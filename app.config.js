@@ -28,7 +28,6 @@ export default () => ({
       },
       package: 'com.cactus.loancalculator.free',
       versionCode: 24,
-      edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
     web: {
@@ -38,6 +37,7 @@ export default () => ({
       'expo-router',
       'expo-font',
       'expo-localization',
+      'expo-system-ui',
       [
         'expo-splash-screen',
         {
