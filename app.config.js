@@ -43,6 +43,7 @@ export default () => ({
       'expo-router',
       'expo-font',
       'expo-localization',
+      'expo-splash-screen',
       '@react-native-community/datetimepicker',
       'expo-web-browser',
       [
