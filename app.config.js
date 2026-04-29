@@ -32,7 +32,7 @@ export default () => ({
         backgroundColor: '#002D72',
       },
       package: 'com.cactus.loancalculator.free',
-      versionCode: 1,
+      versionCode: 24,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
     },
