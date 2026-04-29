@@ -68,8 +68,13 @@ __tests__/
 ```bash
 npm install
 npm test          # run all 63 tests
-npm start         # Expo dev server (scan QR with Expo Go)
+npm run android   # build & run on connected Android device or emulator (expo run:android)
+npm run ios       # build & run on connected iOS device or simulator (expo run:ios)
 ```
+
+Requires Android Studio + SDK (for Android) or Xcode (for iOS). The app uses native modules
+(`react-native-mmkv`, `react-native-google-mobile-ads`) that are incompatible with Expo Go —
+always use a local build or an EAS development build.
 
 ## Environment Variables
 
@@ -84,14 +89,13 @@ Set these before an EAS production build — test IDs are used automatically whe
 
 ## EAS Builds
 
+Used for preview and production releases only. Local development runs via `npm run android` / `npm run ios`.
+
 ```bash
 # Install EAS CLI once
 npm install --global eas-cli
 
-# Development client (on-device with hot reload)
-eas build --profile development --platform android
-
-# Preview APK (internal distribution)
+# Preview APK (internal distribution / QA)
 eas build --profile preview --platform android
 
 # Production AAB (Play Store / App Store)

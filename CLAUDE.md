@@ -70,9 +70,21 @@ Production unit IDs flow via environment variables:
 
 Google test IDs are used automatically when env vars are unset or `__DEV__` is true. The GDPR consent check in `AdProvider.tsx` fires once on first launch for EU users.
 
+## Local Development
+
+The project always runs via local builds — Expo Go is not supported due to native modules (`react-native-mmkv`, `react-native-google-mobile-ads`).
+
+```bash
+npm run android   # expo run:android — builds with Gradle and installs on connected device/emulator
+npm run ios       # expo run:ios — builds with Xcode and installs on connected device/simulator
+```
+
+After native dependency changes, re-run the full build command. For JS-only changes Metro hot-reloads automatically.
+
 ## EAS Build Profiles
 
-- `development` — dev client, internal distribution
+EAS is used for preview and production releases only, not local development.
+
 - `preview` — internal APK (Android), no store submission
 - `production` — AAB/IPA, `autoIncrement: true`
 
