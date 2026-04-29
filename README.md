@@ -16,7 +16,7 @@ Loan amortisation calculator for iOS and Android. Mobile companion to [TTN.loan-
 
 | Concern | Choice |
 |---|---|
-| Framework | Expo SDK 54, React Native 0.81 |
+| Framework | Expo SDK 55, React Native 0.83 |
 | Navigation | Expo Router 55 (file-based, bottom tabs) |
 | Forms | react-hook-form + zod |
 | Storage | react-native-mmkv (synchronous, encrypted at rest) |

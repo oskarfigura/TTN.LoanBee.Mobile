@@ -38,7 +38,7 @@ Screen padding: `paddingHorizontal: 16` (content), `20` (headers).
 
 ## Test Setup
 
-Tests use **ts-jest** in two isolated Jest projects (`core`, `storage`). Do NOT switch to jest-expo — react-native-reanimated 4.x requires react-native-worklets which breaks the jest-expo Babel pipeline.
+Tests use **ts-jest** in two isolated Jest projects (`core`, `storage`). Do NOT switch to jest-expo — react-native-mmkv requires a manual mock that ts-jest handles cleanly without the jest-expo Babel pipeline.
 
 ```bash
 npm test    # runs all 63 tests

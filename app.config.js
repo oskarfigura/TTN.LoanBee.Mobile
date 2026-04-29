@@ -16,11 +16,6 @@ export default () => ({
       admobBannerAndroid: process.env.ADMOB_BANNER_ANDROID_ID ?? null,
       admobBannerIos: process.env.ADMOB_BANNER_IOS_ID ?? null,
     },
-    splash: {
-      image: './assets/splash-icon.png',
-      resizeMode: 'contain',
-      backgroundColor: '#002D72',
-    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.thetechnarrative.loanbee',
@@ -43,7 +38,15 @@ export default () => ({
       'expo-router',
       'expo-font',
       'expo-localization',
-      'expo-splash-screen',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#002D72',
+        },
+      ],
       '@react-native-community/datetimepicker',
       'expo-web-browser',
       [
