@@ -31,7 +31,7 @@ export default () => ({
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#002D72',
       },
-      package: 'com.thetechnarrative.loanbee',
+      package: 'com.cactus.loancalculator.free',
       versionCode: 1,
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
