@@ -1,0 +1,131 @@
+{
+  "calculator": {
+    "title": "LoanBee",
+    "subtitle": "Loan Calculator",
+    "loanAmount": "Loan Amount",
+    "loanAmountPlaceholder": "e.g. 300000",
+    "interestRate": "Interest Rate (%)",
+    "interestPlaceholder": "e.g. 3.5",
+    "downPayment": "Down Payment",
+    "downPaymentPlaceholder": "0",
+    "startDate": "Start Date",
+    "termYears": "Term (Years)",
+    "termMonths": "Months",
+    "additionalPayment": "Extra Monthly Payment",
+    "additionalPaymentPlaceholder": "0",
+    "desiredPayment": "Desired Monthly Payment",
+    "desiredPaymentPlaceholder": "e.g. 2000",
+    "byTerm": "By Term",
+    "byPayment": "By Payment",
+    "generate": "Generate Schedule",
+    "currency": "Currency",
+    "cash": "Cash",
+    "percent": "Percent"
+  },
+  "results": {
+    "title": "Results",
+    "monthlyPayment": "Monthly Payment",
+    "totalInterest": "Total Interest",
+    "totalCost": "Total Cost",
+    "loanTerm": "Loan Term",
+    "years": "yrs",
+    "months": "mo",
+    "and": "&",
+    "saveThisLoan": "Save This Loan",
+    "amortisationTable": "Amortisation Schedule",
+    "month": "Month",
+    "payment": "Payment",
+    "principal": "Principal",
+    "interest": "Interest",
+    "balance": "Balance",
+    "page": "Page",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "charts": "Charts",
+    "repaymentBreakdown": "Repayment Breakdown",
+    "loanBreakdown": "Loan Breakdown",
+    "cumulativePayments": "Cumulative Payments"
+  },
+  "saved": {
+    "title": "Saved Loans",
+    "empty": "No saved loans yet",
+    "emptySubtitle": "Save a calculation to see it here",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "progress": "{{months}} months of {{total}} remaining",
+    "overpaymentSaving": "Saved {{amount}} in interest by overpaying",
+    "category": {
+      "mortgage": "Mortgage",
+      "loan": "Loan"
+    }
+  },
+  "save": {
+    "title": "Save Loan",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "e.g. My First Mortgage",
+    "lender": "Lender",
+    "category": "Category",
+    "mortgage": "Mortgage",
+    "loan": "Personal Loan",
+    "currency": "Currency",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "edit": {
+    "title": "Edit Loan",
+    "save": "Save Changes"
+  },
+  "about": {
+    "title": "About",
+    "formula": "How It Works",
+    "formulaDesc": "LoanBee uses the standard annuity formula to calculate monthly payments:",
+    "formulaEquation": "M = P × [r(1+r)ⁿ] / [(1+r)ⁿ−1]",
+    "variables": "Where:",
+    "varM": "M = Monthly payment",
+    "varP": "P = Principal (loan amount after down payment)",
+    "varR": "r = Monthly interest rate (annual rate ÷ 12)",
+    "varN": "n = Total number of payments (term in months)",
+    "disclaimer": "This calculator is for illustrative purposes only. Always consult a qualified financial advisor before making borrowing decisions."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "defaultCurrency": "Default Currency",
+    "version": "Version",
+    "termsAndConditions": "Terms & Conditions",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "disclaimer": {
+    "text": "For illustrative purposes only. Not financial advice."
+  },
+  "errors": {
+    "loanAmount": "Loan amount must be greater than 0",
+    "interest": "Interest rate must be greater than 0",
+    "termRequired": "Term in years and months cannot both be 0",
+    "downPaymentPercent": "Down payment percentage cannot exceed 100%",
+    "downPaymentCash": "Down payment cannot exceed the loan amount",
+    "desiredPaymentRequired": "Desired monthly payment must be greater than 0",
+    "desiredPaymentExceeds": "Desired monthly payment cannot exceed the loan balance",
+    "additionalPaymentExceeds": "Additional monthly payment cannot exceed the loan balance"
+  },
+  "lenders": {
+    "nationwide": "Nationwide",
+    "halifax": "Halifax",
+    "barclays": "Barclays",
+    "hsbc": "HSBC",
+    "lloyds": "Lloyds",
+    "natwest": "NatWest",
+    "santander": "Santander",
+    "virginMoney": "Virgin Money",
+    "other": "Other",
+    "custom": "Custom"
+  },
+  "tabs": {
+    "calculator": "Calculator",
+    "saved": "Saved",
+    "about": "About",
+    "settings": "Settings"
+  }
+}

@@ -1,0 +1,233 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { v4 as uuidv4 } from 'uuid';
+import { useSavedLoans } from '@/hooks/useSavedLoans';
+import { SavedLoan } from '@/types/SavedLoan';
+import { getLoanCalculations } from '@/core/amortisation';
+import { LoanCalculationType } from '@/core/LoanCalculationType';
+import { DownPaymentType } from '@/core/DownPaymentType';
+import { CurrencyCode } from '@/currency/currencies';
+import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { Button } from '@/components/ui/Button';
+import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { LENDERS } from '@/constants/lenders';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+type LoanResult = ReturnType<typeof getLoanCalculations>;
+
+export default function SaveNewLoanScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ result: string; formValues: string; currency: string }>();
+  const { add } = useSavedLoans();
+
+  const result = JSON.parse(params.result) as LoanResult;
+  const formValues = JSON.parse(params.formValues);
+  const [nickname, setNickname] = useState('');
+  const [lender, setLender] = useState('');
+  const [customLender, setCustomLender] = useState('');
+  const [category, setCategory] = useState<'mortgage' | 'loan'>('mortgage');
+  const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? 'GBP');
+  const [showLenderPicker, setShowLenderPicker] = useState(false);
+
+  const handleSave = () => {
+    if (!nickname.trim()) return;
+
+    const baseline = getLoanCalculations(
+      formValues.loanAmount,
+      formValues.interest,
+      formValues.termInYears ?? 0,
+      formValues.termInMonths ?? 0,
+      formValues.desiredMonthlyPayment ?? 0,
+      formValues.calculationType as LoanCalculationType,
+      formValues.downPayment,
+      formValues.downPaymentType as DownPaymentType,
+      0,
+      formValues.startDate,
+    );
+
+    const now = new Date().toISOString();
+    const loan: SavedLoan = {
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now,
+      nickname: nickname.trim(),
+      lender: lender === 'Custom' ? customLender : lender || undefined,
+      category,
+      currency,
+      formSnapshot: {
+        loanAmount: formValues.loanAmount,
+        interest: formValues.interest,
+        termInYears: formValues.termInYears ?? 0,
+        termInMonths: formValues.termInMonths ?? 0,
+        downPayment: formValues.downPayment,
+        downPaymentType: (formValues.downPaymentType as string).toUpperCase() as 'CASH' | 'PERCENT',
+        desiredMonthlyPayment: formValues.desiredMonthlyPayment ?? null,
+        additionalMonthlyPayment: formValues.additionalMonthlyPayment ?? null,
+        startDate: formValues.startDate,
+        calculationType: (formValues.calculationType as string).toUpperCase() as 'TERM' | 'PAYMENT',
+        currency,
+      },
+      resultSnapshot: {
+        monthlyPayments: result.monthlyPayments,
+        totalAmountPaid: result.totalAmountPaid,
+        totalInterestPaid: result.totalInterestPaid,
+        totalInterestPaidBaseline: baseline.totalInterestPaid,
+        termInYears: result.termInYears,
+        termInMonths: result.termInMonths,
+        totalTermInMonths: result.tableItems.length,
+      },
+    };
+
+    add(loan);
+    router.back();
+  };
+
+  const selectedLender = lender === 'Custom' ? 'Custom' : lender;
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.label}>{t('save.nickname')}</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={t('save.nicknamePlaceholder')}
+          placeholderTextColor={colours.textSecondary}
+          value={nickname}
+          onChangeText={setNickname}
+        />
+
+        <Text style={styles.label}>{t('save.category')}</Text>
+        <View style={styles.toggleRow}>
+          {(['mortgage', 'loan'] as const).map(cat => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.toggleBtn, category === cat && styles.toggleBtnActive]}
+              onPress={() => setCategory(cat)}
+            >
+              <Text style={[styles.toggleText, category === cat && styles.toggleTextActive]}>
+                {cat === 'mortgage' ? t('save.mortgage') : t('save.loan')}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.label}>{t('save.lender')}</Text>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowLenderPicker(v => !v)}
+        >
+          <Text style={{ color: selectedLender ? colours.textPrimary : colours.textSecondary, fontFamily: fonts.body, fontSize: fontSizes.base }}>
+            {selectedLender || 'Select lender...'}
+          </Text>
+        </TouchableOpacity>
+        {showLenderPicker && (
+          <View style={styles.lenderList}>
+            {[...LENDERS, 'Custom'].map(l => (
+              <TouchableOpacity
+                key={l}
+                style={[styles.lenderItem, lender === l && styles.lenderItemActive]}
+                onPress={() => { setLender(l); setShowLenderPicker(false); }}
+              >
+                <Text style={[styles.lenderText, lender === l && styles.lenderTextActive]}>{l}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {lender === 'Custom' && (
+          <TextInput
+            style={[styles.input, { marginTop: 8 }]}
+            placeholder="Enter lender name"
+            placeholderTextColor={colours.textSecondary}
+            value={customLender}
+            onChangeText={setCustomLender}
+          />
+        )}
+
+        <Text style={styles.label}>{t('save.currency')}</Text>
+        <CurrencyPicker value={currency} onChange={setCurrency} />
+
+        <Button
+          label={t('save.save')}
+          onPress={handleSave}
+          disabled={!nickname.trim()}
+          style={styles.saveBtn}
+        />
+        <Button
+          label={t('save.cancel')}
+          onPress={() => router.back()}
+          variant="ghost"
+          style={styles.cancelBtn}
+        />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colours.background },
+  container: { padding: 16, paddingBottom: 40 },
+  label: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    color: colours.textPrimary,
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: colours.surface,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colours.border,
+    height: 48,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.base,
+    color: colours.textPrimary,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    backgroundColor: colours.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colours.border,
+    overflow: 'hidden',
+    height: 44,
+  },
+  toggleBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  toggleBtnActive: { backgroundColor: colours.primary },
+  toggleText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    color: colours.textSecondary,
+  },
+  toggleTextActive: { color: colours.white },
+  lenderList: {
+    marginTop: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colours.border,
+    overflow: 'hidden',
+  },
+  lenderItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+    backgroundColor: colours.surface,
+  },
+  lenderItemActive: { backgroundColor: colours.primary },
+  lenderText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.base,
+    color: colours.textPrimary,
+  },
+  lenderTextActive: { color: colours.white },
+  saveBtn: { marginTop: 24 },
+  cancelBtn: { marginTop: 8 },
+});

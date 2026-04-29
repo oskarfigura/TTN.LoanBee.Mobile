@@ -1,0 +1,16 @@
+export const colours = {
+  primary: '#002D72',
+  primaryDark: '#003a8c',
+  secondary: '#046d40',
+  accent: '#38bdf8',
+  teal: '#0d9488',
+  error: '#ba1a1a',
+  background: '#fcfdfe',
+  surface: '#f8fafc',
+  border: '#e2e8f0',
+  textPrimary: '#0f172a',
+  textSecondary: '#64748b',
+  white: '#ffffff',
+  success: '#16a34a',
+  focusRing: 'rgba(0,45,114,0.08)',
+} as const;

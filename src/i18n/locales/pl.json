@@ -1,0 +1,131 @@
+{
+  "calculator": {
+    "title": "LoanBee",
+    "subtitle": "Kalkulator Kredytu",
+    "loanAmount": "Kwota Kredytu",
+    "loanAmountPlaceholder": "np. 300000",
+    "interestRate": "Oprocentowanie (%)",
+    "interestPlaceholder": "np. 3.5",
+    "downPayment": "Wkład Własny",
+    "downPaymentPlaceholder": "0",
+    "startDate": "Data Rozpoczęcia",
+    "termYears": "Okres (Lata)",
+    "termMonths": "Miesiące",
+    "additionalPayment": "Dodatkowa Płatność Miesięczna",
+    "additionalPaymentPlaceholder": "0",
+    "desiredPayment": "Żądana Płatność Miesięczna",
+    "desiredPaymentPlaceholder": "np. 2000",
+    "byTerm": "Wg Okresu",
+    "byPayment": "Wg Płatności",
+    "generate": "Generuj Harmonogram",
+    "currency": "Waluta",
+    "cash": "Gotówka",
+    "percent": "Procent"
+  },
+  "results": {
+    "title": "Wyniki",
+    "monthlyPayment": "Rata Miesięczna",
+    "totalInterest": "Łączne Odsetki",
+    "totalCost": "Łączny Koszt",
+    "loanTerm": "Okres Kredytu",
+    "years": "lat",
+    "months": "mies.",
+    "and": "i",
+    "saveThisLoan": "Zapisz Ten Kredyt",
+    "amortisationTable": "Harmonogram Spłat",
+    "month": "Miesiąc",
+    "payment": "Płatność",
+    "principal": "Kapitał",
+    "interest": "Odsetki",
+    "balance": "Saldo",
+    "page": "Strona",
+    "of": "z",
+    "previous": "Poprzednia",
+    "next": "Następna",
+    "charts": "Wykresy",
+    "repaymentBreakdown": "Podział Spłat",
+    "loanBreakdown": "Podział Kredytu",
+    "cumulativePayments": "Łączne Płatności"
+  },
+  "saved": {
+    "title": "Zapisane Kredyty",
+    "empty": "Brak zapisanych kredytów",
+    "emptySubtitle": "Zapisz obliczenie, aby zobaczyć je tutaj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "view": "Podgląd",
+    "progress": "{{months}} miesięcy z {{total}} pozostało",
+    "overpaymentSaving": "Zaoszczędzono {{amount}} odsetek dzięki nadpłatom",
+    "category": {
+      "mortgage": "Hipoteka",
+      "loan": "Kredyt"
+    }
+  },
+  "save": {
+    "title": "Zapisz Kredyt",
+    "nickname": "Nazwa",
+    "nicknamePlaceholder": "np. Moja Pierwsza Hipoteka",
+    "lender": "Pożyczkodawca",
+    "category": "Kategoria",
+    "mortgage": "Hipoteka",
+    "loan": "Kredyt Osobisty",
+    "currency": "Waluta",
+    "save": "Zapisz",
+    "cancel": "Anuluj"
+  },
+  "edit": {
+    "title": "Edytuj Kredyt",
+    "save": "Zapisz Zmiany"
+  },
+  "about": {
+    "title": "O Aplikacji",
+    "formula": "Jak To Działa",
+    "formulaDesc": "LoanBee używa standardowego wzoru rentowego do obliczania rat miesięcznych:",
+    "formulaEquation": "M = P × [r(1+r)ⁿ] / [(1+r)ⁿ−1]",
+    "variables": "Gdzie:",
+    "varM": "M = Rata miesięczna",
+    "varP": "P = Kapitał (kwota kredytu po wkładzie własnym)",
+    "varR": "r = Miesięczna stopa procentowa (roczna ÷ 12)",
+    "varN": "n = Łączna liczba płatności (okres w miesiącach)",
+    "disclaimer": "Ten kalkulator służy wyłącznie celom informacyjnym. Zawsze skonsultuj się z wykwalifikowanym doradcą finansowym przed podjęciem decyzji o pożyczce."
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "language": "Język",
+    "defaultCurrency": "Domyślna Waluta",
+    "version": "Wersja",
+    "termsAndConditions": "Regulamin",
+    "privacyPolicy": "Polityka Prywatności"
+  },
+  "disclaimer": {
+    "text": "Wyłącznie do celów informacyjnych. Nie jest poradą finansową."
+  },
+  "errors": {
+    "loanAmount": "Kwota kredytu musi być większa niż 0",
+    "interest": "Oprocentowanie musi być większe niż 0",
+    "termRequired": "Lata i miesiące okresu nie mogą być jednocześnie zerowe",
+    "downPaymentPercent": "Wkład własny procentowy nie może przekraczać 100%",
+    "downPaymentCash": "Wkład własny nie może przekraczać kwoty kredytu",
+    "desiredPaymentRequired": "Żądana rata musi być większa niż 0",
+    "desiredPaymentExceeds": "Żądana rata nie może przekraczać salda kredytu",
+    "additionalPaymentExceeds": "Dodatkowa płatność nie może przekraczać salda kredytu"
+  },
+  "lenders": {
+    "nationwide": "Nationwide",
+    "halifax": "Halifax",
+    "barclays": "Barclays",
+    "hsbc": "HSBC",
+    "lloyds": "Lloyds",
+    "natwest": "NatWest",
+    "santander": "Santander",
+    "virginMoney": "Virgin Money",
+    "other": "Inne",
+    "custom": "Własny"
+  },
+  "tabs": {
+    "calculator": "Kalkulator",
+    "saved": "Zapisane",
+    "about": "O Aplikacji",
+    "settings": "Ustawienia"
+  }
+}
