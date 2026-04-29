@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colours, fonts, fontSizes } from '@/theme';
+import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 
 interface Props {
   title: string;
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fonts.heading,
     fontSize: fontSizes.lg,
-    fontWeight: '700',
+    fontWeight: fontWeights.bold,
     color: colours.textPrimary,
     textAlign: 'center',
     marginBottom: 8,

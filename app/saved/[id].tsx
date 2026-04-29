@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
   },
   savingsCard: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    backgroundColor: colours.successSurface,
+    borderColor: colours.successBorder,
     borderWidth: 1,
     marginBottom: 12,
     alignItems: 'center',

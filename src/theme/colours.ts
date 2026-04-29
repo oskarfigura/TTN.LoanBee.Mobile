@@ -12,5 +12,9 @@ export const colours = {
   textSecondary: '#64748b',
   white: '#ffffff',
   success: '#16a34a',
+  successSurface: '#f0fdf4',
+  successBorder: '#bbf7d0',
+  successLight: '#dcfce7',
+  shadow: '#000000',
   focusRing: 'rgba(0,45,114,0.08)',
 } as const;

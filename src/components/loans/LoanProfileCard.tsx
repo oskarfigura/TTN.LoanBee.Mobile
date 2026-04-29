@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
   },
   savingsBadge: {
-    backgroundColor: '#dcfce7',
+    backgroundColor: colours.successLight,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
