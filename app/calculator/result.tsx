@@ -53,7 +53,7 @@ export default function ResultScreen() {
               onPress={() => setActiveTab(tab)}
             >
               <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'summary' ? 'Summary' : tab === 'charts' ? t('results.charts') : t('results.amortisationTable')}
+                {tab === 'summary' ? t('results.summary') : tab === 'charts' ? t('results.charts') : t('results.amortisationTable')}
               </Text>
             </TouchableOpacity>
           ))}

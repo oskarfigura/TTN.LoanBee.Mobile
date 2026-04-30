@@ -1,7 +1,12 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes } from '@/theme';
+
+const TabIcon = ({ symbol }: { symbol: string; color: string }) => (
+  <Text style={{ fontFamily: fonts.body, fontSize: fontSizes.lg }}>{symbol}</Text>
+);
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -57,8 +62,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-const TabIcon = ({ symbol }: { symbol: string; color: string }) => {
-  const { Text } = require('react-native');
-  return <Text style={{ fontSize: 20 }}>{symbol}</Text>;
-};

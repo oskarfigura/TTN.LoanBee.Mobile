@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
+import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
@@ -12,12 +13,13 @@ interface Props {
 }
 
 export const LoanBreakdownDonut = ({ principal, totalInterest, currency }: Props) => {
+  const { t } = useTranslation();
   const total = principal + totalInterest;
   const interestPct = total > 0 ? ((totalInterest / total) * 100).toFixed(1) : '0';
 
   const data = [
-    { value: principal, color: colours.primary, text: 'Principal' },
-    { value: totalInterest, color: colours.accent, text: 'Interest' },
+    { value: principal, color: colours.primary },
+    { value: totalInterest, color: colours.accent },
   ];
 
   return (
@@ -30,7 +32,7 @@ export const LoanBreakdownDonut = ({ principal, totalInterest, currency }: Props
         centerLabelComponent={() => (
           <View style={styles.center}>
             <Text style={styles.centerPct}>{interestPct}%</Text>
-            <Text style={styles.centerLabel}>Interest</Text>
+            <Text style={styles.centerLabel}>{t('results.interest')}</Text>
           </View>
         )}
         strokeColor={colours.background}
@@ -41,14 +43,14 @@ export const LoanBreakdownDonut = ({ principal, totalInterest, currency }: Props
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colours.primary }]} />
           <View>
-            <Text style={styles.legendLabel}>Principal</Text>
+            <Text style={styles.legendLabel}>{t('results.principal')}</Text>
             <Text style={styles.legendValue}>{formatCurrency(principal, currency)}</Text>
           </View>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colours.accent }]} />
           <View>
-            <Text style={styles.legendLabel}>Interest</Text>
+            <Text style={styles.legendLabel}>{t('results.interest')}</Text>
             <Text style={styles.legendValue}>{formatCurrency(totalInterest, currency)}</Text>
           </View>
         </View>

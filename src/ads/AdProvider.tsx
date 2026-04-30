@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import MobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 
 interface Props {
@@ -6,8 +6,6 @@ interface Props {
 }
 
 export const AdProvider = ({ children }: Props) => {
-  const [ready, setReady] = useState(false);
-
   useEffect(() => {
     (async () => {
       try {
@@ -21,12 +19,9 @@ export const AdProvider = ({ children }: Props) => {
         await MobileAds().initialize();
       } catch {
         // silently fail so ads don't block the app
-      } finally {
-        setReady(true);
       }
     })();
   }, []);
 
-  if (!ready) return <>{children}</>;
   return <>{children}</>;
 };

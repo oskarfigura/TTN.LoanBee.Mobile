@@ -30,7 +30,7 @@ export const AmortisationTable = ({ items, currency, pageSize = 12 }: Props) => 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
           <View style={styles.headerRow}>
-            {[t('results.month'), t('results.balance'), t('results.principal'), t('results.interest'), t('results.balance')].map((h, i) => (
+            {[t('results.month'), t('results.payment'), t('results.principal'), t('results.interest'), t('results.balance')].map((h, i) => (
               <Text key={i} style={[styles.headerCell, i === 0 && styles.indexCell]}>{h}</Text>
             ))}
           </View>

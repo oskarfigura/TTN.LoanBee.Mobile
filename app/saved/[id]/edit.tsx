@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { LenderPicker } from '@/components/loans/LenderPicker';
 import { Button } from '@/components/ui/Button';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
-import { LENDERS } from '@/constants/lenders';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function EditLoanScreen() {
@@ -24,8 +24,8 @@ export default function EditLoanScreen() {
   if (!loan) {
     return (
       <View style={styles.notFound}>
-        <Text>Loan not found</Text>
-        <Button label="Go Back" onPress={() => router.back()} />
+        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+        <Button label={t('common.goBack')} onPress={() => router.back()} />
       </View>
     );
   }
@@ -70,19 +70,7 @@ export default function EditLoanScreen() {
         </View>
 
         <Text style={styles.label}>{t('save.lender')}</Text>
-        <View style={styles.lenderList}>
-          {[...LENDERS, ''].map(l => (
-            <TouchableOpacity
-              key={l || 'none'}
-              style={[styles.lenderItem, lender === l && styles.lenderItemActive]}
-              onPress={() => setLender(l)}
-            >
-              <Text style={[styles.lenderText, lender === l && styles.lenderTextActive]}>
-                {l || 'None'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <LenderPicker value={lender} onChange={setLender} />
 
         <Text style={styles.label}>{t('save.currency')}</Text>
         <CurrencyPicker value={currency} onChange={setCurrency} />
@@ -108,6 +96,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   container: { padding: 16, paddingBottom: 40 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  notFoundText: { fontFamily: fonts.heading, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
   label: {
     fontFamily: fonts.heading,
     fontSize: fontSizes.sm,
@@ -145,22 +134,6 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
   },
   toggleTextActive: { color: colours.white },
-  lenderList: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colours.border,
-    overflow: 'hidden',
-  },
-  lenderItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colours.border,
-    backgroundColor: colours.surface,
-  },
-  lenderItemActive: { backgroundColor: colours.primary },
-  lenderText: { fontFamily: fonts.body, fontSize: fontSizes.base, color: colours.textPrimary },
-  lenderTextActive: { color: colours.white },
   saveBtn: { marginTop: 24 },
   cancelBtn: { marginTop: 8 },
 });

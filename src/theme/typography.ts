@@ -4,6 +4,7 @@ export const fonts = {
 } as const;
 
 export const fontSizes = {
+  tiny: 10,
   xs: 11,
   sm: 13,
   base: 15,

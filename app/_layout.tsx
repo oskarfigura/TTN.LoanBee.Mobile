@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -19,9 +20,15 @@ import {
 } from '@expo-google-fonts/manrope';
 import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
-import { colours } from '@/theme';
+import { colours, fonts, fontSizes } from '@/theme';
 
 SplashScreen.preventAutoHideAsync();
+
+const TabIcon = ({ symbol }: { symbol: string; color: string }) => (
+  <Text style={{ fontFamily: fonts.body, fontSize: fontSizes.lg }}>{symbol}</Text>
+);
+
+export { TabIcon };
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -41,6 +48,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
+  const headerStyle = { backgroundColor: colours.primary };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -52,8 +61,8 @@ export default function RootLayout() {
                 name="calculator/result"
                 options={{
                   headerShown: true,
-                  title: 'Results',
-                  headerStyle: { backgroundColor: colours.primary },
+                  title: i18n.t('results.title'),
+                  headerStyle,
                   headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
@@ -62,8 +71,8 @@ export default function RootLayout() {
                 name="saved/new"
                 options={{
                   headerShown: true,
-                  title: 'Save Loan',
-                  headerStyle: { backgroundColor: colours.primary },
+                  title: i18n.t('save.title'),
+                  headerStyle,
                   headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
@@ -72,8 +81,8 @@ export default function RootLayout() {
                 name="saved/[id]"
                 options={{
                   headerShown: true,
-                  title: 'Loan Detail',
-                  headerStyle: { backgroundColor: colours.primary },
+                  title: i18n.t('saved.loanDetail'),
+                  headerStyle,
                   headerTintColor: colours.white,
                 }}
               />
@@ -81,8 +90,8 @@ export default function RootLayout() {
                 name="saved/[id]/edit"
                 options={{
                   headerShown: true,
-                  title: 'Edit Loan',
-                  headerStyle: { backgroundColor: colours.primary },
+                  title: i18n.t('saved.editLoan'),
+                  headerStyle,
                   headerTintColor: colours.white,
                 }}
               />

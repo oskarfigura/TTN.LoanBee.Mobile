@@ -11,6 +11,7 @@ export const colours = {
   textPrimary: '#0f172a',
   textSecondary: '#64748b',
   white: '#ffffff',
+  whiteSubtle: 'rgba(255,255,255,0.7)',
   success: '#16a34a',
   successSurface: '#f0fdf4',
   successBorder: '#bbf7d0',

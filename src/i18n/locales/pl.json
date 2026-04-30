@@ -24,6 +24,7 @@
   },
   "results": {
     "title": "Wyniki",
+    "summary": "Podsumowanie",
     "monthlyPayment": "Rata Miesięczna",
     "totalInterest": "Łączne Odsetki",
     "totalCost": "Łączny Koszt",
@@ -38,6 +39,8 @@
     "principal": "Kapitał",
     "interest": "Odsetki",
     "balance": "Saldo",
+    "totalPaid": "Łącznie Zapłacono",
+    "remaining": "Pozostało",
     "page": "Strona",
     "of": "z",
     "previous": "Poprzednia",
@@ -49,13 +52,21 @@
   },
   "saved": {
     "title": "Zapisane Kredyty",
+    "loanDetail": "Szczegóły Kredytu",
+    "editLoan": "Edytuj Kredyt",
     "empty": "Brak zapisanych kredytów",
     "emptySubtitle": "Zapisz obliczenie, aby zobaczyć je tutaj",
     "delete": "Usuń",
     "edit": "Edytuj",
     "view": "Podgląd",
     "progress": "{{months}} miesięcy z {{total}} pozostało",
+    "completed": "Zakończono",
     "overpaymentSaving": "Zaoszczędzono {{amount}} odsetek dzięki nadpłatom",
+    "overpaymentSavings": "Oszczędności z Nadpłat",
+    "savedInInterest": "zaoszczędzono odsetek dzięki nadpłatom",
+    "loanProgress": "Postęp Spłaty",
+    "startedOn": "Rozpoczęto {{date}}",
+    "notFound": "Nie znaleziono kredytu",
     "category": {
       "mortgage": "Hipoteka",
       "loan": "Kredyt"
@@ -66,6 +77,10 @@
     "nickname": "Nazwa",
     "nicknamePlaceholder": "np. Moja Pierwsza Hipoteka",
     "lender": "Pożyczkodawca",
+    "selectLender": "Wybierz pożyczkodawcę...",
+    "enterLenderName": "Wpisz nazwę pożyczkodawcy",
+    "none": "Brak",
+    "custom": "Własny",
     "category": "Kategoria",
     "mortgage": "Hipoteka",
     "loan": "Kredyt Osobisty",
@@ -110,17 +125,8 @@
     "desiredPaymentExceeds": "Żądana rata nie może przekraczać salda kredytu",
     "additionalPaymentExceeds": "Dodatkowa płatność nie może przekraczać salda kredytu"
   },
-  "lenders": {
-    "nationwide": "Nationwide",
-    "halifax": "Halifax",
-    "barclays": "Barclays",
-    "hsbc": "HSBC",
-    "lloyds": "Lloyds",
-    "natwest": "NatWest",
-    "santander": "Santander",
-    "virginMoney": "Virgin Money",
-    "other": "Inne",
-    "custom": "Własny"
+  "common": {
+    "goBack": "Wróć"
   },
   "tabs": {
     "calculator": "Kalkulator",

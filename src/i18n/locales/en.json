@@ -24,6 +24,7 @@
   },
   "results": {
     "title": "Results",
+    "summary": "Summary",
     "monthlyPayment": "Monthly Payment",
     "totalInterest": "Total Interest",
     "totalCost": "Total Cost",
@@ -38,6 +39,8 @@
     "principal": "Principal",
     "interest": "Interest",
     "balance": "Balance",
+    "totalPaid": "Total Paid",
+    "remaining": "Remaining",
     "page": "Page",
     "of": "of",
     "previous": "Previous",
@@ -49,13 +52,21 @@
   },
   "saved": {
     "title": "Saved Loans",
+    "loanDetail": "Loan Detail",
+    "editLoan": "Edit Loan",
     "empty": "No saved loans yet",
     "emptySubtitle": "Save a calculation to see it here",
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
     "progress": "{{months}} months of {{total}} remaining",
+    "completed": "Completed",
     "overpaymentSaving": "Saved {{amount}} in interest by overpaying",
+    "overpaymentSavings": "Overpayment Savings",
+    "savedInInterest": "saved in interest by overpaying",
+    "loanProgress": "Loan Progress",
+    "startedOn": "Started {{date}}",
+    "notFound": "Loan not found",
     "category": {
       "mortgage": "Mortgage",
       "loan": "Loan"
@@ -66,6 +77,10 @@
     "nickname": "Nickname",
     "nicknamePlaceholder": "e.g. My First Mortgage",
     "lender": "Lender",
+    "selectLender": "Select lender...",
+    "enterLenderName": "Enter lender name",
+    "none": "None",
+    "custom": "Custom",
     "category": "Category",
     "mortgage": "Mortgage",
     "loan": "Personal Loan",
@@ -110,17 +125,8 @@
     "desiredPaymentExceeds": "Desired monthly payment cannot exceed the loan balance",
     "additionalPaymentExceeds": "Additional monthly payment cannot exceed the loan balance"
   },
-  "lenders": {
-    "nationwide": "Nationwide",
-    "halifax": "Halifax",
-    "barclays": "Barclays",
-    "hsbc": "HSBC",
-    "lloyds": "Lloyds",
-    "natwest": "NatWest",
-    "santander": "Santander",
-    "virginMoney": "Virgin Money",
-    "other": "Other",
-    "custom": "Custom"
+  "common": {
+    "goBack": "Go Back"
   },
   "tabs": {
     "calculator": "Calculator",

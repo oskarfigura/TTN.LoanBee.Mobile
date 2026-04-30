@@ -5,17 +5,13 @@ import { SavedLoan } from '@/types/SavedLoan';
 import { Card } from '@/components/ui/Card';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
+import { monthsBetween } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
   onPress: () => void;
   onDelete: () => void;
 }
-
-const monthsBetween = (startDate: string, now: Date): number => {
-  const start = new Date(startDate);
-  return Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
-};
 
 export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
   const { t } = useTranslation();
@@ -54,7 +50,7 @@ export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
           <Text style={styles.progressLabel}>
             {remaining > 0
               ? t('saved.progress', { months: remaining, total })
-              : 'Completed'}
+              : t('saved.completed')}
           </Text>
         </View>
 
@@ -68,7 +64,7 @@ export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
         )}
 
         <View style={styles.footer}>
-          <Text style={styles.date}>Started {loan.formSnapshot.startDate}</Text>
+          <Text style={styles.date}>{t('saved.startedOn', { date: loan.formSnapshot.startDate })}</Text>
           <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={styles.deleteBtn}>{t('saved.delete')}</Text>
           </TouchableOpacity>

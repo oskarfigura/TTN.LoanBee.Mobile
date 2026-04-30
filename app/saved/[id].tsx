@@ -11,12 +11,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
+import { monthsBetween } from '@/utils/date';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const monthsBetween = (startDate: string, now: Date): number => {
-  const start = new Date(startDate);
-  return Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
-};
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
@@ -41,8 +37,8 @@ export default function LoanDetailScreen() {
   if (!loan || !result) {
     return (
       <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>Loan not found</Text>
-        <Button label="Go Back" onPress={() => router.back()} />
+        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+        <Button label={t('common.goBack')} onPress={() => router.back()} />
       </View>
     );
   }
@@ -72,32 +68,30 @@ export default function LoanDetailScreen() {
           currency={loan.currency}
         />
 
-        {/* Progress */}
         <Card style={styles.progressCard}>
-          <Text style={styles.sectionTitle}>Loan Progress</Text>
+          <Text style={styles.sectionTitle}>{t('saved.loanProgress')}</Text>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
           </View>
           <Text style={styles.progressLabel}>
             {remaining > 0
-              ? `${remaining} months of ${total} remaining`
-              : 'Completed'}
+              ? t('saved.progress', { months: remaining, total })
+              : t('saved.completed')}
           </Text>
         </Card>
 
-        {/* Overpayment Savings */}
         {hasSavings && savings > 0 && (
           <Card style={styles.savingsCard}>
-            <Text style={styles.savingsTitle}>Overpayment Savings</Text>
+            <Text style={styles.savingsTitle}>{t('saved.overpaymentSavings')}</Text>
             <Text style={styles.savingsAmount}>
               {formatCurrency(savings, loan.currency)}
             </Text>
-            <Text style={styles.savingsSubtitle}>saved in interest by overpaying</Text>
+            <Text style={styles.savingsSubtitle}>{t('saved.savedInInterest')}</Text>
           </Card>
         )}
 
         <Button
-          label="Edit Loan"
+          label={t('saved.editLoan')}
           onPress={() => router.push(`/saved/${id}/edit`)}
           variant="secondary"
           style={{ marginTop: 16 }}

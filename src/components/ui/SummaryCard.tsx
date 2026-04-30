@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   accentLabel: {
-    color: 'rgba(255,255,255,0.7)',
+    color: colours.whiteSubtle,
   },
   value: {
     fontFamily: fonts.heading,

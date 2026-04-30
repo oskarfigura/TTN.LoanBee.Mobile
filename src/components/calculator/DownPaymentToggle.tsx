@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 
@@ -8,22 +9,25 @@ interface Props {
   onChange: (v: DownPaymentType) => void;
 }
 
-export const DownPaymentToggle = ({ value, onChange }: Props) => (
-  <View style={styles.container}>
-    {([DownPaymentType.CASH, DownPaymentType.PERCENT] as const).map(type => (
-      <TouchableOpacity
-        key={type}
-        style={[styles.btn, value === type && styles.btnActive]}
-        onPress={() => onChange(type)}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.label, value === type && styles.labelActive]}>
-          {type === DownPaymentType.CASH ? 'Cash' : '%'}
-        </Text>
-      </TouchableOpacity>
-    ))}
-  </View>
-);
+export const DownPaymentToggle = ({ value, onChange }: Props) => {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.container}>
+      {([DownPaymentType.CASH, DownPaymentType.PERCENT] as const).map(type => (
+        <TouchableOpacity
+          key={type}
+          style={[styles.btn, value === type && styles.btnActive]}
+          onPress={() => onChange(type)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.label, value === type && styles.labelActive]}>
+            {type === DownPaymentType.CASH ? t('calculator.cash') : '%'}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

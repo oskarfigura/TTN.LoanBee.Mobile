@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
+import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes } from '@/theme';
 import { formatCurrencyCompact } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
@@ -15,6 +16,7 @@ interface Props {
 const SAMPLE_STEP = 12;
 
 export const RepaymentBarChart = ({ monthlyArray, interestArray, labelArray, currency }: Props) => {
+  const { t } = useTranslation();
   const width = Dimensions.get('window').width - 64;
 
   const yearlyData = [];
@@ -54,11 +56,11 @@ export const RepaymentBarChart = ({ monthlyArray, interestArray, labelArray, cur
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colours.primary }]} />
-          <Text style={styles.legendText}>Principal</Text>
+          <Text style={styles.legendText}>{t('results.principal')}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colours.accent }]} />
-          <Text style={styles.legendText}>Interest</Text>
+          <Text style={styles.legendText}>{t('results.interest')}</Text>
         </View>
       </View>
     </View>
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
   container: { paddingVertical: 8 },
   axisText: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.xs - 1,
+    fontSize: fontSizes.tiny,
     color: colours.textSecondary,
   },
   legend: {

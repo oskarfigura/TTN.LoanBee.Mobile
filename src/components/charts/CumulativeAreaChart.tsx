@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
+import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes } from '@/theme';
 import { formatCurrencyCompact } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
@@ -15,6 +16,7 @@ interface Props {
 const SAMPLE_STEP = 12;
 
 export const CumulativeAreaChart = ({ monthlyArray, interestArray, remainingArray, currency }: Props) => {
+  const { t } = useTranslation();
   const width = Dimensions.get('window').width - 64;
 
   const sample = (arr: number[]) => {
@@ -28,6 +30,12 @@ export const CumulativeAreaChart = ({ monthlyArray, interestArray, remainingArra
   const remainingData = sample(remainingArray).map(d => ({ ...d, color: colours.teal, dataPointColor: colours.teal }));
 
   if (totalData.length < 2) return null;
+
+  const legendItems = [
+    { labelKey: 'results.totalPaid', color: colours.accent },
+    { labelKey: 'results.interest', color: colours.primary },
+    { labelKey: 'results.remaining', color: colours.teal },
+  ] as const;
 
   return (
     <View style={styles.container}>
@@ -58,14 +66,10 @@ export const CumulativeAreaChart = ({ monthlyArray, interestArray, remainingArra
         isAnimated
       />
       <View style={styles.legend}>
-        {[
-          { label: 'Total Paid', color: colours.accent },
-          { label: 'Interest', color: colours.primary },
-          { label: 'Remaining', color: colours.teal },
-        ].map(item => (
-          <View key={item.label} style={styles.legendItem}>
+        {legendItems.map(item => (
+          <View key={item.labelKey} style={styles.legendItem}>
             <View style={[styles.dot, { backgroundColor: item.color }]} />
-            <Text style={styles.legendText}>{item.label}</Text>
+            <Text style={styles.legendText}>{t(item.labelKey)}</Text>
           </View>
         ))}
       </View>
@@ -77,7 +81,7 @@ const styles = StyleSheet.create({
   container: { paddingVertical: 8 },
   axisText: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.xs - 1,
+    fontSize: fontSizes.tiny,
     color: colours.textSecondary,
   },
   legend: {

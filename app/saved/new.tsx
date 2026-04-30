@@ -10,9 +10,9 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { LenderPicker } from '@/components/loans/LenderPicker';
 import { Button } from '@/components/ui/Button';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
-import { LENDERS } from '@/constants/lenders';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
@@ -27,10 +27,8 @@ export default function SaveNewLoanScreen() {
   const formValues = JSON.parse(params.formValues);
   const [nickname, setNickname] = useState('');
   const [lender, setLender] = useState('');
-  const [customLender, setCustomLender] = useState('');
   const [category, setCategory] = useState<'mortgage' | 'loan'>('mortgage');
   const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? 'GBP');
-  const [showLenderPicker, setShowLenderPicker] = useState(false);
 
   const handleSave = () => {
     if (!nickname.trim()) return;
@@ -54,7 +52,7 @@ export default function SaveNewLoanScreen() {
       createdAt: now,
       updatedAt: now,
       nickname: nickname.trim(),
-      lender: lender === 'Custom' ? customLender : lender || undefined,
+      lender: lender || undefined,
       category,
       currency,
       formSnapshot: {
@@ -85,8 +83,6 @@ export default function SaveNewLoanScreen() {
     router.back();
   };
 
-  const selectedLender = lender === 'Custom' ? 'Custom' : lender;
-
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -115,36 +111,7 @@ export default function SaveNewLoanScreen() {
         </View>
 
         <Text style={styles.label}>{t('save.lender')}</Text>
-        <TouchableOpacity
-          style={styles.input}
-          onPress={() => setShowLenderPicker(v => !v)}
-        >
-          <Text style={{ color: selectedLender ? colours.textPrimary : colours.textSecondary, fontFamily: fonts.body, fontSize: fontSizes.base }}>
-            {selectedLender || 'Select lender...'}
-          </Text>
-        </TouchableOpacity>
-        {showLenderPicker && (
-          <View style={styles.lenderList}>
-            {[...LENDERS, 'Custom'].map(l => (
-              <TouchableOpacity
-                key={l}
-                style={[styles.lenderItem, lender === l && styles.lenderItemActive]}
-                onPress={() => { setLender(l); setShowLenderPicker(false); }}
-              >
-                <Text style={[styles.lenderText, lender === l && styles.lenderTextActive]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {lender === 'Custom' && (
-          <TextInput
-            style={[styles.input, { marginTop: 8 }]}
-            placeholder="Enter lender name"
-            placeholderTextColor={colours.textSecondary}
-            value={customLender}
-            onChangeText={setCustomLender}
-          />
-        )}
+        <LenderPicker value={lender} onChange={setLender} />
 
         <Text style={styles.label}>{t('save.currency')}</Text>
         <CurrencyPicker value={currency} onChange={setCurrency} />
@@ -207,27 +174,6 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
   },
   toggleTextActive: { color: colours.white },
-  lenderList: {
-    marginTop: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colours.border,
-    overflow: 'hidden',
-  },
-  lenderItem: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colours.border,
-    backgroundColor: colours.surface,
-  },
-  lenderItemActive: { backgroundColor: colours.primary },
-  lenderText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textPrimary,
-  },
-  lenderTextActive: { color: colours.white },
   saveBtn: { marginTop: 24 },
   cancelBtn: { marginTop: 8 },
 });

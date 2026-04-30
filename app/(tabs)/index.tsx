@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
-    color: 'rgba(255,255,255,0.7)',
+    color: colours.whiteSubtle,
     marginTop: 2,
   },
   footer: {
