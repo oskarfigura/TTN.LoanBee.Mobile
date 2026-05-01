@@ -108,7 +108,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('tabs.calculator'),
+          title: t('tabs.home'),
           tabBarIcon: ({ color }) => <TabIcon name="calculator" color={color} />,
         }}
       />

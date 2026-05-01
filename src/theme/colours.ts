@@ -18,4 +18,5 @@ export const colours = {
   successLight: '#dcfce7',
   shadow: '#000000',
   focusRing: 'rgba(0,45,114,0.08)',
+  modalScrim: 'rgba(15,23,42,0.42)',
 } as const;

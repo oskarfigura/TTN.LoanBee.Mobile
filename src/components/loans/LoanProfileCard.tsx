@@ -6,14 +6,17 @@ import { Card } from '@/components/ui/Card';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
 import { monthsBetween } from '@/utils/date';
+import { getMortgageTrackerSummary } from '@/mortgage/tracker';
+import { PinIcon } from '@/components/loans/LoanIcons';
 
 interface Props {
   loan: SavedLoan;
   onPress: () => void;
   onDelete: () => void;
+  onTogglePinned: () => void;
 }
 
-export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
+export const LoanProfileCard = ({ loan, onPress, onDelete, onTogglePinned }: Props) => {
   const { t } = useTranslation();
   const now = new Date();
   const elapsed = monthsBetween(loan.formSnapshot.startDate, now);
@@ -22,6 +25,11 @@ export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
   const remaining = Math.max(0, total - elapsed);
   const hasSavings = (loan.formSnapshot.additionalMonthlyPayment ?? 0) > 0;
   const savings = loan.resultSnapshot.totalInterestPaidBaseline - loan.resultSnapshot.totalInterestPaid;
+  const mortgageSummary = loan.category === 'mortgage'
+    ? getMortgageTrackerSummary(loan, now)
+    : null;
+  const payment = mortgageSummary?.currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments;
+  const progressValue = mortgageSummary?.balanceProgress ?? progress;
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
@@ -39,35 +47,50 @@ export const LoanProfileCard = ({ loan, onPress, onDelete }: Props) => {
         </View>
 
         <Text style={styles.payment}>
-          {formatCurrency(loan.resultSnapshot.monthlyPayments, loan.currency)} / mo
+          {formatCurrency(payment, loan.currency)} / mo
         </Text>
 
-        {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+            <View style={[styles.progressFill, { width: `${progressValue * 100}%` }]} />
           </View>
           <Text style={styles.progressLabel}>
-            {remaining > 0
-              ? t('saved.progress', { months: remaining, total })
-              : t('saved.completed')}
+            {mortgageSummary
+              ? t('mortgage.balancePaid', { percent: Math.round(progressValue * 100) })
+              : remaining > 0
+                ? t('saved.progress', { months: remaining, total })
+                : t('saved.completed')}
           </Text>
         </View>
 
-        {/* Overpayment Savings */}
-        {hasSavings && savings > 0 && (
+        {((hasSavings && savings > 0) || (mortgageSummary?.overpaymentSavingsEstimate ?? 0) > 0) && (
           <View style={styles.savingsBadge}>
             <Text style={styles.savingsText}>
-              {t('saved.overpaymentSaving', { amount: formatCurrency(savings, loan.currency) })}
+              {t('saved.overpaymentSaving', {
+                amount: formatCurrency(
+                  mortgageSummary?.overpaymentSavingsEstimate ?? savings,
+                  loan.currency,
+                ),
+              })}
             </Text>
           </View>
         )}
 
         <View style={styles.footer}>
           <Text style={styles.date}>{t('saved.startedOn', { date: loan.formSnapshot.startDate })}</Text>
-          <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.deleteBtn}>{t('saved.delete')}</Text>
-          </TouchableOpacity>
+          <View style={styles.footerActions}>
+            <TouchableOpacity onPress={onTogglePinned} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <View style={styles.pinBtn}>
+                <PinIcon color={colours.primary} size={14} />
+                <Text style={styles.pinBtnText}>
+                  {loan.pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
+                </Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.deleteBtn}>{t('saved.delete')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Card>
     </TouchableOpacity>
@@ -155,10 +178,26 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     marginTop: 4,
   },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   date: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
+  },
+  pinBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  pinBtnText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semibold,
+    color: colours.primary,
   },
   deleteBtn: {
     fontFamily: fonts.heading,

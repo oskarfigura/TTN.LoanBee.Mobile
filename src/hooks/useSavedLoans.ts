@@ -24,5 +24,10 @@ export const useSavedLoans = () => {
     refresh();
   }, [refresh]);
 
-  return { loans, add, update, remove, refresh };
+  const togglePinned = useCallback((id: string) => {
+    savedLoansStorage.togglePinned(id);
+    refresh();
+  }, [refresh]);
+
+  return { loans, add, update, remove, togglePinned, refresh };
 };

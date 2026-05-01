@@ -85,9 +85,57 @@ export default function RootLayout() {
                 name="saved/[id]/edit"
                 options={{
                   headerShown: true,
-                  title: i18n.t('saved.editLoan'),
+                  title: i18n.t('edit.manageTitle'),
                   headerStyle,
                   headerTintColor: colours.white,
+                }}
+              />
+              <Stack.Screen
+                name="saved/[id]/timeline"
+                options={{
+                  headerShown: true,
+                  title: i18n.t('mortgage.timelineTitle'),
+                  headerStyle,
+                  headerTintColor: colours.white,
+                }}
+              />
+              <Stack.Screen
+                name="saved/[id]/deals/new"
+                options={{
+                  headerShown: true,
+                  title: i18n.t('mortgage.addNextDeal'),
+                  headerStyle,
+                  headerTintColor: colours.white,
+                  presentation: 'modal',
+                }}
+              />
+              <Stack.Screen
+                name="saved/[id]/deals/[dealId]"
+                options={{
+                  headerShown: true,
+                  title: i18n.t('mortgage.editDeal'),
+                  headerStyle,
+                  headerTintColor: colours.white,
+                }}
+              />
+              <Stack.Screen
+                name="saved/[id]/events/new"
+                options={{
+                  headerShown: true,
+                  title: i18n.t('mortgage.addEvent'),
+                  headerStyle,
+                  headerTintColor: colours.white,
+                  presentation: 'modal',
+                }}
+              />
+              <Stack.Screen
+                name="saved/[id]/complete-current"
+                options={{
+                  headerShown: true,
+                  title: i18n.t('mortgage.completeCurrentDeal'),
+                  headerStyle,
+                  headerTintColor: colours.white,
+                  presentation: 'modal',
                 }}
               />
             </Stack>

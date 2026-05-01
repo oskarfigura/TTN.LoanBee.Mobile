@@ -9,13 +9,17 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
-import { LenderPicker } from '@/components/loans/LenderPicker';
+import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { Button } from '@/components/ui/Button';
 import { createLocalId } from '@/utils/id';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
-import { buildSavedLoanResultParams } from '@/results/loanResultRoute';
 import { useStoreReview } from '@/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  buildInitialDeal,
+  buildResultSnapshot,
+  normaliseFormSnapshot,
+} from '@/loans/loanGroupFactory';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
 
@@ -50,6 +54,8 @@ export default function SaveNewLoanScreen() {
     );
 
     const now = new Date().toISOString();
+    const formSnapshot = normaliseFormSnapshot(formValues, currency);
+    const resultSnapshot = buildResultSnapshot(result, baseline.totalInterestPaid);
     const loan: SavedLoan = {
       id: createLocalId(),
       createdAt: now,
@@ -58,44 +64,24 @@ export default function SaveNewLoanScreen() {
       lender: lender || undefined,
       category,
       currency,
-      formSnapshot: {
-        loanAmount: formValues.loanAmount,
-        interest: formValues.interest,
-        termInYears: formValues.termInYears ?? 0,
-        termInMonths: formValues.termInMonths ?? 0,
-        downPayment: formValues.downPayment,
-        downPaymentType: (formValues.downPaymentType as string).toUpperCase() as 'CASH' | 'PERCENT',
-        desiredMonthlyPayment: formValues.desiredMonthlyPayment ?? null,
-        additionalMonthlyPayment: formValues.additionalMonthlyPayment ?? null,
-        startDate: formValues.startDate,
-        calculationType: (formValues.calculationType as string).toUpperCase() as 'TERM' | 'PAYMENT',
-        currency,
-      },
-      resultSnapshot: {
-        monthlyPayments: result.monthlyPayments,
-        totalAmountPaid: result.totalAmountPaid,
-        totalInterestPaid: result.totalInterestPaid,
-        totalInterestPaidBaseline: baseline.totalInterestPaid,
-        termInYears: result.termInYears,
-        termInMonths: result.termInMonths,
-        totalTermInMonths: result.tableItems.length,
-      },
+      status: 'tracked',
+      pinnedToDashboard: false,
+      deals: [],
+      events: [],
+      formSnapshot,
+      resultSnapshot,
     };
+    loan.deals = [buildInitialDeal(createLocalId(), loan)];
 
     add(loan);
     recordUsefulAction()
       .then(() => requestReview())
       .catch(() => undefined);
 
-    if (params.returnToResult === '1') {
-      router.replace({
-        pathname: '/result' as never,
-        params: buildSavedLoanResultParams(loan),
-      });
-      return;
-    }
-
-    router.back();
+    router.replace({
+      pathname: '/saved/[id]' as never,
+      params: { id: loan.id, fromSave: '1' },
+    });
   };
 
   return (
@@ -126,7 +112,7 @@ export default function SaveNewLoanScreen() {
         </View>
 
         <Text style={styles.label}>{t('save.lender')}</Text>
-        <LenderPicker value={lender} onChange={setLender} />
+        <LenderTextInput value={lender} onChange={setLender} />
 
         <Text style={styles.label}>{t('save.currency')}</Text>
         <CurrencyPicker value={currency} onChange={setCurrency} />

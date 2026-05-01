@@ -35,6 +35,8 @@ import { setResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 import { useStoreReview } from '@/review';
 import { formatCurrency } from '@/currency/format';
 import { getCalculationWebShareUrl, ShareableCalculationValues } from '@/share/calculationShareLink';
+import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
+import { EditIcon } from '@/components/loans/LoanIcons';
 
 type ResultTab = 'summary' | 'charts' | 'schedule';
 
@@ -77,6 +79,7 @@ export default function ResultScreen() {
   const navigation = useNavigation();
   const params = useLocalSearchParams<ResultParams>();
   const allowLeaveRef = useRef(false);
+  const pendingLeaveRef = useRef<(() => void) | null>(null);
   const recordedReviewActionRef = useRef(false);
   const { recordUsefulAction, requestReview } = useStoreReview();
 
@@ -96,6 +99,7 @@ export default function ResultScreen() {
   ), [params.formValues, savedLoan]);
   const currency = ((savedLoan?.currency ?? params.currency) as CurrencyCode | undefined) ?? 'GBP';
   const [activeTab, setActiveTab] = useState<ResultTab>('summary');
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   useEffect(() => {
     if (isSavedMode || !result || recordedReviewActionRef.current) return;
@@ -166,20 +170,29 @@ export default function ResultScreen() {
   }, [router]);
 
   const confirmLeave = useCallback((continueNavigation: () => void) => {
-    Alert.alert(
-      t('results.unsavedTitle'),
-      t('results.unsavedMessage'),
-      [
-        { text: t('results.cancelLeave'), style: 'cancel' },
-        {
-          text: t('results.discard'),
-          style: 'destructive',
-          onPress: () => continueWithoutGuard(continueNavigation),
-        },
-        { text: t('results.saveBeforeLeaving'), onPress: openSave },
-      ],
-    );
-  }, [continueWithoutGuard, openSave, t]);
+    pendingLeaveRef.current = continueNavigation;
+    setShowUnsavedModal(true);
+  }, []);
+
+  const keepEditing = useCallback(() => {
+    pendingLeaveRef.current = null;
+    setShowUnsavedModal(false);
+  }, []);
+
+  const saveBeforeLeaving = useCallback(() => {
+    pendingLeaveRef.current = null;
+    setShowUnsavedModal(false);
+    openSave();
+  }, [openSave]);
+
+  const discardAndLeave = useCallback(() => {
+    const pending = pendingLeaveRef.current;
+    pendingLeaveRef.current = null;
+    setShowUnsavedModal(false);
+    if (pending) {
+      continueWithoutGuard(pending);
+    }
+  }, [continueWithoutGuard]);
 
   useFocusEffect(
     useCallback(() => {
@@ -240,6 +253,15 @@ export default function ResultScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.headerSaveText}>{t('results.save')}</Text>
+          </TouchableOpacity>
+        ) : savedLoan ? (
+          <TouchableOpacity
+            style={styles.headerEditButton}
+            onPress={() => router.push(`/saved/${savedLoan.id}/edit`)}
+            accessibilityRole="button"
+            activeOpacity={0.8}
+          >
+            <EditIcon color={colours.white} />
           </TouchableOpacity>
         ) : undefined}
       />
@@ -336,6 +358,12 @@ export default function ResultScreen() {
       <View style={styles.adFooter}>
         <BannerAd />
       </View>
+      <UnsavedResultModal
+        visible={showUnsavedModal}
+        onKeepEditing={keepEditing}
+        onSave={saveBeforeLeaving}
+        onDiscard={discardAndLeave}
+      />
     </SafeAreaView>
   );
 }
@@ -360,6 +388,14 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.bold,
     color: colours.white,
+  },
+  headerEditButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.secondary,
   },
   adFooter: {
     backgroundColor: colours.white,

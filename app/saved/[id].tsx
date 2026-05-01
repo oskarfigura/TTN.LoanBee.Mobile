@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { HeaderBackButton } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { getLoanCalculations } from '@/core/amortisation';
@@ -14,12 +15,52 @@ import { formatCurrency } from '@/currency/format';
 import { monthsBetween } from '@/utils/date';
 import { buildSavedLoanResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { MortgageGroupDetail } from '@/components/loans/MortgageGroupDetail';
+import { PinIcon } from '@/components/loans/LoanIcons';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const loan = savedLoansStorage.getById(id);
+  const navigation = useNavigation();
+  const { id, fromSave } = useLocalSearchParams<{ id: string; fromSave?: string }>();
+  const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
+  const allowSavedBackRef = useRef(false);
+
+  const refresh = useCallback(() => {
+    setLoan(savedLoansStorage.getById(id));
+  }, [id]);
+
+  useFocusEffect(refresh);
+
+  useEffect(() => {
+    if (fromSave !== '1') return undefined;
+
+    const goToSaved = () => {
+      allowSavedBackRef.current = true;
+      router.replace('/saved');
+      setTimeout(() => {
+        allowSavedBackRef.current = false;
+      }, 0);
+    };
+
+    navigation.setOptions({
+      headerLeft: () => (
+        <HeaderBackButton
+          onPress={goToSaved}
+          tintColor={colours.white}
+          displayMode="minimal"
+        />
+      ),
+    });
+
+    const unsubscribe = navigation.addListener('beforeRemove', event => {
+      if (allowSavedBackRef.current) return;
+      event.preventDefault();
+      goToSaved();
+    });
+
+    return unsubscribe;
+  }, [fromSave, navigation, router]);
 
   const result = useMemo(() => {
     if (!loan) return null;
@@ -51,13 +92,54 @@ export default function LoanDetailScreen() {
   const remaining = Math.max(0, total - elapsed);
   const hasSavings = (loan.formSnapshot.additionalMonthlyPayment ?? 0) > 0;
   const savings = loan.resultSnapshot.totalInterestPaidBaseline - loan.resultSnapshot.totalInterestPaid;
+  const openResult = () => router.push({
+    pathname: '/result' as never,
+    params: buildSavedLoanResultParams(loan),
+  });
+
+  if (loan.category === 'mortgage') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScrollView contentContainerStyle={styles.container}>
+          <MortgageGroupDetail
+            loan={loan}
+            onTogglePinned={() => {
+              savedLoansStorage.togglePinned(loan.id);
+              refresh();
+            }}
+            onViewCalculation={openResult}
+          />
+          <Button
+            label={t('edit.manageShort')}
+            onPress={() => router.push(`/saved/${id}/edit`)}
+            variant="secondary"
+            style={styles.secondaryAction}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}>
-          <Text style={styles.nickname}>{loan.nickname}</Text>
-          {loan.lender && <Text style={styles.lender}>{loan.lender}</Text>}
+          <View style={styles.titleCopy}>
+            <Text style={styles.nickname}>{loan.nickname}</Text>
+            {loan.lender && <Text style={styles.lender}>{loan.lender}</Text>}
+          </View>
+          <TouchableOpacity
+            style={styles.pinPill}
+            onPress={() => {
+              savedLoansStorage.togglePinned(loan.id);
+              refresh();
+            }}
+          >
+            <PinIcon color={colours.primary} size={14} />
+            <Text style={styles.pinText}>
+              {loan.pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <ResultsSummary
@@ -95,14 +177,11 @@ export default function LoanDetailScreen() {
 
         <Button
           label={t('saved.viewFullCalculation')}
-          onPress={() => router.push({
-            pathname: '/result' as never,
-            params: buildSavedLoanResultParams(loan),
-          })}
+          onPress={openResult}
           style={styles.primaryAction}
         />
         <Button
-          label={t('saved.editLoan')}
+          label={t('edit.manageShort')}
           onPress={() => router.push(`/saved/${id}/edit`)}
           variant="secondary"
           style={styles.secondaryAction}
@@ -117,7 +196,14 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 40 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { fontFamily: fonts.heading, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
-  titleRow: { marginBottom: 16 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  titleCopy: { flex: 1 },
   nickname: {
     fontFamily: fonts.heading,
     fontSize: fontSizes['2xl'],
@@ -129,6 +215,24 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.base,
     color: colours.textSecondary,
     marginTop: 2,
+  },
+  pinPill: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colours.border,
+    paddingHorizontal: 12,
+    backgroundColor: colours.surface,
+  },
+  pinText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semibold,
+    color: colours.primary,
   },
   progressCard: { marginBottom: 12 },
   sectionTitle: {
