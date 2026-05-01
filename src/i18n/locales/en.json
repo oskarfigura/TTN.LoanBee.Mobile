@@ -181,6 +181,16 @@
   "common": {
     "goBack": "Go Back"
   },
+  "share": {
+    "button": "Share calculation",
+    "title": "LoanBee calculation",
+    "opening": "Opening shared calculation...",
+    "monthlyPayment": "Monthly payment: {{amount}}",
+    "totalInterest": "Total interest: {{amount}}",
+    "totalCost": "Total cost: {{amount}}",
+    "errorTitle": "Could not share",
+    "errorMessage": "Please try sharing this calculation again."
+  },
   "tabs": {
     "calculator": "Calculator",
     "saved": "Saved",

@@ -256,3 +256,25 @@ npm test
 ```
 
 Tests use ts-jest (two isolated projects: `core` and `storage`). jest-expo is not used because react-native-reanimated 4.x requires react-native-worklets which conflicts with the jest-expo Babel pipeline.
+
+## Testing Shared Calculation Links
+
+Shared calculations use web-first URLs for people who do not have the app installed, and `loanbee://calculator/share` deep links for opening the same inputs in the native app.
+
+Example app deep link:
+
+```text
+loanbee://calculator/share?amount=180000&interest=6.1&years=0&months=0&downPayment=25000&downPaymentType=cash&startDate=2027-11-09&mode=payment&payment=1750&currency=GBP&source=mobile&share=1
+```
+
+After installing a local development build with `npm run ios` or `npm run android`, open the link on a simulator/device:
+
+```bash
+xcrun simctl openurl booted "loanbee://calculator/share?amount=180000&interest=6.1&years=0&months=0&downPayment=25000&downPaymentType=cash&startDate=2027-11-09&mode=payment&payment=1750&currency=GBP&source=mobile&share=1"
+```
+
+```bash
+adb shell am start -a android.intent.action.VIEW -d "loanbee://calculator/share?amount=180000&interest=6.1&years=0&months=0&downPayment=25000&downPaymentType=cash&startDate=2027-11-09&mode=payment&payment=1750&currency=GBP&source=mobile&share=1" com.cactus.loancalculator.free
+```
+
+Expected behaviour: the app opens the shared calculation, recomputes the result locally, and lands on the Results tab where the loan can be saved or reshared.

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   ScrollView,
+  Share,
   View,
   Text,
   StyleSheet,
@@ -31,6 +32,8 @@ import {
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { setResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 import { useStoreReview } from '@/review';
+import { formatCurrency } from '@/currency/format';
+import { getCalculationWebShareUrl, ShareableCalculationValues } from '@/share/calculationShareLink';
 
 type ResultTab = 'summary' | 'charts' | 'schedule';
 
@@ -109,6 +112,34 @@ export default function ResultScreen() {
       },
     });
   }, [currency, formValues, params.formValues, params.result, result, router]);
+
+  const handleShare = useCallback(async () => {
+    if (!result || !formValues) return;
+
+    const shareValues = {
+      ...(formValues as Partial<ShareableCalculationValues>),
+      currency,
+    } as ShareableCalculationValues;
+    const shareUrl = getCalculationWebShareUrl(shareValues);
+    const monthlyPayment = formatCurrency(result.monthlyPayments, currency);
+    const totalInterest = formatCurrency(result.totalInterestPaid, currency);
+    const totalCost = formatCurrency(result.totalAmountPaid, currency);
+
+    try {
+      await Share.share({
+        title: t('share.title'),
+        message: [
+          t('share.monthlyPayment', { amount: monthlyPayment }),
+          t('share.totalInterest', { amount: totalInterest }),
+          t('share.totalCost', { amount: totalCost }),
+          shareUrl,
+        ].join('\n'),
+        url: shareUrl,
+      });
+    } catch {
+      Alert.alert(t('share.errorTitle'), t('share.errorMessage'));
+    }
+  }, [currency, formValues, result, t]);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -194,6 +225,13 @@ export default function ResultScreen() {
       />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <FinancialDisclaimer />
+
+        <Button
+          label={t('share.button')}
+          onPress={handleShare}
+          variant="secondary"
+          style={styles.shareButton}
+        />
 
         <View style={styles.tabBar}>
           {tabs.map(tab => (
@@ -311,6 +349,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colours.border,
     paddingHorizontal: 16,
+  },
+  shareButton: {
+    marginBottom: 12,
   },
   tabBar: {
     flexDirection: 'row',
