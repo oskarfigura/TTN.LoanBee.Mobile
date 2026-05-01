@@ -12,13 +12,13 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
 import { LoanForm } from '@/components/calculator/LoanForm';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { buildDraftResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
-import { Button } from '@/components/ui/Button';
 
 export default function CalculatorScreen() {
   const { t } = useTranslation();
@@ -80,49 +80,32 @@ export default function CalculatorScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('calculator.title')} subtitle={t('calculator.subtitle')} />
-      <View style={styles.dashboardHint}>
-        <Text style={styles.dashboardHintTitle}>{t('mortgage.pinToDashboard')}</Text>
-        <Text style={styles.dashboardHintText}>{t('mortgage.dashboardHint')}</Text>
-        {pinnedLoans.length > 0 && (
-          <Button
-            label={t('mortgage.backToDashboard')}
-            onPress={() => setShowCalculator(false)}
-            variant="ghost"
-            style={styles.dashboardHintAction}
-          />
+      <ScreenHeader
+        title={t('calculator.title')}
+        leftAction={pinnedLoans.length > 0 ? <HeaderBackAction onPress={() => setShowCalculator(false)} /> : undefined}
+      />
+      <LoanForm
+        form={form}
+        onSubmit={handleSubmit}
+        topContent={(
+          <View style={styles.pageIntro}>
+            <Text style={styles.pageSubtitle}>{t('calculator.subtitle')}</Text>
+          </View>
         )}
-      </View>
-      <LoanForm form={form} onSubmit={handleSubmit} />
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  dashboardHint: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 2,
-    padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surface,
+  pageIntro: {
+    marginBottom: 20,
   },
-  dashboardHintTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-  },
-  dashboardHintText: {
+  pageSubtitle: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.base,
     color: colours.textSecondary,
-    marginTop: 4,
-  },
-  dashboardHintAction: {
-    marginTop: 8,
+    lineHeight: 24,
   },
 });

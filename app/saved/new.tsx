@@ -11,6 +11,8 @@ import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { Button } from '@/components/ui/Button';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { createLocalId } from '@/utils/id';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { useStoreReview } from '@/review';
@@ -86,6 +88,10 @@ export default function SaveNewLoanScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('save.title')}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.label}>{t('save.nickname')}</Text>
         <TextInput

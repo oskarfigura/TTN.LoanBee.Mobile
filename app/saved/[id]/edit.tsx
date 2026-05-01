@@ -9,6 +9,8 @@ import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { PinIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getDraftDeals, getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
@@ -37,10 +39,16 @@ export default function EditLoanScreen() {
 
   if (!loan) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('edit.manageTitle')}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -72,10 +80,12 @@ export default function EditLoanScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('edit.manageTitle')}
+        subtitle={t('edit.manageSubtitle')}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>{t('edit.manageTitle')}</Text>
-        <Text style={styles.subtitle}>{t('edit.manageSubtitle')}</Text>
-
         <View style={styles.tabBar}>
           {(['general', 'specifics'] as const).map(tab => (
             <TouchableOpacity

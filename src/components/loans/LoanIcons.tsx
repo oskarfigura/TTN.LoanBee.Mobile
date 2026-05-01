@@ -36,3 +36,19 @@ export const EditIcon = ({ color = colours.white, size = 18 }: IconProps) => (
     />
   </Svg>
 );
+
+export const CalculatorIcon = ({ color = colours.white, size = 18 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M7 3.5h10A2.5 2.5 0 0 1 19.5 6v12A2.5 2.5 0 0 1 17 20.5H7A2.5 2.5 0 0 1 4.5 18V6A2.5 2.5 0 0 1 7 3.5z"
+      stroke={color}
+      strokeWidth={1.8}
+    />
+    <Path
+      d="M8 7.5h8M8.5 11.5h2m3 0h2m-7 3h2m3 0h2"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+    />
+  </Svg>
+);

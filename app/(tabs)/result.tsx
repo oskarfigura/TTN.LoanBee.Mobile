@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { HeaderBackButton } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -24,6 +23,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { BannerAd } from '@/ads/BannerAd';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
@@ -288,14 +288,8 @@ export default function ResultScreen() {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
         title={t('results.title')}
-        subtitle={savedLoan ? savedLoan.nickname : t('results.unsavedSubtitle')}
-        leftAction={(
-          <HeaderBackButton
-            onPress={handleBack}
-            tintColor={colours.white}
-            displayMode="minimal"
-          />
-        )}
+        subtitle={savedLoan ? undefined : t('results.unsavedSubtitle')}
+        leftAction={<HeaderBackAction onPress={handleBack} />}
         rightAction={!isSavedMode ? (
           <TouchableOpacity
             style={styles.headerSaveButton}
@@ -312,7 +306,7 @@ export default function ResultScreen() {
             accessibilityRole="button"
             activeOpacity={0.8}
           >
-            <EditIcon color={colours.white} />
+            <EditIcon color={colours.primary} />
           </TouchableOpacity>
         ) : undefined}
       />
@@ -437,12 +431,12 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { fontFamily: fonts.heading, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
   headerSaveButton: {
-    minHeight: 34,
-    minWidth: 66,
+    minHeight: 36,
+    minWidth: 70,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 17,
-    backgroundColor: colours.secondary,
+    borderRadius: 18,
+    backgroundColor: colours.primary,
     paddingHorizontal: 16,
   },
   headerSaveText: {
@@ -457,7 +451,9 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colours.secondary,
+    backgroundColor: colours.white,
+    borderWidth: 1,
+    borderColor: colours.border,
   },
   adFooter: {
     backgroundColor: colours.white,

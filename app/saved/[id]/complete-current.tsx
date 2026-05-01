@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -25,19 +27,27 @@ export default function CompleteCurrentDealScreen() {
 
   if (!loan || !currentDeal) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.completeCurrentDeal')}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</Text>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('mortgage.completeCurrentDeal')}
+        subtitle={t('mortgage.completeDealHelp')}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>{t('mortgage.completeCurrentDeal')}</Text>
-        <Text style={styles.helper}>{t('mortgage.completeDealHelp')}</Text>
-
         <Text style={styles.label}>{t('mortgage.completionDate')}</Text>
         <TextInput
           style={styles.input}

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { HeaderBackButton } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { getLoanCalculations } from '@/core/amortisation';
@@ -17,6 +16,8 @@ import { buildSavedLoanResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageGroupDetail } from '@/components/loans/MortgageGroupDetail';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
@@ -32,35 +33,30 @@ export default function LoanDetailScreen() {
 
   useFocusEffect(refresh);
 
+  const handleBack = useCallback(() => {
+    if (fromSave !== '1') {
+      router.back();
+      return;
+    }
+
+    allowSavedBackRef.current = true;
+    router.replace('/saved');
+    setTimeout(() => {
+      allowSavedBackRef.current = false;
+    }, 0);
+  }, [fromSave, router]);
+
   useEffect(() => {
     if (fromSave !== '1') return undefined;
-
-    const goToSaved = () => {
-      allowSavedBackRef.current = true;
-      router.replace('/saved');
-      setTimeout(() => {
-        allowSavedBackRef.current = false;
-      }, 0);
-    };
-
-    navigation.setOptions({
-      headerLeft: () => (
-        <HeaderBackButton
-          onPress={goToSaved}
-          tintColor={colours.white}
-          displayMode="minimal"
-        />
-      ),
-    });
 
     const unsubscribe = navigation.addListener('beforeRemove', event => {
       if (allowSavedBackRef.current) return;
       event.preventDefault();
-      goToSaved();
+      handleBack();
     });
 
     return unsubscribe;
-  }, [fromSave, navigation, router]);
+  }, [fromSave, handleBack, navigation]);
 
   const result = useMemo(() => {
     if (!loan) return null;
@@ -78,10 +74,16 @@ export default function LoanDetailScreen() {
 
   if (!loan || !result) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('saved.loanDetail')}
+          leftAction={<HeaderBackAction onPress={handleBack} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+          <Button label={t('common.goBack')} onPress={handleBack} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -100,6 +102,10 @@ export default function LoanDetailScreen() {
   if (loan.category === 'mortgage') {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('saved.loanDetail')}
+          leftAction={<HeaderBackAction onPress={handleBack} />}
+        />
         <ScrollView contentContainerStyle={styles.container}>
           <MortgageGroupDetail
             loan={loan}
@@ -122,6 +128,10 @@ export default function LoanDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('saved.loanDetail')}
+        leftAction={<HeaderBackAction onPress={handleBack} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.titleRow}>
           <View style={styles.titleCopy}>

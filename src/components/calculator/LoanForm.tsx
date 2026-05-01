@@ -20,6 +20,7 @@ import { DownPaymentToggle } from './DownPaymentToggle';
 interface Props {
   form: UseFormReturn<LoanCalculatorFormInputValues, undefined, LoanCalculatorFormValues>;
   onSubmit: (values: LoanCalculatorFormValues) => void;
+  topContent?: React.ReactNode;
 }
 
 const FieldError = ({ message }: { message?: string }) =>
@@ -59,7 +60,7 @@ const formatDisplayDate = (value: string | undefined, language: string) => {
   });
 };
 
-export const LoanForm = ({ form, onSubmit }: Props) => {
+export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
   const { t, i18n } = useTranslation();
   const { control, handleSubmit, watch, setValue, formState: { errors } } = form;
   const calculationType = watch('calculationType');
@@ -84,6 +85,8 @@ export const LoanForm = ({ form, onSubmit }: Props) => {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.container}
       >
+        {topContent}
+
         {/* Loan Amount */}
         <Label>{t('calculator.loanAmount')}</Label>
         <Controller

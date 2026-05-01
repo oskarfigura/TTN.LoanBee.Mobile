@@ -16,73 +16,105 @@ export const ScreenHeader = ({ title, subtitle, leftAction, rightAction }: Props
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-      {leftAction ? (
-        <View style={styles.actionWrap}>{leftAction}</View>
-      ) : (
-        <View style={styles.logoWrap}>
-          <Image source={logo} style={styles.logo} resizeMode="contain" />
+    <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={styles.brandRow}>
+        <View style={styles.leading}>
+          {leftAction ? <View style={styles.actionWrap}>{leftAction}</View> : null}
+          <View style={styles.brandLockup}>
+            <View style={styles.logoBadge}>
+              <Image source={logo} style={styles.logo} resizeMode="contain" />
+            </View>
+            <View style={styles.brandCopy}>
+              <Text style={styles.brandEyebrow}>LoanBee</Text>
+              <Text style={styles.brandText} numberOfLines={2}>{title}</Text>
+            </View>
+          </View>
         </View>
-      )}
-      <View style={styles.copy}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
       </View>
-      {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: colours.primary,
+    backgroundColor: colours.background,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+  },
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colours.primaryDark,
+    justifyContent: 'space-between',
   },
-  logoWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colours.primary,
+  leading: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: colours.accent,
-    overflow: 'hidden',
+    flexShrink: 1,
+    flex: 1,
   },
-  logo: {
-    width: 38,
-    height: 38,
+  brandLockup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    flexShrink: 1,
+  },
+  brandCopy: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  brandEyebrow: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colours.textSecondary,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  brandText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colours.primary,
+    marginTop: 2,
+    lineHeight: 24,
   },
   actionWrap: {
-    width: 38,
-    height: 38,
+    minWidth: 32,
+    minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  copy: {
-    flex: 1,
+  logoBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.primary,
+    shadowColor: colours.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  logo: {
+    width: 22,
+    height: 22,
   },
   rightAction: {
     marginLeft: 12,
   },
-  title: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.extrabold,
-    color: colours.white,
-  },
   subtitle: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.whiteSubtle,
-    lineHeight: 19,
-    marginTop: 2,
+    fontSize: fontSizes.base,
+    color: colours.textSecondary,
+    lineHeight: 24,
+    marginTop: 12,
+    maxWidth: '92%',
   },
 });

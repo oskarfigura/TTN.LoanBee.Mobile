@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
 import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -60,10 +62,16 @@ export default function NewDealScreen() {
 
   if (!loan || !initialDeal) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.addNextDeal')}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -73,6 +81,11 @@ export default function NewDealScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('mortgage.addNextDeal')}
+        subtitle={loan.nickname}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
         {!canPublish && previous && (
           <View style={styles.blocker}>

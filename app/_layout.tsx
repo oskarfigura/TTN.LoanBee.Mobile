@@ -20,7 +20,7 @@ import {
 } from '@expo-google-fonts/manrope';
 import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
-import { colours, fonts, fontSizes } from '@/theme';
+import { fonts, fontSizes } from '@/theme';
 import { recordReviewAppOpen } from '@/review';
 
 SplashScreen.preventAutoHideAsync();
@@ -53,8 +53,6 @@ export default function RootLayout() {
 
   if (!fontsLoaded && !fontError) return null;
 
-  const headerStyle = { backgroundColor: colours.primary };
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -65,76 +63,28 @@ export default function RootLayout() {
               <Stack.Screen
                 name="saved/new"
                 options={{
-                  headerShown: true,
-                  title: i18n.t('save.title'),
-                  headerStyle,
-                  headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
               />
-              <Stack.Screen
-                name="saved/[id]"
-                options={{
-                  headerShown: true,
-                  title: i18n.t('saved.loanDetail'),
-                  headerStyle,
-                  headerTintColor: colours.white,
-                }}
-              />
-              <Stack.Screen
-                name="saved/[id]/edit"
-                options={{
-                  headerShown: true,
-                  title: i18n.t('edit.manageTitle'),
-                  headerStyle,
-                  headerTintColor: colours.white,
-                }}
-              />
-              <Stack.Screen
-                name="saved/[id]/timeline"
-                options={{
-                  headerShown: true,
-                  title: i18n.t('mortgage.timelineTitle'),
-                  headerStyle,
-                  headerTintColor: colours.white,
-                }}
-              />
+              <Stack.Screen name="saved/[id]" />
+              <Stack.Screen name="saved/[id]/edit" />
+              <Stack.Screen name="saved/[id]/timeline" />
               <Stack.Screen
                 name="saved/[id]/deals/new"
                 options={{
-                  headerShown: true,
-                  title: i18n.t('mortgage.addNextDeal'),
-                  headerStyle,
-                  headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
               />
-              <Stack.Screen
-                name="saved/[id]/deals/[dealId]"
-                options={{
-                  headerShown: true,
-                  title: i18n.t('mortgage.editDeal'),
-                  headerStyle,
-                  headerTintColor: colours.white,
-                }}
-              />
+              <Stack.Screen name="saved/[id]/deals/[dealId]" />
               <Stack.Screen
                 name="saved/[id]/events/new"
                 options={{
-                  headerShown: true,
-                  title: i18n.t('mortgage.addEvent'),
-                  headerStyle,
-                  headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
               />
               <Stack.Screen
                 name="saved/[id]/complete-current"
                 options={{
-                  headerShown: true,
-                  title: i18n.t('mortgage.completeCurrentDeal'),
-                  headerStyle,
-                  headerTintColor: colours.white,
                   presentation: 'modal',
                 }}
               />

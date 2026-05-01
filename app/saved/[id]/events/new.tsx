@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -46,10 +48,16 @@ export default function NewMortgageEventScreen() {
 
   if (!loan || !currentDeal) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.addEvent')}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</Text>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -58,10 +66,12 @@ export default function NewMortgageEventScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('mortgage.addEvent')}
+        subtitle={t('mortgage.eventHelp')}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>{t('mortgage.addEvent')}</Text>
-        <Text style={styles.helper}>{t('mortgage.eventHelp')}</Text>
-
         <Text style={styles.label}>{t('mortgage.eventType')}</Text>
         <View style={styles.chips}>
           {eventTypes.map(item => (

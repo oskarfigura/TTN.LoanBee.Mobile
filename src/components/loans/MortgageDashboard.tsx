@@ -5,13 +5,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { CalculatorIcon } from '@/components/loans/LoanIcons';
 import { formatCurrency } from '@/currency/format';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { SavedLoan, MortgageEvent } from '@/types/SavedLoan';
@@ -51,9 +55,16 @@ const EventRow = ({ event, currency }: { event: MortgageEvent; currency: SavedLo
   </View>
 );
 
-const LoanDashboardCard = ({ loan, width }: { loan: SavedLoan; width: number }) => {
+const LoanDashboardCard = ({
+  loan,
+  width,
+  onOpenDetails,
+}: {
+  loan: SavedLoan;
+  width: number;
+  onOpenDetails: () => void;
+}) => {
   const { t } = useTranslation();
-  const router = useRouter();
   const isMortgage = loan.category === 'mortgage';
   const mortgageSummary = isMortgage ? getMortgageTrackerSummary(loan) : null;
   const currentDeal = mortgageSummary?.currentDeal ?? loan.deals.find(deal => deal.status === 'active') ?? loan.deals[0];
@@ -67,96 +78,102 @@ const LoanDashboardCard = ({ loan, width }: { loan: SavedLoan; width: number }) 
       contentContainerStyle={styles.slide}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.titleBlock}>
-        <Text style={styles.lender}>{loan.lender || currentDeal?.lender || t(`saved.category.${loan.category}`)}</Text>
-        <Text style={styles.dashboardTitle}>{loan.nickname}</Text>
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.97}
+        onPress={onOpenDetails}
+        style={styles.cardPressable}
+      >
+        <View style={styles.titleBlock}>
+          <Text style={styles.lender}>{loan.lender || currentDeal?.lender || t(`saved.category.${loan.category}`)}</Text>
+          <Text style={styles.dashboardTitle}>{loan.nickname}</Text>
+        </View>
 
-      <Card style={styles.balanceCard}>
-        <Text style={styles.cardKicker}>{t('mortgage.currentBalance')}</Text>
-        <Text style={styles.balanceAmount}>{formatCurrency(balance, loan.currency)}</Text>
-        <View style={styles.balanceDivider} />
-        <View style={styles.balanceStats}>
-          <View style={styles.balanceStat}>
-            <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
-            <Text style={styles.statValue}>
-              {formatCurrency(currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments, loan.currency)}
-            </Text>
-          </View>
-          <View style={styles.balanceStat}>
-            <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
-            <Text style={styles.statValue}>
-              {currentDeal ? `${currentDeal.interestRate}%` : `${loan.formSnapshot.interest}%`}
-              <Text style={styles.statSuffix}>
-                {currentDeal?.repaymentType === 'interestOnly' ? ' IO' : ' Fixed'}
+        <Card style={styles.balanceCard}>
+          <Text style={styles.cardKicker}>{t('mortgage.currentBalance')}</Text>
+          <Text style={styles.balanceAmount}>{formatCurrency(balance, loan.currency)}</Text>
+          <View style={styles.balanceDivider} />
+          <View style={styles.balanceStats}>
+            <View style={styles.balanceStat}>
+              <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
+              <Text style={styles.statValue}>
+                {formatCurrency(currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments, loan.currency)}
               </Text>
-            </Text>
-          </View>
-        </View>
-      </Card>
-
-      <Card style={styles.progressCard}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.cardKicker}>{isMortgage ? t('mortgage.balancePaidShort') : t('saved.loanProgress')}</Text>
-          <Text style={styles.progressPercent}>{formatPercent(progress)}</Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-        </View>
-        <View style={styles.progressLabels}>
-          <Text style={styles.progressCaption}>{t('mortgage.paidAmount', { amount: formatCurrency(paid, loan.currency) })}</Text>
-          <Text style={styles.progressCaption}>{t('mortgage.totalAmount', { amount: formatCurrency(mortgageSummary?.originalBalance ?? loan.formSnapshot.loanAmount, loan.currency) })}</Text>
-        </View>
-      </Card>
-
-      <Card style={styles.timelineCard}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
-        </View>
-        <View style={styles.timelinePreview}>
-          <View style={styles.timelineDotActive} />
-          <View>
-            <Text style={styles.timelineLabel}>{t('mortgage.currentDealEnds')}</Text>
-            <Text style={styles.timelineDate}>{currentDeal?.endDate ?? loan.formSnapshot.startDate}</Text>
-          </View>
-        </View>
-        {mortgageSummary?.nextDraftDeal && (
-          <View style={styles.timelinePreviewMuted}>
-            <View style={styles.timelineDotMuted} />
-            <View>
-              <Text style={styles.timelineLabelMuted}>{t('mortgage.nextDealDraft')}</Text>
-              <Text style={styles.timelineDateMuted}>{mortgageSummary.nextDraftDeal.startDate}</Text>
+            </View>
+            <View style={styles.balanceStat}>
+              <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
+              <Text style={styles.statValue}>
+                {currentDeal ? `${currentDeal.interestRate}%` : `${loan.formSnapshot.interest}%`}
+                <Text style={styles.statSuffix}>
+                  {currentDeal?.repaymentType === 'interestOnly' ? ' IO' : ' Fixed'}
+                </Text>
+              </Text>
             </View>
           </View>
-        )}
-      </Card>
+        </Card>
 
-      <Card style={styles.timelineCard}>
-        <Text style={styles.sectionTitle}>{t('mortgage.recentEvents')}</Text>
-        {(mortgageSummary?.recentEvents.length ?? 0) > 0 ? (
-          mortgageSummary?.recentEvents.map(event => (
-            <EventRow key={event.id} event={event} currency={loan.currency} />
-          ))
-        ) : (
-          <Text style={styles.emptyEvents}>{t('mortgage.noEventsYet')}</Text>
-        )}
-      </Card>
+        <Card style={styles.progressCard}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.cardKicker}>{isMortgage ? t('mortgage.balancePaidShort') : t('saved.loanProgress')}</Text>
+            <Text style={styles.progressPercent}>{formatPercent(progress)}</Text>
+          </View>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          </View>
+          <View style={styles.progressLabels}>
+            <Text style={styles.progressCaption}>{t('mortgage.paidAmount', { amount: formatCurrency(paid, loan.currency) })}</Text>
+            <Text style={styles.progressCaption}>{t('mortgage.totalAmount', { amount: formatCurrency(mortgageSummary?.originalBalance ?? loan.formSnapshot.loanAmount, loan.currency) })}</Text>
+          </View>
+        </Card>
 
-      <Button
-        label={t('mortgage.viewDetails')}
-        onPress={() => router.push(`/saved/${loan.id}`)}
-        variant="secondary"
-        style={styles.detailsButton}
-      />
+        <Card style={styles.timelineCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
+          </View>
+          <View style={styles.timelinePreview}>
+            <View style={styles.timelineDotActive} />
+            <View>
+              <Text style={styles.timelineLabel}>{t('mortgage.currentDealEnds')}</Text>
+              <Text style={styles.timelineDate}>{currentDeal?.endDate ?? loan.formSnapshot.startDate}</Text>
+            </View>
+          </View>
+          {mortgageSummary?.nextDraftDeal && (
+            <View style={styles.timelinePreviewMuted}>
+              <View style={styles.timelineDotMuted} />
+              <View>
+                <Text style={styles.timelineLabelMuted}>{t('mortgage.nextDealDraft')}</Text>
+                <Text style={styles.timelineDateMuted}>{mortgageSummary.nextDraftDeal.startDate}</Text>
+              </View>
+            </View>
+          )}
+        </Card>
+
+        <Card style={styles.timelineCard}>
+          <Text style={styles.sectionTitle}>{t('mortgage.recentEvents')}</Text>
+          {(mortgageSummary?.recentEvents.length ?? 0) > 0 ? (
+            mortgageSummary?.recentEvents.map(event => (
+              <EventRow key={event.id} event={event} currency={loan.currency} />
+            ))
+          ) : (
+            <Text style={styles.emptyEvents}>{t('mortgage.noEventsYet')}</Text>
+          )}
+        </Card>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
 
 export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
   const { t } = useTranslation();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const slideWidth = width;
+  const activeLoan = loans[Math.min(activeIndex, loans.length - 1)] ?? loans[0];
+
+  const openLoanDetails = (loanId: string) => {
+    router.push(`/saved/${loanId}`);
+  };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const nextIndex = Math.round(event.nativeEvent.contentOffset.x / slideWidth);
@@ -165,23 +182,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
 
   return (
     <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.appName}>LoanBee</Text>
-        <Text style={styles.headerTitle}>{t('mortgage.dashboard')}</Text>
-      </View>
-      <ScrollView
-        style={styles.carousel}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={slideWidth}
-        decelerationRate="fast"
-        onMomentumScrollEnd={handleScrollEnd}
-      >
-        {loans.map(loan => (
-          <LoanDashboardCard key={loan.id} loan={loan} width={slideWidth} />
-        ))}
-      </ScrollView>
+      <ScreenHeader title={t('mortgage.dashboard')} />
       {loans.length > 1 && (
         <View style={styles.carouselHint}>
           <Text style={styles.carouselHintText}>
@@ -198,8 +199,37 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
           <Text style={styles.carouselHintText}>{t('mortgage.dashboardSwipeHint')}</Text>
         </View>
       )}
-      <View style={styles.newCalculation}>
-        <Button label={t('results.newCalculation')} onPress={onNewCalculation} variant="ghost" />
+      <ScrollView
+        style={styles.carousel}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={slideWidth}
+        decelerationRate="fast"
+        onMomentumScrollEnd={handleScrollEnd}
+      >
+        {loans.map(loan => (
+          <LoanDashboardCard
+            key={loan.id}
+            loan={loan}
+            width={slideWidth}
+            onOpenDetails={() => openLoanDetails(loan.id)}
+          />
+        ))}
+      </ScrollView>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <Button
+          label={t('mortgage.viewDetails')}
+          onPress={() => openLoanDetails(activeLoan.id)}
+          variant="secondary"
+          style={styles.detailsButton}
+        />
+        <Button
+          label={t('results.newCalculation')}
+          onPress={onNewCalculation}
+          leftIcon={<CalculatorIcon />}
+          style={styles.newCalculationButton}
+        />
       </View>
     </View>
   );
@@ -208,31 +238,11 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colours.background },
   carousel: { flex: 1 },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colours.border,
-    backgroundColor: colours.background,
-  },
-  appName: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-    marginBottom: 10,
-  },
-  headerTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['2xl'],
-    fontWeight: fontWeights.extrabold,
-    color: colours.textPrimary,
-  },
+  cardPressable: { flex: 1 },
   slide: {
     paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 28,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   titleBlock: { marginBottom: 18 },
   lender: {
@@ -427,19 +437,23 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
     marginTop: 12,
   },
-  detailsButton: { marginTop: 2 },
   carouselHint: {
-    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 8,
+    paddingTop: 10,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+    backgroundColor: colours.background,
   },
   carouselHintText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
+    textAlign: 'center',
   },
   dots: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 7,
     marginVertical: 8,
   },
@@ -453,8 +467,19 @@ const styles = StyleSheet.create({
     width: 18,
     backgroundColor: colours.primary,
   },
-  newCalculation: {
+  footer: {
     paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingTop: 12,
+    backgroundColor: colours.background,
+  },
+  detailsButton: {
+    marginBottom: 10,
+  },
+  newCalculationButton: {
+    shadowColor: colours.shadow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 6,
   },
 });

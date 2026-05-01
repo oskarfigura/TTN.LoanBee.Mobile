@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { formatCurrency } from '@/currency/format';
 import { getCurrentDeal, getDraftDeals, getPublishedDeals, getTimelineWarnings } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -49,21 +51,27 @@ export default function MortgageTimelineScreen() {
 
   if (!loan || !timeline) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.back()} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.timelineTitle')}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.notFound}>
+          <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('mortgage.timelineTitle')}
+        subtitle={loan.nickname}
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('mortgage.timelineTitle')}</Text>
-          <Text style={styles.subtitle}>{loan.nickname}</Text>
-        </View>
-
         <View style={styles.timelineShell}>
           <View style={styles.rail} />
 

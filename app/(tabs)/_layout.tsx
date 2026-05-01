@@ -97,12 +97,6 @@ export default function TabLayout() {
           fontFamily: fonts.heading,
           fontSize: fontSizes.xs,
         },
-        headerStyle: { backgroundColor: colours.primary },
-        headerTintColor: colours.white,
-        headerTitleStyle: {
-          fontFamily: fonts.heading,
-          fontSize: fontSizes.md,
-        },
       }}
     >
       <Tabs.Screen
