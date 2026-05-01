@@ -9,7 +9,7 @@ export const BannerAd = () => (
     <Text style={styles.label}>Advertisement</Text>
     <GoogleBannerAd
       unitId={AD_UNITS.banner}
-      size={BannerAdSize.LARGE_ANCHORED_ADAPTIVE_BANNER}
+      size={BannerAdSize.BANNER}
       requestOptions={{ requestNonPersonalizedAdsOnly: true }}
     />
   </View>
@@ -18,12 +18,12 @@ export const BannerAd = () => (
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 8,
+    marginVertical: 4,
   },
   label: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
 });

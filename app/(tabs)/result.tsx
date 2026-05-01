@@ -17,6 +17,7 @@ import { CumulativeAreaChart } from '@/components/charts/CumulativeAreaChart';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { BannerAd } from '@/ads/BannerAd';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
@@ -174,33 +175,12 @@ export default function ResultScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('results.title')}
+        subtitle={savedLoan ? savedLoan.nickname : t('results.unsavedSubtitle')}
+      />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.headerTitle}>{t('results.title')}</Text>
-            <Text style={styles.headerSubtitle}>
-              {savedLoan ? savedLoan.nickname : t('results.unsavedSubtitle')}
-            </Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerButton} onPress={handleNewCalculation}>
-              <Text style={styles.headerButtonText}>{t('results.newCalculation')}</Text>
-            </TouchableOpacity>
-            {isSavedMode ? (
-              <View style={styles.savedPill}>
-                <Text style={styles.savedPillText}>{t('results.saved')}</Text>
-              </View>
-            ) : (
-              <TouchableOpacity style={styles.headerButtonPrimary} onPress={openSave}>
-                <Text style={styles.headerButtonPrimaryText}>{t('results.save')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        <FinancialDisclaimer />
-
         <View style={styles.tabBar}>
           {tabs.map(tab => (
             <TouchableOpacity
@@ -282,13 +262,25 @@ export default function ResultScreen() {
             />
           </Card>
         )}
+
+        <FinancialDisclaimer />
       </ScrollView>
 
-      {!isSavedMode && (
-        <View style={styles.saveFooter}>
-          <Button label={t('results.saveThisLoan')} onPress={openSave} />
-        </View>
-      )}
+      <View style={styles.actionFooter}>
+        <Button
+          label={t('results.newCalculation')}
+          onPress={handleNewCalculation}
+          variant="secondary"
+          style={isSavedMode ? styles.fullFooterButton : styles.footerButton}
+        />
+        {!isSavedMode && (
+          <Button
+            label={t('results.saveThisLoan')}
+            onPress={openSave}
+            style={styles.footerButton}
+          />
+        )}
+      </View>
       <View style={styles.adFooter}>
         <BannerAd />
       </View>
@@ -302,87 +294,28 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 24 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { fontFamily: fonts.heading, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
-  header: {
-    backgroundColor: colours.primary,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerCopy: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.extrabold,
-    color: colours.white,
-  },
-  headerSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.whiteSubtle,
-    marginTop: 2,
-  },
-  headerActions: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  headerButton: {
-    minHeight: 34,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colours.whiteSubtle,
-  },
-  headerButtonText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.white,
-  },
-  headerButtonPrimary: {
-    minHeight: 34,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: 17,
-    backgroundColor: colours.white,
-  },
-  headerButtonPrimaryText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-  },
-  savedPill: {
-    minHeight: 34,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: 17,
-    backgroundColor: colours.successLight,
-  },
-  savedPillText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.bold,
-    color: colours.secondary,
-  },
   adFooter: {
     backgroundColor: colours.white,
     borderTopWidth: 1,
     borderTopColor: colours.border,
     paddingHorizontal: 16,
   },
-  saveFooter: {
+  actionFooter: {
+    flexDirection: 'row',
+    gap: 10,
     backgroundColor: colours.white,
     borderTopWidth: 1,
     borderTopColor: colours.border,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
+  },
+  footerButton: {
+    flex: 1,
+    paddingHorizontal: 12,
+  },
+  fullFooterButton: {
+    flex: 1,
   },
   tabBar: {
     flexDirection: 'row',
