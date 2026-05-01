@@ -8,6 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { HeaderBackButton } from '@react-navigation/elements';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +55,21 @@ const parseJson = <T,>(value?: string): T | null => {
     return null;
   }
 };
+
+const ShareIcon = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M8.6 10.8l6.8-3.6M8.6 13.2l6.8 3.6"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx={6} cy={12} r={2.5} stroke={color} strokeWidth={2} />
+    <Circle cx={18} cy={6} r={2.5} stroke={color} strokeWidth={2} />
+    <Circle cx={18} cy={18} r={2.5} stroke={color} strokeWidth={2} />
+  </Svg>
+);
 
 export default function ResultScreen() {
   const { t } = useTranslation();
@@ -234,6 +250,7 @@ export default function ResultScreen() {
           label={t('share.button')}
           onPress={handleShare}
           variant="secondary"
+          leftIcon={<ShareIcon color={colours.primary} />}
           style={styles.shareButton}
         />
 

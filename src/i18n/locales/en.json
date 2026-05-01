@@ -183,8 +183,8 @@
   },
   "share": {
     "button": "Share calculation",
-    "title": "LoanBee calculation",
-    "intro": "I ran a loan estimate in LoanBee:",
+    "title": "🐝 LoanBee calculation",
+    "intro": "🐝 LoanBee loan estimate",
     "opening": "Opening shared calculation...",
     "monthlyPayment": "Monthly payment {{amount}}",
     "totalInterest": "Total interest {{amount}}",

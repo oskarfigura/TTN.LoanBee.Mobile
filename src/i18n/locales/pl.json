@@ -171,8 +171,8 @@
   },
   "share": {
     "button": "Udostępnij obliczenie",
-    "title": "Obliczenie LoanBee",
-    "intro": "Przygotowałem/am obliczenie w LoanBee:",
+    "title": "🐝 Obliczenie LoanBee",
+    "intro": "🐝 Szacunek kredytu z LoanBee",
     "opening": "Otwieranie udostępnionego obliczenia...",
     "monthlyPayment": "Rata miesięczna {{amount}}",
     "totalInterest": "Łączne odsetki {{amount}}",
