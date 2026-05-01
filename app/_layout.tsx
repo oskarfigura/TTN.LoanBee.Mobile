@@ -21,6 +21,7 @@ import {
 import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
 import { colours, fonts, fontSizes } from '@/theme';
+import { recordReviewAppOpen } from '@/review';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,6 +46,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    recordReviewAppOpen().catch(() => undefined);
+  }, []);
 
   if (!fontsLoaded && !fontError) return null;
 

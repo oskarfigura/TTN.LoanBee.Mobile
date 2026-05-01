@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrencyCompact } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
+import { getProjectionChartWidth } from './dimensions';
 
 interface Props {
   monthlyArray: number[];
@@ -17,7 +18,9 @@ const SAMPLE_STEP = 12;
 
 export const RepaymentBarChart = ({ monthlyArray, interestArray, labelArray, currency }: Props) => {
   const { t } = useTranslation();
-  const width = Dimensions.get('window').width - 64;
+  const [containerWidth, setContainerWidth] = useState(0);
+  const width = getProjectionChartWidth(containerWidth);
+  const shouldScroll = containerWidth > 0 && width + 66 > containerWidth;
 
   const yearlyData = [];
   for (let i = SAMPLE_STEP; i < monthlyArray.length; i += SAMPLE_STEP) {
@@ -47,33 +50,42 @@ export const RepaymentBarChart = ({ monthlyArray, interestArray, labelArray, cur
   if (yearlyData.length === 0) return null;
 
   return (
-    <View style={styles.container}>
-      <BarChart
-        stackData={yearlyData}
-        width={width}
-        height={196}
-        barWidth={Math.max(8, Math.min(24, width / yearlyData.length - 4))}
-        spacing={Math.max(8, Math.min(18, width / yearlyData.length / 2))}
-        initialSpacing={8}
-        endSpacing={16}
-        noOfSections={4}
-        yAxisTextStyle={styles.axisText}
-        xAxisLabelTextStyle={styles.axisText}
-        yAxisLabelWidth={42}
-        xAxisLabelsHeight={24}
-        rulesColor={colours.border}
-        rulesThickness={1}
-        xAxisColor={colours.border}
-        yAxisColor={colours.border}
-        yAxisThickness={1}
-        xAxisThickness={1}
-        showYAxisIndices={false}
-        showXAxisIndices={false}
-        formatYLabel={v => formatCurrencyCompact(+v, currency)}
-        disableScroll
-        adjustToWidth
-        isAnimated
-      />
+    <View
+      style={styles.container}
+      onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+    >
+      <ScrollView
+        horizontal={shouldScroll}
+        scrollEnabled={shouldScroll}
+        showsHorizontalScrollIndicator={shouldScroll}
+      >
+        <BarChart
+          stackData={yearlyData}
+          width={width}
+          height={196}
+          barWidth={Math.max(8, Math.min(24, width / yearlyData.length - 4))}
+          spacing={Math.max(8, Math.min(18, width / yearlyData.length / 2))}
+          initialSpacing={8}
+          endSpacing={16}
+          noOfSections={4}
+          yAxisTextStyle={styles.axisText}
+          xAxisLabelTextStyle={styles.axisText}
+          yAxisLabelWidth={42}
+          xAxisLabelsHeight={24}
+          rulesColor={colours.border}
+          rulesThickness={1}
+          xAxisColor={colours.border}
+          yAxisColor={colours.border}
+          yAxisThickness={1}
+          xAxisThickness={1}
+          showYAxisIndices={false}
+          showXAxisIndices={false}
+          formatYLabel={v => formatCurrencyCompact(+v, currency)}
+          disableScroll={!shouldScroll}
+          adjustToWidth={!shouldScroll}
+          isAnimated
+        />
+      </ScrollView>
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colours.primary }]} />

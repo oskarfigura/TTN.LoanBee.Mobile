@@ -10,9 +10,11 @@ import {
 import { getLoanCalculations } from '@/core/amortisation';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
+import { CurrencyCode } from '@/currency/currencies';
 import { LoanForm } from '@/components/calculator/LoanForm';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { colours } from '@/theme';
+import { buildDraftResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CalculatorScreen() {
@@ -45,12 +47,8 @@ export default function CalculatorScreen() {
     );
 
     router.push({
-      pathname: '/calculator/result',
-      params: {
-        result: JSON.stringify(result),
-        formValues: JSON.stringify(values),
-        currency: values.currency,
-      },
+      pathname: '/result' as never,
+      params: buildDraftResultParams(result, values, values.currency as CurrencyCode),
     });
   };
 

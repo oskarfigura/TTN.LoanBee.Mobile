@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { CurrencyCode, CURRENCIES } from '@/currency/currencies';
+import { getProjectionChartWidth } from './dimensions';
 
 interface Props {
   monthlyArray: number[];
@@ -16,7 +17,9 @@ const SAMPLE_STEP = 12;
 
 export const CumulativeAreaChart = ({ monthlyArray, interestArray, remainingArray, currency }: Props) => {
   const { t } = useTranslation();
-  const width = Math.max(240, Dimensions.get('window').width - 112);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const width = getProjectionChartWidth(containerWidth);
+  const shouldScroll = containerWidth > 0 && width + 66 > containerWidth;
   const symbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
 
   const formatChartCurrency = (value: number) => {
@@ -77,54 +80,63 @@ export const CumulativeAreaChart = ({ monthlyArray, interestArray, remainingArra
   ] as const;
 
   return (
-    <View style={styles.container}>
-      <LineChart
-        data={remainingData}
-        data2={totalData}
-        data3={interestData}
-        width={width}
-        height={196}
-        areaChart
-        areaChart2
-        areaChart3
-        thickness1={3}
-        thickness2={3}
-        thickness3={3}
-        color={colours.accent}
-        color2={colours.primary}
-        color3={colours.teal}
-        startFillColor={colours.accent}
-        startFillColor2={colours.primary}
-        startFillColor3={colours.teal}
-        startOpacity={0.12}
-        startOpacity2={0.1}
-        startOpacity3={0.08}
-        endOpacity={0.01}
-        endOpacity2={0.01}
-        endOpacity3={0.01}
-        yAxisTextStyle={styles.axisText}
-        xAxisLabelTextStyle={styles.axisText}
-        yAxisLabelWidth={46}
-        xAxisLabelsHeight={24}
-        rulesColor={colours.border}
-        rulesThickness={1}
-        rulesType="dashed"
-        dashWidth={5}
-        dashGap={6}
-        xAxisColor={colours.white}
-        yAxisColor={colours.white}
-        yAxisThickness={0}
-        xAxisThickness={0}
-        initialSpacing={8}
-        endSpacing={8}
-        noOfSections={4}
-        formatYLabel={v => formatChartCurrency(+v)}
-        hideDataPoints
-        disableScroll
-        curved
-        curvature={0.16}
-        isAnimated
-      />
+    <View
+      style={styles.container}
+      onLayout={event => setContainerWidth(event.nativeEvent.layout.width)}
+    >
+      <ScrollView
+        horizontal={shouldScroll}
+        scrollEnabled={shouldScroll}
+        showsHorizontalScrollIndicator={shouldScroll}
+      >
+        <LineChart
+          data={remainingData}
+          data2={totalData}
+          data3={interestData}
+          width={width}
+          height={196}
+          areaChart
+          areaChart2
+          areaChart3
+          thickness1={3}
+          thickness2={3}
+          thickness3={3}
+          color={colours.accent}
+          color2={colours.primary}
+          color3={colours.teal}
+          startFillColor={colours.accent}
+          startFillColor2={colours.primary}
+          startFillColor3={colours.teal}
+          startOpacity={0.12}
+          startOpacity2={0.1}
+          startOpacity3={0.08}
+          endOpacity={0.01}
+          endOpacity2={0.01}
+          endOpacity3={0.01}
+          yAxisTextStyle={styles.axisText}
+          xAxisLabelTextStyle={styles.axisText}
+          yAxisLabelWidth={46}
+          xAxisLabelsHeight={24}
+          rulesColor={colours.border}
+          rulesThickness={1}
+          rulesType="dashed"
+          dashWidth={5}
+          dashGap={6}
+          xAxisColor={colours.white}
+          yAxisColor={colours.white}
+          yAxisThickness={0}
+          xAxisThickness={0}
+          initialSpacing={8}
+          endSpacing={8}
+          noOfSections={4}
+          formatYLabel={v => formatChartCurrency(+v)}
+          hideDataPoints
+          disableScroll={!shouldScroll}
+          curved
+          curvature={0.16}
+          isAnimated
+        />
+      </ScrollView>
       <View style={styles.legend}>
         {legendItems.map(item => (
           <View key={item.labelKey} style={styles.legendItem}>

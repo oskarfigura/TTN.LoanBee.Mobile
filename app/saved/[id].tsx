@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/Card';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
 import { monthsBetween } from '@/utils/date';
+import { buildSavedLoanResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoanDetailScreen() {
@@ -92,10 +93,18 @@ export default function LoanDetailScreen() {
         )}
 
         <Button
+          label={t('saved.viewFullCalculation')}
+          onPress={() => router.push({
+            pathname: '/result' as never,
+            params: buildSavedLoanResultParams(loan),
+          })}
+          style={styles.primaryAction}
+        />
+        <Button
           label={t('saved.editLoan')}
           onPress={() => router.push(`/saved/${id}/edit`)}
           variant="secondary"
-          style={{ marginTop: 16 }}
+          style={styles.secondaryAction}
         />
       </ScrollView>
     </SafeAreaView>
@@ -170,5 +179,11 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colours.secondary,
     marginTop: 2,
+  },
+  primaryAction: {
+    marginTop: 16,
+  },
+  secondaryAction: {
+    marginTop: 8,
   },
 });

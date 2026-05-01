@@ -254,12 +254,13 @@ export const LoanForm = ({ form, onSubmit }: Props) => {
           </>
         )}
 
+      </ScrollView>
+      <View style={styles.stickyFooter}>
         <Button
           label={t('calculator.generate')}
           onPress={handleSubmit(onSubmit)}
-          style={styles.submitBtn}
         />
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -273,7 +274,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 112,
   },
   label: {
     fontFamily: fonts.heading,
@@ -354,7 +355,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   termField: { flex: 1 },
-  submitBtn: {
-    marginTop: 24,
+  stickyFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    backgroundColor: colours.white,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
 });

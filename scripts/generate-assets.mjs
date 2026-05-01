@@ -8,6 +8,7 @@ const root = join(__dirname, '..');
 
 const NAVY = '#002D72';
 const WHITE = 'white';
+const WHITE_SUBTLE = 'rgba(255,255,255,0.76)';
 
 // Bee paths extracted from the web portal bee-svg.svg
 const beePaths = `
@@ -62,6 +63,29 @@ function makeLogoSvg(size, padding, fgColor) {
 </svg>`);
 }
 
+function makeSplashLogoSvg(width, height) {
+  const beeSize = Math.round(height * 0.42);
+  const beePadding = Math.round(beeSize * 0.12);
+  const beeX = Math.round((width - beeSize) / 2);
+  const beeY = Math.round(height * 0.06);
+  const titleY = beeY + beeSize + Math.round(height * 0.2);
+  const taglineY = titleY + Math.round(height * 0.14);
+
+  return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="${width}" height="${height}" fill="none"/>
+  <g transform="translate(${beeX + beePadding},${beeY + beePadding}) scale(${(beeSize - beePadding * 2) / 512})">
+    <g fill="${WHITE}">${beePaths}</g>
+  </g>
+  <text x="${width / 2}" y="${titleY}" text-anchor="middle"
+    font-family="Manrope, Inter, Arial, sans-serif" font-size="${Math.round(height * 0.18)}"
+    font-weight="800" fill="${WHITE}">LoanBee</text>
+  <text x="${width / 2}" y="${taglineY}" text-anchor="middle"
+    font-family="Inter, Arial, sans-serif" font-size="${Math.round(height * 0.055)}"
+    font-weight="600" letter-spacing="${Math.round(height * 0.006)}"
+    fill="${WHITE_SUBTLE}">Borrow smarter</text>
+</svg>`);
+}
+
 async function generate() {
   mkdirSync(join(root, 'assets'), { recursive: true });
 
@@ -84,8 +108,8 @@ async function generate() {
     .toFile(join(root, 'assets', 'bee-logo.png'));
   console.log('bee-logo.png done');
 
-  // splash-icon.png — kept as a compatibility alias for older references
-  await sharp(makeLogoSvg(200, 24, WHITE))
+  // splash-icon.png — bee + wordmark used by Expo and native splash screens
+  await sharp(makeSplashLogoSvg(900, 520))
     .png()
     .toFile(join(root, 'assets', 'splash-icon.png'));
   console.log('splash-icon.png done');
@@ -103,7 +127,7 @@ async function generate() {
 
   for (const scale of [1, 2, 3]) {
     const filename = scale === 1 ? 'image.png' : `image@${scale}x.png`;
-    await sharp(makeLogoSvg(200 * scale, 24 * scale, WHITE))
+    await sharp(makeSplashLogoSvg(300 * scale, 174 * scale))
       .png()
       .toFile(join(root, 'ios/LoanBee/Images.xcassets/SplashScreenLogo.imageset', filename));
   }
@@ -117,7 +141,7 @@ async function generate() {
     ['drawable-xxxhdpi', 1152],
   ];
   for (const [dir, size] of splashSizes) {
-    await sharp(makeLogoSvg(size, Math.round(size * 0.12), WHITE))
+    await sharp(makeSplashLogoSvg(Math.round(size * 1.8), size))
       .png()
       .toFile(join(root, `android/app/src/main/res/${dir}/splashscreen_logo.png`));
   }

@@ -49,13 +49,25 @@
     "interestPaid": "Interest Paid",
     "page": "Page",
     "of": "of",
+    "first": "First",
     "previous": "Previous",
     "next": "Next",
+    "last": "Last",
     "charts": "Charts",
     "schedule": "Schedule",
     "repaymentBreakdown": "Repayment Projection",
     "loanBreakdown": "Loan Breakdown (%)",
-    "cumulativePayments": "Cumulative Payments"
+    "cumulativePayments": "Cumulative Payments",
+    "unsavedSubtitle": "Review, save, or start again",
+    "unsavedTitle": "Leave without saving?",
+    "unsavedMessage": "This calculation has not been saved yet.",
+    "cancelLeave": "Cancel",
+    "discard": "Discard",
+    "saveBeforeLeaving": "Save",
+    "save": "Save",
+    "saved": "Saved",
+    "newCalculation": "New calculation",
+    "notFound": "Result not found"
   },
   "saved": {
     "title": "Saved Loans",
@@ -74,6 +86,7 @@
     "loanProgress": "Loan Progress",
     "startedOn": "Started {{date}}",
     "notFound": "Loan not found",
+    "viewFullCalculation": "View full calculation",
     "category": {
       "mortgage": "Mortgage",
       "loan": "Loan"
@@ -144,7 +157,8 @@
     "defaultCurrency": "Default Currency",
     "version": "Version",
     "termsAndConditions": "Terms & Conditions",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "copyright": "Copyright © 2026 THE TECH NARRATIVE LTD. All rights reserved."
   },
   "disclaimer": {
     "label": "Disclaimer:",

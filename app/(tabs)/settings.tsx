@@ -65,6 +65,14 @@ export default function SettingsScreen() {
         </Card>
 
         <Text style={styles.version}>{t('settings.version')} {version}</Text>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>{t('settings.copyright')}</Text>
+          <TouchableOpacity
+            onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
+          >
+            <Text style={styles.footerLink}>{t('settings.termsAndConditions').toUpperCase()}</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,5 +136,25 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
     textAlign: 'center',
     paddingTop: 8,
+  },
+  footer: {
+    alignItems: 'center',
+    marginTop: 18,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  footerText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  footerLink: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colours.primary,
+    letterSpacing: 0.5,
   },
 });

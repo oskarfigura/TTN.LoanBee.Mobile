@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SummaryCard } from '@/components/ui/SummaryCard';
 import { Card } from '@/components/ui/Card';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
@@ -70,15 +69,19 @@ export const ResultsSummary = ({
         </View>
       </Card>
       <View style={styles.row}>
-        <SummaryCard
-          label={t('results.totalInterest')}
-          value={formatCurrency(totalInterestPaid, currency)}
-        />
+        <View style={styles.statPanel}>
+          <Text style={styles.statLabel}>{t('results.totalInterest')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(totalInterestPaid, currency)}
+          </Text>
+        </View>
         <View style={styles.spacer} />
-        <SummaryCard
-          label={t('results.totalCost')}
-          value={formatCurrency(totalAmountPaid, currency)}
-        />
+        <View style={styles.statPanel}>
+          <Text style={styles.statLabel}>{t('results.totalCost')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(totalAmountPaid, currency)}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -140,6 +143,29 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+  },
+  statPanel: {
+    flex: 1,
+    backgroundColor: colours.surface,
+    borderWidth: 1,
+    borderColor: colours.border,
+    borderRadius: 12,
+    padding: 12,
+  },
+  statLabel: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semibold,
+    color: colours.textSecondary,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  statValue: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colours.textPrimary,
   },
   spacer: { width: 10 },
 });

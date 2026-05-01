@@ -13,6 +13,8 @@ import { LenderPicker } from '@/components/loans/LenderPicker';
 import { Button } from '@/components/ui/Button';
 import { createLocalId } from '@/utils/id';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { buildSavedLoanResultParams } from '@/results/loanResultRoute';
+import { useStoreReview } from '@/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
@@ -20,8 +22,9 @@ type LoanResult = ReturnType<typeof getLoanCalculations>;
 export default function SaveNewLoanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ result: string; formValues: string; currency: string }>();
+  const params = useLocalSearchParams<{ result: string; formValues: string; currency: string; returnToResult?: string }>();
   const { add } = useSavedLoans();
+  const { recordUsefulAction, requestReview } = useStoreReview();
 
   const result = JSON.parse(params.result) as LoanResult;
   const formValues = JSON.parse(params.formValues);
@@ -80,6 +83,18 @@ export default function SaveNewLoanScreen() {
     };
 
     add(loan);
+    recordUsefulAction()
+      .then(() => requestReview())
+      .catch(() => undefined);
+
+    if (params.returnToResult === '1') {
+      router.replace({
+        pathname: '/result' as never,
+        params: buildSavedLoanResultParams(loan),
+      });
+      return;
+    }
+
     router.back();
   };
 

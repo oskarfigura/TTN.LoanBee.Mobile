@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
+import { clampPage, getPaginationWindow } from './pagination';
 
 interface TableItem {
   itemNo: number;
@@ -36,7 +37,10 @@ export const AmortisationTable = ({ items, startDate, currency, pageSize = 12 }:
   const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const totalPages = Math.ceil(items.length / pageSize);
-  const pageItems = items.slice(page * pageSize, (page + 1) * pageSize);
+  const safePage = clampPage(page, totalPages);
+  const pageItems = items.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  const pages = getPaginationWindow(safePage, totalPages, 5);
+  const goToPage = (nextPage: number) => setPage(clampPage(nextPage, totalPages));
 
   return (
     <View>
@@ -61,23 +65,56 @@ export const AmortisationTable = ({ items, startDate, currency, pageSize = 12 }:
 
       {totalPages > 1 && (
         <View style={styles.pagination}>
-          <TouchableOpacity
-            style={[styles.pageBtn, page === 0 && styles.pageBtnDisabled]}
-            onPress={() => setPage(p => p - 1)}
-            disabled={page === 0}
-          >
-            <Text style={styles.pageBtnText}>{t('results.previous')}</Text>
-          </TouchableOpacity>
+          <View style={styles.pageJumpRow}>
+            <TouchableOpacity
+              style={[styles.pageBtn, safePage === 0 && styles.pageBtnDisabled]}
+              onPress={() => goToPage(0)}
+              disabled={safePage === 0}
+            >
+              <Text style={styles.pageBtnText}>{t('results.first')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pageBtn, safePage === 0 && styles.pageBtnDisabled]}
+              onPress={() => goToPage(safePage - 1)}
+              disabled={safePage === 0}
+            >
+              <Text style={styles.pageBtnText}>{t('results.previous')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pageBtn, safePage === totalPages - 1 && styles.pageBtnDisabled]}
+              onPress={() => goToPage(safePage + 1)}
+              disabled={safePage === totalPages - 1}
+            >
+              <Text style={styles.pageBtnText}>{t('results.next')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pageBtn, safePage === totalPages - 1 && styles.pageBtnDisabled]}
+              onPress={() => goToPage(totalPages - 1)}
+              disabled={safePage === totalPages - 1}
+            >
+              <Text style={styles.pageBtnText}>{t('results.last')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.pageChipRow}>
+            {pages[0] > 0 && <Text style={styles.ellipsis}>...</Text>}
+            {pages.map(pageNumber => (
+              <TouchableOpacity
+                key={pageNumber}
+                style={[styles.pageChip, pageNumber === safePage && styles.pageChipActive]}
+                onPress={() => goToPage(pageNumber)}
+              >
+                <Text style={[styles.pageChipText, pageNumber === safePage && styles.pageChipTextActive]}>
+                  {pageNumber + 1}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {pages[pages.length - 1] < totalPages - 1 && <Text style={styles.ellipsis}>...</Text>}
+          </View>
+
           <Text style={styles.pageInfo}>
-            {t('results.page')} {page + 1} {t('results.of')} {totalPages}
+            {t('results.page')} {safePage + 1} {t('results.of')} {totalPages}
           </Text>
-          <TouchableOpacity
-            style={[styles.pageBtn, page === totalPages - 1 && styles.pageBtnDisabled]}
-            onPress={() => setPage(p => p + 1)}
-            disabled={page === totalPages - 1}
-          >
-            <Text style={styles.pageBtnText}>{t('results.next')}</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -125,14 +162,21 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.bold,
   },
   pagination: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: 14,
     paddingHorizontal: 4,
+    rowGap: 10,
+  },
+  pageJumpRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
   },
   pageBtn: {
-    paddingHorizontal: 16,
+    minWidth: 66,
+    alignItems: 'center',
+    paddingHorizontal: 12,
     paddingVertical: 8,
     backgroundColor: colours.primary,
     borderRadius: 20,
@@ -145,6 +189,41 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.semibold,
     color: colours.white,
+  },
+  pageChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  pageChip: {
+    minWidth: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colours.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.white,
+  },
+  pageChipActive: {
+    backgroundColor: colours.primary,
+    borderColor: colours.primary,
+  },
+  pageChipText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semibold,
+    color: colours.textSecondary,
+  },
+  pageChipTextActive: {
+    color: colours.white,
+  },
+  ellipsis: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+    paddingHorizontal: 2,
   },
   pageInfo: {
     fontFamily: fonts.body,

@@ -49,13 +49,25 @@
     "interestPaid": "Zapłacone Odsetki",
     "page": "Strona",
     "of": "z",
+    "first": "Pierwsza",
     "previous": "Poprzednia",
     "next": "Następna",
+    "last": "Ostatnia",
     "charts": "Wykresy",
     "schedule": "Harmonogram",
     "repaymentBreakdown": "Prognoza Spłat",
     "loanBreakdown": "Podział Kredytu (%)",
-    "cumulativePayments": "Łączne Płatności"
+    "cumulativePayments": "Łączne Płatności",
+    "unsavedSubtitle": "Sprawdź, zapisz albo zacznij od nowa",
+    "unsavedTitle": "Opuścić bez zapisywania?",
+    "unsavedMessage": "To obliczenie nie zostało jeszcze zapisane.",
+    "cancelLeave": "Anuluj",
+    "discard": "Odrzuć",
+    "saveBeforeLeaving": "Zapisz",
+    "save": "Zapisz",
+    "saved": "Zapisano",
+    "newCalculation": "Nowe obliczenie",
+    "notFound": "Nie znaleziono wyniku"
   },
   "saved": {
     "title": "Zapisane Kredyty",
@@ -74,6 +86,7 @@
     "loanProgress": "Postęp Spłaty",
     "startedOn": "Rozpoczęto {{date}}",
     "notFound": "Nie znaleziono kredytu",
+    "viewFullCalculation": "Zobacz pełne obliczenie",
     "category": {
       "mortgage": "Hipoteka",
       "loan": "Kredyt"
@@ -132,7 +145,8 @@
     "defaultCurrency": "Domyślna Waluta",
     "version": "Wersja",
     "termsAndConditions": "Regulamin",
-    "privacyPolicy": "Polityka Prywatności"
+    "privacyPolicy": "Polityka Prywatności",
+    "copyright": "Copyright © 2026 THE TECH NARRATIVE LTD. All rights reserved."
   },
   "disclaimer": {
     "label": "Zastrzeżenie:",
