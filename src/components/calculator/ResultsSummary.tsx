@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { formatCurrency } from '@/currency/format';
@@ -32,6 +33,11 @@ const formatPayoffDate = (startDate: string, termInYears: number, termInMonths: 
   });
 };
 
+const DONUT_SIZE = 86;
+const DONUT_STROKE = 10;
+const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+
 export const ResultsSummary = ({
   monthlyPayments,
   principalAmount,
@@ -55,6 +61,14 @@ export const ResultsSummary = ({
   const interestShare = totalAmountPaid > 0
     ? `${Math.round((totalInterestPaid / totalAmountPaid) * 100)}%`
     : '—';
+  const downPaymentAmount = Math.max(totalAmountPaid - principalAmount - totalInterestPaid, 0);
+  const breakdownTotal = principalAmount + downPaymentAmount + totalInterestPaid;
+  const breakdownSegments = [
+    { key: 'principal', value: principalAmount, color: colours.primary, label: t('results.principal') },
+    { key: 'downPayment', value: downPaymentAmount, color: colours.teal, label: t('calculator.downPayment') },
+    { key: 'interest', value: totalInterestPaid, color: colours.accent, label: t('results.interest') },
+  ].filter(segment => segment.value > 0);
+  let segmentOffset = 0;
 
   return (
     <View style={styles.container}>
@@ -110,23 +124,57 @@ export const ResultsSummary = ({
         </View>
       </View>
       <View style={styles.breakdownPanel}>
-        <View style={styles.breakdownItem}>
-          <Text style={styles.breakdownLabel}>{t('results.principal')}</Text>
-          <Text style={styles.breakdownValue} numberOfLines={1} adjustsFontSizeToFit>
-            {formatCurrency(principalAmount, currency)}
-          </Text>
+        <View style={styles.donutWrap}>
+          <Svg width={DONUT_SIZE} height={DONUT_SIZE} viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}>
+            <Circle
+              cx={DONUT_SIZE / 2}
+              cy={DONUT_SIZE / 2}
+              r={DONUT_RADIUS}
+              stroke={colours.border}
+              strokeWidth={DONUT_STROKE}
+              fill="none"
+            />
+            {breakdownSegments.map(segment => {
+              const dashLength = breakdownTotal > 0
+                ? (segment.value / breakdownTotal) * DONUT_CIRCUMFERENCE
+                : 0;
+              const currentOffset = segmentOffset;
+              segmentOffset += dashLength;
+
+              return (
+                <Circle
+                  key={segment.key}
+                  cx={DONUT_SIZE / 2}
+                  cy={DONUT_SIZE / 2}
+                  r={DONUT_RADIUS}
+                  stroke={segment.color}
+                  strokeWidth={DONUT_STROKE}
+                  strokeDasharray={`${dashLength} ${DONUT_CIRCUMFERENCE - dashLength}`}
+                  strokeDashoffset={-currentOffset}
+                  strokeLinecap="round"
+                  fill="none"
+                  rotation="-90"
+                  origin={`${DONUT_SIZE / 2}, ${DONUT_SIZE / 2}`}
+                />
+              );
+            })}
+          </Svg>
+          <View style={styles.donutCenter}>
+            <Text style={styles.donutValue}>{interestShare}</Text>
+            <Text style={styles.donutLabel}>{t('results.interest')}</Text>
+          </View>
         </View>
-        <View style={styles.breakdownDivider} />
-        <View style={styles.breakdownItem}>
-          <Text style={styles.breakdownLabel}>{t('results.totalInterest')}</Text>
-          <Text style={styles.breakdownValue} numberOfLines={1} adjustsFontSizeToFit>
-            {formatCurrency(totalInterestPaid, currency)}
-          </Text>
-        </View>
-        <View style={styles.breakdownDivider} />
-        <View style={styles.breakdownItem}>
-          <Text style={styles.breakdownLabel}>{t('results.interestShare')}</Text>
-          <Text style={styles.breakdownValue}>{interestShare}</Text>
+        <View style={styles.breakdownContent}>
+          <Text style={styles.breakdownTitle}>{t('results.costBreakdown')}</Text>
+          {breakdownSegments.map(segment => (
+            <View key={segment.key} style={styles.legendRow}>
+              <View style={[styles.legendDot, { backgroundColor: segment.color }]} />
+              <Text style={styles.legendLabel} numberOfLines={1}>{segment.label}</Text>
+              <Text style={styles.legendValue} numberOfLines={1} adjustsFontSizeToFit>
+                {formatCurrency(segment.value, currency)}
+              </Text>
+            </View>
+          ))}
         </View>
       </View>
     </View>
@@ -251,31 +299,65 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colours.border,
     borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    padding: 12,
   },
-  breakdownItem: {
+  donutWrap: {
+    width: DONUT_SIZE,
+    height: DONUT_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  donutCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donutValue: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.extrabold,
+    color: colours.textPrimary,
+  },
+  donutLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.tiny,
+    color: colours.textSecondary,
+    marginTop: -2,
+  },
+  breakdownContent: {
     flex: 1,
   },
-  breakdownDivider: {
-    width: 1,
-    height: 34,
-    backgroundColor: colours.border,
-    marginHorizontal: 10,
-  },
-  breakdownLabel: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.tiny,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginBottom: 3,
-  },
-  breakdownValue: {
+  breakdownTitle: {
     fontFamily: fonts.heading,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.bold,
     color: colours.textPrimary,
+    marginBottom: 8,
+  },
+  legendRow: {
+    minHeight: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  legendLabel: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+  },
+  legendValue: {
+    maxWidth: 104,
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colours.textPrimary,
+    textAlign: 'right',
   },
 });
