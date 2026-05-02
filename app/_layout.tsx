@@ -20,6 +20,7 @@ import {
   Nunito_700Bold,
   Nunito_800ExtraBold,
 } from '@expo-google-fonts/nunito';
+import { Sacramento_400Regular } from '@expo-google-fonts/sacramento';
 import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
 import { fonts, fontSizes } from '@/theme';
@@ -45,6 +46,7 @@ export default function RootLayout() {
     'Nunito-SemiBold': Nunito_600SemiBold,
     'Nunito-Bold': Nunito_700Bold,
     'Nunito-ExtraBold': Nunito_800ExtraBold,
+    Sacramento: Sacramento_400Regular,
   });
 
   useEffect(() => {

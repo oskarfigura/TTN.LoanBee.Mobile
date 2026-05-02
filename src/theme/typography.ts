@@ -1,6 +1,7 @@
 export const fonts = {
   body: 'Manrope',
   heading: 'Nunito',
+  brand: 'Sacramento',
 } as const;
 
 export const fontSizes = {

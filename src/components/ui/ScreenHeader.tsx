@@ -1,10 +1,8 @@
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './AppText';
-import { colours, fontSizes, fontWeights, layout, spacing } from '@/theme';
-
-const logo = require('../../../assets/bee-logo.png');
+import { colours, fonts, fontWeights, layout, spacing } from '@/theme';
 
 interface Props {
   title: string;
@@ -34,10 +32,22 @@ export const ScreenHeader = ({
           {showBrand ? (
             <View style={styles.brandCopy}>
               <View style={styles.wordmarkRow}>
-                <AppText variant="display" style={styles.wordmark} numberOfLines={1}>
-                  LoanBee
+                <AppText variant="display" style={[styles.wordmark, styles.wordmarkLoan]} numberOfLines={1}>
+                  Loan
                 </AppText>
-                <Image source={logo} style={styles.inlineBee} resizeMode="contain" />
+                <View style={styles.wordmarkBeeWrap}>
+                  <AppText
+                    variant="display"
+                    style={[styles.wordmark, styles.wordmarkBee, styles.wordmarkBeeLayerOne]}
+                    numberOfLines={1}
+                    accessible={false}
+                  >
+                    Bee
+                  </AppText>
+                  <AppText variant="display" style={[styles.wordmark, styles.wordmarkBee]} numberOfLines={1}>
+                    Bee
+                  </AppText>
+                </View>
               </View>
               <AppText variant="bodyLg" tone="muted" style={styles.brandSubtitle} numberOfLines={2}>
                 {title}
@@ -89,23 +99,42 @@ const styles = StyleSheet.create({
   },
   wordmarkRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     alignSelf: 'flex-start',
-    gap: spacing.xs,
   },
   wordmark: {
-    color: colours.primaryInk,
-    fontSize: fontSizes['3xl'],
-    lineHeight: 40,
-    fontWeight: fontWeights.extrabold,
+    fontFamily: fonts.brand,
+    fontWeight: fontWeights.regular,
+    letterSpacing: 0,
   },
-  inlineBee: {
-    width: 30,
-    height: 30,
-    marginLeft: -2,
+  wordmarkLoan: {
+    fontFamily: fonts.body,
+    fontSize: 36,
+    lineHeight: 36,
+    fontWeight: fontWeights.extrabold,
+    letterSpacing: -0.8,
+    color: colours.primaryDark,
+    marginBottom: 4,
+  },
+  wordmarkBee: {
+    fontSize: 40,
+    lineHeight: 42,
+    color: colours.honey,
+    marginLeft: -8,
+    textShadowColor: colours.honey,
+    textShadowOffset: { width: 0.5, height: 0.1 },
+    textShadowRadius: 0.1,
+  },
+  wordmarkBeeWrap: {
+    position: 'relative',
+  },
+  wordmarkBeeLayerOne: {
+    position: 'absolute',
+    left: 0.7,
+    top: 0.15,
   },
   brandSubtitle: {
-    marginTop: spacing.xxs,
+    marginTop: 0,
     maxWidth: '92%',
   },
   plainTitle: {

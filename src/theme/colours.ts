@@ -16,6 +16,8 @@ export const colours = {
   successBorder: '#BBF7D0',
   successLight: '#DCFCE7',
   warning: '#9A6700',
+  honey: '#F4B400',
+  honeySoft: '#FFE29A',
   warningSurface: '#FFF6DA',
   error: '#BA1A1A',
   errorSurface: '#FFDAD6',
