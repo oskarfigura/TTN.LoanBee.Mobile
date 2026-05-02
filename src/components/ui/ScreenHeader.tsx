@@ -1,7 +1,8 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { AppText } from './AppText';
+import { colours, layout, radii, spacing } from '@/theme';
 
 const logo = require('../../../assets/bee-logo.png');
 
@@ -10,29 +11,48 @@ interface Props {
   subtitle?: string;
   leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
+  variant?: 'top-level' | 'detail' | 'editor';
 }
 
-export const ScreenHeader = ({ title, subtitle, leftAction, rightAction }: Props) => {
+export const ScreenHeader = ({
+  title,
+  subtitle,
+  leftAction,
+  rightAction,
+  variant = 'top-level',
+}: Props) => {
   const insets = useSafeAreaInsets();
+  const compact = variant !== 'top-level';
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
       <View style={styles.brandRow}>
         <View style={styles.leading}>
           {leftAction ? <View style={styles.actionWrap}>{leftAction}</View> : null}
-          <View style={styles.brandLockup}>
-            <View style={styles.logoBadge}>
-              <Image source={logo} style={styles.logo} resizeMode="contain" />
+          <View style={[styles.brandLockup, compact && styles.brandLockupCompact]}>
+            <View style={[styles.logoBadge, compact && styles.logoBadgeCompact]}>
+              <Image source={logo} style={[styles.logo, compact && styles.logoCompact]} resizeMode="contain" />
             </View>
             <View style={styles.brandCopy}>
-              <Text style={styles.brandEyebrow}>LoanBee</Text>
-              <Text style={styles.brandText} numberOfLines={2}>{title}</Text>
+              <AppText variant="labelSm" tone="muted" style={styles.brandEyebrow}>LoanBee</AppText>
+              <AppText
+                variant={compact ? 'title2' : 'title1'}
+                tone="accent"
+                style={styles.brandText}
+                numberOfLines={2}
+              >
+                {title}
+              </AppText>
             </View>
           </View>
         </View>
         {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
       </View>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {subtitle ? (
+        <AppText variant="bodyMd" tone="muted" style={styles.subtitle}>
+          {subtitle}
+        </AppText>
+      ) : null}
     </View>
   );
 };
@@ -40,10 +60,10 @@ export const ScreenHeader = ({ title, subtitle, leftAction, rightAction }: Props
 const styles = StyleSheet.create({
   header: {
     backgroundColor: colours.background,
-    paddingHorizontal: 20,
-    paddingBottom: 14,
+    paddingHorizontal: layout.headerPadding,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colours.border,
+    borderBottomColor: colours.borderSoft,
   },
   brandRow: {
     flexDirection: 'row',
@@ -62,59 +82,53 @@ const styles = StyleSheet.create({
     flex: 1,
     flexShrink: 1,
   },
+  brandLockupCompact: {
+    gap: spacing.sm,
+  },
   brandCopy: {
-    marginLeft: 10,
+    marginLeft: spacing.sm,
     flex: 1,
   },
   brandEyebrow: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.bold,
-    color: colours.textSecondary,
-    letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   brandText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
     marginTop: 2,
-    lineHeight: 24,
   },
   actionWrap: {
     minWidth: 32,
     minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: spacing.sm,
   },
   logoBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colours.primary,
-    shadowColor: colours.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    backgroundColor: colours.primarySoft,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+  },
+  logoBadgeCompact: {
+    width: 32,
+    height: 32,
   },
   logo: {
-    width: 22,
-    height: 22,
+    width: 19,
+    height: 19,
+  },
+  logoCompact: {
+    width: 17,
+    height: 17,
   },
   rightAction: {
-    marginLeft: 12,
+    marginLeft: spacing.sm,
   },
   subtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textSecondary,
-    lineHeight: 24,
-    marginTop: 12,
+    marginTop: spacing.sm,
     maxWidth: '92%',
   },
 });

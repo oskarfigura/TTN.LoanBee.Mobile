@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { AppText } from './AppText';
+import { colours, radii, spacing } from '@/theme';
 
 export const FinancialDisclaimer = () => {
   const { t } = useTranslation();
@@ -15,13 +16,13 @@ export const FinancialDisclaimer = () => {
         accessibilityRole="button"
         accessibilityState={{ expanded }}
       >
-        <Text style={styles.text}>
-          <Text style={styles.label}>{t('disclaimer.label')} </Text>
-          {t('disclaimer.shortText')} <Text style={styles.link}>{expanded ? t('disclaimer.less') : t('disclaimer.more')}</Text>
-        </Text>
+        <AppText variant="bodySm" tone="muted" style={styles.text}>
+          <AppText variant="labelSm" tone="accent" style={styles.label}>{t('disclaimer.label')} </AppText>
+          {t('disclaimer.shortText')} <AppText variant="labelMd" tone="accent" style={styles.link}>{expanded ? t('disclaimer.less') : t('disclaimer.more')}</AppText>
+        </AppText>
       </TouchableOpacity>
       {expanded && (
-        <Text style={styles.fullText}>{t('disclaimer.fullText')}</Text>
+        <AppText variant="bodySm" tone="muted" style={styles.fullText}>{t('disclaimer.fullText')}</AppText>
       )}
     </View>
   );
@@ -29,38 +30,23 @@ export const FinancialDisclaimer = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colours.surface,
-    borderRadius: 12,
+    backgroundColor: colours.surfaceMuted,
+    borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colours.border,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    borderColor: colours.borderSoft,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
   },
   text: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-    lineHeight: 18,
   },
   label: {
-    fontFamily: fonts.heading,
-    fontWeight: fontWeights.extrabold,
-    color: colours.primary,
     textTransform: 'uppercase',
   },
   link: {
-    fontFamily: fonts.heading,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
     textDecorationLine: 'underline',
   },
   fullText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    lineHeight: 18,
-    marginTop: 8,
+    marginTop: spacing.xs,
   },
 });

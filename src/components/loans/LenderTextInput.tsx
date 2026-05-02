@@ -1,7 +1,6 @@
 import React from 'react';
-import { StyleSheet, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colours, fonts, fontSizes } from '@/theme';
+import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 
 interface Props {
   value: string;
@@ -13,27 +12,13 @@ export const LenderTextInput = ({ value, onChange, placeholder }: Props) => {
   const { t } = useTranslation();
 
   return (
-    <TextInput
-      style={styles.input}
-      value={value}
-      onChangeText={onChange}
-      placeholder={placeholder ?? t('save.lenderPlaceholder')}
-      placeholderTextColor={colours.textSecondary}
-      autoCapitalize="words"
-    />
+    <InputSurface>
+      <AppTextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder ?? t('save.lenderPlaceholder')}
+        autoCapitalize="words"
+      />
+    </InputSurface>
   );
 };
-
-const styles = StyleSheet.create({
-  input: {
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colours.border,
-    minHeight: 48,
-    paddingHorizontal: 14,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textPrimary,
-  },
-});

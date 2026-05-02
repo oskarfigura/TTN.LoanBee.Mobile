@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,7 +14,9 @@ import { CurrencyCode } from '@/currency/currencies';
 import { LoanForm } from '@/components/calculator/LoanForm';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
+import { colours, layout, spacing } from '@/theme';
 import { buildDraftResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
@@ -82,6 +84,7 @@ export default function CalculatorScreen() {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
         title={t('calculator.title')}
+        variant="top-level"
         leftAction={pinnedLoans.length > 0 ? <HeaderBackAction onPress={() => setShowCalculator(false)} /> : undefined}
       />
       <LoanForm
@@ -89,7 +92,25 @@ export default function CalculatorScreen() {
         onSubmit={handleSubmit}
         topContent={(
           <View style={styles.pageIntro}>
-            <Text style={styles.pageSubtitle}>{t('calculator.subtitle')}</Text>
+            <AppText variant="display" tone="accent" style={styles.pageTitle}>
+              Mortgage & Loan Calculator
+            </AppText>
+            <AppText variant="bodyLg" tone="muted" style={styles.pageSubtitle}>
+              {t('calculator.subtitle')}
+            </AppText>
+            <View style={styles.helperRow}>
+              <AppText variant="bodySm" tone="muted" style={styles.helperText}>
+                {t('mortgage.dashboardHint')}
+              </AppText>
+              {pinnedLoans.length > 0 ? (
+                <Button
+                  label={t('saved.title')}
+                  onPress={() => router.push('/saved')}
+                  variant="secondary"
+                  style={styles.helperAction}
+                />
+              ) : null}
+            </View>
           </View>
         )}
       />
@@ -100,12 +121,24 @@ export default function CalculatorScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   pageIntro: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
+  },
+  pageTitle: {
+    marginBottom: spacing.sm,
+    maxWidth: '92%',
   },
   pageSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textSecondary,
-    lineHeight: 24,
+    maxWidth: '96%',
+  },
+  helperRow: {
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
+  helperText: {
+    maxWidth: '92%',
+  },
+  helperAction: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: layout.cardPadding,
   },
 });

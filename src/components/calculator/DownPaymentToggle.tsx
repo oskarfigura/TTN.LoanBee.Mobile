@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { DownPaymentType } from '@/core/DownPaymentType';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { SegmentedControl } from '@/components/ui/FormPrimitives';
 
 interface Props {
   value: DownPaymentType;
@@ -10,48 +10,20 @@ interface Props {
 }
 
 export const DownPaymentToggle = ({ value, onChange, currencySymbol }: Props) => (
-    <View style={styles.container}>
-      {([DownPaymentType.CASH, DownPaymentType.PERCENT] as const).map(type => (
-        <TouchableOpacity
-          key={type}
-          style={[styles.btn, value === type && styles.btnActive]}
-          onPress={() => onChange(type)}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.label, value === type && styles.labelActive]}>
-            {type === DownPaymentType.CASH ? currencySymbol : '%'}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+  <View style={styles.container}>
+    <SegmentedControl
+      value={value}
+      onChange={onChange}
+      options={[
+        { label: currencySymbol, value: DownPaymentType.CASH },
+        { label: '%', value: DownPaymentType.PERCENT },
+      ]}
+    />
+  </View>
 );
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colours.border,
-    overflow: 'hidden',
-    height: 48,
     width: 88,
-  },
-  btn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnActive: {
-    backgroundColor: colours.primary,
-  },
-  label: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  labelActive: {
-    color: colours.white,
   },
 });

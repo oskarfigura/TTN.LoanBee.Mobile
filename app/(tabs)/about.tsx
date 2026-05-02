@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const VARIABLE_KEYS = ['varA', 'varP', 'varR', 'varN'] as const;
@@ -20,43 +21,43 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('tabs.about')} />
+      <ScreenHeader title={t('tabs.about')} variant="top-level" />
       <ScrollView contentContainerStyle={styles.container}>
-        <Card style={styles.card}>
-          <Text style={styles.title}>{t('about.formula')}</Text>
-          <Text style={styles.body}>{t('about.formulaDesc')}</Text>
+        <Card style={styles.card} variant="accent" padding={layout.cardPadding}>
+          <AppText variant="title2" tone="accent" style={styles.title}>{t('about.formula')}</AppText>
+          <AppText variant="bodyMd" tone="muted" style={styles.body}>{t('about.formulaDesc')}</AppText>
 
           <View style={styles.formulaPanel}>
             <View style={styles.formulaRow}>
-              <Text style={styles.formulaLead}>A = P ·</Text>
+              <AppText variant="title2" tone="accent" style={styles.formulaLead}>A = P ·</AppText>
               <View style={styles.fraction}>
-                <Text style={styles.fractionText}>r(1+r)^n</Text>
+                <AppText variant="title3" tone="accent" style={styles.fractionText}>r(1+r)^n</AppText>
                 <View style={styles.fractionLine} />
-                <Text style={styles.fractionText}>(1+r)^n - 1</Text>
+                <AppText variant="title3" tone="accent" style={styles.fractionText}>(1+r)^n - 1</AppText>
               </View>
             </View>
           </View>
 
-          <Text style={styles.subtitle}>{t('about.variables')}</Text>
+          <AppText variant="labelSm" tone="muted" style={styles.subtitle}>{t('about.variables')}</AppText>
           <View style={styles.variableGrid}>
             {VARIABLE_KEYS.map(key => {
               const [symbol, label] = t(`about.${key}`).split(' = ');
               return (
                 <View key={key} style={styles.variableTile}>
-                  <Text style={styles.variableSymbol}>{symbol}</Text>
-                  <Text style={styles.variableLabel}>{label}</Text>
+                  <AppText variant="title2" tone="accent" style={styles.variableSymbol}>{symbol}</AppText>
+                  <AppText variant="bodySm" tone="muted">{label}</AppText>
                 </View>
               );
             })}
           </View>
         </Card>
 
-        <Card style={styles.disclaimerCard}>
-          <Text style={styles.disclaimerText}>{t('about.disclaimer')}</Text>
+        <Card style={styles.disclaimerCard} padding={layout.denseCardPadding}>
+          <AppText variant="bodySm" tone="muted">{t('about.disclaimer')}</AppText>
         </Card>
 
-        <Card style={styles.card}>
-          <Text style={styles.title}>{t('about.faqTitle')}</Text>
+        <Card style={styles.card} padding={layout.cardPadding}>
+          <AppText variant="title2" tone="accent" style={styles.title}>{t('about.faqTitle')}</AppText>
           <View style={styles.faqList}>
             {faqItems.map((item, index) => {
               const expanded = openFaqIndex === index;
@@ -69,17 +70,17 @@ export default function AboutScreen() {
                     style={styles.faqQuestionRow}
                     onPress={() => setOpenFaqIndex(expanded ? -1 : index)}
                   >
-                    <Text style={styles.faqQuestion}>{item.q}</Text>
-                    <Text style={styles.faqToggle}>{expanded ? '-' : '+'}</Text>
+                    <AppText variant="title3" style={styles.faqQuestion}>{item.q}</AppText>
+                    <AppText variant="title3" tone="inverse" style={styles.faqToggle}>{expanded ? '-' : '+'}</AppText>
                   </TouchableOpacity>
-                  {expanded && <Text style={styles.faqAnswer}>{item.a}</Text>}
+                  {expanded ? <AppText variant="bodySm" tone="muted" style={styles.faqAnswer}>{item.a}</AppText> : null}
                 </View>
               );
             })}
           </View>
         </Card>
 
-        <Text style={styles.version}>LoanBee • Made with 🐝 by The Tech Narrative</Text>
+        <AppText variant="helper" tone="muted" style={styles.version}>LoanBee • Made with the calm precision of a finance workspace.</AppText>
       </ScrollView>
     </SafeAreaView>
   );
@@ -87,27 +88,19 @@ export default function AboutScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  container: { padding: 16, paddingBottom: 40 },
-  card: { marginBottom: 16 },
+  container: { padding: layout.screenPadding, paddingBottom: 40 },
+  card: { marginBottom: spacing.md },
   title: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   body: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textSecondary,
-    lineHeight: 22,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   formulaPanel: {
-    backgroundColor: colours.surface,
+    backgroundColor: colours.surfaceMuted,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colours.border,
+    borderColor: colours.borderSoft,
     paddingVertical: 24,
     paddingHorizontal: 16,
     marginVertical: 16,
@@ -120,23 +113,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   formulaLead: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.extrabold,
-    color: colours.primary,
     marginRight: 10,
   },
   fraction: {
     minWidth: 150,
     alignItems: 'center',
   },
-  fractionText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-    textAlign: 'center',
-  },
+  fractionText: { textAlign: 'center' },
   fractionLine: {
     height: 2,
     alignSelf: 'stretch',
@@ -144,11 +127,8 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   subtitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
     marginBottom: 10,
+    textTransform: 'uppercase',
   },
   variableGrid: {
     flexDirection: 'row',
@@ -157,45 +137,29 @@ const styles = StyleSheet.create({
   },
   variableTile: {
     width: '47%',
-    backgroundColor: colours.surface,
+    backgroundColor: colours.surfaceMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colours.border,
+    borderColor: colours.borderSoft,
     padding: 12,
   },
   variableSymbol: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.extrabold,
-    color: colours.primary,
-    marginBottom: 4,
-  },
-  variableLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    lineHeight: 17,
+    marginBottom: spacing.xxs,
   },
   disclaimerCard: {
-    backgroundColor: colours.surface,
+    backgroundColor: colours.surfaceMuted,
     borderLeftWidth: 3,
     borderLeftColor: colours.accent,
     marginBottom: 16,
-  },
-  disclaimerText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    lineHeight: 20,
   },
   faqList: {
     gap: 10,
   },
   faqItem: {
-    backgroundColor: colours.surface,
+    backgroundColor: colours.surfaceMuted,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colours.border,
+    borderColor: colours.borderSoft,
     overflow: 'hidden',
   },
   faqItemOpen: {
@@ -210,11 +174,6 @@ const styles = StyleSheet.create({
   },
   faqQuestion: {
     flex: 1,
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
-    lineHeight: 19,
   },
   faqToggle: {
     width: 24,
@@ -222,26 +181,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: colours.primary,
-    color: colours.white,
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.bold,
     lineHeight: 23,
     textAlign: 'center',
   },
   faqAnswer: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    lineHeight: 21,
     paddingHorizontal: 12,
     paddingBottom: 14,
   },
   version: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
     textAlign: 'center',
-    paddingTop: 8,
+    paddingTop: spacing.xs,
   },
 });

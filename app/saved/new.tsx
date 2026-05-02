@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
@@ -10,11 +10,19 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
+import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import {
+  AppTextInput,
+  FieldLabel,
+  FormSection,
+  InputSurface,
+  SegmentedControl,
+} from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { createLocalId } from '@/utils/id';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours, layout, spacing } from '@/theme';
 import { useStoreReview } from '@/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -90,38 +98,49 @@ export default function SaveNewLoanScreen() {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
         title={t('save.title')}
+        subtitle="Save the current result as a reusable tracked item for your dashboard and mortgage workflows."
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.label}>{t('save.nickname')}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={t('save.nicknamePlaceholder')}
-          placeholderTextColor={colours.textSecondary}
-          value={nickname}
-          onChangeText={setNickname}
-        />
+        <FormSection title={t('save.title')} accent>
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{t('save.nickname')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput
+                placeholder={t('save.nicknamePlaceholder')}
+                value={nickname}
+                onChangeText={setNickname}
+              />
+            </InputSurface>
+          </View>
 
-        <Text style={styles.label}>{t('save.category')}</Text>
-        <View style={styles.toggleRow}>
-          {(['mortgage', 'loan'] as const).map(cat => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.toggleBtn, category === cat && styles.toggleBtnActive]}
-              onPress={() => setCategory(cat)}
-            >
-              <Text style={[styles.toggleText, category === cat && styles.toggleTextActive]}>
-                {cat === 'mortgage' ? t('save.mortgage') : t('save.loan')}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{t('save.category')}</FieldLabel>
+            <SegmentedControl
+              value={category}
+              onChange={setCategory}
+              options={[
+                { label: t('save.mortgage'), value: 'mortgage' },
+                { label: t('save.loan'), value: 'loan' },
+              ]}
+            />
+          </View>
 
-        <Text style={styles.label}>{t('save.lender')}</Text>
-        <LenderTextInput value={lender} onChange={setLender} />
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{t('save.lender')}</FieldLabel>
+            <LenderTextInput value={lender} onChange={setLender} />
+          </View>
 
-        <Text style={styles.label}>{t('save.currency')}</Text>
-        <CurrencyPicker value={currency} onChange={setCurrency} />
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{t('save.currency')}</FieldLabel>
+            <CurrencyPicker value={currency} onChange={setCurrency} />
+          </View>
+
+          <AppText variant="bodySm" tone="muted">
+            Saving preserves this calculation snapshot and unlocks dashboard pinning plus mortgage-specific timeline management.
+          </AppText>
+        </FormSection>
 
         <Button
           label={t('save.save')}
@@ -142,45 +161,8 @@ export default function SaveNewLoanScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  container: { padding: 16, paddingBottom: 40 },
-  label: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textPrimary,
-    marginTop: 16,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colours.border,
-    height: 48,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textPrimary,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colours.border,
-    overflow: 'hidden',
-    height: 44,
-  },
-  toggleBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  toggleBtnActive: { backgroundColor: colours.primary },
-  toggleText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  toggleTextActive: { color: colours.white },
-  saveBtn: { marginTop: 24 },
-  cancelBtn: { marginTop: 8 },
+  container: { padding: layout.screenPadding, paddingBottom: 40 },
+  fieldGroup: { gap: spacing.xs },
+  saveBtn: { marginTop: spacing.lg },
+  cancelBtn: { marginTop: spacing.xs },
 });

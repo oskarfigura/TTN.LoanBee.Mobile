@@ -7,11 +7,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-} from '@expo-google-fonts/inter';
-import {
   Manrope_400Regular,
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -33,9 +28,6 @@ export { TabIcon };
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter: Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-SemiBold': Inter_600SemiBold,
     Manrope: Manrope_400Regular,
     'Manrope-Medium': Manrope_500Medium,
     'Manrope-SemiBold': Manrope_600SemiBold,

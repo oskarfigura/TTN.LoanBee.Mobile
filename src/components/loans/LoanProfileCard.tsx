@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AppText } from '@/components/ui/AppText';
+import { Badge } from '@/components/ui/Badge';
 import { SavedLoan } from '@/types/SavedLoan';
 import { Card } from '@/components/ui/Card';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { colours, spacing } from '@/theme';
 import { formatCurrency } from '@/currency/format';
 import { monthsBetween } from '@/utils/date';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
@@ -33,62 +36,56 @@ export const LoanProfileCard = ({ loan, onPress, onDelete, onTogglePinned }: Pro
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
-      <Card style={styles.card}>
+      <Card style={styles.card} variant="accent" padding={20}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.nickname}>{loan.nickname}</Text>
-            {loan.lender && <Text style={styles.lender}>{loan.lender}</Text>}
+            <AppText variant="title2">{loan.nickname}</AppText>
+            {loan.lender ? <AppText variant="bodySm" tone="muted" style={styles.lender}>{loan.lender}</AppText> : null}
           </View>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>
-              {t(`saved.category.${loan.category}`)}
-            </Text>
-          </View>
+          <Badge label={t(`saved.category.${loan.category}`)} />
         </View>
 
-        <Text style={styles.payment}>
+        <AppText variant="metricMd" tone="accent" style={styles.payment}>
           {formatCurrency(payment, loan.currency)} / mo
-        </Text>
+        </AppText>
 
         <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressValue * 100}%` }]} />
-          </View>
-          <Text style={styles.progressLabel}>
+          <ProgressBar progress={progressValue} color={loan.category === 'mortgage' ? colours.tealDeep : colours.primary} />
+          <AppText variant="helper" tone="muted" style={styles.progressLabel}>
             {mortgageSummary
               ? t('mortgage.balancePaid', { percent: Math.round(progressValue * 100) })
               : remaining > 0
                 ? t('saved.progress', { months: remaining, total })
                 : t('saved.completed')}
-          </Text>
+          </AppText>
         </View>
 
         {((hasSavings && savings > 0) || (mortgageSummary?.overpaymentSavingsEstimate ?? 0) > 0) && (
           <View style={styles.savingsBadge}>
-            <Text style={styles.savingsText}>
+            <AppText variant="labelMd" tone="success">
               {t('saved.overpaymentSaving', {
                 amount: formatCurrency(
                   mortgageSummary?.overpaymentSavingsEstimate ?? savings,
                   loan.currency,
                 ),
               })}
-            </Text>
+            </AppText>
           </View>
         )}
 
         <View style={styles.footer}>
-          <Text style={styles.date}>{t('saved.startedOn', { date: loan.formSnapshot.startDate })}</Text>
+          <AppText variant="helper" tone="muted">{t('saved.startedOn', { date: loan.formSnapshot.startDate })}</AppText>
           <View style={styles.footerActions}>
             <TouchableOpacity onPress={onTogglePinned} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <View style={styles.pinBtn}>
                 <PinIcon color={colours.primary} size={14} />
-                <Text style={styles.pinBtnText}>
+                <AppText variant="labelMd" tone="accent">
                   {loan.pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
-                </Text>
+                </AppText>
               </View>
             </TouchableOpacity>
             <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Text style={styles.deleteBtn}>{t('saved.delete')}</Text>
+              <AppText variant="labelMd" tone="error">{t('saved.delete')}</AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -98,83 +95,38 @@ export const LoanProfileCard = ({ loan, onPress, onDelete, onTogglePinned }: Pro
 };
 
 const styles = StyleSheet.create({
-  card: { marginBottom: 12 },
+  card: { marginBottom: spacing.sm },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
-  },
-  nickname: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
+    marginBottom: spacing.xs,
   },
   lender: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
     marginTop: 2,
   },
-  categoryBadge: {
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: colours.border,
-  },
-  categoryText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.primary,
-  },
   payment: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-    marginVertical: 8,
+    marginVertical: spacing.sm,
   },
   progressContainer: { marginBottom: 8 },
-  progressTrack: {
-    height: 6,
-    backgroundColor: colours.border,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colours.primary,
-    borderRadius: 3,
-  },
   progressLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
+    marginTop: spacing.xs,
   },
   savingsBadge: {
-    backgroundColor: colours.successLight,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    backgroundColor: colours.successSurface,
+    borderRadius: 10,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
     marginBottom: 8,
-  },
-  savingsText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.secondary,
+    borderWidth: 1,
+    borderColor: colours.successBorder,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: colours.border,
+    borderTopColor: colours.borderSoft,
     paddingTop: 8,
     marginTop: 4,
   },
@@ -183,26 +135,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  date: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-  },
   pinBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  pinBtnText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.primary,
-  },
-  deleteBtn: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.error,
   },
 });

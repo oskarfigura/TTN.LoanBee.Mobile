@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { StyleSheet } from 'react-native';
+import { colours, spacing } from '@/theme';
+import { AppText } from './AppText';
 import { Card } from './Card';
 
 interface Props {
@@ -10,11 +11,11 @@ interface Props {
 }
 
 export const SummaryCard = ({ label, value, accent }: Props) => (
-  <Card style={[styles.card, accent && styles.accentCard]} padding={12}>
-    <Text style={[styles.label, accent && styles.accentLabel]}>{label}</Text>
-    <Text style={[styles.value, accent && styles.accentValue]} numberOfLines={1} adjustsFontSizeToFit>
+  <Card style={[styles.card, accent && styles.accentCard]} variant={accent ? 'hero' : 'dense'} padding={16}>
+    <AppText variant="labelSm" tone={accent ? 'inverse' : 'muted'} style={styles.label}>{label}</AppText>
+    <AppText variant={accent ? 'metricMd' : 'title2'} tone={accent ? 'inverse' : 'default'} numberOfLines={1} adjustsFontSizeToFit>
       {value}
-    </Text>
+    </AppText>
   </Card>
 );
 
@@ -24,27 +25,10 @@ const styles = StyleSheet.create({
   },
   accentCard: {
     backgroundColor: colours.primary,
+    borderColor: colours.primary,
   },
   label: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-    letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  accentLabel: {
-    color: colours.whiteSubtle,
-  },
-  value: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
-  },
-  accentValue: {
-    color: colours.white,
-    fontSize: fontSizes.xl,
+    marginBottom: spacing.xxs,
   },
 });

@@ -4,7 +4,6 @@ import {
   NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -12,14 +11,25 @@ import {
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppText } from '@/components/ui/AppText';
+import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { QuickActionTile } from '@/components/ui/QuickActionTile';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { CalculatorIcon } from '@/components/loans/LoanIcons';
+import {
+  BalanceIcon,
+  CalculatorIcon,
+  PaymentIcon,
+  SwitchIcon,
+  TimelineIcon,
+} from '@/components/loans/LoanIcons';
 import { formatCurrency } from '@/currency/format';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { SavedLoan, MortgageEvent } from '@/types/SavedLoan';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours, layout, radii, spacing } from '@/theme';
 
 interface Props {
   loans: SavedLoan[];
@@ -39,19 +49,19 @@ const eventTitle = (event: MortgageEvent) => {
 const EventRow = ({ event, currency }: { event: MortgageEvent; currency: SavedLoan['currency'] }) => (
   <View style={styles.eventRow}>
     <View style={styles.eventIcon}>
-      <Text style={styles.eventIconText}>{event.type === 'balanceCheckpoint' ? 'B' : '+'}</Text>
+      <AppText variant="labelMd" tone="accent">{event.type === 'balanceCheckpoint' ? 'B' : '+'}</AppText>
     </View>
     <View style={styles.eventCopy}>
-      <Text style={styles.eventTitle}>{eventTitle(event)}</Text>
-      <Text style={styles.eventMeta}>
+      <AppText variant="title3">{eventTitle(event)}</AppText>
+      <AppText variant="bodySm" tone="muted" style={styles.eventMeta}>
         {event.balance !== undefined
           ? `Updated to ${formatCurrency(event.balance, currency)}`
           : event.amount !== undefined
             ? `${formatCurrency(event.amount, currency)} applied`
             : event.note || event.date}
-      </Text>
+      </AppText>
     </View>
-    <Text style={styles.eventDate}>{event.date}</Text>
+    <AppText variant="helper" tone="muted">{event.date}</AppText>
   </View>
 );
 
@@ -71,6 +81,9 @@ const LoanDashboardCard = ({
   const balance = mortgageSummary?.currentBalance ?? loan.formSnapshot.loanAmount;
   const paid = mortgageSummary?.principalPaid ?? Math.max(0, loan.formSnapshot.loanAmount - balance);
   const progress = mortgageSummary?.balanceProgress ?? 0;
+  const originalBalance = mortgageSummary?.originalBalance ?? loan.formSnapshot.loanAmount;
+  const savings = mortgageSummary?.overpaymentSavingsEstimate ?? 0;
+  const interestPaid = mortgageSummary?.interestPaidEstimate ?? 0;
 
   return (
     <ScrollView
@@ -84,79 +97,131 @@ const LoanDashboardCard = ({
         style={styles.cardPressable}
       >
         <View style={styles.titleBlock}>
-          <Text style={styles.lender}>{loan.lender || currentDeal?.lender || t(`saved.category.${loan.category}`)}</Text>
-          <Text style={styles.dashboardTitle}>{loan.nickname}</Text>
+          <AppText variant="bodyMd" tone="muted">{loan.lender || currentDeal?.lender || t(`saved.category.${loan.category}`)}</AppText>
+          <AppText variant="display" tone="accent" style={styles.dashboardTitle}>{loan.nickname}</AppText>
         </View>
 
-        <Card style={styles.balanceCard}>
-          <Text style={styles.cardKicker}>{t('mortgage.currentBalance')}</Text>
-          <Text style={styles.balanceAmount}>{formatCurrency(balance, loan.currency)}</Text>
+        <Card style={styles.balanceCard} variant="accent" padding={layout.cardPadding}>
+          <View style={styles.heroTopBorder} />
+          <View style={styles.heroHeader}>
+            <View style={styles.heroIdentity}>
+              <View style={styles.heroIconWrap}>
+                <BalanceIcon />
+              </View>
+              <View style={styles.heroCopy}>
+                <AppText variant="title2" tone="accent">{loan.nickname}</AppText>
+                <AppText variant="bodySm" tone="muted">{loan.lender || currentDeal?.lender || t(`saved.category.${loan.category}`)}</AppText>
+              </View>
+            </View>
+            <Badge label="On track" variant="success" />
+          </View>
+          <AppText variant="labelMd" tone="muted" style={styles.cardKicker}>{t('mortgage.currentBalance')}</AppText>
+          <AppText variant="metricLg" tone="accent" style={styles.balanceAmount}>{formatCurrency(balance, loan.currency)}</AppText>
           <View style={styles.balanceDivider} />
           <View style={styles.balanceStats}>
             <View style={styles.balanceStat}>
-              <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
-              <Text style={styles.statValue}>
+              <AppText variant="labelSm" tone="muted" style={styles.statLabel}>{t('results.monthlyPayment')}</AppText>
+              <AppText variant="title2">
                 {formatCurrency(currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments, loan.currency)}
-              </Text>
+              </AppText>
             </View>
             <View style={styles.balanceStat}>
-              <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
-              <Text style={styles.statValue}>
+              <AppText variant="labelSm" tone="muted" style={styles.statLabel}>{t('calculator.interestRate')}</AppText>
+              <AppText variant="title2">
                 {currentDeal ? `${currentDeal.interestRate}%` : `${loan.formSnapshot.interest}%`}
-                <Text style={styles.statSuffix}>
+                <AppText variant="bodySm" tone="muted" style={styles.statSuffix}>
                   {currentDeal?.repaymentType === 'interestOnly' ? ' IO' : ' Fixed'}
-                </Text>
-              </Text>
+                </AppText>
+              </AppText>
             </View>
           </View>
         </Card>
 
-        <Card style={styles.progressCard}>
+        <Card style={styles.progressCard} padding={layout.cardPadding}>
           <View style={styles.progressHeader}>
-            <Text style={styles.cardKicker}>{isMortgage ? t('mortgage.balancePaidShort') : t('saved.loanProgress')}</Text>
-            <Text style={styles.progressPercent}>{formatPercent(progress)}</Text>
+            <AppText variant="labelMd" tone="muted">{isMortgage ? t('mortgage.balancePaidShort') : t('saved.loanProgress')}</AppText>
+            <AppText variant="title2" tone="success">{formatPercent(progress)}</AppText>
           </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
-          </View>
+          <ProgressBar progress={progress} color={colours.tealDeep} />
           <View style={styles.progressLabels}>
-            <Text style={styles.progressCaption}>{t('mortgage.paidAmount', { amount: formatCurrency(paid, loan.currency) })}</Text>
-            <Text style={styles.progressCaption}>{t('mortgage.totalAmount', { amount: formatCurrency(mortgageSummary?.originalBalance ?? loan.formSnapshot.loanAmount, loan.currency) })}</Text>
+            <AppText variant="helper" tone="muted">{t('mortgage.paidAmount', { amount: formatCurrency(paid, loan.currency) })}</AppText>
+            <AppText variant="helper" tone="muted">{t('mortgage.totalAmount', { amount: formatCurrency(originalBalance, loan.currency) })}</AppText>
           </View>
         </Card>
 
-        <Card style={styles.timelineCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
+        <Card style={styles.breakdownCard} padding={layout.cardPadding}>
+          <SectionHeader title={t('mortgage.financialBreakdown')} />
+          <View style={styles.breakdownGrid}>
+            <View style={styles.breakdownItem}>
+              <AppText variant="bodySm" tone="muted">{t('mortgage.paidAmount', { amount: formatCurrency(paid, loan.currency) })}</AppText>
+            </View>
+            <View style={styles.breakdownItem}>
+              <AppText variant="bodySm" tone="muted">{t('mortgage.estimatedInterestPaid')}</AppText>
+              <AppText variant="title3">{formatCurrency(interestPaid, loan.currency)}</AppText>
+            </View>
+            <View style={styles.breakdownItem}>
+              <AppText variant="bodySm" tone="muted">{t('mortgage.totalAmount', { amount: formatCurrency(originalBalance, loan.currency) })}</AppText>
+            </View>
+            <View style={[styles.breakdownItem, styles.breakdownItemAccent]}>
+              <AppText variant="bodySm" tone="success">{t('mortgage.estimatedSavings')}</AppText>
+              <AppText variant="title2" tone="success">{formatCurrency(savings, loan.currency)}</AppText>
+            </View>
           </View>
+        </Card>
+
+        <Card style={styles.timelineCard} padding={layout.cardPadding}>
+          <SectionHeader title={t('mortgage.dealTimeline')} />
           <View style={styles.timelinePreview}>
             <View style={styles.timelineDotActive} />
             <View>
-              <Text style={styles.timelineLabel}>{t('mortgage.currentDealEnds')}</Text>
-              <Text style={styles.timelineDate}>{currentDeal?.endDate ?? loan.formSnapshot.startDate}</Text>
+              <AppText variant="labelMd" tone="success">{t('mortgage.currentDealEnds')}</AppText>
+              <AppText variant="bodyLg">{currentDeal?.endDate ?? loan.formSnapshot.startDate}</AppText>
             </View>
           </View>
           {mortgageSummary?.nextDraftDeal && (
             <View style={styles.timelinePreviewMuted}>
               <View style={styles.timelineDotMuted} />
               <View>
-                <Text style={styles.timelineLabelMuted}>{t('mortgage.nextDealDraft')}</Text>
-                <Text style={styles.timelineDateMuted}>{mortgageSummary.nextDraftDeal.startDate}</Text>
+                <AppText variant="labelMd" tone="muted">{t('mortgage.nextDealDraft')}</AppText>
+                <AppText variant="bodyMd" tone="muted">{mortgageSummary.nextDraftDeal.startDate}</AppText>
               </View>
             </View>
           )}
         </Card>
 
-        <Card style={styles.timelineCard}>
-          <Text style={styles.sectionTitle}>{t('mortgage.recentEvents')}</Text>
+        <Card style={styles.timelineCard} padding={layout.cardPadding}>
+          <SectionHeader title={t('mortgage.recentEvents')} />
           {(mortgageSummary?.recentEvents.length ?? 0) > 0 ? (
             mortgageSummary?.recentEvents.map(event => (
               <EventRow key={event.id} event={event} currency={loan.currency} />
             ))
           ) : (
-            <Text style={styles.emptyEvents}>{t('mortgage.noEventsYet')}</Text>
+            <AppText variant="bodySm" tone="muted" style={styles.emptyEvents}>{t('mortgage.noEventsYet')}</AppText>
           )}
         </Card>
+
+        <View style={styles.quickActions}>
+          <QuickActionTile
+            label={t('mortgage.recordBalance')}
+            icon={<BalanceIcon />}
+            onPress={() => onOpenDetails()}
+          />
+          <QuickActionTile
+            label={t('mortgage.addOverpayment')}
+            icon={<PaymentIcon />}
+            onPress={() => onOpenDetails()}
+          />
+          <QuickActionTile
+            label={t('mortgage.addNextDeal')}
+            icon={<SwitchIcon />}
+            onPress={() => onOpenDetails()}
+          />
+          <QuickActionTile
+            label={t('mortgage.dealTimeline')}
+            icon={<TimelineIcon />}
+            onPress={() => onOpenDetails()}
+          />
+        </View>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -182,12 +247,12 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('mortgage.dashboard')} />
+      <ScreenHeader title={t('mortgage.dashboard')} variant="top-level" />
       {loans.length > 1 && (
         <View style={styles.carouselHint}>
-          <Text style={styles.carouselHintText}>
+          <AppText variant="helper" tone="muted" style={styles.carouselHintText}>
             {t('mortgage.dashboardPosition', { current: activeIndex + 1, total: loans.length })}
-          </Text>
+          </AppText>
           <View style={styles.dots}>
             {loans.map((loan, index) => (
               <View
@@ -196,7 +261,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
               />
             ))}
           </View>
-          <Text style={styles.carouselHintText}>{t('mortgage.dashboardSwipeHint')}</Text>
+          <AppText variant="helper" tone="muted" style={styles.carouselHintText}>{t('mortgage.dashboardSwipeHint')}</AppText>
         </View>
       )}
       <ScrollView
@@ -219,16 +284,16 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <Button
-          label={t('mortgage.viewDetails')}
-          onPress={() => openLoanDetails(activeLoan.id)}
-          variant="secondary"
-          style={styles.detailsButton}
-        />
-        <Button
           label={t('results.newCalculation')}
           onPress={onNewCalculation}
           leftIcon={<CalculatorIcon />}
           style={styles.newCalculationButton}
+        />
+        <Button
+          label={t('mortgage.viewDetails')}
+          onPress={() => openLoanDetails(activeLoan.id)}
+          variant="secondary"
+          style={styles.detailsButton}
         />
       </View>
     </View>
@@ -240,119 +305,115 @@ const styles = StyleSheet.create({
   carousel: { flex: 1 },
   cardPressable: { flex: 1 },
   slide: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingHorizontal: layout.headerPadding,
+    paddingTop: spacing.md,
+    paddingBottom: spacing['2xl'],
   },
-  titleBlock: { marginBottom: 18 },
-  lender: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textSecondary,
-    marginBottom: 4,
-  },
+  titleBlock: { marginBottom: spacing.lg },
   dashboardTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['3xl'],
-    fontWeight: fontWeights.extrabold,
-    color: colours.primary,
+    marginTop: spacing.xxs,
   },
-  balanceCard: { marginBottom: 14 },
+  balanceCard: { marginBottom: spacing.md, overflow: 'hidden' },
+  heroTopBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colours.tealDeep,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  heroIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  heroIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: colours.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    flex: 1,
+  },
   cardKicker: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textPrimary,
     textTransform: 'uppercase',
+    marginBottom: spacing.xxs,
   },
   balanceAmount: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes['3xl'],
-    fontWeight: fontWeights.extrabold,
-    color: colours.primary,
-    marginTop: 18,
+    marginTop: spacing.sm,
   },
   balanceDivider: {
     height: 1,
-    backgroundColor: colours.border,
-    marginVertical: 18,
+    backgroundColor: colours.borderSoft,
+    marginVertical: spacing.lg,
   },
-  balanceStats: { flexDirection: 'row', gap: 20 },
+  balanceStats: { flexDirection: 'row', gap: spacing.lg },
   balanceStat: { flex: 1 },
   statLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    marginBottom: 6,
-  },
-  statValue: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
+    marginBottom: spacing.xxs,
   },
   statSuffix: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
+    marginLeft: spacing.xxs,
   },
-  progressCard: { marginBottom: 14 },
+  progressCard: { marginBottom: spacing.md },
   progressHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  progressPercent: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.bold,
-    color: colours.secondary,
-  },
-  progressTrack: {
-    height: 14,
-    backgroundColor: colours.border,
-    borderRadius: 7,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colours.teal,
-    borderRadius: 7,
+    marginBottom: spacing.sm,
   },
   progressLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: spacing.sm,
   },
-  progressCaption: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
+  breakdownCard: {
+    marginBottom: spacing.md,
   },
-  timelineCard: { marginBottom: 14 },
-  sectionHeader: {
+  breakdownGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colours.border,
-    paddingBottom: 12,
-    marginBottom: 14,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
-  sectionTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
+  breakdownItem: {
+    width: '47%',
+    minHeight: 76,
+    paddingLeft: spacing.sm,
+    borderLeftWidth: 2,
+    borderLeftColor: colours.borderSoft,
+    justifyContent: 'center',
+    gap: spacing.xxs,
   },
+  breakdownItemAccent: {
+    borderLeftColor: colours.tealDeep,
+    backgroundColor: colours.successSurface,
+    borderRadius: radii.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+  },
+  timelineCard: { marginBottom: spacing.md },
   timelinePreview: {
     flexDirection: 'row',
-    gap: 14,
-    marginBottom: 14,
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   timelinePreviewMuted: {
     flexDirection: 'row',
-    gap: 14,
+    gap: spacing.sm,
     opacity: 0.65,
   },
   timelineDotActive: {
@@ -369,35 +430,11 @@ const styles = StyleSheet.create({
     backgroundColor: colours.border,
     marginTop: 6,
   },
-  timelineLabel: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textPrimary,
-  },
-  timelineDate: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.md,
-    color: colours.textPrimary,
-    marginTop: 4,
-  },
-  timelineLabelMuted: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  timelineDateMuted: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.md,
-    color: colours.textSecondary,
-    marginTop: 4,
-  },
   eventRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    paddingTop: 16,
+    gap: spacing.sm,
+    paddingTop: spacing.md,
   },
   eventIcon: {
     width: 40,
@@ -407,48 +444,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colours.focusRing,
   },
-  eventIconText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-  },
   eventCopy: { flex: 1 },
-  eventTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.semibold,
-    color: colours.textPrimary,
-  },
   eventMeta: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
     marginTop: 3,
   },
-  eventDate: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-  },
-  emptyEvents: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    marginTop: 12,
+  emptyEvents: { marginTop: spacing.sm },
+  quickActions: {
+    flexDirection: 'row',
+    marginTop: spacing.xs,
+    gap: spacing.xs,
   },
   carouselHint: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingHorizontal: layout.headerPadding,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colours.border,
+    borderBottomColor: colours.borderSoft,
     backgroundColor: colours.background,
   },
   carouselHintText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
     textAlign: 'center',
   },
   dots: {
@@ -461,25 +475,20 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: colours.border,
+    backgroundColor: colours.borderSoft,
   },
   dotActive: {
     width: 18,
     backgroundColor: colours.primary,
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: layout.headerPadding,
+    paddingTop: spacing.sm,
     backgroundColor: colours.background,
   },
   detailsButton: {
-    marginBottom: 10,
+    marginTop: spacing.sm,
   },
   newCalculationButton: {
-    shadowColor: colours.shadow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    elevation: 6,
   },
 });

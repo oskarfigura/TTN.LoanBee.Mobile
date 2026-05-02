@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { useLocale } from '@/hooks/useLocale';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
+import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LANGUAGES = [
@@ -22,55 +24,47 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('settings.title')} />
+      <ScreenHeader title={t('settings.title')} variant="top-level" />
       <ScrollView contentContainerStyle={styles.container}>
-        <Card style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('settings.language')}</Text>
-          <View style={styles.toggleRow}>
-            {LANGUAGES.map(lang => (
-              <TouchableOpacity
-                key={lang.code}
-                style={[styles.toggleBtn, language === lang.code && styles.toggleBtnActive]}
-                onPress={() => setLanguage(lang.code)}
-              >
-                <Text style={[styles.toggleText, language === lang.code && styles.toggleTextActive]}>
-                  {lang.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <Card style={styles.section} variant="accent" padding={layout.cardPadding}>
+          <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>{t('settings.language')}</AppText>
+          <SegmentedControl
+            value={language}
+            onChange={setLanguage}
+            options={LANGUAGES.map(lang => ({ label: lang.label, value: lang.code }))}
+          />
         </Card>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('settings.defaultCurrency')}</Text>
+        <Card style={styles.section} padding={layout.cardPadding}>
+          <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>{t('settings.defaultCurrency')}</AppText>
           <CurrencyPicker value={currency} onChange={setCurrency} />
         </Card>
 
-        <Card style={styles.section}>
+        <Card style={styles.section} padding={layout.cardPadding}>
           <TouchableOpacity
             style={styles.linkRow}
             onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
           >
-            <Text style={styles.linkText}>{t('settings.termsAndConditions')}</Text>
-            <Text style={styles.chevron}>›</Text>
+            <AppText variant="bodyMd" tone="accent">{t('settings.termsAndConditions')}</AppText>
+            <AppText variant="title2" tone="muted">›</AppText>
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity
             style={styles.linkRow}
             onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/privacy')}
           >
-            <Text style={styles.linkText}>{t('settings.privacyPolicy')}</Text>
-            <Text style={styles.chevron}>›</Text>
+            <AppText variant="bodyMd" tone="accent">{t('settings.privacyPolicy')}</AppText>
+            <AppText variant="title2" tone="muted">›</AppText>
           </TouchableOpacity>
         </Card>
 
-        <Text style={styles.version}>{t('settings.version')} {version}</Text>
+        <AppText variant="helper" tone="muted" style={styles.version}>{t('settings.version')} {version}</AppText>
         <View style={styles.footer}>
-          <Text style={styles.footerText}>{t('settings.copyright')}</Text>
+          <AppText variant="helper" tone="muted" style={styles.footerText}>{t('settings.copyright')}</AppText>
           <TouchableOpacity
             onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
           >
-            <Text style={styles.footerLink}>{t('settings.termsAndConditions').toUpperCase()}</Text>
+            <AppText variant="labelSm" tone="accent">{t('settings.termsAndConditions').toUpperCase()}</AppText>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -80,81 +74,34 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  container: { padding: 16, paddingBottom: 40 },
-  section: { marginBottom: 16 },
+  container: { padding: layout.screenPadding, paddingBottom: 40 },
+  section: { marginBottom: spacing.md },
   sectionLabel: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.bold,
-    color: colours.textSecondary,
-    letterSpacing: 0.5,
     textTransform: 'uppercase',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
   },
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colours.border,
-    overflow: 'hidden',
-    height: 44,
-  },
-  toggleBtn: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  toggleBtnActive: { backgroundColor: colours.primary },
-  toggleText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  toggleTextActive: { color: colours.white },
   linkRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
-  },
-  linkText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.primary,
-  },
-  chevron: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.lg,
-    color: colours.textSecondary,
+    paddingVertical: spacing.xxs,
   },
   divider: {
     height: 1,
-    backgroundColor: colours.border,
-    marginVertical: 8,
+    backgroundColor: colours.borderSoft,
+    marginVertical: spacing.sm,
   },
   version: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
     textAlign: 'center',
-    paddingTop: 8,
+    paddingTop: spacing.xs,
   },
   footer: {
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: spacing.lg,
     paddingHorizontal: 12,
     gap: 8,
   },
   footerText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
-  },
-  footerLink: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-    letterSpacing: 0.5,
   },
 });

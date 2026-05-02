@@ -1,35 +1,55 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, ActivityIndicator, View } from 'react-native';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { TouchableOpacity, StyleSheet, ViewStyle, ActivityIndicator, View } from 'react-native';
+import { AppText } from './AppText';
+import { colours, radii, spacing } from '@/theme';
 
 interface Props {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive' | 'icon-pill';
   disabled?: boolean;
   loading?: boolean;
   leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   style?: ViewStyle;
 }
 
-export const Button = ({ label, onPress, variant = 'primary', disabled, loading, leftIcon, style }: Props) => {
-  const bg = variant === 'primary' ? colours.primary : variant === 'secondary' ? colours.surface : 'transparent';
-  const fg = variant === 'primary' ? colours.white : colours.primary;
-  const border = variant === 'secondary' ? colours.border : 'transparent';
+export const Button = ({
+  label,
+  onPress,
+  variant = 'primary',
+  disabled,
+  loading,
+  leftIcon,
+  rightIcon,
+  style,
+}: Props) => {
+  const fg = variant === 'primary' || variant === 'destructive'
+    ? colours.white
+    : variant === 'ghost'
+      ? colours.primary
+      : colours.primaryInk;
 
   return (
     <TouchableOpacity
-      style={[styles.base, { backgroundColor: bg, borderColor: border, opacity: disabled ? 0.5 : 1 }, style]}
+      style={[styles.base, variantStyles[variant], disabled && styles.disabled, style]}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={0.84}
     >
       {loading ? (
         <ActivityIndicator color={fg} size="small" />
       ) : (
         <View style={styles.content}>
           {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
-          <Text style={[styles.label, { color: fg }]}>{label}</Text>
+          <AppText
+            variant="labelMd"
+            tone={variant === 'primary' || variant === 'destructive' ? 'inverse' : variant === 'secondary' ? 'default' : 'accent'}
+            style={styles.label}
+          >
+            {label}
+          </AppText>
+          {rightIcon ? <View style={[styles.icon, styles.iconAfter]}>{rightIcon}</View> : null}
         </View>
       )}
     </TouchableOpacity>
@@ -38,11 +58,11 @@ export const Button = ({ label, onPress, variant = 'primary', disabled, loading,
 
 const styles = StyleSheet.create({
   base: {
-    height: 52,
-    borderRadius: 26,
+    minHeight: 48,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing.lg,
     borderWidth: 1,
   },
   content: {
@@ -51,12 +71,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    marginRight: 8,
+    marginRight: spacing.xs,
+  },
+  iconAfter: {
+    marginRight: 0,
+    marginLeft: spacing.xs,
   },
   label: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.semibold,
-    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+});
+
+const variantStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: colours.primary,
+    borderColor: colours.primary,
+  },
+  secondary: {
+    backgroundColor: colours.surfaceRaised,
+    borderColor: colours.secondary,
+  },
+  ghost: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+  },
+  destructive: {
+    backgroundColor: colours.error,
+    borderColor: colours.error,
+  },
+  'icon-pill': {
+    backgroundColor: colours.surfaceRaised,
+    borderColor: colours.borderSoft,
   },
 });

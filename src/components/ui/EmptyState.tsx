@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { StyleSheet, View } from 'react-native';
+import { AppText } from './AppText';
+import { Card } from './Card';
+import { colours, radii, spacing } from '@/theme';
 
 interface Props {
   title: string;
@@ -9,9 +11,13 @@ interface Props {
 
 export const EmptyState = ({ title, subtitle }: Props) => (
   <View style={styles.container}>
-    <Text style={styles.emoji}>🐝</Text>
-    <Text style={styles.title}>{title}</Text>
-    {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+    <Card style={styles.card} variant="accent" padding={24}>
+      <View style={styles.iconWrap}>
+        <AppText variant="title1" tone="accent">🐝</AppText>
+      </View>
+      <AppText variant="title2" style={styles.title}>{title}</AppText>
+      {subtitle ? <AppText variant="bodyMd" tone="muted" style={styles.subtitle}>{subtitle}</AppText> : null}
+    </Card>
   </View>
 );
 
@@ -21,25 +27,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 32,
+    paddingHorizontal: 20,
   },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 16,
+  card: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  iconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: radii.full,
+    backgroundColor: colours.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
   },
   title: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.lg,
-    fontWeight: fontWeights.bold,
-    color: colours.textPrimary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   subtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
   },
 });

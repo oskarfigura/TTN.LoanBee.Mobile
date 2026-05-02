@@ -1,11 +1,22 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import {
+  AppTextInput,
+  FieldHint,
+  FieldLabel,
+  FormSection,
+  InputAffix,
+  InputSurface,
+  PillSelector,
+  SegmentedControl,
+} from '@/components/ui/FormPrimitives';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours, layout, spacing } from '@/theme';
 
 interface Props {
   currency: CurrencyCode;
@@ -112,99 +123,124 @@ export const DealEditorForm = ({
 
   return (
     <View>
-      <Text style={styles.helper}>{t('mortgage.bankBalanceTruth')}</Text>
+      <FormSection title="Core Details" accent style={styles.section}>
+        <FieldHint>{t('mortgage.bankBalanceTruth')}</FieldHint>
 
-      <Text style={styles.label}>{t('mortgage.dealName')}</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder={t('mortgage.dealNamePlaceholder')}
-        placeholderTextColor={colours.textSecondary}
-      />
-
-      <Text style={styles.label}>{t('save.lender')}</Text>
-      <LenderTextInput value={lender} onChange={setLender} />
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('mortgage.dealStartDate')}</Text>
-          <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} placeholder="2026-06-01" placeholderTextColor={colours.textSecondary} />
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('mortgage.dealName')}</FieldLabel>
+          <InputSurface>
+            <AppTextInput
+              value={name}
+              onChangeText={setName}
+              placeholder={t('mortgage.dealNamePlaceholder')}
+            />
+          </InputSurface>
         </View>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('mortgage.dealEndDate')}</Text>
-          <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} placeholder="2031-06-01" placeholderTextColor={colours.textSecondary} />
-        </View>
-      </View>
 
-      <View style={styles.termRow}>
-        {termOptions.map(option => (
-          <TouchableOpacity
-            key={option.years}
-            style={styles.termChip}
-            onPress={() => {
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('save.lender')}</FieldLabel>
+          <LenderTextInput value={lender} onChange={setLender} />
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <FieldLabel>{t('mortgage.dealStartDate')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput value={startDate} onChangeText={setStartDate} placeholder="2026-06-01" />
+            </InputSurface>
+          </View>
+          <View style={styles.half}>
+            <FieldLabel>{t('mortgage.dealEndDate')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput value={endDate} onChangeText={setEndDate} placeholder="2031-06-01" />
+            </InputSurface>
+          </View>
+        </View>
+      </FormSection>
+
+      <FormSection title="Rate & Term" style={styles.section}>
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
+          <InputSurface>
+            <AppTextInput keyboardType="decimal-pad" value={interestRate} onChangeText={setInterestRate} placeholder="4.29" />
+            <InputAffix trailing>%</InputAffix>
+          </InputSurface>
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <FieldLabel>Preset term</FieldLabel>
+          <PillSelector
+            value={name}
+            onChange={nextName => {
+              const option = termOptions.find(item => `${item.years}-year Fixed` === nextName);
+              if (!option) return;
               setEndDate(addYears(startDate, option.years));
-              setName(`${option.years}-year Fixed`);
+              setName(nextName);
             }}
-          >
-            <Text style={styles.termChipText}>{option.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.label}>{t('mortgage.openingBankBalance')}</Text>
-      <View style={styles.inputShell}>
-        <Text style={styles.affix}>{currencySymbol}</Text>
-        <TextInput style={styles.inputField} keyboardType="decimal-pad" value={openingBalance} onChangeText={setOpeningBalance} placeholder="238420" placeholderTextColor={colours.textSecondary} />
-      </View>
-
-      <Text style={styles.label}>{t('calculator.interestRate')}</Text>
-      <View style={styles.inputShell}>
-        <TextInput style={styles.inputField} keyboardType="decimal-pad" value={interestRate} onChangeText={setInterestRate} placeholder="4.29" placeholderTextColor={colours.textSecondary} />
-        <Text style={styles.affix}>%</Text>
-      </View>
-
-      <Text style={styles.label}>{t('mortgage.repaymentType')}</Text>
-      <View style={styles.segmented}>
-        {(['repayment', 'interestOnly'] as const).map(type => (
-          <TouchableOpacity
-            key={type}
-            style={[styles.segment, repaymentType === type && styles.segmentActive]}
-            onPress={() => setRepaymentType(type)}
-          >
-            <Text style={[styles.segmentText, repaymentType === type && styles.segmentTextActive]}>
-              {type === 'repayment' ? t('mortgage.repayment') : t('mortgage.interestOnly')}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.label}>{t('results.monthlyPayment')}</Text>
-      <View style={styles.inputShell}>
-        <Text style={styles.affix}>{currencySymbol}</Text>
-        <TextInput style={styles.inputField} keyboardType="decimal-pad" value={monthlyPayment} onChangeText={setMonthlyPayment} placeholder="1385" placeholderTextColor={colours.textSecondary} />
-      </View>
-
-      <Text style={styles.label}>{t('calculator.additionalPayment')}</Text>
-      <View style={styles.inputShell}>
-        <Text style={styles.affix}>{currencySymbol}</Text>
-        <TextInput style={styles.inputField} keyboardType="decimal-pad" value={regularOverpayment} onChangeText={setRegularOverpayment} placeholder="150" placeholderTextColor={colours.textSecondary} />
-      </View>
-
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('calculator.termYears')}</Text>
-          <TextInput style={styles.input} keyboardType="number-pad" value={remainingTermInYears} onChangeText={setRemainingTermInYears} placeholder="25" placeholderTextColor={colours.textSecondary} />
+            options={termOptions.map(option => ({
+              label: option.label,
+              value: `${option.years}-year Fixed`,
+            }))}
+          />
         </View>
-        <View style={styles.half}>
-          <Text style={styles.label}>{t('calculator.termMonths')}</Text>
-          <TextInput style={styles.input} keyboardType="number-pad" value={remainingTermInMonths} onChangeText={setRemainingTermInMonths} placeholder="0" placeholderTextColor={colours.textSecondary} />
-        </View>
-      </View>
 
-      {initialDeal.status === 'draft' && !canPublish && (
-        <Text style={styles.blockedHelp}>{t('mortgage.draftOnlyUntilCompleted')}</Text>
-      )}
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('mortgage.repaymentType')}</FieldLabel>
+          <SegmentedControl
+            value={repaymentType}
+            onChange={setRepaymentType}
+            options={[
+              { label: t('mortgage.repayment'), value: 'repayment' },
+              { label: t('mortgage.interestOnly'), value: 'interestOnly' },
+            ]}
+          />
+        </View>
+      </FormSection>
+
+      <FormSection title="Payments" accent style={styles.section}>
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('mortgage.openingBankBalance')}</FieldLabel>
+          <InputSurface>
+            <InputAffix>{currencySymbol}</InputAffix>
+            <AppTextInput keyboardType="decimal-pad" value={openingBalance} onChangeText={setOpeningBalance} placeholder="238420" />
+          </InputSurface>
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('results.monthlyPayment')}</FieldLabel>
+          <InputSurface>
+            <InputAffix>{currencySymbol}</InputAffix>
+            <AppTextInput keyboardType="decimal-pad" value={monthlyPayment} onChangeText={setMonthlyPayment} placeholder="1385" />
+          </InputSurface>
+        </View>
+
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
+          <InputSurface>
+            <InputAffix>{currencySymbol}</InputAffix>
+            <AppTextInput keyboardType="decimal-pad" value={regularOverpayment} onChangeText={setRegularOverpayment} placeholder="150" />
+          </InputSurface>
+        </View>
+
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <FieldLabel>{t('calculator.termYears')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput keyboardType="number-pad" value={remainingTermInYears} onChangeText={setRemainingTermInYears} placeholder="25" />
+            </InputSurface>
+          </View>
+          <View style={styles.half}>
+            <FieldLabel>{t('calculator.termMonths')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput keyboardType="number-pad" value={remainingTermInMonths} onChangeText={setRemainingTermInMonths} placeholder="0" />
+            </InputSurface>
+          </View>
+        </View>
+      </FormSection>
+
+      {initialDeal.status === 'draft' && !canPublish ? (
+        <AppText variant="bodySm" tone="muted" style={styles.blockedHelp}>{t('mortgage.draftOnlyUntilCompleted')}</AppText>
+      ) : null}
 
       {initialDeal.status === 'draft' ? (
         canPublish ? (
@@ -234,112 +270,23 @@ export const DealEditorForm = ({
 };
 
 const styles = StyleSheet.create({
-  helper: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    lineHeight: 20,
-    marginBottom: 10,
+  section: {
+    marginBottom: spacing.md,
   },
-  label: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textPrimary,
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colours.border,
-    minHeight: 48,
-    paddingHorizontal: 14,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textPrimary,
+  fieldGroup: {
+    gap: spacing.xs,
   },
   row: { flexDirection: 'row', gap: 12 },
   half: { flex: 1 },
-  termRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 10,
-  },
-  termChip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surface,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  termChipText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.xs,
-    fontWeight: fontWeights.semibold,
-    color: colours.primary,
-  },
-  inputShell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colours.surface,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colours.border,
-    minHeight: 48,
-    paddingHorizontal: 14,
-  },
-  inputField: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colours.textPrimary,
-    paddingVertical: 10,
-  },
-  affix: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.base,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  segmented: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: colours.border,
-    borderRadius: 12,
-    overflow: 'hidden',
-    minHeight: 46,
-    backgroundColor: colours.surface,
-  },
-  segment: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentActive: { backgroundColor: colours.primary },
-  segmentText: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  segmentTextActive: { color: colours.white },
   blockedHelp: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    lineHeight: 20,
-    marginTop: 16,
+    marginTop: spacing.md,
   },
   actions: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 24,
+    marginTop: spacing.lg,
   },
   action: { flex: 1 },
-  singleAction: { marginTop: 24 },
-  deleteAction: { marginTop: 8 },
+  singleAction: { marginTop: spacing.lg },
+  deleteAction: { marginTop: spacing.xs },
 });
