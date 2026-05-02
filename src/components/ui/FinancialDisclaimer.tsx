@@ -32,15 +32,17 @@ export const FinancialDisclaimer = ({ dismissible = false, style }: Props) => {
           </AppText>
         </TouchableOpacity>
         {dismissible ? (
-          <TouchableOpacity
-            style={styles.dismissButton}
-            onPress={() => setDismissed(true)}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={t('disclaimer.dismiss')}
-          >
-            <AppText variant="labelMd" tone="accent">X</AppText>
-          </TouchableOpacity>
+          <View style={styles.dismissSlot}>
+            <TouchableOpacity
+              style={styles.dismissButton}
+              onPress={() => setDismissed(true)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('disclaimer.dismiss')}
+            >
+              <AppText variant="labelMd" tone="accent" style={styles.dismissText}>X</AppText>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </View>
       {expanded && (
@@ -79,13 +81,23 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   dismissButton: {
-    width: 28,
-    height: 28,
+    width: 26,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.full,
+    borderRadius: 13,
     backgroundColor: colours.surfaceRaised,
     borderWidth: 1,
     borderColor: colours.border,
+  },
+  dismissSlot: {
+    width: 26,
+    height: 26,
+    flexGrow: 0,
+    flexShrink: 0,
+  },
+  dismissText: {
+    lineHeight: 15,
+    textAlign: 'center',
   },
 });

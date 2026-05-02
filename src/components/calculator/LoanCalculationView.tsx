@@ -123,7 +123,7 @@ export const LoanCalculationView = ({
       ) : null}
 
       {activeTab === 'summary' && (
-        <View style={styles.tabPanel}>
+        <View style={[styles.tabPanel, tabStyle === 'underline' && styles.underlineTabPanel]}>
           {summaryContent ?? (
             <LoanSummaryOverview
               result={result}
@@ -138,7 +138,7 @@ export const LoanCalculationView = ({
       )}
 
       {activeTab === 'charts' && (
-        <View style={styles.tabPanel}>
+        <View style={[styles.tabPanel, tabStyle === 'underline' && styles.underlineTabPanel]}>
           <Card style={styles.chartCard}>
             <View style={styles.chartHeader}>
               <Text style={styles.chartTitle}>{t('results.repaymentBreakdown')}</Text>
@@ -175,7 +175,7 @@ export const LoanCalculationView = ({
       )}
 
       {activeTab === 'schedule' && (
-        <Card style={[styles.chartCard, styles.scheduleCard]}>
+        <Card style={[styles.chartCard, styles.scheduleCard, tabStyle === 'underline' && styles.underlineTabPanel]}>
           <View style={[styles.chartHeader, styles.scheduleHeader]}>
             <Text style={[styles.chartTitle, styles.scheduleTitle]}>{t('results.amortisationTable')}</Text>
             <TouchableOpacity
@@ -209,7 +209,10 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   financialDisclaimer: {
-    marginTop: spacing.xxs,
+    marginTop: spacing.sm,
+  },
+  underlineTabPanel: {
+    marginTop: spacing.sm,
   },
   tabPanel: {
     marginTop: 2,

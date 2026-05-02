@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { HeaderBackButton } from '@react-navigation/elements';
 import Svg, { Path } from 'react-native-svg';
-import { colours, radii, spacing } from '@/theme';
+import { colours, radii } from '@/theme';
 
 interface Props {
   onPress: () => void;
@@ -18,11 +18,11 @@ export const HeaderBackAction = ({ onPress, variant = 'default' }: Props) => {
         activeOpacity={0.82}
         accessibilityRole="button"
       >
-        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+        <Svg width={21} height={21} viewBox="0 0 24 24" fill="none">
           <Path
-            d="M15 18l-6-6 6-6"
+            d="M19 12H5m7-7l-7 7 7 7"
             stroke={colours.primary}
-            strokeWidth={2.4}
+            strokeWidth={2.2}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -42,8 +42,8 @@ export const HeaderBackAction = ({ onPress, variant = 'default' }: Props) => {
 
 const styles = StyleSheet.create({
   circleButton: {
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.full,
@@ -55,6 +55,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
-    marginLeft: -spacing.xs,
   },
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './AppText';
-import { colours, fonts, fontWeights, layout, spacing } from '@/theme';
+import { colours, fonts, fontSizes, fontWeights, layout, spacing } from '@/theme';
 
 interface Props {
   title: string;
@@ -45,7 +45,7 @@ export const ScreenHeader = ({
               {leftAction ? <View style={styles.centerActionWrap}>{leftAction}</View> : null}
             </View>
             <View style={styles.centerTitleWrap}>
-              <AppText variant={compact ? 'title2' : 'title1'} style={[styles.plainTitle, styles.centerTitle]} numberOfLines={1}>
+              <AppText variant="title2" style={[styles.plainTitle, styles.centerTitle]} numberOfLines={1}>
                 {title}
               </AppText>
             </View>
@@ -183,6 +183,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   centerTitle: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    lineHeight: 25,
     textAlign: 'center',
   },
   centerActionSlot: {
