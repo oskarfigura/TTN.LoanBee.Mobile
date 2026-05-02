@@ -114,3 +114,15 @@ export const TimelineIcon = ({ color = colours.primary, size = 20 }: IconProps) 
     />
   </Svg>
 );
+
+export const ChevronRightIcon = ({ color = colours.primary, size = 16 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="m9 6 6 6-6 6"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);

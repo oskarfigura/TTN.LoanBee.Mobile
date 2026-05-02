@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './AppText';
-import { colours, layout, radii, spacing } from '@/theme';
+import { colours, fontWeights, layout, radii, spacing } from '@/theme';
 
 const logo = require('../../../assets/bee-logo.png');
 
@@ -29,22 +29,32 @@ export const ScreenHeader = ({
       <View style={styles.brandRow}>
         <View style={styles.leading}>
           {leftAction ? <View style={styles.actionWrap}>{leftAction}</View> : null}
-          <View style={[styles.brandLockup, compact && styles.brandLockupCompact]}>
-            <View style={[styles.logoBadge, compact && styles.logoBadgeCompact]}>
-              <Image source={logo} style={[styles.logo, compact && styles.logoCompact]} resizeMode="contain" />
-            </View>
-            <View style={styles.brandCopy}>
-              <AppText variant="labelSm" tone="muted" style={styles.brandEyebrow}>LoanBee</AppText>
-              <AppText
-                variant={compact ? 'title2' : 'title1'}
-                tone="accent"
-                style={styles.brandText}
-                numberOfLines={2}
-              >
+          {compact ? (
+            <View style={[styles.brandCopy, styles.brandCopyCompact]}>
+              <AppText variant="title2" style={styles.compactTitle} numberOfLines={2}>
                 {title}
               </AppText>
             </View>
-          </View>
+          ) : (
+            <View style={styles.brandCopy}>
+              <View style={styles.wordmarkRow}>
+                <AppText variant="title2" style={styles.wordmarkLoan}>
+                  Loan
+                </AppText>
+                <View style={styles.wordmarkBeePill}>
+                  <AppText variant="labelMd" tone="inverse" style={styles.wordmarkBeeText}>
+                    Bee
+                  </AppText>
+                </View>
+                <View style={styles.inlineBeeWrap}>
+                  <Image source={logo} style={styles.inlineBee} resizeMode="contain" />
+                </View>
+              </View>
+              <AppText variant="title1" style={styles.brandTitle} numberOfLines={2}>
+                {title}
+              </AppText>
+            </View>
+          )}
         </View>
         {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
       </View>
@@ -76,24 +86,61 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flex: 1,
   },
-  brandLockup: {
+  brandCopy: {
+    flex: 1,
+  },
+  brandCopyCompact: {
+    marginLeft: spacing.xs,
+    flex: 1,
+  },
+  wordmarkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    flexShrink: 1,
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
   },
-  brandLockupCompact: {
-    gap: spacing.sm,
+  wordmarkLoan: {
+    color: colours.primaryInk,
+    fontWeight: fontWeights.extrabold,
+    letterSpacing: 0.2,
   },
-  brandCopy: {
-    marginLeft: spacing.sm,
-    flex: 1,
+  wordmarkBeePill: {
+    minHeight: 24,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.full,
+    backgroundColor: colours.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colours.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  brandEyebrow: {
-    textTransform: 'uppercase',
+  wordmarkBeeText: {
+    fontWeight: fontWeights.bold,
   },
-  brandText: {
-    marginTop: 2,
+  inlineBeeWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceAccent,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+  },
+  inlineBee: {
+    width: 14,
+    height: 14,
+  },
+  brandTitle: {
+    marginTop: spacing.xs,
+    color: colours.textPrimary,
+    fontWeight: fontWeights.extrabold,
+  },
+  compactTitle: {
+    color: colours.textPrimary,
   },
   actionWrap: {
     minWidth: 32,
@@ -101,28 +148,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
-  },
-  logoBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colours.primarySoft,
-    borderWidth: 1,
-    borderColor: colours.surfaceStrong,
-  },
-  logoBadgeCompact: {
-    width: 32,
-    height: 32,
-  },
-  logo: {
-    width: 19,
-    height: 19,
-  },
-  logoCompact: {
-    width: 17,
-    height: 17,
   },
   rightAction: {
     marginLeft: spacing.sm,
