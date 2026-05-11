@@ -137,18 +137,20 @@ export const LoanInsightCard = ({
                 )}
               </>
             )}
-            <View style={styles.progressMetricGrid}>
-              {summary.progress.metrics.map(metric => (
-                <View key={metric.labelKey} style={styles.progressMetric}>
-                  <Text style={styles.metricLabel} numberOfLines={1}>
-                    {t(metric.labelKey)}
-                  </Text>
-                  <Text style={styles.progressMetricValue} numberOfLines={1} adjustsFontSizeToFit>
-                    {metric.value}
-                  </Text>
-                </View>
-              ))}
-            </View>
+            {summary.progress.metrics.length > 0 ? (
+              <View style={styles.progressMetricGrid}>
+                {summary.progress.metrics.map(metric => (
+                  <View key={metric.labelKey} style={styles.progressMetric}>
+                    <Text style={styles.metricLabel} numberOfLines={1}>
+                      {t(metric.labelKey)}
+                    </Text>
+                    <Text style={styles.progressMetricValue} numberOfLines={1} adjustsFontSizeToFit>
+                      {metric.value}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
             {summary.progress.savingsAmount ? (
               <View style={styles.savingsBadge}>
                 <Text style={styles.savingsText} numberOfLines={2}>

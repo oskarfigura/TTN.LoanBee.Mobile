@@ -70,11 +70,14 @@ export const buildResultSnapshot = (
 
 export const buildInitialDeal = (
   id: string,
-  loan: Pick<LoanGroup, 'category' | 'lender' | 'createdAt' | 'updatedAt' | 'formSnapshot' | 'resultSnapshot'>,
+  loan: Pick<LoanGroup, 'category' | 'lender' | 'createdAt' | 'updatedAt' | 'mortgageTermInMonths' | 'formSnapshot' | 'resultSnapshot'>,
 ): LoanDeal => {
-  const totalMonths = loan.resultSnapshot.totalTermInMonths
+  const totalMonths = loan.mortgageTermInMonths
+    || loan.resultSnapshot.totalTermInMonths
     || (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths
     || 12;
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
 
   return {
     id,
@@ -90,7 +93,7 @@ export const buildInitialDeal = (
     repaymentType: 'repayment',
     monthlyPayment: loan.resultSnapshot.monthlyPayments,
     regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
-    remainingTermInYears: loan.formSnapshot.termInYears,
-    remainingTermInMonths: loan.formSnapshot.termInMonths,
+    remainingTermInYears: years,
+    remainingTermInMonths: months,
   };
 };

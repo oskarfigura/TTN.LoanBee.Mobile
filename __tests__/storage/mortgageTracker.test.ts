@@ -1,12 +1,19 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  buildNextDealDraft,
+  canDeleteDeal,
   canActivateDeal,
+  formatDealDuration,
   getMortgageTrackerSummary,
+  getNextDealStartDate,
   getTimelineWarnings,
+  normaliseDealChain,
   projectDeal,
   recalculateLaterDealOpeningBalances,
   removeDealAndRecalculateLater,
+  removeLaterDealsAndEvents,
 } from '../../src/mortgage/tracker';
+import { buildMortgageProjection } from '../../src/mortgage/projection';
 import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
 import { LoanGroup } from '../../src/types/SavedLoan';
 
@@ -244,7 +251,7 @@ describe('mortgage tracker', () => {
     expect(updatedLoan.deals.find(deal => deal.id === 'next')?.openingBalance).toBe(205000);
   });
 
-  it('rebases later drafts after deleting an earlier draft', () => {
+  it('returns an existing draft instead of creating a second draft', () => {
     const completed = {
       ...makeMortgage().deals[0],
       status: 'completed' as const,
@@ -254,30 +261,142 @@ describe('mortgage tracker', () => {
         feesAdded: 0,
       },
     };
-    const firstDraft = {
+    const draft = {
       ...completed,
-      id: 'first-draft',
+      id: 'draft',
       status: 'draft' as const,
       startDate: '2031-06-02',
       endDate: '2036-06-02',
       openingBalance: 205000,
       completion: undefined,
     };
-    const secondDraft = {
-      ...firstDraft,
-      id: 'second-draft',
-      startDate: '2036-06-03',
-      endDate: '2041-06-03',
-      openingBalance: 180000,
-    };
     const loan = makeMortgage({
-      deals: [completed, firstDraft, secondDraft],
+      deals: [completed, draft],
     });
 
-    const updatedLoan = removeDealAndRecalculateLater(loan, firstDraft.id);
+    const nextDraft = buildNextDealDraft(loan, 'new-draft', '2031-01-01T00:00:00.000Z');
 
-    expect(updatedLoan.deals.map(deal => deal.id)).toEqual(['deal-current', 'second-draft']);
-    expect(updatedLoan.deals.find(deal => deal.id === 'second-draft')?.openingBalance).toBe(205000);
+    expect(nextDraft.id).toBe('draft');
+  });
+
+  it('builds the next draft without a date gap and calculates the remaining-term payment', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const loan = makeMortgage({ deals: [completed] });
+
+    const draft = buildNextDealDraft(loan, 'next', '2031-06-01T00:00:00.000Z');
+
+    expect(draft.startDate).toBe(getNextDealStartDate(completed));
+    expect(draft.openingBalance).toBe(205000);
+    expect(draft.remainingTermInYears).toBe(20);
+    expect(draft.remainingTermInMonths).toBe(0);
+    expect(draft.monthlyPayment).toBeGreaterThan(1200);
+  });
+
+  it('rebases a draft after completing the current deal', () => {
+    const current = makeMortgage().deals[0];
+    const draft = {
+      ...current,
+      id: 'draft',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 210000,
+    };
+    const completedCurrent = {
+      ...current,
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2030-12-15',
+        closingBalance: 215000,
+        feesAdded: 0,
+      },
+    };
+    const loan = makeMortgage({
+      deals: [completedCurrent, draft],
+    });
+
+    const updatedLoan = normaliseDealChain(loan, completedCurrent.id);
+    const updatedDraft = updatedLoan.deals.find(deal => deal.id === 'draft');
+
+    expect(updatedDraft?.startDate).toBe('2030-12-16');
+    expect(updatedDraft?.endDate).toBe('2035-12-16');
+    expect(updatedDraft?.openingBalance).toBe(215000);
+  });
+
+  it('only deletes the latest chronological deal', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const latest = {
+      ...completed,
+      id: 'latest',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      completion: undefined,
+    };
+    const loan = makeMortgage({
+      deals: [completed, latest],
+      events: [{
+        id: 'event-latest',
+        createdAt: '2031-07-01T00:00:00.000Z',
+        updatedAt: '2031-07-01T00:00:00.000Z',
+        dealId: 'latest',
+        type: 'note',
+        date: '2031-07-01',
+        note: 'Draft note',
+      }],
+    });
+
+    expect(canDeleteDeal(loan, completed.id)).toBe(false);
+    expect(removeDealAndRecalculateLater(loan, completed.id)).toBe(loan);
+
+    const updatedLoan = removeDealAndRecalculateLater(loan, latest.id);
+
+    expect(updatedLoan.deals.map(deal => deal.id)).toEqual(['deal-current']);
+    expect(updatedLoan.events).toHaveLength(0);
+  });
+
+  it('does not delete the sole first deal', () => {
+    const loan = makeMortgage({
+      events: [{
+        id: 'event-current',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+        dealId: 'deal-current',
+        type: 'note',
+        date: '2026-07-01',
+        note: 'Current note',
+      }],
+    });
+
+    const updatedLoan = removeDealAndRecalculateLater(loan, 'deal-current');
+
+    expect(canDeleteDeal(loan, 'deal-current')).toBe(false);
+    expect(updatedLoan).toBe(loan);
+    expect(updatedLoan.deals).toHaveLength(1);
+    expect(updatedLoan.events).toHaveLength(1);
+  });
+
+  it('formats deal durations for years, half-years, mixed terms, and months', () => {
+    expect(formatDealDuration(36, 'en')).toBe('3 years');
+    expect(formatDealDuration(30, 'en')).toBe('2.5 years');
+    expect(formatDealDuration(18, 'en')).toBe('18 months');
+    expect(formatDealDuration(27, 'en')).toBe('2 years 3 months');
   });
 
   it('reports timeline warnings for gaps, overlaps, incomplete active deals, and blocked drafts', () => {
@@ -414,5 +533,136 @@ describe('mortgage tracker', () => {
 
     expect(editedProjection.balance).toBeLessThan(originalProjection.balance);
     expect(deletedProjection.balance).toBeGreaterThan(editedProjection.balance);
+  });
+
+  it('aggregates completed and active deals into mortgage projection charts and schedule', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      id: 'completed',
+      status: 'completed' as const,
+      startDate: '2026-06-01',
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 210000,
+        feesAdded: 0,
+      },
+    };
+    const active = {
+      ...makeMortgage().deals[0],
+      id: 'active',
+      status: 'active' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 210000,
+      interestRate: 3.8,
+      monthlyPayment: 1300,
+      regularOverpayment: 200,
+      completion: undefined,
+    };
+    const loan = makeMortgage({
+      deals: [completed, active],
+      events: [
+        {
+          id: 'active-overpay',
+          createdAt: '2031-08-01T00:00:00.000Z',
+          updatedAt: '2031-08-01T00:00:00.000Z',
+          dealId: 'active',
+          type: 'lumpOverpayment',
+          date: '2031-08-01',
+          amount: 5000,
+        },
+        {
+          id: 'active-checkpoint',
+          createdAt: '2031-09-01T00:00:00.000Z',
+          updatedAt: '2031-09-01T00:00:00.000Z',
+          dealId: 'active',
+          type: 'balanceCheckpoint',
+          date: '2031-09-01',
+          balance: 202000,
+        },
+      ],
+    });
+
+    const projection = buildMortgageProjection(loan, new Date('2031-10-01T00:00:00'));
+
+    expect(projection.publishedDealCount).toBe(2);
+    expect(projection.points.some(point => point.dealId === 'completed')).toBe(true);
+    expect(projection.points.some(point => point.dealId === 'active')).toBe(true);
+    expect(projection.currentBalance).toBeLessThan(202000);
+    expect(projection.loanChartMonthlyArray.length).toBe(projection.tableItems.length + 1);
+    expect(projection.overpaymentSavingsEstimate).toBeGreaterThan(0);
+  });
+
+  it('excludes draft deals from mortgage projection totals and chart points', () => {
+    const draft = {
+      ...makeMortgage().deals[0],
+      id: 'draft',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 999999,
+      interestRate: 12,
+    };
+    const loan = makeMortgage({
+      deals: [makeMortgage().deals[0], draft],
+    });
+
+    const projection = buildMortgageProjection(loan, new Date('2026-10-01T00:00:00'));
+
+    expect(projection.publishedDealCount).toBe(1);
+    expect(projection.draftDealCount).toBe(1);
+    expect(projection.points.some(point => point.dealId === 'draft')).toBe(false);
+    expect(projection.loanChartRemainingArray).not.toContain(999999);
+  });
+
+  it('removes later deals and their events when correcting a completed deal', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      id: 'completed',
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const next = {
+      ...completed,
+      id: 'next',
+      status: 'active' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 205000,
+      completion: undefined,
+    };
+    const loan = makeMortgage({
+      deals: [completed, next],
+      events: [
+        {
+          id: 'keep',
+          createdAt: '2030-01-01T00:00:00.000Z',
+          updatedAt: '2030-01-01T00:00:00.000Z',
+          dealId: 'completed',
+          type: 'note',
+          date: '2030-01-01',
+          note: 'Historic note',
+        },
+        {
+          id: 'remove',
+          createdAt: '2032-01-01T00:00:00.000Z',
+          updatedAt: '2032-01-01T00:00:00.000Z',
+          dealId: 'next',
+          type: 'lumpOverpayment',
+          date: '2032-01-01',
+          amount: 1000,
+        },
+      ],
+    });
+
+    const corrected = removeLaterDealsAndEvents(loan, completed.id);
+
+    expect(corrected.deals.map(deal => deal.id)).toEqual(['completed']);
+    expect(corrected.events.map(event => event.id)).toEqual(['keep']);
   });
 });

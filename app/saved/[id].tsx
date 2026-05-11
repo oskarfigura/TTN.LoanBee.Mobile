@@ -1,15 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, View, Text, StyleSheet } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
 import { LoanSummaryOverview } from '@/components/calculator/LoanSummaryOverview';
+import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
-import { colours, fonts, fontSizes, layout, spacing } from '@/theme';
+import { AppText } from '@/components/ui/AppText';
+import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
+import { colours, fonts, fontSizes, fontWeights, layout, radii, spacing } from '@/theme';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MortgageGroupDetail } from '@/components/loans/MortgageGroupDetail';
+import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -20,6 +23,9 @@ export default function LoanDetailScreen() {
   const navigation = useNavigation();
   const { id, fromSave } = useLocalSearchParams<{ id: string; fromSave?: string }>();
   const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
+  const [mortgageMenuVisible, setMortgageMenuVisible] = useState(false);
+  const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [renameValue, setRenameValue] = useState(loan?.nickname ?? '');
   const allowSavedBackRef = useRef(false);
 
   const refresh = useCallback(() => {
@@ -60,6 +66,7 @@ export default function LoanDetailScreen() {
 
   const handleDelete = useCallback(() => {
     if (!loan) return;
+    setMortgageMenuVisible(false);
 
     Alert.alert(
       t('saved.delete'),
@@ -77,6 +84,27 @@ export default function LoanDetailScreen() {
       ],
     );
   }, [loan, router, t]);
+
+  const openRenameModal = useCallback(() => {
+    if (!loan) return;
+    setMortgageMenuVisible(false);
+    setRenameValue(loan.nickname);
+    setRenameModalVisible(true);
+  }, [loan]);
+
+  const handleRename = useCallback(() => {
+    if (!loan) return;
+    const nickname = renameValue.trim();
+    if (!nickname) return;
+
+    savedLoansStorage.update({
+      ...loan,
+      nickname,
+      updatedAt: new Date().toISOString(),
+    });
+    setRenameModalVisible(false);
+    refresh();
+  }, [loan, refresh, renameValue]);
 
   if (!loan || !result) {
     return (
@@ -109,37 +137,93 @@ export default function LoanDetailScreen() {
   );
 
   if (loan.category === 'mortgage') {
+    const mortgageHeaderMenu = (
+      <TouchableOpacity
+        style={styles.headerMenuButton}
+        onPress={() => setMortgageMenuVisible(true)}
+        activeOpacity={0.84}
+        accessibilityRole="button"
+        accessibilityLabel={t('mortgage.mortgageActions')}
+      >
+        <MoreIcon color={colours.primary} size={22} />
+      </TouchableOpacity>
+    );
+
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
-          title={t('saved.loanDetail')}
+          title={t('mortgage.summaryTitle')}
           leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
+          rightAction={mortgageHeaderMenu}
           showBottomBorder={false}
           backgroundColor={colours.background}
           titleAlign="center"
         />
-        <ScrollView contentContainerStyle={styles.container}>
-          <LoanCalculationView
-            result={result}
-            startDate={loan.formSnapshot.startDate}
-            currency={loan.currency}
-            tabStyle="underline"
-            showFinancialDisclaimer
-            summaryContent={(
-              <>
-                <MortgageGroupDetail
-                  loan={loan}
-                  onTogglePinned={() => {
-                    savedLoansStorage.togglePinned(loan.id);
-                    refresh();
-                  }}
-                  onLoanUpdated={refresh}
+        <MortgageDetailView
+          loan={loan}
+          onTogglePinned={() => {
+            savedLoansStorage.togglePinned(loan.id);
+            refresh();
+          }}
+          onLoanUpdated={refresh}
+        />
+        <Modal
+          visible={mortgageMenuVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setMortgageMenuVisible(false)}
+        >
+          <Pressable style={styles.modalScrim} onPress={() => setMortgageMenuVisible(false)}>
+            <Pressable style={styles.actionMenu}>
+              <TouchableOpacity style={styles.actionMenuRow} onPress={openRenameModal} activeOpacity={0.84}>
+                <Text style={styles.actionMenuText}>{t('mortgage.renameMortgage')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionMenuRow} onPress={handleDelete} activeOpacity={0.84}>
+                <Text style={[styles.actionMenuText, styles.actionMenuDanger]}>{t('mortgage.deleteMortgage')}</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+        <Modal
+          visible={renameModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setRenameModalVisible(false)}
+        >
+          <Pressable style={styles.modalScrim} onPress={() => setRenameModalVisible(false)}>
+            <Pressable style={styles.renameDialog}>
+              <AppText variant="title2">{t('mortgage.renameMortgage')}</AppText>
+              <AppText variant="bodySm" tone="muted" style={styles.renameHelp}>
+                {t('mortgage.renameMortgageHelp')}
+              </AppText>
+              <View style={styles.renameField}>
+                <FieldLabel>{t('save.nickname')}</FieldLabel>
+                <InputSurface>
+                  <AppTextInput
+                    value={renameValue}
+                    onChangeText={setRenameValue}
+                    placeholder={t('save.nicknamePlaceholder')}
+                    autoFocus
+                  />
+                </InputSurface>
+              </View>
+              <View style={styles.renameActions}>
+                <Button
+                  label={t('save.cancel')}
+                  onPress={() => setRenameModalVisible(false)}
+                  variant="ghost"
+                  style={styles.renameAction}
                 />
-                {manageButton}
-              </>
-            )}
-          />
-        </ScrollView>
+                <Button
+                  label={t('edit.save')}
+                  onPress={handleRename}
+                  disabled={!renameValue.trim()}
+                  style={styles.renameAction}
+                />
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -205,5 +289,70 @@ const styles = StyleSheet.create({
   detailActions: {
     marginTop: 8,
     gap: spacing.sm,
+  },
+  headerMenuButton: {
+    width: 42,
+    height: 42,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+  },
+  modalScrim: {
+    flex: 1,
+    backgroundColor: colours.modalScrim,
+    paddingHorizontal: layout.screenPadding,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 92,
+  },
+  actionMenu: {
+    width: 232,
+    borderRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    overflow: 'hidden',
+  },
+  actionMenuRow: {
+    minHeight: 52,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+  },
+  actionMenuText: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.semibold,
+    color: colours.textPrimary,
+  },
+  actionMenuDanger: {
+    color: colours.error,
+  },
+  renameDialog: {
+    alignSelf: 'stretch',
+    marginTop: 96,
+    borderRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    padding: spacing.lg,
+  },
+  renameHelp: {
+    marginTop: spacing.xs,
+  },
+  renameField: {
+    marginTop: spacing.md,
+  },
+  renameActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  renameAction: {
+    flex: 1,
   },
 });

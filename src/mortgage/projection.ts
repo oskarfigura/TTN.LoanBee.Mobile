@@ -1,0 +1,303 @@
+import { getCurrentDeal, getDraftDeals, getPublishedDeals } from '@/mortgage/tracker';
+import { LoanDeal, LoanGroup, MortgageEvent } from '@/types/SavedLoan';
+
+export interface MortgageProjectionPoint {
+  itemNo: number;
+  date: string;
+  dealId: string;
+  dealName: string;
+  openingBalance: number;
+  scheduledPayment: number;
+  regularOverpayment: number;
+  lumpOverpayment: number;
+  totalPayment: number;
+  principal: number;
+  interest: number;
+  closingBalance: number;
+  isProjected: boolean;
+}
+
+export interface MortgageProjection {
+  points: MortgageProjectionPoint[];
+  tableItems: Array<{
+    itemNo: number;
+    remaining: string;
+    principal: string;
+    interest: string;
+    ending: string;
+  }>;
+  loanChartMonthlyArray: number[];
+  loanChartInterestArray: number[];
+  loanChartRemainingArray: number[];
+  loanChartLabelArray: string[];
+  openingBalance: number;
+  currentBalance: number;
+  closingBalance: number;
+  totalAmountPaid: number;
+  totalInterestPaid: number;
+  totalPrincipalPaid: number;
+  overpaymentSavingsEstimate: number;
+  projectedEndDate?: string;
+  currentDealEndDate?: string;
+  publishedDealCount: number;
+  draftDealCount: number;
+}
+
+const toMoney = (value: number): number => +Math.max(0, value).toFixed(2);
+
+const parseDate = (dateString: string): Date => {
+  const date = new Date(`${dateString}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? new Date(0) : date;
+};
+
+const monthStart = (dateString: string): Date => {
+  const date = parseDate(dateString);
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+};
+
+const dateToIso = (date: Date): string => date.toISOString().split('T')[0];
+
+const monthKey = (dateString: string): string => dateString.slice(0, 7);
+
+const addMonths = (date: Date, months: number): Date => (
+  new Date(date.getFullYear(), date.getMonth() + months, 1)
+);
+
+const addMonthsIso = (dateString: string, months: number): string => (
+  dateToIso(addMonths(monthStart(dateString), months))
+);
+
+const monthsBetween = (startDate: string, endDate: string): number => {
+  const start = monthStart(startDate);
+  const end = monthStart(endDate);
+  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
+};
+
+const getDealEvents = (events: MortgageEvent[], dealId: string): MortgageEvent[] => (
+  events
+    .filter(event => event.dealId === dealId)
+    .sort((a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime())
+);
+
+const getDealProjectionMonths = (deal: LoanDeal): number => {
+  if (deal.status === 'completed' && deal.completion) {
+    return monthsBetween(deal.startDate, deal.completion.completedAt);
+  }
+
+  const remainingTermMonths = (deal.remainingTermInYears * 12) + deal.remainingTermInMonths;
+  const dealTermMonths = monthsBetween(deal.startDate, deal.endDate);
+
+  return Math.max(remainingTermMonths, dealTermMonths, 1);
+};
+
+const buildEmptyProjection = (loan: LoanGroup): MortgageProjection => {
+  const openingBalance = loan.formSnapshot.loanAmount;
+
+  return {
+    points: [],
+    tableItems: [],
+    loanChartMonthlyArray: [0],
+    loanChartInterestArray: [0],
+    loanChartRemainingArray: [openingBalance],
+    loanChartLabelArray: [],
+    openingBalance,
+    currentBalance: openingBalance,
+    closingBalance: openingBalance,
+    totalAmountPaid: 0,
+    totalInterestPaid: 0,
+    totalPrincipalPaid: 0,
+    overpaymentSavingsEstimate: 0,
+    currentDealEndDate: getCurrentDeal(loan)?.endDate,
+    publishedDealCount: 0,
+    draftDealCount: getDraftDeals(loan).length,
+  };
+};
+
+const buildProjection = (
+  loan: LoanGroup,
+  asOf: Date,
+  includeOverpayments: boolean,
+): Omit<MortgageProjection, 'overpaymentSavingsEstimate'> => {
+  const deals = getPublishedDeals(loan);
+  if (deals.length === 0) return buildEmptyProjection(loan);
+
+  const openingBalance = deals[0].openingBalance;
+  const asOfMonth = monthStart(dateToIso(asOf)).getTime();
+  const points: MortgageProjectionPoint[] = [];
+  const loanChartMonthlyArray: number[] = [0];
+  const loanChartInterestArray: number[] = [0];
+  const loanChartRemainingArray: number[] = [openingBalance];
+  const loanChartLabelArray: string[] = [];
+
+  let runningPaid = 0;
+  let runningInterest = 0;
+  let currentBalance = openingBalance;
+  let currentBalanceCaptured = false;
+  let closingBalance = openingBalance;
+  let projectedEndDate: string | undefined;
+
+  deals.forEach(deal => {
+    const dealEvents = getDealEvents(loan.events, deal.id);
+    const monthlyRate = deal.interestRate / 100 / 12;
+    const maxMonths = getDealProjectionMonths(deal);
+    let balance = deal.openingBalance;
+    let endedByPayoff = false;
+
+    for (let month = 0; month < maxMonths && !endedByPayoff; month += 1) {
+      const cursor = addMonths(monthStart(deal.startDate), month);
+      const cursorIso = dateToIso(cursor);
+      const key = monthKey(cursorIso);
+      const eventsInMonth = dealEvents.filter(event => monthKey(event.date) === key);
+      const checkpoints = eventsInMonth
+        .filter(event => event.type === 'balanceCheckpoint' && typeof event.balance === 'number');
+      const checkpoint = checkpoints[checkpoints.length - 1];
+
+      if (checkpoint?.balance !== undefined) {
+        balance = checkpoint.balance;
+      }
+
+      const opening = balance;
+      const interest = toMoney(opening * monthlyRate);
+      const hasSkippedPayment = eventsInMonth.some(event => (
+        event.type === 'missedPayment' || event.type === 'paymentHoliday'
+      ));
+      const scheduledPayment = hasSkippedPayment ? 0 : deal.monthlyPayment;
+      const regularOverpayment = includeOverpayments && !hasSkippedPayment ? deal.regularOverpayment : 0;
+      const lumpOverpayment = includeOverpayments
+        ? eventsInMonth
+          .filter(event => event.type === 'lumpOverpayment' && typeof event.amount === 'number')
+          .reduce((sum, event) => sum + (event.amount ?? 0), 0)
+        : 0;
+      const requestedPayment = Math.max(0, scheduledPayment + regularOverpayment + lumpOverpayment);
+      const maxPayment = Math.max(0, opening + interest);
+      const totalPayment = toMoney(Math.min(requestedPayment, maxPayment));
+      const closing = toMoney(opening + interest - totalPayment);
+      const principal = toMoney(Math.max(0, opening - closing));
+      const point: MortgageProjectionPoint = {
+        itemNo: points.length + 1,
+        date: cursorIso,
+        dealId: deal.id,
+        dealName: deal.name,
+        openingBalance: toMoney(opening),
+        scheduledPayment: toMoney(Math.min(scheduledPayment, totalPayment)),
+        regularOverpayment: toMoney(Math.min(regularOverpayment, Math.max(totalPayment - scheduledPayment, 0))),
+        lumpOverpayment: toMoney(Math.min(lumpOverpayment, Math.max(totalPayment - scheduledPayment - regularOverpayment, 0))),
+        totalPayment,
+        principal,
+        interest,
+        closingBalance: closing,
+        isProjected: cursor.getTime() > asOfMonth,
+      };
+
+      points.push(point);
+      runningPaid = toMoney(runningPaid + totalPayment);
+      runningInterest = toMoney(runningInterest + interest);
+      loanChartMonthlyArray.push(runningPaid);
+      loanChartInterestArray.push(runningInterest);
+      loanChartRemainingArray.push(closing);
+      loanChartLabelArray.push(String(point.itemNo));
+      projectedEndDate = cursorIso;
+
+      if (cursor.getTime() <= asOfMonth) {
+        currentBalance = closing;
+        currentBalanceCaptured = true;
+      }
+
+      balance = closing;
+      closingBalance = closing;
+      endedByPayoff = closing <= 0;
+    }
+
+    if (deal.status === 'completed' && deal.completion) {
+      const bankClosingBalance = toMoney(deal.completion.closingBalance);
+      const dealPoints = points.filter(point => point.dealId === deal.id);
+      const lastPoint = dealPoints[dealPoints.length - 1];
+
+      if (lastPoint) {
+        const principalAdjustment = Math.max(0, lastPoint.closingBalance - bankClosingBalance);
+        const interestAdjustment = Math.max(0, bankClosingBalance - lastPoint.closingBalance);
+
+        lastPoint.principal = toMoney(lastPoint.principal + principalAdjustment);
+        lastPoint.interest = toMoney(lastPoint.interest + interestAdjustment);
+        lastPoint.closingBalance = bankClosingBalance;
+        loanChartRemainingArray[loanChartRemainingArray.length - 1] = bankClosingBalance;
+        runningInterest = toMoney(runningInterest + interestAdjustment);
+        loanChartInterestArray[loanChartInterestArray.length - 1] = runningInterest;
+      } else {
+        points.push({
+          itemNo: points.length + 1,
+          date: deal.completion.completedAt,
+          dealId: deal.id,
+          dealName: deal.name,
+          openingBalance: toMoney(deal.openingBalance),
+          scheduledPayment: 0,
+          regularOverpayment: 0,
+          lumpOverpayment: 0,
+          totalPayment: 0,
+          principal: toMoney(Math.max(0, deal.openingBalance - bankClosingBalance)),
+          interest: 0,
+          closingBalance: bankClosingBalance,
+          isProjected: parseDate(deal.completion.completedAt).getTime() > asOfMonth,
+        });
+        loanChartMonthlyArray.push(runningPaid);
+        loanChartInterestArray.push(runningInterest);
+        loanChartRemainingArray.push(bankClosingBalance);
+        loanChartLabelArray.push(String(points.length));
+      }
+
+      const completionMonth = monthStart(deal.completion.completedAt).getTime();
+      if (completionMonth <= asOfMonth) {
+        currentBalance = bankClosingBalance;
+        currentBalanceCaptured = true;
+      }
+      closingBalance = bankClosingBalance;
+      projectedEndDate = deal.completion.completedAt;
+    }
+  });
+
+  if (!currentBalanceCaptured) currentBalance = openingBalance;
+
+  const tableItems = points.map(point => ({
+    itemNo: point.itemNo,
+    remaining: point.openingBalance.toFixed(2),
+    principal: point.principal.toFixed(2),
+    interest: point.interest.toFixed(2),
+    ending: point.closingBalance.toFixed(2),
+  }));
+
+  return {
+    points,
+    tableItems,
+    loanChartMonthlyArray,
+    loanChartInterestArray,
+    loanChartRemainingArray,
+    loanChartLabelArray,
+    openingBalance: toMoney(openingBalance),
+    currentBalance: toMoney(currentBalance),
+    closingBalance: toMoney(closingBalance),
+    totalAmountPaid: toMoney(runningPaid),
+    totalInterestPaid: toMoney(runningInterest),
+    totalPrincipalPaid: toMoney(Math.max(0, openingBalance - currentBalance)),
+    projectedEndDate,
+    currentDealEndDate: getCurrentDeal(loan, asOf)?.endDate,
+    publishedDealCount: deals.length,
+    draftDealCount: getDraftDeals(loan).length,
+  };
+};
+
+export const buildMortgageProjection = (
+  loan: LoanGroup,
+  asOf = new Date(),
+): MortgageProjection => {
+  const projection = buildProjection(loan, asOf, true);
+  const baselineProjection = buildProjection(loan, asOf, false);
+
+  return {
+    ...projection,
+    overpaymentSavingsEstimate: toMoney(baselineProjection.totalInterestPaid - projection.totalInterestPaid),
+  };
+};
+
+export const getProjectedDealEndDate = (deal: LoanDeal): string => (
+  addMonthsIso(deal.startDate, getDealProjectionMonths(deal))
+);

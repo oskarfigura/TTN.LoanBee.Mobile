@@ -139,7 +139,18 @@ describe('savedLoansStorage', () => {
     expect(migrated).toHaveLength(1);
     expect(migrated[0].status).toBe('tracked');
     expect(migrated[0].pinnedToDashboard).toBe(false);
+    expect(migrated[0].mortgageTermInMonths).toBe(120);
     expect(migrated[0].deals).toHaveLength(1);
     expect(migrated[0].deals[0].openingBalance).toBe(270000);
+  });
+
+  it('backfills mortgage term on existing loan groups', () => {
+    const loan = makeLoan();
+    const { mortgageTermInMonths, ...withoutMortgageTerm } = loan;
+    void mortgageTermInMonths;
+
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([withoutMortgageTerm]));
+
+    expect(savedLoansStorage.getAll()[0].mortgageTermInMonths).toBe(120);
   });
 });

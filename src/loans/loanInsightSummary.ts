@@ -1,5 +1,6 @@
 import { CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
+import { buildMortgageProjection } from '@/mortgage/projection';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { LoanResult } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
@@ -73,6 +74,11 @@ const buildSavedProgress = (
 ): LoanInsightProgress => {
   if (loan.category === 'mortgage') {
     const mortgageSummary = getMortgageTrackerSummary(loan, asOf);
+    const mortgageProjection = buildMortgageProjection(loan, asOf);
+    const interestPaidEstimate = +mortgageProjection.points
+      .filter(point => !point.isProjected)
+      .reduce((sum, point) => sum + point.interest, 0)
+      .toFixed(2);
     const progress = clamp(mortgageSummary.balanceProgress);
 
     return {
@@ -93,12 +99,12 @@ const buildSavedProgress = (
       metrics: [
         {
           labelKey: 'mortgage.estimatedInterestPaid',
-          value: formatCurrency(mortgageSummary.interestPaidEstimate, loan.currency),
+          value: formatCurrency(interestPaidEstimate, loan.currency),
         },
-        {
+        ...(mortgageProjection.overpaymentSavingsEstimate > 0 ? [{
           labelKey: 'mortgage.estimatedSavings',
-          value: formatCurrency(mortgageSummary.overpaymentSavingsEstimate, loan.currency),
-        },
+          value: formatCurrency(mortgageProjection.overpaymentSavingsEstimate, loan.currency),
+        }] : []),
       ],
     };
   }
@@ -222,11 +228,16 @@ export const buildSavedLoanSummary = (
   const mortgageSummary = loan.category === 'mortgage'
     ? getMortgageTrackerSummary(loan, asOf)
     : null;
+  const mortgageProjection = mortgageSummary
+    ? buildMortgageProjection(loan, asOf)
+    : null;
   const currentDeal = mortgageSummary?.currentDeal;
   const totalMonths = Math.max(loan.resultSnapshot.totalTermInMonths, result.tableItems.length);
   const monthlyPayment = currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments;
   const interestRate = currentDeal?.interestRate ?? loan.formSnapshot.interest;
-  const payoffDate = formatPayoffDate(loan.formSnapshot.startDate, totalMonths, locale);
+  const payoffDate = mortgageProjection?.projectedEndDate
+    ? formatFriendlyDate(mortgageProjection.projectedEndDate, locale)
+    : formatPayoffDate(loan.formSnapshot.startDate, totalMonths, locale);
 
   return {
     context: 'saved',
@@ -254,11 +265,11 @@ export const buildSavedLoanSummary = (
       }] : []),
       {
         labelKey: 'results.totalInterest',
-        value: formatCurrency(result.totalInterestPaid, loan.currency),
+        value: formatCurrency(mortgageProjection?.totalInterestPaid ?? result.totalInterestPaid, loan.currency),
       },
       {
         labelKey: 'results.totalCost',
-        value: formatCurrency(result.totalAmountPaid, loan.currency),
+        value: formatCurrency(mortgageProjection?.totalAmountPaid ?? result.totalAmountPaid, loan.currency),
       },
     ],
     progress: buildSavedProgress(loan, result, asOf),

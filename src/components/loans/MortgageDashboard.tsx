@@ -24,6 +24,7 @@ import {
   buildSavedLoanDashboardProgress,
   buildSavedLoanSummary,
 } from '@/loans/loanInsightSummary';
+import { getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, fonts, fontSizes, fontWeights, layout, spacing } from '@/theme';
@@ -73,13 +74,15 @@ const LoanDashboardCard = ({
   onOpenDetails: () => void;
 }) => {
   const { t, i18n } = useTranslation();
-  const { progress, summary } = useMemo(() => {
+  const { progress, summary, dealLender } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
     const asOf = new Date();
+    const mortgageSummary = getMortgageTrackerSummary(loan, asOf);
 
     return {
       progress: buildSavedLoanDashboardProgress(loan, result, asOf),
       summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
+      dealLender: mortgageSummary.currentDeal?.lender ?? loan.deals[0]?.lender ?? loan.lender,
     };
   }, [i18n.language, loan]);
 
@@ -94,7 +97,7 @@ const LoanDashboardCard = ({
           summary={summary}
           density="compact"
           title={loan.nickname}
-          subtitle={loan.lender || t(`saved.category.${loan.category}`)}
+          subtitle={dealLender || t(`saved.category.${loan.category}`)}
           headerAction={<Badge label={t(`saved.category.${loan.category}`)} variant="ghost" />}
           style={styles.summaryCard}
           footerContent={(

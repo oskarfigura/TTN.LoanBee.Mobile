@@ -9,11 +9,14 @@ import { PlusIcon } from '@/components/loans/LoanIcons';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
 import {
+  canDeleteDeal,
+  formatDealDuration,
   getCurrentDeal,
   getDraftDeals,
+  getLatestDeal,
   getPublishedDeals,
   getTimelineWarnings,
-  removeDealAndRecalculateLater,
+  removeLatestDealAndEvents,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fonts, fontSizes, fontWeights, radii } from '@/theme';
@@ -26,22 +29,43 @@ interface Props {
   onLoanUpdated?: (loan: SavedLoan) => void;
 }
 
+export const MortgageWarningBanners = ({ loan }: { loan: SavedLoan }) => {
+  const warnings = useMemo(() => getTimelineWarnings(loan), [loan]);
+
+  if (warnings.length === 0) return null;
+
+  return (
+    <View style={styles.warningList}>
+      {warnings.map(warning => (
+        <Card key={`${warning.type}-${warning.dealId ?? 'group'}`} style={styles.warningCard}>
+          <Text style={styles.warningTitle}>{warning.title}</Text>
+          <Text style={styles.warningText}>{warning.message}</Text>
+        </Card>
+      ))}
+    </View>
+  );
+};
+
 const StatusBadge = ({ label, variant = 'neutral' }: { label: string; variant?: 'neutral' | 'active' | 'success' }) => (
   <Badge label={label} variant={variant} />
 );
 
 const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <View style={styles.dealStats}>
       <View style={styles.dealStat}>
+        <Text style={styles.statLabel}>{t('mortgage.duration')}</Text>
+        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatDealDuration(deal, i18n.language)}</Text>
+      </View>
+      <View style={styles.dealStat}>
         <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
-        <Text style={styles.statValue}>{deal.interestRate}%</Text>
+        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{deal.interestRate}%</Text>
       </View>
       <View style={styles.dealStat}>
         <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
-        <Text style={styles.statValue}>{formatCurrency(deal.monthlyPayment, currency)}</Text>
+        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(deal.monthlyPayment, currency)}</Text>
       </View>
     </View>
   );
@@ -54,27 +78,31 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
     drafts: getDraftDeals(loan),
     current: getCurrentDeal(loan),
     completed: getPublishedDeals(loan).filter(deal => deal.status === 'completed').reverse(),
-    warnings: getTimelineWarnings(loan),
   }), [loan]);
+  const latestDeal = getLatestDeal(loan);
+  const hasDeals = loan.deals.length > 0;
   const addDealButton = (
     <Button
-      label={t('mortgage.addNextDeal')}
+      label={hasDeals ? t('mortgage.addNextDeal') : t('mortgage.addFirstDeal')}
       leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
       onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
       variant="secondary"
     />
   );
-  const deleteDraft = (deal: LoanDeal) => {
+  const deleteDeal = (deal: LoanDeal) => {
+    if (!canDeleteDeal(loan, deal.id)) return;
+
+    const isDraft = deal.status === 'draft';
     Alert.alert(
-      t('mortgage.deleteDraftTitle'),
-      t('mortgage.deleteDraftMessage'),
+      isDraft ? t('mortgage.deleteDraftTitle') : t('mortgage.deleteDealTitle'),
+      isDraft ? t('mortgage.deleteDraftMessage') : t('mortgage.deleteDealMessage', { name: deal.name }),
       [
         { text: t('results.cancelLeave'), style: 'cancel' },
         {
-          text: t('mortgage.deleteDraft'),
+          text: isDraft ? t('mortgage.deleteDraft') : t('mortgage.deleteDeal'),
           style: 'destructive',
           onPress: () => {
-            const updatedLoan = removeDealAndRecalculateLater(loan, deal.id);
+            const updatedLoan = removeLatestDealAndEvents(loan, deal.id);
             savedLoansStorage.update(updatedLoan);
             onLoanUpdated?.(updatedLoan);
           },
@@ -108,17 +136,20 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
               <Text style={styles.meta}>
                 {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
               </Text>
+              <Text style={styles.meta}>{formatDealDuration(deal, i18n.language)}</Text>
               <View style={styles.futureActions}>
                 <Button
-                  label={t('mortgage.planNextDeal')}
+                  label={t('mortgage.editDraftDeal')}
                   onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
                   variant="secondary"
                 />
-                <Button
-                  label={t('mortgage.deleteDraft')}
-                  onPress={() => deleteDraft(deal)}
-                  variant="ghost"
-                />
+                {latestDeal?.id === deal.id ? (
+                  <Button
+                    label={t('mortgage.deleteDraft')}
+                    onPress={() => deleteDeal(deal)}
+                    variant="ghost"
+                  />
+                ) : null}
               </View>
             </Card>
           </View>
@@ -148,20 +179,17 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                   onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
                   variant="secondary"
                 />
+                {latestDeal?.id === timeline.current.id ? (
+                  <Button
+                    label={t('mortgage.deleteDeal')}
+                    onPress={() => deleteDeal(timeline.current as LoanDeal)}
+                    variant="ghost"
+                  />
+                ) : null}
               </View>
             </Card>
           </View>
         )}
-
-        {timeline.warnings.map(warning => (
-          <View key={`${warning.type}-${warning.dealId ?? 'group'}`} style={styles.timelineItem}>
-            <View style={styles.nodeWarning} />
-            <Card style={styles.warningCard}>
-              <Text style={styles.warningTitle}>{warning.title}</Text>
-              <Text style={styles.warningText}>{warning.message}</Text>
-            </Card>
-          </View>
-        ))}
 
         {timeline.completed.map(deal => (
           <View key={deal.id} style={styles.timelineItem}>
@@ -174,9 +202,29 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                 </View>
                 <View style={styles.completedActions}>
                   <StatusBadge label={t('saved.completed')} variant="success" />
-                  <TouchableOpacity onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}>
-                    <Text style={styles.editLink}>{t('saved.edit')}</Text>
+                  <TouchableOpacity
+                    style={styles.completedActionLink}
+                    onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
+                    activeOpacity={0.84}
+                  >
+                    <Text style={styles.editLink}>{t('saved.view')}</Text>
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.completedActionLink}
+                    onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}?correct=1`)}
+                    activeOpacity={0.84}
+                  >
+                    <Text style={styles.correctLink}>{t('mortgage.correctDeal')}</Text>
+                  </TouchableOpacity>
+                  {latestDeal?.id === deal.id ? (
+                    <TouchableOpacity
+                      style={styles.completedActionLink}
+                      onPress={() => deleteDeal(deal)}
+                      activeOpacity={0.84}
+                    >
+                      <Text style={styles.deleteLink}>{t('mortgage.deleteDeal')}</Text>
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
               </View>
               <Text style={styles.meta}>{formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}</Text>
@@ -214,6 +262,10 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: 28,
   },
+  warningList: {
+    gap: 10,
+    marginBottom: 14,
+  },
   nodeMuted: {
     position: 'absolute',
     left: -49,
@@ -235,17 +287,6 @@ const styles = StyleSheet.create({
     borderWidth: 5,
     borderColor: colours.teal,
     backgroundColor: colours.white,
-  },
-  nodeWarning: {
-    position: 'absolute',
-    left: -49,
-    top: 20,
-    width: 34,
-    height: 34,
-    borderRadius: radii.full,
-    borderWidth: 3,
-    borderColor: colours.error,
-    backgroundColor: colours.background,
   },
   nodeComplete: {
     position: 'absolute',
@@ -380,13 +421,31 @@ const styles = StyleSheet.create({
   },
   completedActions: {
     alignItems: 'flex-end',
-    gap: 10,
+    gap: 4,
+  },
+  completedActionLink: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    marginRight: -8,
   },
   editLink: {
     fontFamily: fonts.heading,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.semibold,
     color: colours.primary,
+  },
+  correctLink: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    color: colours.textSecondary,
+  },
+  deleteLink: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    color: colours.error,
   },
   completionText: {
     fontFamily: fonts.body,

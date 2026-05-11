@@ -6,11 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageEventForm, mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { formatCurrency } from '@/currency/format';
 import { removeMortgageEvent, upsertMortgageEvent } from '@/mortgage/events';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
+import { formatFriendlyDate } from '@/utils/date';
 
 export default function EditMortgageEventScreen() {
   const { t } = useTranslation();
@@ -53,6 +56,42 @@ export default function EditMortgageEventScreen() {
     );
   };
 
+  if (deal.status === 'completed') {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.eventDetails')}
+          subtitle={t(mortgageEventLabelKey(event.type))}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <ScrollView contentContainerStyle={styles.container}>
+          <Card style={styles.readOnlyCard}>
+            <AppText variant="labelMd" tone="muted">{formatFriendlyDate(event.date)}</AppText>
+            <AppText variant="title2" tone="accent" style={styles.readOnlyTitle}>
+              {t(mortgageEventLabelKey(event.type))}
+            </AppText>
+            {event.amount !== undefined ? (
+              <AppText variant="title3" style={styles.readOnlyValue}>
+                {formatCurrency(event.amount, loan.currency)}
+              </AppText>
+            ) : null}
+            {event.balance !== undefined ? (
+              <AppText variant="title3" style={styles.readOnlyValue}>
+                {formatCurrency(event.balance, loan.currency)}
+              </AppText>
+            ) : null}
+            {event.note ? (
+              <AppText variant="bodyMd" style={styles.readOnlyNote}>{event.note}</AppText>
+            ) : null}
+            <AppText variant="bodySm" tone="muted" style={styles.readOnlyHelp}>
+              {t('mortgage.completedEventReadOnly')}
+            </AppText>
+          </Card>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
@@ -82,4 +121,14 @@ const styles = StyleSheet.create({
   container: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing['2xl'] },
   notFoundText: { marginBottom: spacing.md },
+  readOnlyCard: { gap: spacing.xs },
+  readOnlyTitle: { marginTop: spacing.xs },
+  readOnlyValue: { marginTop: spacing.xs },
+  readOnlyNote: {
+    marginTop: spacing.sm,
+    lineHeight: 22,
+  },
+  readOnlyHelp: {
+    marginTop: spacing.md,
+  },
 });

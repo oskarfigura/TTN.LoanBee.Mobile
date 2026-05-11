@@ -58,10 +58,17 @@ const buildMigratedDeal = (loan: LegacySavedLoan): LoanDeal => {
   };
 };
 
+const getMortgageTermInMonths = (loan: Pick<LoanGroup, 'formSnapshot' | 'resultSnapshot'>): number => (
+  loan.resultSnapshot.totalTermInMonths
+  || (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths
+  || 12
+);
+
 export const migrateLegacySavedLoan = (loan: LegacySavedLoan): LoanGroup => ({
   ...loan,
   status: 'tracked',
   pinnedToDashboard: false,
+  mortgageTermInMonths: getMortgageTermInMonths(loan),
   deals: [buildMigratedDeal(loan)],
   events: [],
 });
@@ -71,6 +78,15 @@ const isLoanGroup = (loan: Partial<LoanGroup>): loan is LoanGroup => (
   && typeof loan.pinnedToDashboard === 'boolean'
   && Array.isArray(loan.deals)
   && Array.isArray(loan.events)
+);
+
+const normaliseLoanGroup = (loan: LoanGroup): LoanGroup => (
+  loan.mortgageTermInMonths
+    ? loan
+    : {
+      ...loan,
+      mortgageTermInMonths: getMortgageTermInMonths(loan),
+    }
 );
 
 const saveAll = (loans: LoanGroup[]): void => {
@@ -83,7 +99,7 @@ const loadAll = (): LoanGroup[] => {
   if (currentRaw !== undefined) {
     const normalised = current.map(loan => (
       isLoanGroup(loan)
-        ? loan
+        ? normaliseLoanGroup(loan)
         : migrateLegacySavedLoan(loan as LegacySavedLoan)
     ));
     if (normalised.some((loan, index) => loan !== current[index])) {

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -12,6 +13,7 @@ import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
+import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 
 export default function CompleteCurrentDealScreen() {
   const { t } = useTranslation();
@@ -22,10 +24,11 @@ export default function CompleteCurrentDealScreen() {
   const projected = currentDeal && loan ? projectDeal(currentDeal, loan.events) : null;
   const currencySymbol = CURRENCIES.find(c => c.code === loan?.currency)?.symbol ?? '£';
 
-  const [completedAt, setCompletedAt] = useState(currentDeal?.endDate ?? new Date().toISOString().split('T')[0]);
+  const [completedAt, setCompletedAt] = useState(currentDeal?.endDate ?? formatIsoDate(new Date()));
   const [closingBalance, setClosingBalance] = useState(String(projected?.balance ?? currentDeal?.openingBalance ?? 0));
   const [feesAdded, setFeesAdded] = useState('0');
   const [notes, setNotes] = useState('');
+  const minimumCompletionDate = currentDeal ? parseDateLabelValue(currentDeal.startDate) ?? undefined : undefined;
 
   if (!loan || !currentDeal) {
     return (
@@ -51,14 +54,13 @@ export default function CompleteCurrentDealScreen() {
       />
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.field}>
-          <FieldLabel>{t('mortgage.completionDate')}</FieldLabel>
-          <InputSurface>
-            <AppTextInput
-              value={completedAt}
-              onChangeText={setCompletedAt}
-              placeholder="2031-06-01"
-            />
-          </InputSurface>
+          <DatePickerField
+            label={t('mortgage.completionDate')}
+            value={completedAt}
+            onChange={setCompletedAt}
+            hint={t('mortgage.dateFormatHint')}
+            minimumDate={minimumCompletionDate}
+          />
         </View>
 
         <View style={styles.field}>
@@ -103,6 +105,11 @@ export default function CompleteCurrentDealScreen() {
         <Button
           label={t('mortgage.completeDeal')}
           onPress={() => {
+            if (!isValidIsoDate(completedAt)) {
+              Alert.alert(t('mortgage.invalidDealTitle'), t('mortgage.invalidCompletionDetails'));
+              return;
+            }
+
             const updatedLoan = {
               ...loan,
               deals: loan.deals.map(deal => deal.id === currentDeal.id

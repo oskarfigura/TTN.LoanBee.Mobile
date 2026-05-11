@@ -3,11 +3,13 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 import { AppTextInput, FieldLabel, InputAffix, InputSurface, PillSelector } from '@/components/ui/FormPrimitives';
 import { CURRENCIES } from '@/currency/currencies';
 import { projectDeal } from '@/mortgage/tracker';
 import { LoanDeal, MortgageEvent, MortgageEventType } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
+import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { colours, spacing } from '@/theme';
 
 export const mortgageEventTypes: MortgageEventType[] = [
@@ -54,7 +56,7 @@ export const MortgageEventForm = ({
   const [eventType, setEventType] = useState<MortgageEventType>(
     initialEvent?.type ?? initialType ?? 'lumpOverpayment',
   );
-  const [date, setDate] = useState(initialEvent?.date ?? new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(initialEvent?.date ?? formatIsoDate(new Date()));
   const [amount, setAmount] = useState(initialEvent?.amount !== undefined ? String(initialEvent.amount) : '');
   const [balance, setBalance] = useState(
     initialEvent?.balance !== undefined ? String(initialEvent.balance) : String(projected.balance),
@@ -63,11 +65,25 @@ export const MortgageEventForm = ({
 
   const needsAmount = eventType === 'lumpOverpayment';
   const needsBalance = eventType === 'balanceCheckpoint';
+  const minEventDate = parseDateLabelValue(currentDeal.startDate) ?? undefined;
+  const maxEventDate = parseDateLabelValue(currentDeal.endDate) ?? undefined;
 
   const handleSave = () => {
     const numericAmount = Number(amount) || 0;
     const numericBalance = Number(balance) || 0;
 
+    if (currentDeal.status !== 'active') {
+      Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.eventRequiresActiveDeal'));
+      return;
+    }
+    if (!isValidIsoDate(date)) {
+      Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventDate'));
+      return;
+    }
+    if (date < currentDeal.startDate || date > currentDeal.endDate) {
+      Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.eventOutsideDealDates'));
+      return;
+    }
     if (needsAmount && numericAmount <= 0) {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventAmount'));
       return;
@@ -108,14 +124,14 @@ export const MortgageEventForm = ({
       </View>
 
       <View style={styles.field}>
-        <FieldLabel>{t('mortgage.eventDate')}</FieldLabel>
-        <InputSurface>
-          <AppTextInput
-            value={date}
-            onChangeText={setDate}
-            placeholder="2026-06-01"
-          />
-        </InputSurface>
+        <DatePickerField
+          label={t('mortgage.eventDate')}
+          value={date}
+          onChange={setDate}
+          hint={t('mortgage.dateFormatHint')}
+          minimumDate={minEventDate}
+          maximumDate={maxEventDate}
+        />
       </View>
 
       {needsAmount && (

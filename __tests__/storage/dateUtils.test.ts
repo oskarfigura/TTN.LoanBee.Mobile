@@ -1,5 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
-import { formatFriendlyDate, formatFriendlyDateRange } from '../../src/utils/date';
+import {
+  formatFriendlyDate,
+  formatFriendlyDateRange,
+  formatIsoDate,
+  isValidIsoDate,
+} from '../../src/utils/date';
 
 describe('date utils', () => {
   it('formats English date labels with ordinal days and friendly month names', () => {
@@ -17,5 +22,15 @@ describe('date utils', () => {
 
   it('falls back to the original value when a date cannot be parsed', () => {
     expect(formatFriendlyDate('not-a-date', 'en')).toBe('not-a-date');
+  });
+
+  it('validates strict ISO calendar dates', () => {
+    expect(isValidIsoDate('2026-06-01')).toBe(true);
+    expect(isValidIsoDate('2026-02-31')).toBe(false);
+    expect(isValidIsoDate('01/06/2026')).toBe(false);
+  });
+
+  it('formats picker dates as local ISO dates', () => {
+    expect(formatIsoDate(new Date(2026, 5, 1))).toBe('2026-06-01');
   });
 });

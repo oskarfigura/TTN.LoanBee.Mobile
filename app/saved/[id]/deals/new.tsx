@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -7,62 +7,40 @@ import { Button } from '@/components/ui/Button';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { getChronologicalDeals, getMortgageTrackerSummary, projectDeal } from '@/mortgage/tracker';
+import {
+  buildNextDealDraft,
+  getChronologicalDeals,
+  getMortgageTermInMonths,
+  getNextDealStartDate,
+  getSingleDraftDeal,
+  normaliseDealChain,
+} from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
 import { colours, fonts, fontSizes, fontWeights } from '@/theme';
-
-const addYears = (dateString: string, years: number): string => {
-  const date = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return dateString;
-  date.setFullYear(date.getFullYear() + years);
-  return date.toISOString().split('T')[0];
-};
-
-const addDays = (dateString: string, days: number): string => {
-  const date = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return dateString;
-  date.setDate(date.getDate() + days);
-  return date.toISOString().split('T')[0];
-};
 
 export default function NewDealScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const loan = savedLoansStorage.getById(id);
+  const existingDraft = useMemo(() => (loan ? getSingleDraftDeal(loan) : undefined), [loan]);
+
+  useEffect(() => {
+    if (!loan || !existingDraft) return;
+
+    router.replace(`/saved/${loan.id}/deals/${existingDraft.id}`);
+  }, [existingDraft, loan, router]);
 
   const initialDeal = useMemo<LoanDeal | null>(() => {
-    if (!loan) return null;
-    const summary = getMortgageTrackerSummary(loan);
-    const deals = getChronologicalDeals(loan);
-    const previous = deals[deals.length - 1];
-    const previousEndDate = previous?.completion?.completedAt ?? previous?.endDate;
-    const projectedPrevious = previous && previousEndDate
-      ? projectDeal(previous, loan.events, new Date(`${previousEndDate}T00:00:00`), true)
-      : undefined;
-    const startDate = previousEndDate ? addDays(previousEndDate, 1) : loan.formSnapshot.startDate;
-    const now = new Date().toISOString();
+    if (!loan || existingDraft) return null;
+    return buildNextDealDraft(loan, createLocalId());
+  }, [existingDraft, loan]);
 
-    return {
-      id: createLocalId(),
-      createdAt: now,
-      updatedAt: now,
-      name: '5-year Fixed',
-      lender: loan.lender,
-      status: 'draft',
-      startDate,
-      endDate: addYears(startDate, 5),
-      openingBalance: projectedPrevious?.balance ?? summary.currentBalance,
-      interestRate: previous?.interestRate ?? loan.formSnapshot.interest,
-      repaymentType: previous?.repaymentType ?? 'repayment',
-      monthlyPayment: previous?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments,
-      regularOverpayment: previous?.regularOverpayment ?? loan.formSnapshot.additionalMonthlyPayment ?? 0,
-      remainingTermInYears: previous?.remainingTermInYears ?? loan.formSnapshot.termInYears,
-      remainingTermInMonths: previous?.remainingTermInMonths ?? loan.formSnapshot.termInMonths,
-    };
-  }, [loan]);
+  if (loan && existingDraft) {
+    return <SafeAreaView style={styles.safe} edges={['bottom']} />;
+  }
 
   if (!loan || !initialDeal) {
     return (
@@ -82,6 +60,7 @@ export default function NewDealScreen() {
   const deals = getChronologicalDeals(loan);
   const previous = deals[deals.length - 1];
   const canPublish = !previous || previous.status === 'completed';
+  const fixedStartDate = previous ? getNextDealStartDate(previous, loan.formSnapshot.startDate) : undefined;
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -106,12 +85,15 @@ export default function NewDealScreen() {
           currency={loan.currency}
           initialDeal={initialDeal}
           canPublish={canPublish}
+          fixedStartDate={fixedStartDate}
+          mortgageStartDate={loan.formSnapshot.startDate}
+          mortgageTermInMonths={getMortgageTermInMonths(loan)}
           onSave={deal => {
-            savedLoansStorage.update({
+            savedLoansStorage.update(normaliseDealChain({
               ...loan,
               deals: [...loan.deals, deal],
               status: 'tracked',
-            });
+            }, deal.id));
             router.back();
           }}
         />

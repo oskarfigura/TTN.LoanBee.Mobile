@@ -134,6 +134,18 @@ export const PlusIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
   </Svg>
 );
 
+export const MoreIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M6.5 12h.01M12 12h.01M17.5 12h.01"
+      stroke={color}
+      strokeWidth={3}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const SwitchIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path

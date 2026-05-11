@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MortgageTimelineView } from '@/components/loans/MortgageTimelineView';
+import { MortgageTimelineView, MortgageWarningBanners } from '@/components/loans/MortgageTimelineView';
 import { Button } from '@/components/ui/Button';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -43,6 +43,7 @@ export default function MortgageTimelineScreen() {
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
+        <MortgageWarningBanners loan={loan} />
         <MortgageTimelineView loan={loan} onLoanUpdated={setLoan} />
       </ScrollView>
     </SafeAreaView>

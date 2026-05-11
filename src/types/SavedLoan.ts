@@ -81,6 +81,7 @@ export interface LoanGroup {
   lender?: string;
   category: LoanCategory;
   currency: CurrencyCode;
+  mortgageTermInMonths?: number;
   parentLoanId?: string;
   status: LoanGroupStatus;
   pinnedToDashboard: boolean;

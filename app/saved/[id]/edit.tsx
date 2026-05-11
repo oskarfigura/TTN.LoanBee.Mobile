@@ -3,9 +3,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
-import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { PinIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
@@ -27,7 +25,6 @@ export default function EditLoanScreen() {
 
   const [nickname, setNickname] = useState(loan?.nickname ?? '');
   const [lender, setLender] = useState(loan?.lender ?? '');
-  const [currency, setCurrency] = useState<CurrencyCode>(loan?.currency ?? 'GBP');
   const [pinnedToDashboard, setPinnedToDashboard] = useState(loan?.pinnedToDashboard ?? false);
 
   const mortgageSummary = useMemo(() => (
@@ -61,15 +58,10 @@ export default function EditLoanScreen() {
       ...loan,
       nickname: nickname.trim(),
       lender: lender.trim() || undefined,
-      currency,
       pinnedToDashboard,
       dashboardOrder: pinnedToDashboard
         ? loan.dashboardOrder ?? maxOrder + 1
         : undefined,
-      formSnapshot: {
-        ...loan.formSnapshot,
-        currency,
-      },
       updatedAt: new Date().toISOString(),
     });
     router.back();
@@ -126,11 +118,6 @@ export default function EditLoanScreen() {
         <View style={styles.field}>
           <FieldLabel>{t('save.lender')}</FieldLabel>
           <LenderTextInput value={lender} onChange={setLender} />
-        </View>
-
-        <View style={styles.field}>
-          <FieldLabel>{t('save.currency')}</FieldLabel>
-          <CurrencyPicker value={currency} onChange={setCurrency} />
         </View>
 
         <TouchableOpacity

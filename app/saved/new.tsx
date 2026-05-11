@@ -74,6 +74,7 @@ export default function SaveNewLoanScreen() {
       lender: lender || undefined,
       category,
       currency,
+      mortgageTermInMonths: resultSnapshot.totalTermInMonths,
       status: 'tracked',
       pinnedToDashboard: false,
       deals: [],
@@ -82,6 +83,9 @@ export default function SaveNewLoanScreen() {
       resultSnapshot,
     };
     loan.deals = [buildInitialDeal(createLocalId(), loan)];
+    if (category === 'mortgage') {
+      loan.lender = undefined;
+    }
 
     add(loan);
     recordUsefulAction()

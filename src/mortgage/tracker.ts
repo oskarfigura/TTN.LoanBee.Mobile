@@ -3,6 +3,7 @@ import {
   LoanGroup,
   MortgageEvent,
 } from '@/types/SavedLoan';
+import { calculateMonthlyPayments } from '@/core/amortisation';
 
 export interface DealProjection {
   dealId: string;
@@ -59,6 +60,14 @@ const addMonths = (date: Date, months: number): Date => (
 
 const dateToIso = (date: Date): string => date.toISOString().split('T')[0];
 
+const dateToLocalIso = (date: Date): string => {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 const minIsoDate = (dates: string[]): string => (
   dates.sort((a, b) => parseDate(a).getTime() - parseDate(b).getTime())[0]
 );
@@ -69,6 +78,46 @@ const monthsBetween = (startDate: string, endDate: string): number => {
   return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
 };
 
+const addDaysIso = (dateString: string, days: number): string => {
+  const date = parseDate(dateString);
+  date.setDate(date.getDate() + days);
+  return dateToLocalIso(date);
+};
+
+const addMonthsIso = (dateString: string, months: number): string => {
+  const date = parseDate(dateString);
+  date.setMonth(date.getMonth() + months);
+  return dateToLocalIso(date);
+};
+
+const splitMonths = (totalMonths: number) => ({
+  years: Math.floor(totalMonths / 12),
+  months: totalMonths % 12,
+});
+
+const getOverallTermInMonths = (loan: Pick<LoanGroup, 'mortgageTermInMonths' | 'formSnapshot' | 'resultSnapshot'>): number => (
+  loan.mortgageTermInMonths
+  || loan.resultSnapshot.totalTermInMonths
+  || (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths
+  || 12
+);
+
+const getPlural = (value: number, singular: string, plural: string): string => (
+  value === 1 ? singular : plural
+);
+
+const getPolishYearUnit = (years: number): string => {
+  if (years === 1) return 'rok';
+  if ([2, 3, 4].includes(years % 10) && ![12, 13, 14].includes(years % 100)) return 'lata';
+  return 'lat';
+};
+
+const getPolishMonthUnit = (months: number): string => {
+  if (months === 1) return 'miesiac';
+  if ([2, 3, 4].includes(months % 10) && ![12, 13, 14].includes(months % 100)) return 'miesiace';
+  return 'miesiecy';
+};
+
 const orderDeals = (deals: LoanDeal[]): LoanDeal[] => (
   [...deals].sort((a, b) => parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime())
 );
@@ -76,6 +125,166 @@ const orderDeals = (deals: LoanDeal[]): LoanDeal[] => (
 export const getChronologicalDeals = (loan: LoanGroup): LoanDeal[] => (
   orderDeals(loan.deals)
 );
+
+export const getEffectiveDealEndDate = (deal: LoanDeal): string => (
+  deal.completion?.completedAt ?? deal.endDate
+);
+
+export const getNextDealStartDate = (previousDeal?: LoanDeal, fallbackStartDate?: string): string => (
+  previousDeal ? addDaysIso(getEffectiveDealEndDate(previousDeal), 1) : fallbackStartDate ?? dateToIso(new Date())
+);
+
+export const getDealDurationInMonths = (deal: LoanDeal): number => (
+  Math.max(0, monthsBetween(deal.startDate, getEffectiveDealEndDate(deal)))
+);
+
+export const getMortgageTermInMonths = getOverallTermInMonths;
+
+export const getRemainingMortgageTermInMonths = (
+  loan: Pick<LoanGroup, 'mortgageTermInMonths' | 'formSnapshot' | 'resultSnapshot'>,
+  dealStartDate: string,
+): number => (
+  Math.max(getOverallTermInMonths(loan) - monthsBetween(loan.formSnapshot.startDate, dealStartDate), 1)
+);
+
+export const formatDealDuration = (dealOrMonths: LoanDeal | number, locale?: string): string => {
+  const totalMonths = typeof dealOrMonths === 'number'
+    ? Math.max(0, dealOrMonths)
+    : getDealDurationInMonths(dealOrMonths);
+  const polish = locale?.startsWith('pl');
+
+  if (totalMonths === 0) return polish ? '0 miesiecy' : '0 months';
+
+  const { years, months } = splitMonths(totalMonths);
+
+  if (years === 0) {
+    return polish
+      ? `${months} ${getPolishMonthUnit(months)}`
+      : `${months} ${getPlural(months, 'month', 'months')}`;
+  }
+
+  if (months === 0) {
+    return polish
+      ? `${years} ${getPolishYearUnit(years)}`
+      : `${years} ${getPlural(years, 'year', 'years')}`;
+  }
+
+  if (months === 6 && years >= 2) {
+    return polish ? `${years},5 roku` : `${years}.5 years`;
+  }
+
+  if (years === 1 && months === 6) {
+    return polish ? `18 ${getPolishMonthUnit(18)}` : '18 months';
+  }
+
+  return polish
+    ? `${years} ${getPolishYearUnit(years)} ${months} ${getPolishMonthUnit(months)}`
+    : `${years} ${getPlural(years, 'year', 'years')} ${months} ${getPlural(months, 'month', 'months')}`;
+};
+
+export const getSingleDraftDeal = (loan: LoanGroup): LoanDeal | undefined => (
+  getDraftDeals(loan)[0]
+);
+
+export const getLatestDeal = (loan: LoanGroup): LoanDeal | undefined => {
+  const deals = getChronologicalDeals(loan);
+  return deals[deals.length - 1];
+};
+
+export const canDeleteDeal = (loan: LoanGroup, dealId: string): boolean => {
+  const deals = getChronologicalDeals(loan);
+  if (deals.length <= 1) return false;
+
+  return deals[deals.length - 1]?.id === dealId;
+};
+
+const getEffectiveOpeningBalance = (loan: LoanGroup): number => {
+  const form = loan.formSnapshot;
+  const downPayment = form.downPaymentType === 'PERCENT'
+    ? (form.downPayment / 100) * form.loanAmount
+    : form.downPayment;
+
+  return Math.max(0, form.loanAmount - downPayment);
+};
+
+export const calculateDealMonthlyPayment = (
+  openingBalance: number,
+  interestRate: number,
+  remainingTermMonths: number,
+  repaymentType: LoanDeal['repaymentType'],
+): number => {
+  if (openingBalance <= 0 || interestRate <= 0 || remainingTermMonths <= 0) return 0;
+  if (repaymentType === 'interestOnly') return toMoney(openingBalance * (interestRate / 100 / 12));
+
+  const { years, months } = splitMonths(remainingTermMonths);
+  return toMoney(calculateMonthlyPayments(interestRate / 100 / 12, years, months, openingBalance));
+};
+
+export const buildNextDealDraft = (
+  loan: LoanGroup,
+  id: string,
+  now = new Date().toISOString(),
+): LoanDeal => {
+  const existingDraft = getSingleDraftDeal(loan);
+  if (existingDraft) return existingDraft;
+
+  const deals = getChronologicalDeals(loan);
+  const previousDeal = deals[deals.length - 1];
+
+  if (!previousDeal) {
+    const totalMonths = getOverallTermInMonths(loan);
+    const startDate = loan.formSnapshot.startDate;
+    const { years, months } = splitMonths(totalMonths);
+
+    return {
+      id,
+      createdAt: now,
+      updatedAt: now,
+      name: loan.category === 'mortgage' ? 'Initial deal' : 'Fixed loan',
+      lender: loan.lender,
+      status: 'draft',
+      startDate,
+      endDate: addMonthsIso(startDate, totalMonths),
+      openingBalance: getEffectiveOpeningBalance(loan),
+      interestRate: loan.formSnapshot.interest,
+      repaymentType: 'repayment',
+      monthlyPayment: loan.resultSnapshot.monthlyPayments,
+      regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
+      remainingTermInYears: years,
+      remainingTermInMonths: months,
+    };
+  }
+
+  const previousEndDate = getEffectiveDealEndDate(previousDeal);
+  const startDate = getNextDealStartDate(previousDeal, loan.formSnapshot.startDate);
+  const projectedPrevious = projectDeal(previousDeal, loan.events, parseDate(previousEndDate), true);
+  const remainingTermMonths = getRemainingMortgageTermInMonths(loan, startDate);
+  const { years, months } = splitMonths(remainingTermMonths);
+  const defaultDealDurationMonths = Math.max(1, Math.min(60, remainingTermMonths));
+
+  return {
+    id,
+    createdAt: now,
+    updatedAt: now,
+    name: defaultDealDurationMonths === 60 ? '5-year Fixed' : 'Next deal',
+    lender: previousDeal.lender ?? loan.lender,
+    status: 'draft',
+    startDate,
+    endDate: addMonthsIso(startDate, defaultDealDurationMonths),
+    openingBalance: projectedPrevious.balance,
+    interestRate: previousDeal.interestRate || loan.formSnapshot.interest,
+    repaymentType: previousDeal.repaymentType,
+    monthlyPayment: calculateDealMonthlyPayment(
+      projectedPrevious.balance,
+      previousDeal.interestRate || loan.formSnapshot.interest,
+      remainingTermMonths,
+      previousDeal.repaymentType,
+    ),
+    regularOverpayment: previousDeal.regularOverpayment,
+    remainingTermInYears: years,
+    remainingTermInMonths: months,
+  };
+};
 
 export const getLaterDeals = (loan: LoanGroup, dealId: string): LoanDeal[] => {
   const deals = getChronologicalDeals(loan);
@@ -177,58 +386,89 @@ export const projectDeal = (
   };
 };
 
+export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGroup => {
+  const deals = getChronologicalDeals(loan);
+  if (deals.length < 2) return loan;
+
+  const fromIndex = fromDealId
+    ? deals.findIndex(deal => deal.id === fromDealId)
+    : 0;
+  const normaliseFromIndex = Math.max(fromIndex, 0);
+  const updatedAt = new Date().toISOString();
+  const normalisedById = new Map<string, LoanDeal>();
+
+  let previousDeal = deals[0];
+  for (let index = 1; index < deals.length; index += 1) {
+    const deal = deals[index];
+    if (index <= normaliseFromIndex) {
+      previousDeal = normalisedById.get(deal.id) ?? deal;
+      continue;
+    }
+
+    const nextStartDate = getNextDealStartDate(previousDeal, loan.formSnapshot.startDate);
+    const durationMonths = Math.max(getDealDurationInMonths(deal), 1);
+    const projectionDate = parseDate(getEffectiveDealEndDate(previousDeal));
+    const projectedPrevious = projectDeal(previousDeal, loan.events, projectionDate, true);
+    const openingBalance = projectedPrevious.balance;
+    const shouldRebaseDates = deal.status !== 'completed';
+    const nextDeal: LoanDeal = {
+      ...deal,
+      startDate: shouldRebaseDates ? nextStartDate : deal.startDate,
+      endDate: shouldRebaseDates ? addMonthsIso(nextStartDate, durationMonths) : deal.endDate,
+      openingBalance,
+      updatedAt,
+    };
+
+    normalisedById.set(deal.id, nextDeal);
+    previousDeal = nextDeal;
+  }
+
+  if (normalisedById.size === 0) return loan;
+
+  return {
+    ...loan,
+    deals: loan.deals.map(deal => normalisedById.get(deal.id) ?? deal),
+  };
+};
+
 export const recalculateLaterDealOpeningBalances = (
   loan: LoanGroup,
   dealId: string,
 ): LoanGroup => {
-  const deals = getChronologicalDeals(loan);
-  const dealIndex = deals.findIndex(deal => deal.id === dealId);
-  if (dealIndex === -1 || dealIndex === deals.length - 1) return loan;
-
-  const updatedAt = new Date().toISOString();
-  const recalculatedById = new Map<string, LoanDeal>();
-  let previousDeal = deals[dealIndex];
-
-  deals.slice(dealIndex + 1).forEach(deal => {
-    const projectionDate = parseDate(previousDeal.completion?.completedAt ?? previousDeal.endDate);
-    const projectedPrevious = projectDeal(previousDeal, loan.events, projectionDate, true);
-    const openingBalance = projectedPrevious.balance;
-    const nextDeal = deal.openingBalance === openingBalance
-      ? deal
-      : {
-        ...deal,
-        openingBalance,
-        updatedAt,
-      };
-
-    recalculatedById.set(deal.id, nextDeal);
-    previousDeal = nextDeal;
-  });
-
-  return {
-    ...loan,
-    deals: loan.deals.map(deal => recalculatedById.get(deal.id) ?? deal),
-  };
+  return normaliseDealChain(loan, dealId);
 };
 
 export const removeDealAndRecalculateLater = (
   loan: LoanGroup,
   dealId: string,
 ): LoanGroup => {
-  const deals = getChronologicalDeals(loan);
-  const dealIndex = deals.findIndex(deal => deal.id === dealId);
-  if (dealIndex === -1) return loan;
+  if (!canDeleteDeal(loan, dealId)) return loan;
 
-  const previousDeal = dealIndex > 0 ? deals[dealIndex - 1] : undefined;
-  const nextLoan = {
+  return {
     ...loan,
     deals: loan.deals.filter(deal => deal.id !== dealId),
     events: loan.events.filter(event => event.dealId !== dealId),
   };
+};
 
-  return previousDeal
-    ? recalculateLaterDealOpeningBalances(nextLoan, previousDeal.id)
-    : nextLoan;
+export const removeLatestDealAndEvents = removeDealAndRecalculateLater;
+
+export const getLaterDealIds = (loan: LoanGroup, dealId: string): string[] => (
+  getLaterDeals(loan, dealId).map(deal => deal.id)
+);
+
+export const removeLaterDealsAndEvents = (
+  loan: LoanGroup,
+  dealId: string,
+): LoanGroup => {
+  const laterDealIds = new Set(getLaterDealIds(loan, dealId));
+  if (laterDealIds.size === 0) return loan;
+
+  return {
+    ...loan,
+    deals: loan.deals.filter(deal => !laterDealIds.has(deal.id)),
+    events: loan.events.filter(event => !laterDealIds.has(event.dealId)),
+  };
 };
 
 export const getMortgageTrackerSummary = (
@@ -236,7 +476,6 @@ export const getMortgageTrackerSummary = (
   asOf = new Date(),
 ): MortgageTrackerSummary => {
   const publishedDeals = getPublishedDeals(loan);
-  const draftDeals = getDraftDeals(loan);
   const originalBalance = publishedDeals[0]?.openingBalance ?? loan.formSnapshot.loanAmount;
   const projections = publishedDeals.map(deal => projectDeal(deal, loan.events, asOf, true));
   const baselineProjections = publishedDeals.map(deal => projectDeal(deal, loan.events, asOf, false));
@@ -270,10 +509,9 @@ export const getMortgageTrackerSummary = (
     overpaymentSavingsEstimate: toMoney(baselineInterestEstimate - interestPaidEstimate),
     balanceProgress: originalBalance > 0 ? Math.min(Math.max((originalBalance - currentBalance) / originalBalance, 0), 1) : 0,
     currentDeal,
-    nextDraftDeal: draftDeals[0],
+    nextDraftDeal: getSingleDraftDeal(loan),
     recentEvents: [...loan.events]
-      .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime())
-      .slice(0, 3),
+      .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()),
   };
 };
 
@@ -285,11 +523,11 @@ export const getTimelineWarnings = (loan: LoanGroup, asOf = new Date()): Timelin
     const next = publishedDeals[index + 1];
     if (!next) return;
 
-    const end = parseDate(deal.endDate).getTime();
+    const expectedStartDate = getNextDealStartDate(deal);
+    const expectedStart = parseDate(expectedStartDate).getTime();
     const start = parseDate(next.startDate).getTime();
-    const oneDay = 24 * 60 * 60 * 1000;
 
-    if (start > end + oneDay) {
+    if (start > expectedStart) {
       warnings.push({
         type: 'gap',
         title: 'Date gap detected',
@@ -298,7 +536,7 @@ export const getTimelineWarnings = (loan: LoanGroup, asOf = new Date()): Timelin
       });
     }
 
-    if (start < end) {
+    if (start < expectedStart) {
       warnings.push({
         type: 'overlap',
         title: 'Deal dates overlap',
@@ -318,7 +556,7 @@ export const getTimelineWarnings = (loan: LoanGroup, asOf = new Date()): Timelin
     });
   }
 
-  const draftDeal = getDraftDeals(loan)[0];
+  const draftDeal = getSingleDraftDeal(loan);
   if (draftDeal && currentDeal && !currentDeal.completion) {
     warnings.push({
       type: 'draftBlocked',
