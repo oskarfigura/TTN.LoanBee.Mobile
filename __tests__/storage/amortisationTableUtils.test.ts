@@ -38,12 +38,12 @@ describe('amortisation table utils', () => {
 
     expect(csv).toBe(
       '\uFEFFPeriod,Opening Balance,Principal,Interest,Closing Balance\n'
-        + 'Jan 2026,250000.00,715.48,812.50,249284.52\n'
-        + 'Feb 2026,249284.52,717.81,810.17,248566.71',
+        + '1st Jan 2026,250000.00,715.48,812.50,249284.52\n'
+        + '1st Feb 2026,249284.52,717.81,810.17,248566.71',
     );
   });
 
   it('formats amortisation periods using the loan start date', () => {
-    expect(formatAmortisationPeriodLabel('2026-01-01', 2, 'en')).toBe('Feb 2026');
+    expect(formatAmortisationPeriodLabel('2026-01-01', 2, 'en')).toBe('1st Feb 2026');
   });
 });

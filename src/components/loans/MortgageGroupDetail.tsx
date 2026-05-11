@@ -15,6 +15,7 @@ import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
 import { MortgageTimelineView } from '@/components/loans/MortgageTimelineView';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
+import { formatFriendlyDate } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
@@ -30,7 +31,7 @@ const eventIcon = (event: MortgageEvent) => {
 };
 
 export const MortgageGroupDetail = ({ loan, onTogglePinned }: Props) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [pickerVisible, setPickerVisible] = useState(false);
   const summary = getMortgageTrackerSummary(loan);
@@ -38,8 +39,8 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned }: Props) => {
   const draftDeal = summary.nextDraftDeal;
   const result = useMemo(() => getResultForSavedLoan(loan), [loan]);
   const insightSummary = useMemo(() => (
-    buildSavedLoanSummary(loan, result, new Date())
-  ), [loan, result]);
+    buildSavedLoanSummary(loan, result, new Date(), i18n.language)
+  ), [i18n.language, loan, result]);
   const navigateFromPicker = (href: string) => {
     setPickerVisible(false);
     router.push(href as Parameters<typeof router.push>[0]);
@@ -98,7 +99,7 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned }: Props) => {
                     : event.note || t('mortgage.eventNoAmount')}
               </Text>
             </View>
-            <Text style={styles.eventDate}>{event.date}</Text>
+            <Text style={styles.eventDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
           </TouchableOpacity>
         )) : (
           <TouchableOpacity

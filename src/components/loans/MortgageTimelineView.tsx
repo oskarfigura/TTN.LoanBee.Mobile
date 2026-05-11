@@ -10,6 +10,7 @@ import { CurrencyCode } from '@/currency/currencies';
 import { getCurrentDeal, getDraftDeals, getPublishedDeals, getTimelineWarnings } from '@/mortgage/tracker';
 import { colours, fonts, fontSizes, fontWeights, radii } from '@/theme';
 import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
+import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
@@ -38,7 +39,7 @@ const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode 
 };
 
 export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const timeline = useMemo(() => ({
     drafts: getDraftDeals(loan),
@@ -63,7 +64,9 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
                 </View>
                 <StatusBadge label={t('mortgage.inactive')} />
               </View>
-              <Text style={styles.meta}>{t('mortgage.startsOn', { date: deal.startDate })}</Text>
+              <Text style={styles.meta}>
+                {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
+              </Text>
               <Button
                 label={t('mortgage.planNextDeal')}
                 onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
@@ -83,7 +86,9 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
                 <StatusBadge label={t('mortgage.active')} variant="active" />
               </View>
               <Text style={styles.currentTitle}>{timeline.current.name}</Text>
-              <Text style={styles.meta}>{timeline.current.startDate} - {timeline.current.endDate}</Text>
+              <Text style={styles.meta}>
+                {formatFriendlyDateRange(timeline.current.startDate, timeline.current.endDate, i18n.language)}
+              </Text>
               <DealStats deal={timeline.current} currency={loan.currency} />
               <View style={styles.currentActions}>
                 <Button
@@ -127,7 +132,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
                   </TouchableOpacity>
                 </View>
               </View>
-              <Text style={styles.meta}>{deal.startDate} - {deal.endDate}</Text>
+              <Text style={styles.meta}>{formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}</Text>
               <DealStats deal={deal} currency={loan.currency} />
               {deal.completion && (
                 <Text style={styles.completionText}>

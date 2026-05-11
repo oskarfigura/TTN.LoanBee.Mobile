@@ -3,7 +3,7 @@ import { formatCurrency } from '@/currency/format';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { LoanResult } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
-import { monthsBetween } from '@/utils/date';
+import { formatFriendlyDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
 
 export type LoanInsightContext = 'saved' | 'calculation';
 
@@ -45,15 +45,12 @@ const clamp = (value: number) => Math.max(0, Math.min(value, 1));
 const formatPercent = (value: number) => `${Number.isFinite(value) ? value : 0}%`;
 
 const formatPayoffDate = (startDate: string, totalMonths: number, locale?: string) => {
-  const date = new Date(startDate);
-  if (Number.isNaN(date.getTime())) return '—';
+  const date = parseDateLabelValue(startDate);
+  if (!date) return '—';
 
   date.setMonth(date.getMonth() + Math.max(totalMonths, 0));
 
-  return date.toLocaleDateString(locale, {
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatFriendlyDate(date.toISOString().split('T')[0], locale);
 };
 
 const getPrincipalAmount = (result: LoanResult) => Math.max(result.amount - result.downPayment, 0);

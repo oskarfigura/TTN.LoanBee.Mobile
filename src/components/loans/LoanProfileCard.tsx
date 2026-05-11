@@ -9,40 +9,13 @@ import { buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSum
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
+import { formatFriendlyDate } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
   onPress: () => void;
   onTogglePinned: () => void;
 }
-
-const getOrdinalSuffix = (day: number) => {
-  if (day >= 11 && day <= 13) return 'th';
-  const lastDigit = day % 10;
-
-  if (lastDigit === 1) return 'st';
-  if (lastDigit === 2) return 'nd';
-  if (lastDigit === 3) return 'rd';
-
-  return 'th';
-};
-
-const formatStartedDate = (dateString: string, locale: string) => {
-  const date = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return dateString;
-
-  if (locale.startsWith('en')) {
-    const day = date.getDate();
-    const month = date.toLocaleDateString(locale, { month: 'long' });
-    return `${day}${getOrdinalSuffix(day)} ${month} ${date.getFullYear()}`;
-  }
-
-  return date.toLocaleDateString(locale, {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-};
 
 export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const { t, i18n } = useTranslation();
@@ -63,7 +36,7 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const supportingMetrics = [monthlyPayment, interestRate, payoffDate]
     .filter((metric): metric is LoanInsightMetric => Boolean(metric))
     .slice(0, 3);
-  const startedDate = formatStartedDate(loan.formSnapshot.startDate, i18n.language);
+  const startedDate = formatFriendlyDate(loan.formSnapshot.startDate, i18n.language);
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">

@@ -26,6 +26,7 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
+import { formatFriendlyDate } from '@/utils/date';
 import { DownPaymentToggle } from './DownPaymentToggle';
 
 interface Props {
@@ -49,18 +50,6 @@ const displayNumberValue = (value: unknown, formatted: boolean) => {
 
   return numeric.toLocaleString('en-GB', {
     maximumFractionDigits: 2,
-  });
-};
-
-const formatDisplayDate = (value: string | undefined, language: string) => {
-  if (!value) return '';
-  const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return date.toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
   });
 };
 
@@ -188,7 +177,7 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
             <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.82}>
               <InputSurface>
                 <AppText variant="bodyMd" style={styles.dateText}>
-                  {formatDisplayDate(startDateStr, i18n.language) || t('calculator.startDate')}
+                  {formatFriendlyDate(startDateStr, i18n.language) || t('calculator.startDate')}
                 </AppText>
               </InputSurface>
             </TouchableOpacity>

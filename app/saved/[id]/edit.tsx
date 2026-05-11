@@ -17,9 +17,10 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getDraftDeals, getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
+import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 
 export default function EditLoanScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const loan = savedLoansStorage.getById(id);
@@ -157,7 +158,9 @@ export default function EditLoanScreen() {
               {currentDeal ? (
                 <>
                   <AppText variant="title2" tone="accent" style={styles.dealTitle}>{currentDeal.name}</AppText>
-                  <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>{currentDeal.startDate} - {currentDeal.endDate}</AppText>
+                  <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
+                    {formatFriendlyDateRange(currentDeal.startDate, currentDeal.endDate, i18n.language)}
+                  </AppText>
                   <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
                     {currentDeal.interestRate}% · {currentDeal.repaymentType === 'interestOnly' ? t('mortgage.interestOnly') : t('mortgage.repayment')}
                   </AppText>
@@ -178,7 +181,9 @@ export default function EditLoanScreen() {
                   >
                     <View>
                       <AppText variant="title2" tone="accent" style={styles.dealTitle}>{deal.name}</AppText>
-                      <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>{t('mortgage.startsOn', { date: deal.startDate })}</AppText>
+                      <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
+                        {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
+                      </AppText>
                     </View>
                     <AppText variant="labelMd" tone="accent">{t('saved.edit')}</AppText>
                   </TouchableOpacity>

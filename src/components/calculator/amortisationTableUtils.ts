@@ -1,3 +1,5 @@
+import { formatFriendlyDate, parseDateLabelValue } from '@/utils/date';
+
 export interface AmortisationTableItem {
   itemNo: number;
   remaining: string;
@@ -6,24 +8,17 @@ export interface AmortisationTableItem {
   ending: string;
 }
 
-const DEFAULT_LOCALE = 'en-GB';
-
-const getLocale = (language: string) => (language === 'pl' ? 'pl-PL' : DEFAULT_LOCALE);
-
 export const formatAmortisationPeriodLabel = (
   startDate: string,
   periodNumber: number,
   language: string,
 ) => {
-  const date = new Date(startDate);
-  if (Number.isNaN(date.getTime())) return String(periodNumber);
+  const date = parseDateLabelValue(startDate);
+  if (!date) return String(periodNumber);
 
   date.setMonth(date.getMonth() + periodNumber - 1);
 
-  return date.toLocaleDateString(getLocale(language), {
-    month: 'short',
-    year: 'numeric',
-  });
+  return formatFriendlyDate(date.toISOString().split('T')[0], language);
 };
 
 const formatCsvNumber = (value: string) => {
