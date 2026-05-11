@@ -56,16 +56,18 @@ export const LoanBreakdownDonut = ({ principal, totalInterest, currency }: Props
           <View style={[styles.dot, { backgroundColor: colours.primary }]} />
           <View style={styles.legendCopy}>
             <Text style={styles.legendLabel}>{t('results.principal')}</Text>
-            <Text style={styles.legendValue}>{formatCurrency(principal, currency)}</Text>
-            <Text style={styles.legendMeta}>{principalPct}%</Text>
+            <Text style={styles.legendValue}>
+              {formatCurrency(principal, currency)} · <Text style={styles.legendPercent}>{principalPct}%</Text>
+            </Text>
           </View>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.dot, { backgroundColor: colours.accent }]} />
           <View style={styles.legendCopy}>
             <Text style={styles.legendLabel}>{t('results.interest')}</Text>
-            <Text style={styles.legendValue}>{formatCurrency(totalInterest, currency)}</Text>
-            <Text style={styles.legendMeta}>{interestPct}%</Text>
+            <Text style={styles.legendValue}>
+              {formatCurrency(totalInterest, currency)} · <Text style={styles.legendPercent}>{interestPct}%</Text>
+            </Text>
           </View>
         </View>
       </View>
@@ -121,10 +123,8 @@ const styles = StyleSheet.create({
     color: colours.textPrimary,
     marginTop: 2,
   },
-  legendMeta: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
+  legendPercent: {
+    fontWeight: fontWeights.extrabold,
     color: colours.primary,
-    marginTop: 2,
   },
 });
