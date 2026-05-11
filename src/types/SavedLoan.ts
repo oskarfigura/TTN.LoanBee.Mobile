@@ -56,6 +56,7 @@ export interface LoanDeal {
   repaymentType: MortgageRepaymentType;
   monthlyPayment: number;
   regularOverpayment: number;
+  additionalBorrowing?: number;
   remainingTermInYears: number;
   remainingTermInMonths: number;
   completion?: LoanDealCompletion;

@@ -13,6 +13,7 @@ import { formatCurrency } from '@/currency/format';
 import {
   canActivateDeal,
   canDeleteDeal,
+  canEditInitialDeal,
   formatDealDuration,
   getChronologicalDeals,
   getLaterDeals,
@@ -20,10 +21,11 @@ import {
   getNextDealStartDate,
   normaliseDealChain,
   removeLatestDealAndEvents,
+  withMortgageTermInMonths,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal } from '@/types/SavedLoan';
-import { colours, spacing } from '@/theme';
+import { colours, radii, spacing } from '@/theme';
 import { formatFriendlyDateRange } from '@/utils/date';
 
 export default function EditDealScreen() {
@@ -53,6 +55,9 @@ export default function EditDealScreen() {
   const dealIndex = chronologicalDeals.findIndex(item => item.id === deal.id);
   const previousDeal = dealIndex > 0 ? chronologicalDeals[dealIndex - 1] : undefined;
   const fixedStartDate = previousDeal ? getNextDealStartDate(previousDeal, loan.formSnapshot.startDate) : undefined;
+  const isInitialDeal = chronologicalDeals[0]?.id === deal.id;
+  const initialDealLocked = isInitialDeal && !canEditInitialDeal(loan);
+  const canEditMortgageTerm = isInitialDeal && canEditInitialDeal(loan);
 
   const deleteLatestDeal = () => {
     if (!canDeleteDeal(loan, deal.id)) return;
@@ -74,10 +79,13 @@ export default function EditDealScreen() {
     );
   };
 
-  const saveDeal = (updatedDeal: LoanDeal) => {
+  const saveDeal = (updatedDeal: LoanDeal, updatedMortgageTermInMonths?: number) => {
+    const loanWithTerm = updatedMortgageTermInMonths
+      ? withMortgageTermInMonths(loan, updatedMortgageTermInMonths)
+      : loan;
     const nextLoan = {
-      ...loan,
-      deals: loan.deals.map(item => item.id === updatedDeal.id ? updatedDeal : item),
+      ...loanWithTerm,
+      deals: loanWithTerm.deals.map(item => item.id === updatedDeal.id ? updatedDeal : item),
     };
     const laterDeals = getLaterDeals(nextLoan, updatedDeal.id);
     const commit = () => {
@@ -99,6 +107,36 @@ export default function EditDealScreen() {
 
     commit();
   };
+
+  if (initialDealLocked) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('mortgage.dealDetails')}
+          subtitle={deal.name}
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <ScrollView contentContainerStyle={styles.container}>
+          <Card style={styles.readOnlyCard}>
+            <AppText variant="labelMd" tone="muted" style={styles.readOnlyKicker}>{t('mortgage.initialDealLockedTitle')}</AppText>
+            <AppText variant="title1" tone="accent" style={styles.readOnlyTitle}>{deal.name}</AppText>
+            <AppText variant="bodySm" tone="muted" style={styles.readOnlyMeta}>
+              {formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}
+            </AppText>
+            <View style={styles.readOnlyGrid}>
+              <ReadOnlyMetric label={t('calculator.interestRate')} value={`${deal.interestRate}%`} />
+              <ReadOnlyMetric label={t('mortgage.duration')} value={formatDealDuration(deal, i18n.language)} />
+              <ReadOnlyMetric label={t('results.monthlyPayment')} value={formatCurrency(deal.monthlyPayment, loan.currency)} />
+              <ReadOnlyMetric label={t('mortgage.openingBankBalance')} value={formatCurrency(deal.openingBalance, loan.currency)} />
+            </View>
+            <AppText variant="bodySm" tone="muted" style={styles.readOnlyNotes}>
+              {t('mortgage.initialDealLockedBody')}
+            </AppText>
+          </Card>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   if (deal.status === 'completed' && !isCorrectionMode) {
     return (
@@ -155,34 +193,35 @@ export default function EditDealScreen() {
         subtitle={deal.name}
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
-      <ScrollView contentContainerStyle={styles.container}>
-        <DealEditorForm
-          currency={loan.currency}
-          initialDeal={deal}
-          canPublish={canActivateDeal(loan, deal.id)}
-          fixedStartDate={fixedStartDate}
-          mortgageStartDate={loan.formSnapshot.startDate}
-          mortgageTermInMonths={getMortgageTermInMonths(loan)}
-          onSave={saveDeal}
-          onDeleteDraft={deal.status === 'draft' && canDeleteDeal(loan, deal.id) ? () => {
-            Alert.alert(
-              t('mortgage.deleteDraftTitle'),
-              t('mortgage.deleteDraftMessage'),
-              [
-                { text: t('results.cancelLeave'), style: 'cancel' },
-                {
-                  text: t('mortgage.deleteDraft'),
-                  style: 'destructive',
-                  onPress: () => {
-                    savedLoansStorage.update(removeLatestDealAndEvents(loan, deal.id));
-                    router.back();
-                  },
+      <DealEditorForm
+        currency={loan.currency}
+        initialDeal={deal}
+        canPublish={canActivateDeal(loan, deal.id)}
+        fixedStartDate={fixedStartDate}
+        mortgageStartDate={loan.formSnapshot.startDate}
+        mortgageTermInMonths={getMortgageTermInMonths(loan)}
+        isInitialDeal={isInitialDeal}
+        canEditMortgageTerm={canEditMortgageTerm}
+        onCancel={() => router.back()}
+        onSave={saveDeal}
+        onDeleteDraft={deal.status === 'draft' && canDeleteDeal(loan, deal.id) ? () => {
+          Alert.alert(
+            t('mortgage.deleteDraftTitle'),
+            t('mortgage.deleteDraftMessage'),
+            [
+              { text: t('results.cancelLeave'), style: 'cancel' },
+              {
+                text: t('mortgage.deleteDraft'),
+                style: 'destructive',
+                onPress: () => {
+                  savedLoansStorage.update(removeLatestDealAndEvents(loan, deal.id));
+                  router.back();
                 },
-              ],
-            );
-          } : undefined}
-        />
-      </ScrollView>
+              },
+            ],
+          );
+        } : undefined}
+      />
     </SafeAreaView>
   );
 }
@@ -211,8 +250,9 @@ const styles = StyleSheet.create({
   readOnlyMetric: {
     width: '47%',
     borderWidth: 1,
-    borderColor: colours.border,
-    borderRadius: 12,
+    borderColor: colours.borderSoft,
+    borderRadius: radii.input,
+    backgroundColor: colours.surfaceRaised,
     padding: spacing.sm,
   },
   readOnlyLabel: {

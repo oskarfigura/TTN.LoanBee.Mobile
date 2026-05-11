@@ -36,6 +36,7 @@ export interface MortgageProjection {
   totalAmountPaid: number;
   totalInterestPaid: number;
   totalPrincipalPaid: number;
+  additionalBorrowingTotal: number;
   overpaymentSavingsEstimate: number;
   projectedEndDate?: string;
   currentDealEndDate?: string;
@@ -107,6 +108,7 @@ const buildEmptyProjection = (loan: LoanGroup): MortgageProjection => {
     totalInterestPaid: 0,
     totalPrincipalPaid: 0,
     overpaymentSavingsEstimate: 0,
+    additionalBorrowingTotal: 0,
     currentDealEndDate: getCurrentDeal(loan)?.endDate,
     publishedDealCount: 0,
     draftDealCount: getDraftDeals(loan).length,
@@ -135,6 +137,15 @@ const buildProjection = (
   let currentBalanceCaptured = false;
   let closingBalance = openingBalance;
   let projectedEndDate: string | undefined;
+  let additionalBorrowingTotal = 0;
+
+  deals.forEach((deal, dealIndex) => {
+    if (dealIndex > 0 && (deal.additionalBorrowing ?? 0) > 0) {
+      additionalBorrowingTotal += deal.additionalBorrowing ?? 0;
+    }
+  });
+
+  additionalBorrowingTotal = toMoney(additionalBorrowingTotal);
 
   deals.forEach(deal => {
     const dealEvents = getDealEvents(loan.events, deal.id);
@@ -277,7 +288,8 @@ const buildProjection = (
     closingBalance: toMoney(closingBalance),
     totalAmountPaid: toMoney(runningPaid),
     totalInterestPaid: toMoney(runningInterest),
-    totalPrincipalPaid: toMoney(Math.max(0, openingBalance - currentBalance)),
+    totalPrincipalPaid: toMoney(Math.max(0, openingBalance + additionalBorrowingTotal - currentBalance)),
+    additionalBorrowingTotal,
     projectedEndDate,
     currentDealEndDate: getCurrentDeal(loan, asOf)?.endDate,
     publishedDealCount: deals.length,

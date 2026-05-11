@@ -3,15 +3,19 @@ import {
   buildNextDealDraft,
   canDeleteDeal,
   canActivateDeal,
+  canEditInitialDeal,
   formatDealDuration,
+  getMortgageTermInMonths,
   getMortgageTrackerSummary,
   getNextDealStartDate,
+  getRemainingMortgageTermInMonths,
   getTimelineWarnings,
   normaliseDealChain,
   projectDeal,
   recalculateLaterDealOpeningBalances,
   removeDealAndRecalculateLater,
   removeLaterDealsAndEvents,
+  withMortgageTermInMonths,
 } from '../../src/mortgage/tracker';
 import { buildMortgageProjection } from '../../src/mortgage/projection';
 import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
@@ -664,5 +668,147 @@ describe('mortgage tracker', () => {
 
     expect(corrected.deals.map(deal => deal.id)).toEqual(['completed']);
     expect(corrected.events.map(event => event.id)).toEqual(['keep']);
+  });
+
+  it('seeds the next draft with zero additional borrowing', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const loan = makeMortgage({ deals: [completed] });
+
+    const draft = buildNextDealDraft(loan, 'next', '2031-06-01T00:00:00.000Z');
+
+    expect(draft.additionalBorrowing).toBe(0);
+    expect(draft.openingBalance).toBe(205000);
+  });
+
+  it('preserves additional borrowing across normalisation when an earlier deal changes', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const next = {
+      ...completed,
+      id: 'next',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 205000 + 30000,
+      additionalBorrowing: 30000,
+      completion: undefined,
+    };
+    const loan = makeMortgage({ deals: [completed, next] });
+
+    const updated = recalculateLaterDealOpeningBalances(loan, completed.id);
+    const updatedNext = updated.deals.find(deal => deal.id === 'next');
+
+    expect(updatedNext?.additionalBorrowing).toBe(30000);
+    expect(updatedNext?.openingBalance).toBe(205000 + 30000);
+  });
+
+  it('locks the initial deal once a second deal exists', () => {
+    const singleDealLoan = makeMortgage();
+    expect(canEditInitialDeal(singleDealLoan)).toBe(true);
+
+    const twoDealLoan = makeMortgage({
+      deals: [
+        makeMortgage().deals[0],
+        {
+          ...makeMortgage().deals[0],
+          id: 'next',
+          status: 'draft',
+          startDate: '2031-06-02',
+          endDate: '2036-06-02',
+        },
+      ],
+    });
+    expect(canEditInitialDeal(twoDealLoan)).toBe(false);
+  });
+
+  it('updates the total mortgage term and recomputes remaining term', () => {
+    const loan = makeMortgage({ mortgageTermInMonths: 25 * 12 });
+    const extended = withMortgageTermInMonths(loan, 40 * 12);
+
+    expect(getMortgageTermInMonths(extended)).toBe(40 * 12);
+    const remainingAtStart = getRemainingMortgageTermInMonths(extended, extended.formSnapshot.startDate);
+    expect(remainingAtStart).toBe(40 * 12);
+  });
+
+  it('counts additional borrowing in mortgage tracker summary so principal paid stays accurate', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      id: 'completed',
+      status: 'completed' as const,
+      startDate: '2026-06-01',
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 200000,
+        feesAdded: 0,
+      },
+    };
+    const remortgage = {
+      ...makeMortgage().deals[0],
+      id: 'remortgage',
+      status: 'active' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 230000,
+      additionalBorrowing: 30000,
+      completion: undefined,
+    };
+    const loan = makeMortgage({ deals: [completed, remortgage] });
+
+    const summary = getMortgageTrackerSummary(loan, new Date('2031-06-15T00:00:00'));
+
+    expect(summary.originalBalance).toBe(240000);
+    expect(summary.currentBalance).toBeCloseTo(230000, 0);
+    expect(summary.principalPaid).toBeCloseTo(40000, 0);
+  });
+
+  it('exposes additional borrowing total and corrected principal paid in mortgage projection', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      id: 'completed',
+      status: 'completed' as const,
+      startDate: '2026-06-01',
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 200000,
+        feesAdded: 0,
+      },
+    };
+    const remortgage = {
+      ...makeMortgage().deals[0],
+      id: 'remortgage',
+      status: 'active' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 225000,
+      additionalBorrowing: 25000,
+      monthlyPayment: 1400,
+      regularOverpayment: 0,
+      completion: undefined,
+    };
+    const loan = makeMortgage({ deals: [completed, remortgage] });
+
+    const projection = buildMortgageProjection(loan, new Date('2031-08-01T00:00:00'));
+
+    expect(projection.additionalBorrowingTotal).toBe(25000);
+    expect(projection.totalPrincipalPaid).toBeGreaterThan(0);
+    expect(projection.currentBalance).toBeLessThanOrEqual(225000);
   });
 });

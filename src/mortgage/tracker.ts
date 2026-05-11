@@ -250,6 +250,7 @@ export const buildNextDealDraft = (
       repaymentType: 'repayment',
       monthlyPayment: loan.resultSnapshot.monthlyPayments,
       regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
+      additionalBorrowing: 0,
       remainingTermInYears: years,
       remainingTermInMonths: months,
     };
@@ -281,8 +282,24 @@ export const buildNextDealDraft = (
       previousDeal.repaymentType,
     ),
     regularOverpayment: previousDeal.regularOverpayment,
+    additionalBorrowing: 0,
     remainingTermInYears: years,
     remainingTermInMonths: months,
+  };
+};
+
+export const canEditInitialDeal = (loan: LoanGroup): boolean => (
+  loan.deals.length <= 1
+);
+
+export const withMortgageTermInMonths = (loan: LoanGroup, totalMonths: number): LoanGroup => {
+  const sanitised = Math.max(1, Math.round(totalMonths));
+  if (sanitised === loan.mortgageTermInMonths) return loan;
+
+  return {
+    ...loan,
+    mortgageTermInMonths: sanitised,
+    updatedAt: new Date().toISOString(),
   };
 };
 
@@ -409,7 +426,7 @@ export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGr
     const durationMonths = Math.max(getDealDurationInMonths(deal), 1);
     const projectionDate = parseDate(getEffectiveDealEndDate(previousDeal));
     const projectedPrevious = projectDeal(previousDeal, loan.events, projectionDate, true);
-    const openingBalance = projectedPrevious.balance;
+    const openingBalance = toMoney(projectedPrevious.balance + (deal.additionalBorrowing ?? 0));
     const shouldRebaseDates = deal.status !== 'completed';
     const nextDeal: LoanDeal = {
       ...deal,
@@ -477,6 +494,9 @@ export const getMortgageTrackerSummary = (
 ): MortgageTrackerSummary => {
   const publishedDeals = getPublishedDeals(loan);
   const originalBalance = publishedDeals[0]?.openingBalance ?? loan.formSnapshot.loanAmount;
+  const additionalBorrowingTotal = publishedDeals
+    .slice(1)
+    .reduce((sum, deal) => sum + Math.max(0, deal.additionalBorrowing ?? 0), 0);
   const projections = publishedDeals.map(deal => projectDeal(deal, loan.events, asOf, true));
   const baselineProjections = publishedDeals.map(deal => projectDeal(deal, loan.events, asOf, false));
   const lastProjection = projections[projections.length - 1];
@@ -500,14 +520,18 @@ export const getMortgageTrackerSummary = (
     ).interestPaid
     : 0;
 
+  const totalOriginatedBalance = originalBalance + additionalBorrowingTotal;
+
   return {
     originalBalance: toMoney(originalBalance),
     currentBalance: toMoney(currentBalance),
-    principalPaid: toMoney(originalBalance - currentBalance),
+    principalPaid: toMoney(Math.max(0, totalOriginatedBalance - currentBalance)),
     interestPaidEstimate: toMoney(interestPaidEstimate),
     interestRemainingEstimate: toMoney(interestRemainingEstimate),
     overpaymentSavingsEstimate: toMoney(baselineInterestEstimate - interestPaidEstimate),
-    balanceProgress: originalBalance > 0 ? Math.min(Math.max((originalBalance - currentBalance) / originalBalance, 0), 1) : 0,
+    balanceProgress: totalOriginatedBalance > 0
+      ? Math.min(Math.max((totalOriginatedBalance - currentBalance) / totalOriginatedBalance, 0), 1)
+      : 0,
     currentDeal,
     nextDraftDeal: getSingleDraftDeal(loan),
     recentEvents: [...loan.events]

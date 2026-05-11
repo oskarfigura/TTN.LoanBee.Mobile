@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
+import { DismissibleBanner } from '@/components/ui/DismissibleBanner';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
@@ -14,11 +16,12 @@ import {
   getNextDealStartDate,
   getSingleDraftDeal,
   normaliseDealChain,
+  withMortgageTermInMonths,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
-import { colours, fonts, fontSizes, fontWeights } from '@/theme';
+import { colours } from '@/theme';
 
 export default function NewDealScreen() {
   const { t } = useTranslation();
@@ -50,7 +53,7 @@ export default function NewDealScreen() {
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>{t('saved.notFound')}</Text>
+          <AppText variant="title3" style={styles.notFoundText}>{t('saved.notFound')}</AppText>
           <Button label={t('common.goBack')} onPress={() => router.back()} />
         </View>
       </SafeAreaView>
@@ -62,6 +65,18 @@ export default function NewDealScreen() {
   const canPublish = !previous || previous.status === 'completed';
   const fixedStartDate = previous ? getNextDealStartDate(previous, loan.formSnapshot.startDate) : undefined;
 
+  const banner = !canPublish && previous ? (
+    <DismissibleBanner
+      tone="warning"
+      title={t('mortgage.completeBeforeNewDealTitle')}
+      message={t('mortgage.completeBeforeNewDealMessage')}
+      action={{
+        label: t('mortgage.completeCurrentDeal'),
+        onPress: () => router.push(`/saved/${loan.id}/complete-current`),
+      }}
+    />
+  ) : null;
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
@@ -69,64 +84,35 @@ export default function NewDealScreen() {
         subtitle={loan.nickname}
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
-      <ScrollView contentContainerStyle={styles.container}>
-        {!canPublish && previous && (
-          <View style={styles.blocker}>
-            <Text style={styles.blockerTitle}>{t('mortgage.completeBeforeNewDealTitle')}</Text>
-            <Text style={styles.blockerText}>{t('mortgage.completeBeforeNewDealMessage')}</Text>
-            <Button
-              label={t('mortgage.completeCurrentDeal')}
-              onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
-              style={styles.blockerAction}
-            />
-          </View>
-        )}
-        <DealEditorForm
-          currency={loan.currency}
-          initialDeal={initialDeal}
-          canPublish={canPublish}
-          fixedStartDate={fixedStartDate}
-          mortgageStartDate={loan.formSnapshot.startDate}
-          mortgageTermInMonths={getMortgageTermInMonths(loan)}
-          onSave={deal => {
-            savedLoansStorage.update(normaliseDealChain({
-              ...loan,
-              deals: [...loan.deals, deal],
-              status: 'tracked',
-            }, deal.id));
-            router.back();
-          }}
-        />
-      </ScrollView>
+      <DealEditorForm
+        currency={loan.currency}
+        initialDeal={initialDeal}
+        canPublish={canPublish}
+        fixedStartDate={fixedStartDate}
+        mortgageStartDate={loan.formSnapshot.startDate}
+        mortgageTermInMonths={getMortgageTermInMonths(loan)}
+        isInitialDeal={false}
+        canEditMortgageTerm
+        onCancel={() => router.back()}
+        banner={banner}
+        onSave={(deal, updatedMortgageTermInMonths) => {
+          const nextLoan = updatedMortgageTermInMonths
+            ? withMortgageTermInMonths(loan, updatedMortgageTermInMonths)
+            : loan;
+          savedLoansStorage.update(normaliseDealChain({
+            ...nextLoan,
+            deals: [...nextLoan.deals, deal],
+            status: 'tracked',
+          }, deal.id));
+          router.back();
+        }}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  container: { padding: 16, paddingBottom: 40 },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  notFoundText: { fontFamily: fonts.heading, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
-  blocker: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surface,
-    padding: 16,
-    marginBottom: 16,
-  },
-  blockerTitle: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.md,
-    fontWeight: fontWeights.bold,
-    color: colours.primary,
-  },
-  blockerText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    lineHeight: 20,
-    marginTop: 6,
-  },
-  blockerAction: { marginTop: 14 },
+  notFoundText: { marginBottom: 16 },
 });

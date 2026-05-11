@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
+import { FormStepper, FormStepperSection } from '@/components/ui/FormStepper';
 import {
   AppTextInput,
   FieldHint,
@@ -11,47 +12,32 @@ import {
   FormSection,
   InputAffix,
   InputSurface,
-  PillSelector,
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
-import { calculateDealMonthlyPayment, formatDealDuration } from '@/mortgage/tracker';
+import { calculateDealMonthlyPayment } from '@/mortgage/tracker';
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
-import { colours, radii, spacing } from '@/theme';
+import { colours, elevation, radii, spacing } from '@/theme';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 
 interface Props {
   currency: CurrencyCode;
   initialDeal: LoanDeal;
   canPublish: boolean;
-  onSave: (deal: LoanDeal) => void;
+  onSave: (deal: LoanDeal, mortgageTermInMonths?: number) => void;
+  onCancel?: () => void;
   onDeleteDraft?: () => void;
   fixedStartDate?: string;
   mortgageStartDate: string;
   mortgageTermInMonths: number;
+  isInitialDeal: boolean;
+  canEditMortgageTerm: boolean;
+  banner?: React.ReactNode;
 }
 
-const termOptions = [
-  { labelKey: 'mortgage.termPreset2', value: '2', years: 2 },
-  { labelKey: 'mortgage.termPreset3', value: '3', years: 3 },
-  { labelKey: 'mortgage.termPreset5', value: '5', years: 5 },
-  { labelKey: 'mortgage.termPreset10', value: '10', years: 10 },
-];
-
-const addYears = (dateString: string, years: number): string => {
-  const date = parseDateLabelValue(dateString);
-  if (!date) return dateString;
-  date.setFullYear(date.getFullYear() + years);
-  return formatIsoDate(date);
-};
-
 const numberText = (value: number) => (Number.isFinite(value) ? String(value) : '0');
-
-const getTermPresetForDates = (startDate: string, endDate: string): string => (
-  termOptions.find(option => addYears(startDate, option.years) === endDate)?.value ?? ''
-);
 
 const monthsBetweenDates = (startDate: string, endDate: string): number => {
   const start = parseDateLabelValue(startDate);
@@ -66,42 +52,82 @@ const splitMonths = (totalMonths: number) => ({
   months: totalMonths % 12,
 });
 
+const addMonthsIso = (dateString: string, totalMonths: number): string => {
+  const date = parseDateLabelValue(dateString);
+  if (!date) return dateString;
+  date.setMonth(date.getMonth() + totalMonths);
+  return formatIsoDate(date);
+};
+
 export const DealEditorForm = ({
   currency,
   initialDeal,
   canPublish,
   onSave,
+  onCancel,
   onDeleteDraft,
   fixedStartDate,
   mortgageStartDate,
   mortgageTermInMonths,
+  isInitialDeal,
+  canEditMortgageTerm,
+  banner,
 }: Props) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
+
+  const initialAdditionalBorrowing = initialDeal.additionalBorrowing ?? 0;
+  const projectedPreviousBalance = isInitialDeal
+    ? 0
+    : Math.max(0, initialDeal.openingBalance - initialAdditionalBorrowing);
+  const initialTermSplit = splitMonths(Math.max(1, Math.round(mortgageTermInMonths)));
+  const initialDealDurationSplit = splitMonths(monthsBetweenDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate));
 
   const [name, setName] = useState(initialDeal.name);
   const [lender, setLender] = useState(initialDeal.lender ?? '');
   const [startDate, setStartDate] = useState(initialDeal.startDate);
   const [endDate, setEndDate] = useState(initialDeal.endDate);
-  const [selectedTerm, setSelectedTerm] = useState(getTermPresetForDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate));
+  const [dealDurationYears, setDealDurationYears] = useState(numberText(initialDealDurationSplit.years));
+  const [dealDurationMonths, setDealDurationMonths] = useState(numberText(initialDealDurationSplit.months));
   const [openingBalance, setOpeningBalance] = useState(numberText(initialDeal.openingBalance));
+  const [additionalBorrowing, setAdditionalBorrowing] = useState(numberText(initialAdditionalBorrowing));
   const [interestRate, setInterestRate] = useState(numberText(initialDeal.interestRate));
   const [repaymentType, setRepaymentType] = useState<MortgageRepaymentType>(initialDeal.repaymentType);
   const [regularOverpayment, setRegularOverpayment] = useState(numberText(initialDeal.regularOverpayment));
-  const [activeStep, setActiveStep] = useState(0);
+  const [totalTermYears, setTotalTermYears] = useState(numberText(initialTermSplit.years));
+  const [totalTermMonths, setTotalTermMonths] = useState(numberText(initialTermSplit.months));
   const [completedAt, setCompletedAt] = useState(initialDeal.completion?.completedAt ?? initialDeal.endDate);
   const [closingBalance, setClosingBalance] = useState(numberText(initialDeal.completion?.closingBalance ?? 0));
   const [feesAdded, setFeesAdded] = useState(numberText(initialDeal.completion?.feesAdded ?? 0));
   const [completionNotes, setCompletionNotes] = useState(initialDeal.completion?.notes ?? '');
 
   const effectiveStartDate = fixedStartDate ?? startDate;
+  const dealDurationInMonths = Math.max(
+    1,
+    (Math.max(0, Number(dealDurationYears) || 0) * 12) + Math.max(0, Number(dealDurationMonths) || 0),
+  );
+
+  // Keep endDate in sync when duration inputs change
+  useEffect(() => {
+    const next = addMonthsIso(effectiveStartDate, dealDurationInMonths);
+    if (next !== endDate) setEndDate(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealDurationInMonths, effectiveStartDate]);
+
+  const additionalBorrowingValue = Math.max(0, Number(additionalBorrowing) || 0);
+  const derivedOpeningBalance = isInitialDeal
+    ? Math.max(0, Number(openingBalance) || 0)
+    : Math.max(0, projectedPreviousBalance + additionalBorrowingValue);
+  const effectiveTotalMortgageTermInMonths = canEditMortgageTerm
+    ? Math.max(1, (Math.max(0, Number(totalTermYears) || 0) * 12) + Math.max(0, Number(totalTermMonths) || 0))
+    : mortgageTermInMonths;
   const remainingTermInMonths = Math.max(
-    mortgageTermInMonths - monthsBetweenDates(mortgageStartDate, effectiveStartDate),
+    effectiveTotalMortgageTermInMonths - monthsBetweenDates(mortgageStartDate, effectiveStartDate),
     1,
   );
   const remainingTerm = splitMonths(remainingTermInMonths);
   const calculatedMonthlyPayment = calculateDealMonthlyPayment(
-    Number(openingBalance) || 0,
+    derivedOpeningBalance,
     Number(interestRate) || 0,
     remainingTermInMonths,
     repaymentType,
@@ -113,11 +139,12 @@ export const DealEditorForm = ({
     lender: lender || undefined,
     startDate: effectiveStartDate,
     endDate,
-    openingBalance: Number(openingBalance) || 0,
+    openingBalance: derivedOpeningBalance,
     interestRate: Number(interestRate) || 0,
     repaymentType,
     monthlyPayment: calculatedMonthlyPayment,
     regularOverpayment: Number(regularOverpayment) || 0,
+    additionalBorrowing: isInitialDeal ? undefined : additionalBorrowingValue,
     remainingTermInYears: remainingTerm.years,
     remainingTermInMonths: remainingTerm.months,
     completion: initialDeal.status === 'completed'
@@ -130,46 +157,25 @@ export const DealEditorForm = ({
       : initialDeal.completion,
     updatedAt: new Date().toISOString(),
   }), [
+    additionalBorrowingValue,
     closingBalance,
     completedAt,
     completionNotes,
+    derivedOpeningBalance,
     endDate,
     effectiveStartDate,
     feesAdded,
-    fixedStartDate,
     initialDeal,
     interestRate,
+    isInitialDeal,
     lender,
     name,
-    openingBalance,
     calculatedMonthlyPayment,
     regularOverpayment,
-    remainingTermInMonths,
+    remainingTerm.months,
+    remainingTerm.years,
     repaymentType,
   ]);
-
-  const updateStartDate = (nextStartDate: string) => {
-    if (fixedStartDate) return;
-
-    setStartDate(nextStartDate);
-    const option = termOptions.find(item => item.value === selectedTerm);
-    if (option) {
-      setEndDate(addYears(nextStartDate, option.years));
-    }
-  };
-
-  const updateEndDate = (nextEndDate: string) => {
-    setEndDate(nextEndDate);
-    setSelectedTerm(getTermPresetForDates(effectiveStartDate, nextEndDate));
-  };
-
-  const applyPresetTerm = (nextTerm: string) => {
-    setSelectedTerm(nextTerm);
-    const option = termOptions.find(item => item.value === nextTerm);
-    if (option) {
-      setEndDate(addYears(effectiveStartDate, option.years));
-    }
-  };
 
   const validate = () => {
     if (!isValidIsoDate(effectiveStartDate) || !isValidIsoDate(endDate) || endDate <= effectiveStartDate) {
@@ -204,15 +210,22 @@ export const DealEditorForm = ({
       return;
     }
 
-    onSave({
-      ...dealFromState,
-      status,
-      completion: status === 'completed' ? dealFromState.completion : undefined,
-    });
+    const updatedMortgageTerm = canEditMortgageTerm && effectiveTotalMortgageTermInMonths !== mortgageTermInMonths
+      ? effectiveTotalMortgageTermInMonths
+      : undefined;
+
+    onSave(
+      {
+        ...dealFromState,
+        status,
+        completion: status === 'completed' ? dealFromState.completion : undefined,
+      },
+      updatedMortgageTerm,
+    );
   };
 
-  const coreDetailsSection = (
-    <FormSection title={t('mortgage.coreDetails')} accent style={styles.section}>
+  const basicsSection = (
+    <FormSection title={t('mortgage.coreDetails')} accent>
       <FieldHint>{t('mortgage.bankBalanceTruth')}</FieldHint>
 
       <View style={styles.fieldGroup}>
@@ -231,38 +244,184 @@ export const DealEditorForm = ({
         <LenderTextInput value={lender} onChange={setLender} />
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.half}>
-          <DatePickerField
-            label={t('mortgage.dealStartDate')}
-            value={effectiveStartDate}
-            onChange={updateStartDate}
-            hint={fixedStartDate ? t('mortgage.dealStartLockedHint') : t('mortgage.dateFormatHint')}
-            disabled={Boolean(fixedStartDate)}
-          />
+      <View style={styles.fieldGroup}>
+        <DatePickerField
+          label={t('mortgage.dealStartDate')}
+          value={effectiveStartDate}
+          onChange={value => {
+            if (fixedStartDate) return;
+            setStartDate(value);
+          }}
+          hint={fixedStartDate ? t('mortgage.dealStartLockedHint') : t('mortgage.dateFormatHint')}
+          disabled={Boolean(fixedStartDate)}
+        />
+      </View>
+
+      {!isInitialDeal && (
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('mortgage.additionalBorrowing')}</FieldLabel>
+          <InputSurface>
+            <InputAffix>{currencySymbol}</InputAffix>
+            <AppTextInput
+              keyboardType="decimal-pad"
+              value={additionalBorrowing}
+              onChangeText={setAdditionalBorrowing}
+              placeholder="0"
+            />
+          </InputSurface>
+          <FieldHint>{t('mortgage.additionalBorrowingHint')}</FieldHint>
         </View>
-        <View style={styles.half}>
-          <DatePickerField
-            label={t('mortgage.dealEndDate')}
-            value={endDate}
-            onChange={updateEndDate}
-            hint={t('mortgage.dateFormatHint')}
+      )}
+
+      <View style={styles.fieldGroup}>
+        <FieldLabel>{t('mortgage.openingBankBalance')}</FieldLabel>
+        {isInitialDeal ? (
+          <InputSurface>
+            <InputAffix>{currencySymbol}</InputAffix>
+            <AppTextInput
+              keyboardType="decimal-pad"
+              value={openingBalance}
+              onChangeText={setOpeningBalance}
+              placeholder="238420"
+            />
+          </InputSurface>
+        ) : (
+          <View style={styles.readonlyPanel}>
+            <AppText variant="title2" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
+              {formatCurrency(derivedOpeningBalance, currency)}
+            </AppText>
+            <AppText variant="helper" tone="muted" style={styles.readonlyPanelHelp}>
+              {formatCurrency(projectedPreviousBalance, currency)}
+              {additionalBorrowingValue > 0
+                ? ` + ${formatCurrency(additionalBorrowingValue, currency)}`
+                : ''}
+            </AppText>
+          </View>
+        )}
+      </View>
+    </FormSection>
+  );
+
+  const rateAndTermSection = (
+    <FormSection title={t('mortgage.rateAndTerm')}>
+      <View style={styles.fieldGroup}>
+        <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
+        <InputSurface>
+          <AppTextInput
+            keyboardType="decimal-pad"
+            value={interestRate}
+            onChangeText={setInterestRate}
+            placeholder="4.29"
           />
+          <InputAffix trailing>%</InputAffix>
+        </InputSurface>
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <FieldLabel>{t('mortgage.dealDuration')}</FieldLabel>
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <InputSurface>
+              <AppTextInput
+                keyboardType="number-pad"
+                value={dealDurationYears}
+                onChangeText={setDealDurationYears}
+                placeholder="5"
+              />
+              <InputAffix trailing>{t('mortgage.totalMortgageTermYears')}</InputAffix>
+            </InputSurface>
+          </View>
+          <View style={styles.half}>
+            <InputSurface>
+              <AppTextInput
+                keyboardType="number-pad"
+                value={dealDurationMonths}
+                onChangeText={setDealDurationMonths}
+                placeholder="0"
+              />
+              <InputAffix trailing>{t('mortgage.totalMortgageTermMonths')}</InputAffix>
+            </InputSurface>
+          </View>
+        </View>
+        <FieldHint>{t('mortgage.dealDurationHint')}</FieldHint>
+      </View>
+
+      <View style={styles.fieldGroup}>
+        <FieldLabel>{t('mortgage.repaymentType')}</FieldLabel>
+        <SegmentedControl
+          value={repaymentType}
+          onChange={setRepaymentType}
+          options={[
+            { label: t('mortgage.repayment'), value: 'repayment' },
+            { label: t('mortgage.interestOnly'), value: 'interestOnly' },
+          ]}
+        />
+      </View>
+
+      {canEditMortgageTerm && (
+        <View style={styles.fieldGroup}>
+          <FieldLabel>{t('mortgage.totalMortgageTerm')}</FieldLabel>
+          <View style={styles.row}>
+            <View style={styles.half}>
+              <InputSurface>
+                <AppTextInput
+                  keyboardType="number-pad"
+                  value={totalTermYears}
+                  onChangeText={setTotalTermYears}
+                  placeholder="35"
+                />
+                <InputAffix trailing>{t('mortgage.totalMortgageTermYears')}</InputAffix>
+              </InputSurface>
+            </View>
+            <View style={styles.half}>
+              <InputSurface>
+                <AppTextInput
+                  keyboardType="number-pad"
+                  value={totalTermMonths}
+                  onChangeText={setTotalTermMonths}
+                  placeholder="0"
+                />
+                <InputAffix trailing>{t('mortgage.totalMortgageTermMonths')}</InputAffix>
+              </InputSurface>
+            </View>
+          </View>
+          <FieldHint>{t('mortgage.totalMortgageTermHint')}</FieldHint>
+        </View>
+      )}
+    </FormSection>
+  );
+
+  const paymentsSection = (
+    <FormSection title={t('mortgage.payments')} accent>
+      <View style={styles.fieldGroup}>
+        <FieldLabel>{t('results.monthlyPayment')}</FieldLabel>
+        <View style={styles.readonlyPanel}>
+          <AppText variant="title2" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(calculatedMonthlyPayment, currency)}
+          </AppText>
+          <AppText variant="helper" tone="muted" style={styles.readonlyPanelHelp}>
+            {t('mortgage.monthlyPaymentAutoHelp')}
+          </AppText>
         </View>
       </View>
 
       <View style={styles.fieldGroup}>
-        <FieldLabel>{t('mortgage.openingBankBalance')}</FieldLabel>
+        <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
         <InputSurface>
           <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput keyboardType="decimal-pad" value={openingBalance} onChangeText={setOpeningBalance} placeholder="238420" />
+          <AppTextInput
+            keyboardType="decimal-pad"
+            value={regularOverpayment}
+            onChangeText={setRegularOverpayment}
+            placeholder="150"
+          />
         </InputSurface>
       </View>
     </FormSection>
   );
 
-  const completionSection = initialDeal.status === 'completed' ? (
-    <FormSection title={t('mortgage.completionDetails')} accent style={styles.section}>
+  const completionSection = (
+    <FormSection title={t('mortgage.completionDetails')} accent>
       <View style={styles.fieldGroup}>
         <DatePickerField
           label={t('mortgage.completionDate')}
@@ -276,7 +435,12 @@ export const DealEditorForm = ({
         <FieldLabel>{t('mortgage.closingBankBalance')}</FieldLabel>
         <InputSurface>
           <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput keyboardType="decimal-pad" value={closingBalance} onChangeText={setClosingBalance} placeholder="210000" />
+          <AppTextInput
+            keyboardType="decimal-pad"
+            value={closingBalance}
+            onChangeText={setClosingBalance}
+            placeholder="210000"
+          />
         </InputSurface>
       </View>
 
@@ -284,8 +448,14 @@ export const DealEditorForm = ({
         <FieldLabel>{t('mortgage.feesAdded')}</FieldLabel>
         <InputSurface>
           <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput keyboardType="decimal-pad" value={feesAdded} onChangeText={setFeesAdded} placeholder="0" />
+          <AppTextInput
+            keyboardType="decimal-pad"
+            value={feesAdded}
+            onChangeText={setFeesAdded}
+            placeholder="0"
+          />
         </InputSurface>
+        <FieldHint>{t('mortgage.feesAddedHint')}</FieldHint>
       </View>
 
       <View style={styles.fieldGroup}>
@@ -301,212 +471,94 @@ export const DealEditorForm = ({
         </InputSurface>
       </View>
     </FormSection>
-  ) : null;
-
-  const rateAndTermSection = (
-    <FormSection title={t('mortgage.rateAndTerm')} style={styles.section}>
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
-        <InputSurface>
-          <AppTextInput keyboardType="decimal-pad" value={interestRate} onChangeText={setInterestRate} placeholder="4.29" />
-          <InputAffix trailing>%</InputAffix>
-        </InputSurface>
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('mortgage.presetTerm')}</FieldLabel>
-        <PillSelector
-          value={selectedTerm}
-          onChange={applyPresetTerm}
-          options={termOptions.map(option => ({
-            label: t(option.labelKey),
-            value: option.value,
-          }))}
-        />
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('mortgage.repaymentType')}</FieldLabel>
-        <SegmentedControl
-          value={repaymentType}
-          onChange={setRepaymentType}
-          options={[
-            { label: t('mortgage.repayment'), value: 'repayment' },
-            { label: t('mortgage.interestOnly'), value: 'interestOnly' },
-          ]}
-        />
-      </View>
-    </FormSection>
   );
 
-  const paymentsSection = (
-    <FormSection title={t('mortgage.payments')} accent style={styles.section}>
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('results.monthlyPayment')}</FieldLabel>
-        <View style={styles.calculatedPayment}>
-          <AppText variant="title2" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
-            {formatCurrency(calculatedMonthlyPayment, currency)}
-          </AppText>
-          <AppText variant="helper" tone="muted" style={styles.calculatedPaymentHelp}>
-            {t('mortgage.monthlyPaymentAutoHelp')}
-          </AppText>
-        </View>
-      </View>
-
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
-        <InputSurface>
-          <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput keyboardType="decimal-pad" value={regularOverpayment} onChangeText={setRegularOverpayment} placeholder="150" />
-        </InputSurface>
-      </View>
-
-      <View style={styles.termSummary}>
-        <AppText variant="labelMd" tone="muted">{t('mortgage.remainingMortgageTerm')}</AppText>
-        <AppText variant="title3" tone="accent">{formatDealDuration(remainingTermInMonths, i18n.language)}</AppText>
-      </View>
-    </FormSection>
-  );
-
-  const saveActions = initialDeal.status === 'draft' ? (
-    canPublish ? (
-      <View style={styles.actions}>
-        <Button label={t('mortgage.saveAsDraft')} onPress={() => saveWithStatus('draft')} variant="secondary" style={styles.action} />
-        <Button label={t('mortgage.publishDeal')} onPress={() => saveWithStatus('active')} style={styles.action} />
-      </View>
-    ) : (
-      <Button
-        label={t('mortgage.saveAsDraft')}
-        onPress={() => saveWithStatus('draft')}
-        style={styles.singleAction}
-      />
-    )
-  ) : (
-    <Button
-      label={t('edit.save')}
-      onPress={() => saveWithStatus(initialDeal.status)}
-      style={styles.singleAction}
-    />
-  );
-
-  if (initialDeal.status === 'draft') {
-    const steps = [
-      { label: t('mortgage.coreDetails'), content: coreDetailsSection },
-      { label: t('mortgage.rateAndTerm'), content: rateAndTermSection },
-      { label: t('mortgage.payments'), content: paymentsSection },
-    ];
-    const lastStep = activeStep === steps.length - 1;
-
-    return (
-      <View>
-        <View style={styles.stepper}>
-          {steps.map((step, index) => (
-            <View key={step.label} style={[styles.stepPill, index === activeStep && styles.stepPillActive]}>
-              <AppText variant="labelSm" tone={index === activeStep ? 'inverse' : 'muted'}>
-                {index + 1}. {step.label}
-              </AppText>
-            </View>
-          ))}
-        </View>
-
-        {steps[activeStep].content}
-
-        {initialDeal.status === 'draft' && !canPublish && lastStep ? (
-          <AppText variant="bodySm" tone="muted" style={styles.blockedHelp}>{t('mortgage.draftOnlyUntilCompleted')}</AppText>
-        ) : null}
-
-        <View style={styles.wizardActions}>
-          {activeStep > 0 ? (
-            <Button label={t('results.previous')} onPress={() => setActiveStep(step => Math.max(step - 1, 0))} variant="secondary" style={styles.action} />
-          ) : null}
-          {lastStep ? saveActions : (
-            <Button label={t('results.next')} onPress={() => setActiveStep(step => Math.min(step + 1, steps.length - 1))} style={styles.action} />
-          )}
-        </View>
-
-        {onDeleteDraft && (
-          <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="ghost" style={styles.deleteAction} />
-        )}
-      </View>
-    );
+  const sections: FormStepperSection[] = [
+    { key: 'basics', label: t('mortgage.coreDetails'), content: basicsSection },
+    { key: 'rate', label: t('mortgage.rateAndTerm'), content: rateAndTermSection },
+    { key: 'payments', label: t('mortgage.payments'), content: paymentsSection },
+  ];
+  if (initialDeal.status === 'completed') {
+    sections.push({ key: 'completion', label: t('mortgage.completionDetails'), content: completionSection });
   }
 
-  return (
-    <View>
-      {coreDetailsSection}
-      {completionSection}
-      {rateAndTermSection}
-      {paymentsSection}
-      {saveActions}
+  const isDraft = initialDeal.status === 'draft';
+  const primaryLabel = isDraft && canPublish ? t('mortgage.publishDeal') : t('edit.save');
+  const handlePrimary = () => {
+    if (isDraft) {
+      saveWithStatus(canPublish ? 'active' : 'draft');
+      return;
+    }
+    saveWithStatus(initialDeal.status);
+  };
+
+  const footer = (
+    <View style={styles.footer}>
+      {isDraft && !canPublish ? (
+        <AppText variant="bodySm" tone="muted" style={styles.footerHint}>
+          {t('mortgage.draftOnlyUntilCompleted')}
+        </AppText>
+      ) : null}
+      <View style={styles.actionsRow}>
+        {onCancel ? (
+          <Button label={t('save.cancel')} onPress={onCancel} variant="secondary" style={styles.action} />
+        ) : null}
+        {isDraft && canPublish ? (
+          <Button
+            label={t('mortgage.saveAsDraft')}
+            onPress={() => saveWithStatus('draft')}
+            variant="secondary"
+            style={styles.action}
+          />
+        ) : null}
+        <Button label={primaryLabel} onPress={handlePrimary} style={styles.action} />
+      </View>
+      {onDeleteDraft ? (
+        <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="ghost" style={styles.deleteAction} />
+      ) : null}
     </View>
+  );
+
+  return (
+    <FormStepper
+      sections={sections}
+      footer={footer}
+      banner={banner}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: spacing.md,
-  },
   fieldGroup: {
     gap: spacing.xs,
   },
-  row: { flexDirection: 'row', gap: 12 },
+  row: { flexDirection: 'row', gap: spacing.sm },
   half: { flex: 1 },
-  stepper: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  stepPill: {
-    flex: 1,
-    minHeight: 38,
-    borderRadius: radii.chip,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
-  },
-  stepPillActive: {
-    borderColor: colours.primary,
-    backgroundColor: colours.primary,
-  },
-  blockedHelp: {
-    marginTop: spacing.md,
-  },
-  wizardActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: spacing.lg,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: spacing.lg,
-  },
-  action: { flex: 1 },
-  singleAction: { marginTop: spacing.lg },
-  deleteAction: { marginTop: spacing.xs },
   noteInput: {
     minHeight: 88,
     textAlignVertical: 'top',
   },
-  calculatedPayment: {
+  readonlyPanel: {
     borderWidth: 1,
-    borderColor: colours.border,
+    borderColor: colours.borderSoft,
     borderRadius: radii.input,
     backgroundColor: colours.surfaceRaised,
     padding: spacing.md,
+    ...elevation.level1,
   },
-  calculatedPaymentHelp: {
+  readonlyPanelHelp: {
     marginTop: spacing.xs,
   },
-  termSummary: {
-    borderWidth: 1,
-    borderColor: colours.border,
-    borderRadius: radii.input,
-    backgroundColor: colours.surface,
-    padding: spacing.md,
-    gap: spacing.xs,
+  footer: {
+    gap: spacing.sm,
   },
+  footerHint: {
+    marginBottom: spacing.xs,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  action: { flex: 1 },
+  deleteAction: { marginTop: spacing.xs },
 });
