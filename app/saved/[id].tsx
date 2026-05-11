@@ -133,6 +133,7 @@ export default function LoanDetailScreen() {
                     savedLoansStorage.togglePinned(loan.id);
                     refresh();
                   }}
+                  onLoanUpdated={refresh}
                 />
                 {manageButton}
               </>

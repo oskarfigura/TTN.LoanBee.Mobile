@@ -123,6 +123,17 @@ export const PaymentIcon = ({ color = colours.primary, size = 20 }: IconProps) =
   </Svg>
 );
 
+export const PlusIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5v14M5 12h14"
+      stroke={color}
+      strokeWidth={1.9}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
 export const SwitchIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path

@@ -7,7 +7,12 @@ import { Button } from '@/components/ui/Button';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { canActivateDeal } from '@/mortgage/tracker';
+import {
+  canActivateDeal,
+  getLaterDeals,
+  recalculateLaterDealOpeningBalances,
+  removeDealAndRecalculateLater,
+} from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal } from '@/types/SavedLoan';
 import { colours, fonts, fontSizes } from '@/theme';
@@ -35,13 +40,29 @@ export default function EditDealScreen() {
   }
 
   const saveDeal = (updatedDeal: LoanDeal) => {
-    const commit = () => {
-      savedLoansStorage.update({
-        ...loan,
-        deals: loan.deals.map(item => item.id === updatedDeal.id ? updatedDeal : item),
-      });
+    const nextLoan = {
+      ...loan,
+      deals: loan.deals.map(item => item.id === updatedDeal.id ? updatedDeal : item),
+    };
+    const laterDeals = getLaterDeals(nextLoan, updatedDeal.id);
+    const commit = (recalculateLaterDeals = false) => {
+      savedLoansStorage.update(recalculateLaterDeals
+        ? recalculateLaterDealOpeningBalances(nextLoan, updatedDeal.id)
+        : nextLoan);
       router.back();
     };
+
+    if (laterDeals.length > 0) {
+      Alert.alert(
+        t('mortgage.recalculateLaterDealsTitle'),
+        t('mortgage.recalculateLaterDealsMessage', { count: laterDeals.length }),
+        [
+          { text: t('results.cancelLeave'), style: 'cancel' },
+          { text: t('mortgage.recalculateLaterDealsAction'), onPress: () => commit(true) },
+        ],
+      );
+      return;
+    }
 
     if (deal.status === 'completed') {
       Alert.alert(
@@ -49,7 +70,7 @@ export default function EditDealScreen() {
         t('mortgage.editCompletedMessage'),
         [
           { text: t('results.cancelLeave'), style: 'cancel' },
-          { text: t('edit.save'), onPress: commit },
+          { text: t('edit.save'), onPress: () => commit() },
         ],
       );
       return;
@@ -72,11 +93,21 @@ export default function EditDealScreen() {
           canPublish={canActivateDeal(loan, deal.id)}
           onSave={saveDeal}
           onDeleteDraft={deal.status === 'draft' ? () => {
-            savedLoansStorage.update({
-              ...loan,
-              deals: loan.deals.filter(item => item.id !== deal.id),
-            });
-            router.back();
+            Alert.alert(
+              t('mortgage.deleteDraftTitle'),
+              t('mortgage.deleteDraftMessage'),
+              [
+                { text: t('results.cancelLeave'), style: 'cancel' },
+                {
+                  text: t('mortgage.deleteDraft'),
+                  style: 'destructive',
+                  onPress: () => {
+                    savedLoansStorage.update(removeDealAndRecalculateLater(loan, deal.id));
+                    router.back();
+                  },
+                },
+              ],
+            );
           } : undefined}
         />
       </ScrollView>

@@ -13,6 +13,7 @@ import { MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { colours, fonts, fontSizes, fontWeights, radii, spacing } from '@/theme';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
+import { PlusIcon } from '@/components/loans/LoanIcons';
 import { MortgageTimelineView } from '@/components/loans/MortgageTimelineView';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
 import { formatFriendlyDate } from '@/utils/date';
@@ -20,6 +21,7 @@ import { formatFriendlyDate } from '@/utils/date';
 interface Props {
   loan: SavedLoan;
   onTogglePinned: () => void;
+  onLoanUpdated?: () => void;
 }
 
 const eventIcon = (event: MortgageEvent) => {
@@ -30,7 +32,7 @@ const eventIcon = (event: MortgageEvent) => {
   return '+';
 };
 
-export const MortgageGroupDetail = ({ loan, onTogglePinned }: Props) => {
+export const MortgageGroupDetail = ({ loan, onTogglePinned, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const [pickerVisible, setPickerVisible] = useState(false);
@@ -65,8 +67,17 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned }: Props) => {
       />
 
       <View style={styles.timelineSection}>
-        <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
-        <MortgageTimelineView loan={loan} showFooterAction={false} />
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
+          <Button
+            label={t('mortgage.addDeal')}
+            leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
+            onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
+            variant="icon-pill"
+            style={styles.addDealButton}
+          />
+        </View>
+        <MortgageTimelineView loan={loan} showFooterAction={false} onLoanUpdated={onLoanUpdated} />
       </View>
 
       <Card style={styles.card}>
@@ -237,6 +248,16 @@ const styles = StyleSheet.create({
   pinButton: {
     marginBottom: 0,
     marginTop: 4,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  addDealButton: {
+    flexShrink: 0,
   },
   lender: {
     fontFamily: fonts.body,

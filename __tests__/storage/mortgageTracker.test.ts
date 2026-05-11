@@ -4,6 +4,8 @@ import {
   getMortgageTrackerSummary,
   getTimelineWarnings,
   projectDeal,
+  recalculateLaterDealOpeningBalances,
+  removeDealAndRecalculateLater,
 } from '../../src/mortgage/tracker';
 import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
 import { LoanGroup } from '../../src/types/SavedLoan';
@@ -180,6 +182,102 @@ describe('mortgage tracker', () => {
     });
 
     expect(canActivateDeal(loan, 'next')).toBe(true);
+  });
+
+  it('blocks activation of a draft when an earlier draft is still in front of it', () => {
+    const previous = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 210000,
+        feesAdded: 0,
+      },
+    };
+    const firstDraft = {
+      ...previous,
+      id: 'first-draft',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      completion: undefined,
+    };
+    const secondDraft = {
+      ...firstDraft,
+      id: 'second-draft',
+      startDate: '2036-06-03',
+      endDate: '2041-06-03',
+    };
+    const loan = makeMortgage({
+      deals: [previous, firstDraft, secondDraft],
+    });
+
+    expect(canActivateDeal(loan, 'second-draft')).toBe(false);
+  });
+
+  it('recalculates later deal opening balances from the previous closing balance', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const next = {
+      ...completed,
+      id: 'next',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 210000,
+      completion: undefined,
+    };
+    const loan = makeMortgage({
+      deals: [completed, next],
+    });
+
+    const updatedLoan = recalculateLaterDealOpeningBalances(loan, completed.id);
+
+    expect(updatedLoan.deals.find(deal => deal.id === 'next')?.openingBalance).toBe(205000);
+  });
+
+  it('rebases later drafts after deleting an earlier draft', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const firstDraft = {
+      ...completed,
+      id: 'first-draft',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 205000,
+      completion: undefined,
+    };
+    const secondDraft = {
+      ...firstDraft,
+      id: 'second-draft',
+      startDate: '2036-06-03',
+      endDate: '2041-06-03',
+      openingBalance: 180000,
+    };
+    const loan = makeMortgage({
+      deals: [completed, firstDraft, secondDraft],
+    });
+
+    const updatedLoan = removeDealAndRecalculateLater(loan, firstDraft.id);
+
+    expect(updatedLoan.deals.map(deal => deal.id)).toEqual(['deal-current', 'second-draft']);
+    expect(updatedLoan.deals.find(deal => deal.id === 'second-draft')?.openingBalance).toBe(205000);
   });
 
   it('reports timeline warnings for gaps, overlaps, incomplete active deals, and blocked drafts', () => {

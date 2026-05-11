@@ -9,7 +9,7 @@ import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
-import { getCurrentDeal, projectDeal } from '@/mortgage/tracker';
+import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
 
@@ -103,12 +103,12 @@ export default function CompleteCurrentDealScreen() {
         <Button
           label={t('mortgage.completeDeal')}
           onPress={() => {
-            savedLoansStorage.update({
+            const updatedLoan = {
               ...loan,
               deals: loan.deals.map(deal => deal.id === currentDeal.id
                 ? {
                   ...deal,
-                  status: 'completed',
+                  status: 'completed' as const,
                   completion: {
                     completedAt,
                     closingBalance: Number(closingBalance) || 0,
@@ -118,7 +118,8 @@ export default function CompleteCurrentDealScreen() {
                   updatedAt: new Date().toISOString(),
                 }
                 : deal),
-            });
+            };
+            savedLoansStorage.update(recalculateLaterDealOpeningBalances(updatedLoan, currentDeal.id));
             router.back();
           }}
           style={styles.action}

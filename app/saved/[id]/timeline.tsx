@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageTimelineView } from '@/components/loans/MortgageTimelineView';
@@ -14,7 +14,11 @@ export default function MortgageTimelineScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const loan = savedLoansStorage.getById(id);
+  const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
+
+  useFocusEffect(useCallback(() => {
+    setLoan(savedLoansStorage.getById(id));
+  }, [id]));
 
   if (!loan) {
     return (
@@ -39,7 +43,7 @@ export default function MortgageTimelineScreen() {
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <MortgageTimelineView loan={loan} />
+        <MortgageTimelineView loan={loan} onLoanUpdated={setLoan} />
       </ScrollView>
     </SafeAreaView>
   );

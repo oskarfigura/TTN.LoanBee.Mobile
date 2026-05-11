@@ -1,13 +1,21 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { PlusIcon } from '@/components/loans/LoanIcons';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
-import { getCurrentDeal, getDraftDeals, getPublishedDeals, getTimelineWarnings } from '@/mortgage/tracker';
+import {
+  getCurrentDeal,
+  getDraftDeals,
+  getPublishedDeals,
+  getTimelineWarnings,
+  removeDealAndRecalculateLater,
+} from '@/mortgage/tracker';
+import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fonts, fontSizes, fontWeights, radii } from '@/theme';
 import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
@@ -15,6 +23,7 @@ import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 interface Props {
   loan: SavedLoan;
   showFooterAction?: boolean;
+  onLoanUpdated?: (loan: SavedLoan) => void;
 }
 
 const StatusBadge = ({ label, variant = 'neutral' }: { label: string; variant?: 'neutral' | 'active' | 'success' }) => (
@@ -38,7 +47,7 @@ const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode 
   );
 };
 
-export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) => {
+export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const timeline = useMemo(() => ({
@@ -47,9 +56,41 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
     completed: getPublishedDeals(loan).filter(deal => deal.status === 'completed').reverse(),
     warnings: getTimelineWarnings(loan),
   }), [loan]);
+  const addDealButton = (
+    <Button
+      label={t('mortgage.addNextDeal')}
+      leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
+      onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
+      variant="secondary"
+    />
+  );
+  const deleteDraft = (deal: LoanDeal) => {
+    Alert.alert(
+      t('mortgage.deleteDraftTitle'),
+      t('mortgage.deleteDraftMessage'),
+      [
+        { text: t('results.cancelLeave'), style: 'cancel' },
+        {
+          text: t('mortgage.deleteDraft'),
+          style: 'destructive',
+          onPress: () => {
+            const updatedLoan = removeDealAndRecalculateLater(loan, deal.id);
+            savedLoansStorage.update(updatedLoan);
+            onLoanUpdated?.(updatedLoan);
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View>
+      {showFooterAction ? (
+        <View style={styles.topAction}>
+          {addDealButton}
+        </View>
+      ) : null}
+
       <View style={styles.timelineShell}>
         <View style={styles.rail} />
 
@@ -67,12 +108,18 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
               <Text style={styles.meta}>
                 {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
               </Text>
-              <Button
-                label={t('mortgage.planNextDeal')}
-                onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
-                variant="secondary"
-                style={styles.cardButton}
-              />
+              <View style={styles.futureActions}>
+                <Button
+                  label={t('mortgage.planNextDeal')}
+                  onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
+                  variant="secondary"
+                />
+                <Button
+                  label={t('mortgage.deleteDraft')}
+                  onPress={() => deleteDraft(deal)}
+                  variant="ghost"
+                />
+              </View>
             </Card>
           </View>
         ))}
@@ -148,19 +195,12 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true }: Props) =
           <Text style={styles.startText}>{t('mortgage.mortgageStart')}</Text>
         </View>
       </View>
-
-      {showFooterAction ? (
-        <Button
-          label={t('mortgage.addNextDeal')}
-          onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
-          style={styles.footerAction}
-        />
-      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  topAction: { marginBottom: 16 },
   timelineShell: { position: 'relative', paddingLeft: 50 },
   rail: {
     position: 'absolute',
@@ -286,7 +326,10 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
     marginTop: 16,
   },
-  cardButton: { marginTop: 24 },
+  futureActions: {
+    marginTop: 24,
+    gap: 8,
+  },
   dealStats: {
     flexDirection: 'row',
     borderWidth: 1,
@@ -358,5 +401,4 @@ const styles = StyleSheet.create({
     color: colours.textSecondary,
     paddingTop: 4,
   },
-  footerAction: { marginTop: 4 },
 });

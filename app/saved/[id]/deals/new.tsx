@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
+import { getChronologicalDeals, getMortgageTrackerSummary, projectDeal } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
@@ -36,9 +36,13 @@ export default function NewDealScreen() {
   const initialDeal = useMemo<LoanDeal | null>(() => {
     if (!loan) return null;
     const summary = getMortgageTrackerSummary(loan);
-    const published = getPublishedDeals(loan);
-    const previous = published[published.length - 1];
-    const startDate = previous ? addDays(previous.endDate, 1) : loan.formSnapshot.startDate;
+    const deals = getChronologicalDeals(loan);
+    const previous = deals[deals.length - 1];
+    const previousEndDate = previous?.completion?.completedAt ?? previous?.endDate;
+    const projectedPrevious = previous && previousEndDate
+      ? projectDeal(previous, loan.events, new Date(`${previousEndDate}T00:00:00`), true)
+      : undefined;
+    const startDate = previousEndDate ? addDays(previousEndDate, 1) : loan.formSnapshot.startDate;
     const now = new Date().toISOString();
 
     return {
@@ -50,7 +54,7 @@ export default function NewDealScreen() {
       status: 'draft',
       startDate,
       endDate: addYears(startDate, 5),
-      openingBalance: summary.currentBalance,
+      openingBalance: projectedPrevious?.balance ?? summary.currentBalance,
       interestRate: previous?.interestRate ?? loan.formSnapshot.interest,
       repaymentType: previous?.repaymentType ?? 'repayment',
       monthlyPayment: previous?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments,
@@ -75,8 +79,8 @@ export default function NewDealScreen() {
     );
   }
 
-  const published = getPublishedDeals(loan);
-  const previous = published[published.length - 1];
+  const deals = getChronologicalDeals(loan);
+  const previous = deals[deals.length - 1];
   const canPublish = !previous || previous.status === 'completed';
 
   return (

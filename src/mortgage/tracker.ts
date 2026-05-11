@@ -73,6 +73,17 @@ const orderDeals = (deals: LoanDeal[]): LoanDeal[] => (
   [...deals].sort((a, b) => parseDate(a.startDate).getTime() - parseDate(b.startDate).getTime())
 );
 
+export const getChronologicalDeals = (loan: LoanGroup): LoanDeal[] => (
+  orderDeals(loan.deals)
+);
+
+export const getLaterDeals = (loan: LoanGroup, dealId: string): LoanDeal[] => {
+  const deals = getChronologicalDeals(loan);
+  const dealIndex = deals.findIndex(deal => deal.id === dealId);
+
+  return dealIndex === -1 ? [] : deals.slice(dealIndex + 1);
+};
+
 const getDealEvents = (events: MortgageEvent[], dealId: string): MortgageEvent[] => (
   events
     .filter(event => event.dealId === dealId)
@@ -164,6 +175,60 @@ export const projectDeal = (
     totalPaid: toMoney(totalPaid),
     principalPaid: toMoney(deal.openingBalance - balance),
   };
+};
+
+export const recalculateLaterDealOpeningBalances = (
+  loan: LoanGroup,
+  dealId: string,
+): LoanGroup => {
+  const deals = getChronologicalDeals(loan);
+  const dealIndex = deals.findIndex(deal => deal.id === dealId);
+  if (dealIndex === -1 || dealIndex === deals.length - 1) return loan;
+
+  const updatedAt = new Date().toISOString();
+  const recalculatedById = new Map<string, LoanDeal>();
+  let previousDeal = deals[dealIndex];
+
+  deals.slice(dealIndex + 1).forEach(deal => {
+    const projectionDate = parseDate(previousDeal.completion?.completedAt ?? previousDeal.endDate);
+    const projectedPrevious = projectDeal(previousDeal, loan.events, projectionDate, true);
+    const openingBalance = projectedPrevious.balance;
+    const nextDeal = deal.openingBalance === openingBalance
+      ? deal
+      : {
+        ...deal,
+        openingBalance,
+        updatedAt,
+      };
+
+    recalculatedById.set(deal.id, nextDeal);
+    previousDeal = nextDeal;
+  });
+
+  return {
+    ...loan,
+    deals: loan.deals.map(deal => recalculatedById.get(deal.id) ?? deal),
+  };
+};
+
+export const removeDealAndRecalculateLater = (
+  loan: LoanGroup,
+  dealId: string,
+): LoanGroup => {
+  const deals = getChronologicalDeals(loan);
+  const dealIndex = deals.findIndex(deal => deal.id === dealId);
+  if (dealIndex === -1) return loan;
+
+  const previousDeal = dealIndex > 0 ? deals[dealIndex - 1] : undefined;
+  const nextLoan = {
+    ...loan,
+    deals: loan.deals.filter(deal => deal.id !== dealId),
+    events: loan.events.filter(event => event.dealId !== dealId),
+  };
+
+  return previousDeal
+    ? recalculateLaterDealOpeningBalances(nextLoan, previousDeal.id)
+    : nextLoan;
 };
 
 export const getMortgageTrackerSummary = (
@@ -270,8 +335,9 @@ export const canActivateDeal = (loan: LoanGroup, dealId: string): boolean => {
   const target = loan.deals.find(deal => deal.id === dealId);
   if (!target || target.status !== 'draft') return false;
 
-  const earlierPublished = getPublishedDeals(loan).filter(deal => deal.startDate < target.startDate);
-  const previousDeal = earlierPublished[earlierPublished.length - 1];
+  const deals = getChronologicalDeals(loan);
+  const targetIndex = deals.findIndex(deal => deal.id === target.id);
+  const previousDeal = targetIndex > 0 ? deals[targetIndex - 1] : undefined;
 
   return !previousDeal || previousDeal.status === 'completed';
 };
