@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/currency/format';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
-import { PinIcon } from '@/components/loans/LoanIcons';
+import { PinIcon, PlusIcon, SwitchIcon, TimelineIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -16,6 +16,37 @@ import { getDraftDeals, getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
+
+const TrackingActionTile = ({
+  label,
+  icon,
+  onPress,
+  emphasis = false,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+  emphasis?: boolean;
+}) => (
+  <TouchableOpacity
+    style={[styles.trackingActionTile, emphasis && styles.trackingActionTilePrimary]}
+    onPress={onPress}
+    activeOpacity={0.84}
+    accessibilityRole="button"
+  >
+    <View style={[styles.trackingActionIcon, emphasis && styles.trackingActionIconPrimary]}>
+      {icon}
+    </View>
+    <AppText
+      variant="labelMd"
+      tone={emphasis ? 'inverse' : 'accent'}
+      style={styles.trackingActionLabel}
+      numberOfLines={2}
+    >
+      {label}
+    </AppText>
+  </TouchableOpacity>
+);
 
 export default function EditLoanScreen() {
   const { t, i18n } = useTranslation();
@@ -179,9 +210,24 @@ export default function EditLoanScreen() {
             )}
 
             <AppText variant="bodySm" tone="muted" style={styles.helperText}>{t('edit.mortgageSpecificsHelp')}</AppText>
-            <Button label={t('mortgage.viewTimeline')} onPress={() => router.push(`/saved/${loan.id}/timeline`)} variant="secondary" style={styles.stackAction} />
-            <Button label={t('mortgage.addNextDeal')} onPress={() => router.push(`/saved/${loan.id}/deals/new`)} variant="secondary" style={styles.stackAction} />
-            <Button label={t('mortgage.completeCurrentDeal')} onPress={() => router.push(`/saved/${loan.id}/complete-current`)} variant="secondary" style={styles.stackAction} />
+            <View style={styles.trackingActions}>
+              <TrackingActionTile
+                label={t('mortgage.viewTimeline')}
+                icon={<TimelineIcon color={colours.primary} />}
+                onPress={() => router.push(`/saved/${loan.id}/timeline`)}
+              />
+              <TrackingActionTile
+                label={t('mortgage.addNextDeal')}
+                icon={<PlusIcon color={colours.primary} />}
+                onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
+              />
+              <TrackingActionTile
+                label={t('mortgage.completeCurrentDeal')}
+                icon={<SwitchIcon color={colours.white} />}
+                onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
+                emphasis
+              />
+            </View>
           </View>
         )}
 
@@ -252,6 +298,42 @@ const styles = StyleSheet.create({
   bodyText: { marginTop: spacing.xs },
   helperText: { marginTop: spacing.md },
   stackAction: { marginTop: spacing.sm },
+  trackingActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  trackingActionTile: {
+    flexGrow: 1,
+    flexBasis: '46%',
+    minHeight: 78,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.surfaceRaised,
+    padding: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  trackingActionTilePrimary: {
+    flexBasis: '100%',
+    backgroundColor: colours.primary,
+    borderColor: colours.primary,
+  },
+  trackingActionIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceMuted,
+  },
+  trackingActionIconPrimary: {
+    backgroundColor: colours.whiteSubtle,
+  },
+  trackingActionLabel: {
+    marginTop: spacing.sm,
+  },
   saveBtn: { marginTop: spacing.xl },
   cancelBtn: { marginTop: spacing.xs },
 });

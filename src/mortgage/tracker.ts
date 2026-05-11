@@ -194,6 +194,7 @@ export const getLatestDeal = (loan: LoanGroup): LoanDeal | undefined => {
 export const canDeleteDeal = (loan: LoanGroup, dealId: string): boolean => {
   const deals = getChronologicalDeals(loan);
   if (deals.length <= 1) return false;
+  if (deals[0]?.id === dealId) return false;
 
   return deals[deals.length - 1]?.id === dealId;
 };

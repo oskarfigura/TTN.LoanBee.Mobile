@@ -252,6 +252,7 @@ const TimelinePreview = ({
     .reverse()
     .find(deal => deal.status === 'completed');
   const firstDeal = publishedDeals[0];
+  const completedDealIsInitial = Boolean(latestCompletedDeal && latestCompletedDeal.id === firstDeal?.id);
   const items: Array<{
     key: string;
     marker: 'future' | 'current' | 'past' | 'start';
@@ -275,20 +276,20 @@ const TimelinePreview = ({
     }] : []),
     ...(latestCompletedDeal && latestCompletedDeal.id !== currentDeal?.id ? [{
       key: `completed-${latestCompletedDeal.id}`,
-      marker: 'past' as const,
-      label: t('mortgage.past'),
+      marker: completedDealIsInitial ? 'start' as const : 'past' as const,
+      label: completedDealIsInitial ? t('mortgage.mortgageStart') : t('mortgage.past'),
       title: latestCompletedDeal.name,
       meta: latestCompletedDeal.completion
         ? `${t('mortgage.closedAt', { amount: formatCurrency(latestCompletedDeal.completion.closingBalance, loan.currency) })} · ${formatDealDuration(latestCompletedDeal, i18n.language)}`
         : `${formatFriendlyDateRange(latestCompletedDeal.startDate, latestCompletedDeal.endDate, i18n.language)} · ${formatDealDuration(latestCompletedDeal, i18n.language)}`,
     }] : []),
-    {
+    ...(!firstDeal ? [{
       key: 'mortgage-start',
       marker: 'start' as const,
       label: t('mortgage.mortgageStart'),
-      title: formatFriendlyDate(firstDeal?.startDate ?? loan.formSnapshot.startDate, i18n.language),
-      meta: firstDeal?.lender || loan.lender || t('saved.category.mortgage'),
-    },
+      title: formatFriendlyDate(loan.formSnapshot.startDate, i18n.language),
+      meta: loan.lender || t('saved.category.mortgage'),
+    }] : []),
   ].slice(0, 3);
 
   return (

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/Badge';
@@ -13,13 +13,12 @@ import {
   formatDealDuration,
   getCurrentDeal,
   getDraftDeals,
-  getLatestDeal,
   getPublishedDeals,
   getTimelineWarnings,
   removeLatestDealAndEvents,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
-import { colours, fonts, fontSizes, fontWeights, radii } from '@/theme';
+import { colours, fonts, fontSizes, fontWeights, radii, spacing } from '@/theme';
 import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 
@@ -50,6 +49,35 @@ const StatusBadge = ({ label, variant = 'neutral' }: { label: string; variant?: 
   <Badge label={label} variant={variant} />
 );
 
+type TimelineActionVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+const TimelineAction = ({
+  label,
+  onPress,
+  variant = 'secondary',
+  style,
+}: {
+  label: string;
+  onPress: () => void;
+  variant?: TimelineActionVariant;
+  style?: StyleProp<ViewStyle>;
+}) => (
+  <TouchableOpacity
+    style={[styles.timelineAction, timelineActionStyles[variant], style]}
+    onPress={onPress}
+    activeOpacity={0.84}
+    accessibilityRole="button"
+  >
+    <Text
+      style={[styles.timelineActionLabel, timelineActionLabelStyles[variant]]}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+
 const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode }) => {
   const { t, i18n } = useTranslation();
 
@@ -74,12 +102,16 @@ const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode 
 export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const timeline = useMemo(() => ({
-    drafts: getDraftDeals(loan),
-    current: getCurrentDeal(loan),
-    completed: getPublishedDeals(loan).filter(deal => deal.status === 'completed').reverse(),
-  }), [loan]);
-  const latestDeal = getLatestDeal(loan);
+  const timeline = useMemo(() => {
+    const publishedDeals = getPublishedDeals(loan);
+
+    return {
+      drafts: getDraftDeals(loan),
+      current: getCurrentDeal(loan),
+      completed: publishedDeals.filter(deal => deal.status === 'completed').reverse(),
+      initialDealId: publishedDeals[0]?.id,
+    };
+  }, [loan]);
   const hasDeals = loan.deals.length > 0;
   const addDealButton = (
     <Button
@@ -127,9 +159,9 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
             <View style={styles.nodeMuted} />
             <Card style={styles.futureCard}>
               <View style={styles.cardHeader}>
-                <View>
+                <View style={styles.cardTitleGroup}>
                   <Text style={styles.kicker}>{t('mortgage.future')}</Text>
-                  <Text style={styles.futureTitle}>{deal.name}</Text>
+                  <Text style={styles.futureTitle} numberOfLines={2}>{deal.name}</Text>
                 </View>
                 <StatusBadge label={t('mortgage.inactive')} />
               </View>
@@ -138,16 +170,15 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
               </Text>
               <Text style={styles.meta}>{formatDealDuration(deal, i18n.language)}</Text>
               <View style={styles.futureActions}>
-                <Button
+                <TimelineAction
                   label={t('mortgage.editDraftDeal')}
                   onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
-                  variant="secondary"
                 />
-                {latestDeal?.id === deal.id ? (
-                  <Button
+                {canDeleteDeal(loan, deal.id) ? (
+                  <TimelineAction
                     label={t('mortgage.deleteDraft')}
                     onPress={() => deleteDeal(deal)}
-                    variant="ghost"
+                    variant="danger"
                   />
                 ) : null}
               </View>
@@ -163,29 +194,33 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                 <Text style={styles.currentKicker}>{t('mortgage.currentDeal')}</Text>
                 <StatusBadge label={t('mortgage.active')} variant="active" />
               </View>
-              <Text style={styles.currentTitle}>{timeline.current.name}</Text>
+              <Text style={styles.currentTitle} numberOfLines={2}>{timeline.current.name}</Text>
               <Text style={styles.meta}>
                 {formatFriendlyDateRange(timeline.current.startDate, timeline.current.endDate, i18n.language)}
               </Text>
               <DealStats deal={timeline.current} currency={loan.currency} />
               <View style={styles.currentActions}>
-                <Button
-                  label={t('mortgage.editDeal')}
-                  onPress={() => router.push(`/saved/${loan.id}/deals/${timeline.current?.id}`)}
-                  variant="ghost"
-                />
-                <Button
+                <TimelineAction
                   label={t('mortgage.completeCurrentDeal')}
                   onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
-                  variant="secondary"
+                  variant="primary"
+                  style={styles.currentPrimaryAction}
                 />
-                {latestDeal?.id === timeline.current.id ? (
-                  <Button
-                    label={t('mortgage.deleteDeal')}
-                    onPress={() => deleteDeal(timeline.current as LoanDeal)}
-                    variant="ghost"
+                <View style={styles.timelineActionRow}>
+                  <TimelineAction
+                    label={t('mortgage.editDeal')}
+                    onPress={() => router.push(`/saved/${loan.id}/deals/${timeline.current?.id}`)}
+                    style={styles.timelineActionFill}
                   />
-                ) : null}
+                  {canDeleteDeal(loan, timeline.current.id) ? (
+                    <TimelineAction
+                      label={t('mortgage.deleteDeal')}
+                      onPress={() => deleteDeal(timeline.current as LoanDeal)}
+                      variant="danger"
+                      style={styles.timelineActionFill}
+                    />
+                  ) : null}
+                </View>
               </View>
             </Card>
           </View>
@@ -196,36 +231,11 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
             <View style={styles.nodeComplete} />
             <Card style={styles.pastCard}>
               <View style={styles.cardHeader}>
-                <View>
-                  <Text style={styles.kicker}>{t('mortgage.past')}</Text>
-                  <Text style={styles.pastTitle}>{deal.name}</Text>
+                <View style={styles.cardTitleGroup}>
+                  <Text style={styles.kicker}>{deal.id === timeline.initialDealId ? t('mortgage.mortgageStart') : t('mortgage.past')}</Text>
+                  <Text style={styles.pastTitle} numberOfLines={2}>{deal.name}</Text>
                 </View>
-                <View style={styles.completedActions}>
-                  <StatusBadge label={t('saved.completed')} variant="success" />
-                  <TouchableOpacity
-                    style={styles.completedActionLink}
-                    onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
-                    activeOpacity={0.84}
-                  >
-                    <Text style={styles.editLink}>{t('saved.view')}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.completedActionLink}
-                    onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}?correct=1`)}
-                    activeOpacity={0.84}
-                  >
-                    <Text style={styles.correctLink}>{t('mortgage.correctDeal')}</Text>
-                  </TouchableOpacity>
-                  {latestDeal?.id === deal.id ? (
-                    <TouchableOpacity
-                      style={styles.completedActionLink}
-                      onPress={() => deleteDeal(deal)}
-                      activeOpacity={0.84}
-                    >
-                      <Text style={styles.deleteLink}>{t('mortgage.deleteDeal')}</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+                <StatusBadge label={t('saved.completed')} variant="success" />
               </View>
               <Text style={styles.meta}>{formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}</Text>
               <DealStats deal={deal} currency={loan.currency} />
@@ -234,25 +244,48 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                   {t('mortgage.closedAt', { amount: formatCurrency(deal.completion.closingBalance, loan.currency) })}
                 </Text>
               )}
+              <View style={styles.completedActions}>
+                <TimelineAction
+                  label={t('saved.view')}
+                  onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
+                  style={styles.completedAction}
+                />
+                <TimelineAction
+                  label={t('mortgage.correctDeal')}
+                  onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}?correct=1`)}
+                  variant="ghost"
+                  style={styles.completedAction}
+                />
+                {canDeleteDeal(loan, deal.id) ? (
+                  <TimelineAction
+                    label={t('mortgage.deleteDeal')}
+                    onPress={() => deleteDeal(deal)}
+                    variant="danger"
+                    style={styles.completedAction}
+                  />
+                ) : null}
+              </View>
             </Card>
           </View>
         ))}
 
-        <View style={styles.timelineItem}>
-          <View style={styles.nodeStart} />
-          <Text style={styles.startText}>{t('mortgage.mortgageStart')}</Text>
-        </View>
+        {!timeline.initialDealId ? (
+          <View style={styles.timelineItem}>
+            <View style={styles.nodeStart} />
+            <Text style={styles.startText}>{t('mortgage.mortgageStart')}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  topAction: { marginBottom: 16 },
-  timelineShell: { position: 'relative', paddingLeft: 50 },
+  topAction: { marginBottom: spacing.md },
+  timelineShell: { position: 'relative', paddingLeft: 42 },
   rail: {
     position: 'absolute',
-    left: 16,
+    left: 13,
     top: 0,
     bottom: 0,
     width: 2,
@@ -260,18 +293,18 @@ const styles = StyleSheet.create({
   },
   timelineItem: {
     position: 'relative',
-    marginBottom: 28,
+    marginBottom: spacing.lg,
   },
   warningList: {
-    gap: 10,
-    marginBottom: 14,
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
   nodeMuted: {
     position: 'absolute',
-    left: -49,
-    top: 28,
-    width: 34,
-    height: 34,
+    left: -42,
+    top: 24,
+    width: 28,
+    height: 28,
     borderRadius: radii.full,
     borderWidth: 3,
     borderColor: colours.border,
@@ -279,21 +312,21 @@ const styles = StyleSheet.create({
   },
   nodeActive: {
     position: 'absolute',
-    left: -53,
-    top: 36,
-    width: 42,
-    height: 42,
+    left: -46,
+    top: 31,
+    width: 36,
+    height: 36,
     borderRadius: radii.full,
-    borderWidth: 5,
+    borderWidth: 4,
     borderColor: colours.teal,
     backgroundColor: colours.white,
   },
   nodeComplete: {
     position: 'absolute',
-    left: -49,
-    top: 28,
-    width: 34,
-    height: 34,
+    left: -42,
+    top: 24,
+    width: 28,
+    height: 28,
     borderRadius: radii.full,
     borderWidth: 3,
     borderColor: colours.textSecondary,
@@ -301,10 +334,10 @@ const styles = StyleSheet.create({
   },
   nodeStart: {
     position: 'absolute',
-    left: -49,
+    left: -42,
     top: 0,
-    width: 34,
-    height: 34,
+    width: 28,
+    height: 28,
     borderRadius: radii.full,
     borderWidth: 3,
     borderColor: colours.border,
@@ -312,7 +345,7 @@ const styles = StyleSheet.create({
   },
   futureCard: {
     borderStyle: 'dashed',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colours.border,
   },
   currentCard: {
@@ -324,64 +357,74 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: spacing.sm,
+  },
+  cardTitleGroup: {
+    flex: 1,
+    minWidth: 0,
   },
   kicker: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.xs,
     fontWeight: fontWeights.semibold,
     color: colours.textSecondary,
     textTransform: 'uppercase',
   },
   futureTitle: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.lg,
     fontWeight: fontWeights.bold,
     color: colours.textPrimary,
-    marginTop: 4,
+    lineHeight: 25,
+    marginTop: spacing.xxs,
   },
   currentKicker: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.xs,
     fontWeight: fontWeights.semibold,
     color: colours.primary,
     textTransform: 'uppercase',
   },
   currentTitle: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes['2xl'],
+    fontSize: fontSizes.xl,
     fontWeight: fontWeights.extrabold,
     color: colours.primary,
-    marginTop: 8,
+    lineHeight: 30,
+    marginTop: spacing.xs,
   },
   pastTitle: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.lg,
     fontWeight: fontWeights.bold,
     color: colours.textPrimary,
-    marginTop: 4,
+    lineHeight: 25,
+    marginTop: spacing.xxs,
   },
   meta: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.sm,
     color: colours.textSecondary,
-    marginTop: 16,
+    lineHeight: 19,
+    marginTop: spacing.xs,
   },
   futureActions: {
-    marginTop: 24,
-    gap: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.md,
   },
   dealStats: {
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: colours.border,
     borderRadius: radii.input,
-    marginTop: 22,
+    marginTop: spacing.md,
     overflow: 'hidden',
   },
   dealStat: {
     flex: 1,
-    padding: 14,
+    padding: spacing.sm,
     backgroundColor: colours.white,
   },
   statLabel: {
@@ -393,14 +436,41 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontFamily: fonts.heading,
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.md,
     fontWeight: fontWeights.bold,
     color: colours.primary,
-    marginTop: 8,
+    lineHeight: 22,
+    marginTop: spacing.xs,
   },
   currentActions: {
-    marginTop: 16,
-    gap: 8,
+    marginTop: spacing.md,
+    gap: spacing.xs,
+  },
+  currentPrimaryAction: {
+    alignSelf: 'stretch',
+  },
+  timelineActionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  timelineActionFill: {
+    flexGrow: 1,
+    flexBasis: '46%',
+  },
+  timelineAction: {
+    minHeight: 42,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  timelineActionLabel: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    textAlign: 'center',
   },
   warningCard: {
     borderColor: colours.error,
@@ -420,44 +490,62 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   completedActions: {
-    alignItems: 'flex-end',
-    gap: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.md,
   },
-  completedActionLink: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    marginRight: -8,
-  },
-  editLink: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.primary,
-  },
-  correctLink: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.textSecondary,
-  },
-  deleteLink: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.sm,
-    fontWeight: fontWeights.semibold,
-    color: colours.error,
+  completedAction: {
+    flexGrow: 1,
+    flexBasis: '29%',
+    minWidth: 96,
   },
   completionText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     color: colours.textSecondary,
-    marginTop: 12,
+    lineHeight: 19,
+    marginTop: spacing.sm,
   },
   startText: {
     fontFamily: fonts.heading,
     fontSize: fontSizes.md,
     fontWeight: fontWeights.semibold,
     color: colours.textSecondary,
-    paddingTop: 4,
+    paddingTop: spacing.xxs,
+  },
+});
+
+const timelineActionStyles = StyleSheet.create({
+  primary: {
+    backgroundColor: colours.primary,
+    borderColor: colours.primary,
+  },
+  secondary: {
+    backgroundColor: colours.surfaceRaised,
+    borderColor: colours.borderSoft,
+  },
+  ghost: {
+    backgroundColor: colours.surface,
+    borderColor: colours.border,
+  },
+  danger: {
+    backgroundColor: colours.errorSurface,
+    borderColor: colours.errorSurface,
+  },
+});
+
+const timelineActionLabelStyles = StyleSheet.create({
+  primary: {
+    color: colours.white,
+  },
+  secondary: {
+    color: colours.primary,
+  },
+  ghost: {
+    color: colours.textSecondary,
+  },
+  danger: {
+    color: colours.error,
   },
 });

@@ -5,11 +5,10 @@ import {
   NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { AppText } from './AppText';
-import { colours, elevation, layout, radii, spacing } from '@/theme';
+import { SegmentedControl } from './FormPrimitives';
+import { colours, layout, spacing } from '@/theme';
 
 export interface FormStepperSection {
   key: string;
@@ -25,6 +24,7 @@ interface Props {
 }
 
 const TAB_SCROLL_OFFSET = 12;
+const BOTTOM_ACTIVATION_DISTANCE = 24;
 
 export const FormStepper = ({ sections, footer, banner, contentPadding = layout.screenPadding }: Props) => {
   const scrollRef = useRef<ScrollView>(null);
@@ -44,7 +44,12 @@ export const FormStepper = ({ sections, footer, banner, contentPadding = layout.
   }, []);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const y = event.nativeEvent.contentOffset.y;
+    const {
+      contentOffset,
+      contentSize,
+      layoutMeasurement,
+    } = event.nativeEvent;
+    const y = contentOffset.y;
     const entries = sections
       .map(section => ({ key: section.key, offset: sectionOffsets.current[section.key] ?? Infinity }))
       .filter(entry => entry.offset !== Infinity)
@@ -52,44 +57,36 @@ export const FormStepper = ({ sections, footer, banner, contentPadding = layout.
 
     if (entries.length === 0) return;
 
-    const threshold = y + TAB_SCROLL_OFFSET + 32;
+    const isAtBottom = y + layoutMeasurement.height >= contentSize.height - BOTTOM_ACTIVATION_DISTANCE;
     let nextKey = entries[0].key;
-    for (const entry of entries) {
-      if (entry.offset <= threshold) nextKey = entry.key;
+
+    if (isAtBottom) {
+      nextKey = entries[entries.length - 1].key;
+    } else {
+      const threshold = y + TAB_SCROLL_OFFSET + 32;
+      for (const entry of entries) {
+        if (entry.offset <= threshold) nextKey = entry.key;
+      }
     }
 
     if (nextKey !== activeKey) setActiveKey(nextKey);
   }, [activeKey, sections]);
 
-  const tabs = useMemo(() => (
-    <View style={styles.tabBar}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabRow}
-      >
-        {sections.map(section => {
-          const active = section.key === activeKey;
-          return (
-            <TouchableOpacity
-              key={section.key}
-              onPress={() => scrollToSection(section.key)}
-              style={[styles.tab, active && styles.tabActive]}
-              activeOpacity={0.84}
-            >
-              <AppText variant="labelMd" tone={active ? 'inverse' : 'muted'}>
-                {section.label}
-              </AppText>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    </View>
-  ), [activeKey, scrollToSection, sections]);
+  const tabOptions = useMemo(() => (
+    sections.map(section => ({ label: section.label, value: section.key }))
+  ), [sections]);
 
   return (
     <View style={styles.container}>
-      {tabs}
+      <View style={styles.tabBar}>
+        <SegmentedControl
+          value={activeKey}
+          onChange={scrollToSection}
+          options={tabOptions}
+          variant="underline"
+          textVariant="labelMd"
+        />
+      </View>
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -120,27 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: colours.background,
   },
   tabBar: {
-    backgroundColor: colours.surfaceRaised,
-    borderBottomWidth: 1,
-    borderBottomColor: colours.border,
-    ...elevation.level1,
-  },
-  tabRow: {
-    paddingHorizontal: layout.screenPadding,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
-  },
-  tab: {
-    minHeight: 36,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.chip,
-    backgroundColor: colours.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabActive: {
-    backgroundColor: colours.primary,
+    backgroundColor: colours.background,
   },
   scroll: {
     flex: 1,
