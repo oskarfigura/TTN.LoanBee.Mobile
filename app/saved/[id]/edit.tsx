@@ -4,20 +4,19 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CurrencyCode } from '@/currency/currencies';
+import { formatCurrency } from '@/currency/format';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { PinIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { AppTextInput, FieldLabel, InputSurface, SegmentedControl } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getDraftDeals, getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
-
-type EditTab = 'general' | 'specifics';
 
 export default function EditLoanScreen() {
   const { t } = useTranslation();
@@ -25,10 +24,8 @@ export default function EditLoanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const loan = savedLoansStorage.getById(id);
 
-  const [activeTab, setActiveTab] = useState<EditTab>('general');
   const [nickname, setNickname] = useState(loan?.nickname ?? '');
   const [lender, setLender] = useState(loan?.lender ?? '');
-  const [category, setCategory] = useState<'mortgage' | 'loan'>(loan?.category ?? 'mortgage');
   const [currency, setCurrency] = useState<CurrencyCode>(loan?.currency ?? 'GBP');
   const [pinnedToDashboard, setPinnedToDashboard] = useState(loan?.pinnedToDashboard ?? false);
 
@@ -63,7 +60,6 @@ export default function EditLoanScreen() {
       ...loan,
       nickname: nickname.trim(),
       lender: lender.trim() || undefined,
-      category,
       currency,
       pinnedToDashboard,
       dashboardOrder: pinnedToDashboard
@@ -88,73 +84,74 @@ export default function EditLoanScreen() {
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <SegmentedControl
-          value={activeTab}
-          onChange={setActiveTab}
-          options={[
-            { value: 'general', label: t('edit.general') },
-            { value: 'specifics', label: t('edit.specifics') },
-          ]}
-          variant="primary"
-          style={styles.tabControl}
-        />
+        <View style={styles.field}>
+          <FieldLabel>{t('save.nickname')}</FieldLabel>
+          <InputSurface>
+            <AppTextInput
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder={t('save.nicknamePlaceholder')}
+            />
+          </InputSurface>
+        </View>
 
-        {activeTab === 'general' && (
-          <View>
-            <View style={styles.field}>
-              <FieldLabel>{t('save.nickname')}</FieldLabel>
-              <InputSurface>
-                <AppTextInput
-                  value={nickname}
-                  onChangeText={setNickname}
-                  placeholder={t('save.nicknamePlaceholder')}
-                />
-              </InputSurface>
-            </View>
-
-            <View style={styles.field}>
-              <FieldLabel>{t('save.category')}</FieldLabel>
-              <SegmentedControl
-                value={category}
-                onChange={setCategory}
-                options={[
-                  { value: 'mortgage', label: t('save.mortgage') },
-                  { value: 'loan', label: t('save.loan') },
-                ]}
-                variant="primary"
-              />
-            </View>
-
-            <View style={styles.field}>
-              <FieldLabel>{t('save.lender')}</FieldLabel>
-              <LenderTextInput value={lender} onChange={setLender} />
-            </View>
-
-            <View style={styles.field}>
-              <FieldLabel>{t('save.currency')}</FieldLabel>
-              <CurrencyPicker value={currency} onChange={setCurrency} />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.pinToggle, pinnedToDashboard && styles.pinToggleActive]}
-              onPress={() => setPinnedToDashboard(value => !value)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.pinCopy}>
-                <PinIcon color={colours.primary} />
-                <AppText variant="title3" tone="accent">
-                  {pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
-                </AppText>
-              </View>
-              <AppText variant="bodySm" tone="muted" style={styles.pinMeta}>
-                {t('edit.pinHelp')}
-              </AppText>
-            </TouchableOpacity>
+        <Card style={styles.lockedSnapshotCard}>
+          <View style={styles.snapshotHeader}>
+            <AppText variant="title3">{t('edit.calculationLockedTitle')}</AppText>
+            <AppText variant="labelMd" tone="accent">
+              {loan.category === 'mortgage' ? t('save.mortgage') : t('save.loan')}
+            </AppText>
           </View>
-        )}
+          <View style={styles.snapshotRow}>
+            <AppText variant="bodySm" tone="muted">{t('edit.originalAmount')}</AppText>
+            <AppText variant="bodySm">
+              {formatCurrency(loan.formSnapshot.loanAmount, loan.currency)}
+            </AppText>
+          </View>
+          <AppText variant="bodySm" tone="muted" style={styles.bodyText}>
+            {t('edit.calculationLockedBody')}
+          </AppText>
+          <Button
+            label={t('saved.createNewCalculation')}
+            onPress={() => router.push({
+              pathname: '/' as never,
+              params: { calculator: '1' },
+            })}
+            variant="secondary"
+            style={styles.stackAction}
+          />
+        </Card>
 
-        {activeTab === 'specifics' && loan.category === 'mortgage' && (
-          <View>
+        <View style={styles.field}>
+          <FieldLabel>{t('save.lender')}</FieldLabel>
+          <LenderTextInput value={lender} onChange={setLender} />
+        </View>
+
+        <View style={styles.field}>
+          <FieldLabel>{t('save.currency')}</FieldLabel>
+          <CurrencyPicker value={currency} onChange={setCurrency} />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.pinToggle, pinnedToDashboard && styles.pinToggleActive]}
+          onPress={() => setPinnedToDashboard(value => !value)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.pinCopy}>
+            <PinIcon color={colours.primary} />
+            <AppText variant="title3" tone="accent">
+              {pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
+            </AppText>
+          </View>
+          <AppText variant="bodySm" tone="muted" style={styles.pinMeta}>
+            {t('edit.pinHelp')}
+          </AppText>
+        </TouchableOpacity>
+
+        {loan.category === 'mortgage' && (
+          <View style={styles.trackingSection}>
+            <AppText variant="title2">{t('edit.specifics')}</AppText>
+
             <Card style={styles.specificsCard}>
               <AppText variant="title3">{t('mortgage.currentDeal')}</AppText>
               {currentDeal ? (
@@ -196,21 +193,6 @@ export default function EditLoanScreen() {
           </View>
         )}
 
-        {activeTab === 'specifics' && loan.category !== 'mortgage' && (
-          <Card style={styles.specificsCard}>
-            <AppText variant="title3">{t('edit.loanInputsLockedTitle')}</AppText>
-            <AppText variant="bodyMd" tone="muted" style={styles.bodyText}>{t('edit.loanInputsLockedBody')}</AppText>
-            <Button
-              label={t('saved.createNewCalculation')}
-              onPress={() => router.push({
-                pathname: '/' as never,
-                params: { calculator: '1' },
-              })}
-              style={styles.stackAction}
-            />
-          </Card>
-        )}
-
         <Button
           label={t('edit.save')}
           onPress={handleSave}
@@ -233,8 +215,19 @@ const styles = StyleSheet.create({
   container: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: spacing.md },
-  tabControl: { marginBottom: spacing.xs },
   field: { marginTop: spacing.md },
+  lockedSnapshotCard: { marginTop: spacing.md },
+  snapshotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  snapshotRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
   pinToggle: {
     borderRadius: radii.card,
     borderWidth: 1,
@@ -253,6 +246,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   pinMeta: { marginTop: spacing.xs },
+  trackingSection: { marginTop: spacing.xl },
   specificsCard: { marginTop: spacing.md },
   dealTitle: { marginTop: spacing.sm },
   dealMeta: { marginTop: spacing.xxs },

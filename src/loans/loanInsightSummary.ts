@@ -27,6 +27,12 @@ export interface LoanInsightProgress {
   savingsAmount?: string;
 }
 
+export interface LoanDashboardProgress {
+  labelKey: string;
+  value: number;
+  caption: LoanInsightCaption;
+}
+
 export interface LoanInsightSummary {
   context: LoanInsightContext;
   hero: LoanInsightMetric;
@@ -130,6 +136,45 @@ const buildSavedProgress = (
       ? formatCurrency(savings, loan.currency)
       : undefined,
   };
+};
+
+export const buildSavedLoanDashboardProgress = (
+  loan: SavedLoan,
+  result: LoanResult,
+  asOf = new Date(),
+): LoanDashboardProgress[] => {
+  const totalMonths = Math.max(loan.resultSnapshot.totalTermInMonths, result.tableItems.length, 1);
+  const elapsedMonths = Math.min(Math.max(0, monthsBetween(loan.formSnapshot.startDate, asOf)), totalMonths);
+  const principalAmount = getPrincipalAmount(result);
+  const mortgageSummary = loan.category === 'mortgage'
+    ? getMortgageTrackerSummary(loan, asOf)
+    : null;
+  const paidAmount = mortgageSummary
+    ? mortgageSummary.principalPaid
+    : Math.max(0, principalAmount - getCurrentBalance(result, loan.formSnapshot.startDate, asOf));
+  const valueTotal = mortgageSummary?.originalBalance ?? principalAmount;
+
+  return [
+    {
+      labelKey: 'mortgage.timeProgress',
+      value: clamp(elapsedMonths / totalMonths),
+      caption: {
+        key: 'mortgage.timeElapsed',
+        values: { elapsed: elapsedMonths, total: totalMonths },
+      },
+    },
+    {
+      labelKey: 'mortgage.moneyProgress',
+      value: valueTotal > 0 ? clamp(paidAmount / valueTotal) : 0,
+      caption: {
+        key: 'mortgage.valuePaid',
+        values: {
+          paid: formatCurrency(paidAmount, loan.currency),
+          total: formatCurrency(valueTotal, loan.currency),
+        },
+      },
+    },
+  ];
 };
 
 export const buildCalculationSummary = (

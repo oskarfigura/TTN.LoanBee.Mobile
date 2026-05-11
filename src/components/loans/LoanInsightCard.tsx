@@ -13,6 +13,7 @@ interface Props {
   density?: InsightDensity;
   title?: string;
   subtitle?: string;
+  eyebrowContent?: React.ReactNode;
   headerAction?: React.ReactNode;
   footerContent?: React.ReactNode;
   showProgress?: boolean;
@@ -24,6 +25,7 @@ export const LoanInsightCard = ({
   density = 'full',
   title,
   subtitle,
+  eyebrowContent,
   headerAction,
   footerContent,
   showProgress = false,
@@ -31,7 +33,7 @@ export const LoanInsightCard = ({
 }: Props) => {
   const { t } = useTranslation();
   const isCompact = density === 'compact';
-  const showHeader = title || subtitle || headerAction;
+  const showHeader = title || subtitle || eyebrowContent || headerAction;
   const isOddMetricCount = summary.metrics.length % 2 === 1;
 
   return (
@@ -48,6 +50,11 @@ export const LoanInsightCard = ({
         {showHeader ? (
           <View style={styles.header}>
             <View style={styles.headerCopy}>
+              {eyebrowContent ? (
+                <View style={styles.eyebrow}>
+                  {eyebrowContent}
+                </View>
+              ) : null}
               {subtitle ? (
                 <Text style={[styles.subtitle, isCompact && styles.compactSubtitle]} numberOfLines={1}>
                   {subtitle}
@@ -182,6 +189,9 @@ const styles = StyleSheet.create({
   headerCopy: {
     flex: 1,
     minWidth: 0,
+  },
+  eyebrow: {
+    marginBottom: spacing.xs,
   },
   subtitle: {
     fontFamily: fonts.body,

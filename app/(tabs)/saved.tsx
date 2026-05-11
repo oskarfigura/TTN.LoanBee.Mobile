@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SavedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { loans, remove, togglePinned } = useSavedLoans();
+  const { loans, togglePinned } = useSavedLoans();
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -46,7 +46,6 @@ export default function SavedScreen() {
           <LoanProfileCard
             loan={item}
             onPress={() => router.push(`/saved/${item.id}`)}
-            onDelete={() => remove(item.id)}
             onTogglePinned={() => togglePinned(item.id)}
           />
         )}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { Alert, ScrollView, View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -58,6 +58,26 @@ export default function LoanDetailScreen() {
     return getResultForSavedLoan(loan);
   }, [loan]);
 
+  const handleDelete = useCallback(() => {
+    if (!loan) return;
+
+    Alert.alert(
+      t('saved.delete'),
+      loan.nickname,
+      [
+        { text: t('save.cancel'), style: 'cancel' },
+        {
+          text: t('saved.delete'),
+          style: 'destructive',
+          onPress: () => {
+            savedLoansStorage.remove(loan.id);
+            router.replace('/saved');
+          },
+        },
+      ],
+    );
+  }, [loan, router, t]);
+
   if (!loan || !result) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -74,12 +94,18 @@ export default function LoanDetailScreen() {
   }
 
   const manageButton = (
-    <Button
-      label={t('edit.manageShort')}
-      onPress={() => router.push(`/saved/${id}/edit`)}
-      variant="secondary"
-      style={styles.secondaryAction}
-    />
+    <View style={styles.detailActions}>
+      <Button
+        label={t('edit.manageShort')}
+        onPress={() => router.push(`/saved/${id}/edit`)}
+        variant="secondary"
+      />
+      <Button
+        label={t('saved.delete')}
+        onPress={handleDelete}
+        variant="destructive"
+      />
+    </View>
   );
 
   if (loan.category === 'mortgage') {
@@ -175,7 +201,8 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 4,
   },
-  secondaryAction: {
+  detailActions: {
     marginTop: 8,
+    gap: spacing.sm,
   },
 });

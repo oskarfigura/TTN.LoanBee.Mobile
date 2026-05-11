@@ -4,6 +4,7 @@ import {
   NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -14,13 +15,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
 import { CalculatorIcon, ChevronRightIcon } from '@/components/loans/LoanIcons';
-import { buildSavedLoanSummary } from '@/loans/loanInsightSummary';
+import {
+  LoanDashboardProgress,
+  buildSavedLoanDashboardProgress,
+  buildSavedLoanSummary,
+} from '@/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
-import { colours, layout, spacing } from '@/theme';
+import { colours, fonts, fontSizes, fontWeights, layout, spacing } from '@/theme';
 
 interface Props {
   loans: SavedLoan[];
@@ -28,6 +34,35 @@ interface Props {
 }
 
 const FOOTER_HEIGHT = 56;
+
+const DashboardProgressBars = ({ progress }: { progress: LoanDashboardProgress[] }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.progressBlock}>
+      {progress.map((item, index) => (
+        <View key={item.labelKey} style={styles.progressItem}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel} numberOfLines={1}>
+              {t(item.labelKey)}
+            </Text>
+            <Text style={styles.progressPercent}>
+              {Math.round(item.value * 100)}%
+            </Text>
+          </View>
+          <ProgressBar
+            progress={item.value}
+            color={index === 0 ? colours.accent : colours.teal}
+            trackStyle={styles.progressTrack}
+          />
+          <Text style={styles.progressCaption} numberOfLines={1} adjustsFontSizeToFit>
+            {t(item.caption.key, item.caption.values)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+};
 
 const LoanDashboardCard = ({
   loan,
@@ -39,9 +74,14 @@ const LoanDashboardCard = ({
   onOpenDetails: () => void;
 }) => {
   const { t, i18n } = useTranslation();
-  const summary = useMemo(() => {
+  const { progress, summary } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
-    return buildSavedLoanSummary(loan, result, new Date(), i18n.language);
+    const asOf = new Date();
+
+    return {
+      progress: buildSavedLoanDashboardProgress(loan, result, asOf),
+      summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
+    };
   }, [i18n.language, loan]);
 
   return (
@@ -59,11 +99,14 @@ const LoanDashboardCard = ({
           headerAction={<Badge label={t(`saved.category.${loan.category}`)} variant="ghost" />}
           style={styles.summaryCard}
           footerContent={(
-            <View style={styles.cardFooter}>
-              <AppText variant="helper" tone="muted">
-                {t('mortgage.tapForDetails')}
-              </AppText>
-              <ChevronRightIcon color={colours.primary} />
+            <View style={styles.cardFooterContent}>
+              <DashboardProgressBars progress={progress} />
+              <View style={styles.cardFooter}>
+                <AppText variant="helper" tone="muted">
+                  {t('mortgage.tapForDetails')}
+                </AppText>
+                <ChevronRightIcon color={colours.primary} />
+              </View>
             </View>
           )}
         />
@@ -158,7 +201,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   summaryCard: {
-    minHeight: 372,
+    minHeight: 456,
     justifyContent: 'space-between',
   },
   indicatorBlock: {
@@ -194,6 +237,43 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  cardFooterContent: {
+    gap: spacing.sm,
+  },
+  progressBlock: {
+    gap: spacing.sm,
+  },
+  progressItem: {
+    gap: spacing.xxs,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  progressLabel: {
+    flex: 1,
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.semibold,
+    color: colours.textPrimary,
+    textTransform: 'uppercase',
+  },
+  progressPercent: {
+    fontFamily: fonts.heading,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+    color: colours.secondary,
+  },
+  progressTrack: {
+    height: 8,
+  },
+  progressCaption: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
   },
   newCalculationButton: {
     width: '100%',
