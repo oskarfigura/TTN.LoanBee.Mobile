@@ -5,7 +5,7 @@ import { AppText } from './AppText';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
 interface Props {
-  title: string;
+  title?: string;
   subtitle?: string;
   leftAction?: React.ReactNode;
   rightAction?: React.ReactNode;
@@ -22,7 +22,7 @@ export const ScreenHeader = ({
   rightAction,
   variant = 'top-level',
   subtitleVariant = 'plain',
-  showBottomBorder = true,
+  showBottomBorder = false,
   backgroundColor,
 }: Props) => {
   const insets = useSafeAreaInsets();
@@ -42,11 +42,13 @@ export const ScreenHeader = ({
             <View style={styles.centerActionSlot}>
               {leftAction ? <View style={styles.centerActionWrap}>{leftAction}</View> : null}
             </View>
-            <View style={styles.centerTitleWrap}>
-              <AppText variant="title2" style={[styles.plainTitle, styles.centerTitle]} numberOfLines={1}>
-                {title}
-              </AppText>
-            </View>
+            {title ? (
+              <View style={styles.centerTitleWrap}>
+                <AppText variant="title2" style={[styles.plainTitle, styles.centerTitle]} numberOfLines={1}>
+                  {title}
+                </AppText>
+              </View>
+            ) : null}
             <View style={styles.centerActionSlot}>
               {rightAction ? <View style={styles.centerRightAction}>{rightAction}</View> : null}
             </View>
@@ -55,11 +57,13 @@ export const ScreenHeader = ({
           <>
             <View style={styles.leading}>
               {leftAction ? <View style={styles.actionWrap}>{leftAction}</View> : null}
-              <View style={styles.titleCopy}>
-                <AppText variant={titleVariant} style={styles.plainTitle} numberOfLines={2}>
-                  {title}
-                </AppText>
-              </View>
+              {title ? (
+                <View style={styles.titleCopy}>
+                  <AppText variant={titleVariant} style={styles.plainTitle} numberOfLines={2}>
+                    {title}
+                  </AppText>
+                </View>
+              ) : null}
             </View>
             {rightAction ? <View style={styles.rightAction}>{rightAction}</View> : null}
           </>
@@ -89,7 +93,7 @@ const styles = StyleSheet.create({
     backgroundColor: colours.background,
     paddingHorizontal: layout.headerPadding,
     paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: colours.borderSoft,
   },
   headerNoBorder: {

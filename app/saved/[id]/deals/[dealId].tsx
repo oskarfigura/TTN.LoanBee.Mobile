@@ -194,9 +194,7 @@ export default function EditDealScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
-        title={isCorrectionMode ? t('mortgage.correctDeal') : t('mortgage.editDeal')}
-        subtitle={deal.name}
-        subtitleVariant="context"
+        title={isCorrectionMode ? t('mortgage.correctDeal') : undefined}
         variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
