@@ -178,6 +178,25 @@ The deal editor enforces these inline. Save buttons disable when any field has a
 - `dateToIso` converts in local time (no UTC round-trip) so BST/DST midnight transitions do not produce off-by-one drift.
 - "Today" in the projection is `new Date()` formatted as local ISO.
 
+## Calculation precision
+
+The projection uses **monthly interest**, the standard model for amortization calculators. Real lenders typically compute interest daily, so figures here are estimates — bank-confirmed values always override.
+
+**What this means concretely:**
+
+- Interest is applied once per month at `monthlyRate = annualRate / 12 / 100` on the start-of-month balance.
+- Events keep their full `YYYY-MM-DD` date in storage, but the projection buckets them by `YYYY-MM` (month key). Two overpayments in the same month land in the same bucket regardless of their day.
+- A lump overpayment reduces the balance at the **end** of its month, so it does not reduce that same month's interest charge. The reduction begins the following month.
+- Order of operations within a single month: `balanceCheckpoint` → interest accrual → scheduled payment → regular overpayment → `lumpOverpayment` events. A checkpoint and an overpayment in the same month compose (checkpoint sets the opening balance, overpayment then deducts from the post-payment balance).
+
+**Where the full date still matters:**
+
+- Validation: an event's date must fall within `[deal.startDate, deal.endDate]`.
+- Cross-month assignment: an event dated 31 March goes into March's bucket; 1 April goes into April's.
+- Display: friendly date formatting for activity logs, completion summaries, and timeline.
+
+**Source-of-truth override:** whenever the user supplies a bank-confirmed figure (a `balanceCheckpoint` event or a deal `completion.closingBalance`), the projection rebases to that figure. Drift from the monthly approximation is therefore self-correcting as long as the user logs occasional checkpoints.
+
 ## Storage
 
 - **MMKV key:** `saved_loans_v1` (JSON array of `LoanGroup`).
