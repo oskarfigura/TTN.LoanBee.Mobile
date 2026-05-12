@@ -40,6 +40,7 @@ export default function EditDealScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.editDeal')}
+          variant="editor"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -114,6 +115,7 @@ export default function EditDealScreen() {
         <ScreenHeader
           title={t('mortgage.dealDetails')}
           subtitle={deal.name}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <ScrollView contentContainerStyle={styles.container}>
@@ -144,6 +146,7 @@ export default function EditDealScreen() {
         <ScreenHeader
           title={t('mortgage.dealDetails')}
           subtitle={deal.name}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <ScrollView contentContainerStyle={styles.container}>
@@ -191,6 +194,7 @@ export default function EditDealScreen() {
       <ScreenHeader
         title={isCorrectionMode ? t('mortgage.correctDeal') : t('mortgage.editDeal')}
         subtitle={deal.name}
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <DealEditorForm

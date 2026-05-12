@@ -25,6 +25,7 @@ export default function MortgageTimelineScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.timelineTitle')}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -40,6 +41,7 @@ export default function MortgageTimelineScreen() {
       <ScreenHeader
         title={t('mortgage.timelineTitle')}
         subtitle={loan.nickname}
+        variant="detail"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>

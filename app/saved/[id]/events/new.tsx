@@ -27,6 +27,7 @@ export default function NewMortgageEventScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.addEvent')}
+          variant="editor"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -42,6 +43,7 @@ export default function NewMortgageEventScreen() {
       <ScreenHeader
         title={t('mortgage.addEvent')}
         subtitle={t('mortgage.eventHelp')}
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>

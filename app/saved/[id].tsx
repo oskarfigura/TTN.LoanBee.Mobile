@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 
 export default function LoanDetailScreen() {
@@ -111,6 +112,7 @@ export default function LoanDetailScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('saved.loanDetail')}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={handleBack} />}
         />
         <View style={styles.notFound}>
@@ -138,26 +140,23 @@ export default function LoanDetailScreen() {
 
   if (loan.category === 'mortgage') {
     const mortgageHeaderMenu = (
-      <TouchableOpacity
-        style={styles.headerMenuButton}
+      <HeaderIconButton
         onPress={() => setMortgageMenuVisible(true)}
-        activeOpacity={0.84}
-        accessibilityRole="button"
         accessibilityLabel={t('mortgage.mortgageActions')}
       >
         <MoreIcon color={colours.primary} size={22} />
-      </TouchableOpacity>
+      </HeaderIconButton>
     );
 
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.summaryTitle')}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
           rightAction={mortgageHeaderMenu}
           showBottomBorder={false}
           backgroundColor={colours.background}
-          titleAlign="center"
         />
         <MortgageDetailView
           loan={loan}
@@ -232,10 +231,10 @@ export default function LoanDetailScreen() {
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
         title={t('saved.loanDetail')}
+        variant="detail"
         leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
         showBottomBorder={false}
         backgroundColor={colours.background}
-        titleAlign="center"
       />
       <LoanCalculationView
         result={result}
@@ -284,16 +283,6 @@ const styles = StyleSheet.create({
   detailActions: {
     marginTop: 8,
     gap: spacing.sm,
-  },
-  headerMenuButton: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colours.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
   },
   modalScrim: {
     flex: 1,

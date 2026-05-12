@@ -85,7 +85,6 @@ export default function CalculatorScreen() {
       <ScreenHeader
         title={t('calculator.title')}
         variant="top-level"
-        showBrand
         leftAction={pinnedLoans.length > 0 ? <HeaderBackAction onPress={() => setShowCalculator(false)} /> : undefined}
       />
       <LoanForm

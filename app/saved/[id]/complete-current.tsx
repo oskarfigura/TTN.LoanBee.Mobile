@@ -35,6 +35,7 @@ export default function CompleteCurrentDealScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.completeCurrentDeal')}
+          variant="editor"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -50,6 +51,7 @@ export default function CompleteCurrentDealScreen() {
       <ScreenHeader
         title={t('mortgage.completeCurrentDeal')}
         subtitle={t('mortgage.completeDealHelp')}
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>

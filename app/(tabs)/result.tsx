@@ -4,7 +4,6 @@ import {
   Share,
   View,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -14,8 +13,9 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { BannerAd } from '@/ads/BannerAd';
-import { colours, layout, radii, spacing } from '@/theme';
+import { colours, layout } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SavedLoan } from '@/types/SavedLoan';
@@ -61,6 +61,25 @@ const ShareIcon = ({ color }: { color: string }) => (
     <Circle cx={6} cy={12} r={2.5} stroke={color} strokeWidth={2} />
     <Circle cx={18} cy={6} r={2.5} stroke={color} strokeWidth={2} />
     <Circle cx={18} cy={18} r={2.5} stroke={color} strokeWidth={2} />
+  </Svg>
+);
+
+const SaveIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M5 4.5h11l3 3v12H5v-15z"
+      stroke={color}
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M8 4.5v5h7v-5M8 19.5v-6h8v6"
+      stroke={color}
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
@@ -221,27 +240,25 @@ export default function ResultScreen() {
       <ScreenHeader
         title={t('results.title')}
         subtitle={savedLoan ? undefined : t('results.unsavedSubtitle')}
+        variant="detail"
         leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
         rightAction={!isSavedMode ? (
-          <Button
-            label={t('results.save')}
+          <HeaderIconButton
             onPress={openSave}
-            variant="primary"
-            style={styles.headerSaveButton}
-          />
+            accessibilityLabel={t('results.saveThisLoan')}
+          >
+            <SaveIcon color={colours.primary} />
+          </HeaderIconButton>
         ) : savedLoan ? (
-          <TouchableOpacity
-            style={styles.headerIconButton}
+          <HeaderIconButton
             onPress={() => router.push(`/saved/${savedLoan.id}/edit`)}
-            accessibilityRole="button"
-            activeOpacity={0.84}
+            accessibilityLabel={t('edit.manageShort')}
           >
             <EditIcon color={colours.primary} />
-          </TouchableOpacity>
+          </HeaderIconButton>
         ) : undefined}
         showBottomBorder={false}
         backgroundColor={colours.background}
-        titleAlign="center"
       />
 
       <LoanCalculationView
@@ -274,20 +291,6 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: 16 },
-  headerSaveButton: {
-    minHeight: 38,
-    paddingHorizontal: spacing.md,
-  },
-  headerIconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colours.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
-  },
   adFooter: {
     backgroundColor: colours.white,
     borderTopWidth: 1,

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
@@ -8,6 +9,7 @@ import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,12 +21,21 @@ const LANGUAGES = [
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ fromDashboard?: string }>();
   const { language, currency, setLanguage, setCurrency } = useLocale();
   const version = Constants.expoConfig?.version ?? '1.0.0';
+  const openedFromDashboard = params.fromDashboard === '1';
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('settings.title')} variant="top-level" showBrand />
+      <ScreenHeader
+        title={t('settings.title')}
+        variant="top-level"
+        leftAction={openedFromDashboard ? (
+          <HeaderBackAction onPress={() => router.replace('/')} />
+        ) : undefined}
+      />
       <ScrollView contentContainerStyle={styles.container}>
         <Card style={styles.section} variant="accent" padding={layout.cardPadding}>
           <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>{t('settings.language')}</AppText>

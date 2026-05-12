@@ -197,6 +197,10 @@
     "close": "Zamknij",
     "viewAll": "Zobacz wszystko"
   },
+  "navigation": {
+    "openMenu": "Otwórz menu",
+    "links": "Nawigacja"
+  },
   "mortgage": {
     "summaryTitle": "Podsumowanie Hipoteki",
     "mortgageActions": "Dzialania hipoteki",

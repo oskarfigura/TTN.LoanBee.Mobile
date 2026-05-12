@@ -1,11 +1,12 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { LoanProfileCard } from '@/components/loans/LoanProfileCard';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Button } from '@/components/ui/Button';
 import { colours, layout, spacing } from '@/theme';
@@ -14,11 +15,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SavedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams<{ fromDashboard?: string }>();
   const { loans, togglePinned } = useSavedLoans();
+  const openedFromDashboard = params.fromDashboard === '1';
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('saved.title')} variant="top-level" showBrand />
+      <ScreenHeader
+        title={t('saved.title')}
+        variant="top-level"
+        leftAction={openedFromDashboard ? (
+          <HeaderBackAction onPress={() => router.replace('/')} />
+        ) : undefined}
+      />
       <FlatList
         data={loans}
         keyExtractor={item => item.id}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
+import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,12 +18,21 @@ interface FaqItem {
 
 export default function AboutScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ fromDashboard?: string }>();
   const faqItems = t('about.faqItems', { returnObjects: true }) as FaqItem[];
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const openedFromDashboard = params.fromDashboard === '1';
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader title={t('tabs.about')} variant="top-level" showBrand />
+      <ScreenHeader
+        title={t('tabs.about')}
+        variant="top-level"
+        leftAction={openedFromDashboard ? (
+          <HeaderBackAction onPress={() => router.replace('/')} />
+        ) : undefined}
+      />
       <ScrollView contentContainerStyle={styles.container}>
         <Card style={styles.card} variant="accent" padding={layout.cardPadding}>
           <AppText variant="title2" tone="accent" style={styles.title}>{t('about.formula')}</AppText>

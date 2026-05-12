@@ -15,8 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { DashboardHeader } from '@/components/loans/DashboardHeader';
 import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
 import { CalculatorIcon, ChevronRightIcon } from '@/components/loans/LoanIcons';
 import {
@@ -34,7 +35,7 @@ interface Props {
   onNewCalculation: () => void;
 }
 
-const FOOTER_HEIGHT = 56;
+const FLOATING_ACTION_SPACE = 84;
 
 const DashboardProgressBars = ({ progress }: { progress: LoanDashboardProgress[] }) => {
   const { t } = useTranslation();
@@ -124,9 +125,17 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const slideWidth = width;
+  const bottomInset = Math.max(insets.bottom, spacing.sm);
 
   const openLoanDetails = (loanId: string) => {
     router.push(`/saved/${loanId}`);
+  };
+
+  const navigateFromDashboardMenu = (href: '/saved' | '/settings' | '/about') => {
+    router.push({
+      pathname: href as never,
+      params: { fromDashboard: '1' },
+    });
   };
 
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -136,8 +145,14 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title={t('mortgage.dashboard')} variant="top-level" showBrand />
-      <View style={[styles.content, { paddingBottom: FOOTER_HEIGHT + Math.max(insets.bottom, spacing.xs) }]}>
+      <DashboardHeader
+        onNewCalculation={onNewCalculation}
+        onNavigate={navigateFromDashboardMenu}
+      />
+      <View style={[styles.content, { paddingBottom: FLOATING_ACTION_SPACE + bottomInset }]}>
+        <View style={styles.disclaimerWrap}>
+          <FinancialDisclaimer dismissible style={styles.disclaimer} />
+        </View>
         <ScrollView
           style={styles.carousel}
           contentContainerStyle={styles.carouselContent}
@@ -170,9 +185,9 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
           </View>
         ) : null}
       </View>
-      <View style={styles.footer}>
+      <View style={[styles.floatingAction, { paddingBottom: bottomInset }]}>
         <Button
-          label={t('calculator.generate')}
+          label={t('results.newCalculation')}
           onPress={onNewCalculation}
           rightIcon={<CalculatorIcon />}
           style={styles.newCalculationButton}
@@ -186,7 +201,13 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colours.background },
   content: {
     flex: 1,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  disclaimerWrap: {
+    paddingHorizontal: layout.headerPadding,
+  },
+  disclaimer: {
+    marginBottom: spacing.sm,
   },
   carousel: {
     flexGrow: 0,
@@ -226,14 +247,15 @@ const styles = StyleSheet.create({
     width: 18,
     backgroundColor: colours.primary,
   },
-  footer: {
+  floatingAction: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     paddingHorizontal: layout.headerPadding,
-    paddingTop: 0,
-    backgroundColor: colours.background,
+  },
+  newCalculationButton: {
+    width: '100%',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -273,8 +295,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
-  },
-  newCalculationButton: {
-    width: '100%',
   },
 });

@@ -209,6 +209,10 @@
     "close": "Close",
     "viewAll": "View all"
   },
+  "navigation": {
+    "openMenu": "Open menu",
+    "links": "Navigation"
+  },
   "mortgage": {
     "summaryTitle": "Mortgage Summary",
     "mortgageActions": "Mortgage actions",

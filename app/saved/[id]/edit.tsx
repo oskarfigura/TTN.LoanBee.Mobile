@@ -70,6 +70,7 @@ export default function EditLoanScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('edit.manageTitle')}
+          variant="editor"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -105,6 +106,7 @@ export default function EditLoanScreen() {
       <ScreenHeader
         title={t('edit.manageTitle')}
         subtitle={t('edit.manageSubtitle')}
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>

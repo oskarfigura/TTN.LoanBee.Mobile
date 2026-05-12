@@ -28,6 +28,7 @@ export default function EditMortgageEventScreen() {
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
           title={t('mortgage.editEvent')}
+          variant="editor"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
@@ -62,6 +63,7 @@ export default function EditMortgageEventScreen() {
         <ScreenHeader
           title={t('mortgage.eventDetails')}
           subtitle={t(mortgageEventLabelKey(event.type))}
+          variant="detail"
           leftAction={<HeaderBackAction onPress={() => router.back()} />}
         />
         <ScrollView contentContainerStyle={styles.container}>
@@ -97,6 +99,7 @@ export default function EditMortgageEventScreen() {
       <ScreenHeader
         title={t('mortgage.editEvent')}
         subtitle={t(mortgageEventLabelKey(event.type))}
+        variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
