@@ -36,6 +36,7 @@ interface Props {
 
 const FLOATING_ACTION_SPACE = 84;
 const GAUGE_SIZE = 150;
+const GAUGE_HEIGHT = 128;
 const GAUGE_STROKE = 18;
 const GAUGE_START_ANGLE = 245;
 const GAUGE_END_ANGLE = 475;
@@ -44,6 +45,21 @@ const DASHBOARD_METRIC_KEYS = [
   'results.monthlyPayment',
   'results.payoffDate',
 ];
+
+const getRemainingTermCaptionKey = (monthsRemaining: number) => {
+  if (monthsRemaining <= 0) return 'mortgage.remainingTermComplete';
+  const years = Math.floor(monthsRemaining / 12);
+  const months = monthsRemaining % 12;
+
+  if (years > 0 && months > 0) return 'mortgage.remainingTermYearsMonths';
+  if (years > 0) return 'mortgage.remainingTermYears';
+  return 'mortgage.remainingTermMonths';
+};
+
+const getRemainingTermValues = (monthsRemaining: number) => ({
+  years: Math.floor(Math.max(monthsRemaining, 0) / 12),
+  months: Math.max(monthsRemaining, 0) % 12,
+});
 
 const polarToCartesian = (
   centerX: number,
@@ -100,7 +116,7 @@ const DashboardProgressGauge = ({ progress }: { progress: LoanDashboardProgress[
   return (
     <View style={styles.progressGaugeBlock}>
       <View style={styles.gaugeShell}>
-        <Svg width={GAUGE_SIZE} height={GAUGE_SIZE * 0.72} viewBox={`0 0 ${GAUGE_SIZE} ${GAUGE_SIZE * 0.72}`}>
+        <Svg width={GAUGE_SIZE} height={GAUGE_HEIGHT} viewBox={`0 0 ${GAUGE_SIZE} ${GAUGE_HEIGHT}`}>
           <Path
             d={trackPath}
             fill="none"
@@ -137,9 +153,21 @@ const DashboardProgressGauge = ({ progress }: { progress: LoanDashboardProgress[
   );
 };
 
-const DashboardMetricPanel = ({ summary }: { summary: LoanInsightSummary }) => {
+const DashboardMetricPanel = ({
+  summary,
+  progress,
+}: {
+  summary: LoanInsightSummary;
+  progress: LoanDashboardProgress[];
+}) => {
   const { t } = useTranslation();
   const candidates = [summary.hero, ...summary.metrics];
+  const timeProgress = progress.find(item => item.labelKey === 'mortgage.timeProgress');
+  const elapsedMonths = Number(timeProgress?.caption.values?.elapsed ?? 0);
+  const totalMonths = Number(timeProgress?.caption.values?.total ?? 0);
+  const remainingMonths = Math.max(0, totalMonths - elapsedMonths);
+  const remainingTermCaptionKey = getRemainingTermCaptionKey(remainingMonths);
+  const remainingTermValues = getRemainingTermValues(remainingMonths);
   const seenKeys = new Set<string>();
   const metrics = DASHBOARD_METRIC_KEYS
     .map(key => candidates.find(metric => metric.labelKey === key))
@@ -156,6 +184,7 @@ const DashboardMetricPanel = ({ summary }: { summary: LoanInsightSummary }) => {
           key={`${metric.labelKey}-${index}`}
           style={[
             styles.dashboardMetricRow,
+            index === 0 && styles.dashboardMetricRowWithAction,
             index === metrics.length - 1 && styles.dashboardMetricRowLast,
           ]}
         >
@@ -165,6 +194,11 @@ const DashboardMetricPanel = ({ summary }: { summary: LoanInsightSummary }) => {
           <Text style={styles.dashboardMetricValue} numberOfLines={1} adjustsFontSizeToFit>
             {metric.value}
           </Text>
+          {metric.labelKey === 'results.payoffDate' && totalMonths > 0 ? (
+            <Text style={styles.dashboardMetricHelper} numberOfLines={1}>
+              {t(remainingTermCaptionKey, remainingTermValues)}
+            </Text>
+          ) : null}
         </View>
       ))}
       <View style={styles.editBubble}>
@@ -221,7 +255,7 @@ const LoanDashboardCard = ({
           </View>
 
           <DashboardProgressGauge progress={progress} />
-          <DashboardMetricPanel summary={summary} />
+          <DashboardMetricPanel summary={summary} progress={progress} />
         </View>
       </TouchableOpacity>
     </View>
@@ -235,7 +269,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
   const slideWidth = width;
-  const bottomInset = Math.max(insets.bottom, spacing.sm);
+  const bottomInset = Math.max(insets.bottom - spacing.md, 0);
 
   const openLoanDetails = (loanId: string) => {
     router.push(`/saved/${loanId}`);
@@ -259,7 +293,14 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
         onNewCalculation={onNewCalculation}
         onNavigate={navigateFromDashboardMenu}
       />
-      <View style={[styles.content, { paddingBottom: FLOATING_ACTION_SPACE + bottomInset }]}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: FLOATING_ACTION_SPACE + bottomInset },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.disclaimerWrap}>
           <FinancialDisclaimer dismissible style={styles.disclaimer} />
         </View>
@@ -282,6 +323,8 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
             />
           ))}
         </ScrollView>
+      </ScrollView>
+      <View style={[styles.floatingAction, { paddingBottom: bottomInset }]}>
         {loans.length > 1 ? (
           <View style={styles.indicatorBlock}>
             <View style={styles.dots}>
@@ -294,8 +337,6 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
             </View>
           </View>
         ) : null}
-      </View>
-      <View style={[styles.floatingAction, { paddingBottom: bottomInset }]}>
         <Button
           label={t('results.newCalculation')}
           onPress={onNewCalculation}
@@ -311,6 +352,8 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colours.background },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     paddingTop: spacing.md,
   },
   disclaimerWrap: {
@@ -331,7 +374,7 @@ const styles = StyleSheet.create({
   },
   slide: {
     paddingHorizontal: layout.headerPadding,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing['2xl'],
   },
   summaryCard: {
     gap: spacing.lg,
@@ -341,8 +384,7 @@ const styles = StyleSheet.create({
   },
   indicatorBlock: {
     alignItems: 'center',
-    paddingHorizontal: layout.headerPadding,
-    paddingTop: spacing.xxxs,
+    paddingBottom: spacing.sm,
   },
   dots: {
     flexDirection: 'row',
@@ -365,6 +407,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: layout.headerPadding,
+    paddingTop: 0,
+    backgroundColor: colours.background,
   },
   newCalculationButton: {
     width: '100%',
@@ -397,13 +441,13 @@ const styles = StyleSheet.create({
   },
   gaugeShell: {
     width: GAUGE_SIZE,
-    height: GAUGE_SIZE * 0.72,
+    height: GAUGE_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
   gaugeCenter: {
     position: 'absolute',
-    top: 50,
+    top: 52,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -458,7 +502,9 @@ const styles = StyleSheet.create({
   },
   dashboardMetricRowLast: {
     borderBottomWidth: 0,
-    paddingRight: 76,
+  },
+  dashboardMetricRowWithAction: {
+    paddingRight: 58,
   },
   dashboardMetricLabel: {
     ...fontFaces.body.regular,
@@ -473,13 +519,20 @@ const styles = StyleSheet.create({
     lineHeight: 25,
     color: colours.primary,
   },
+  dashboardMetricHelper: {
+    ...fontFaces.body.medium,
+    marginTop: spacing.xxxs,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
+  },
   editBubble: {
     position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.md,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    right: spacing.md,
+    top: spacing.md,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

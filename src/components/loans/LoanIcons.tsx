@@ -1,5 +1,10 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
+import {
+  ChevronRightIcon as SystemChevronRightIcon,
+  EditIcon as SystemEditIcon,
+  PlusIcon as SystemPlusIcon,
+} from '@/components/ui/Icons';
 import { colours } from '@/theme';
 
 interface IconProps {
@@ -20,15 +25,7 @@ export const PinIcon = ({ color = colours.primary, size = 16 }: IconProps) => (
 );
 
 export const EditIcon = ({ color = colours.primary, size = 18 }: IconProps) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M18 10l-4-4M2.5 21.5l3.384-.376c.414-.046.62-.069.814-.131a2 2 0 0 0 .485-.234c.17-.111.317-.259.61-.553L21 7a2.828 2.828 0 1 0-4-4L3.794 16.206c-.294.294-.442.442-.553.611a2 2 0 0 0-.234.485c-.062.193-.085.4-.131.814L2.5 21.5z"
-      stroke={color}
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
+  <SystemEditIcon color={color} size={size} strokeWidth={1.8} />
 );
 
 export const CalculatorIcon = ({ color = colours.white, size = 18 }: IconProps) => (
@@ -118,14 +115,7 @@ export const PaymentIcon = ({ color = colours.primary, size = 20 }: IconProps) =
 );
 
 export const PlusIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 5v14M5 12h14"
-      stroke={color}
-      strokeWidth={1.9}
-      strokeLinecap="round"
-    />
-  </Svg>
+  <SystemPlusIcon color={color} size={size} strokeWidth={1.9} />
 );
 
 export const MoreIcon = ({ color = colours.primary, size = 20 }: IconProps) => (
@@ -170,13 +160,5 @@ export const TimelineIcon = ({ color = colours.primary, size = 20 }: IconProps) 
 );
 
 export const ChevronRightIcon = ({ color = colours.primary, size = 16 }: IconProps) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="m9 6 6 6-6 6"
-      stroke={color}
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
+  <SystemChevronRightIcon color={color} size={size} strokeWidth={1.8} />
 );

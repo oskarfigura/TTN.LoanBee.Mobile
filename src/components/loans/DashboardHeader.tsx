@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { MenuIcon } from '@/components/ui/Icons';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
 type DashboardRoute = '/saved' | '/settings' | '/about';
@@ -44,17 +45,6 @@ const BeeMark = () => (
     />
     <Circle cx={13.4} cy={14} r={0.8} fill={colours.primaryDark} />
     <Circle cx={18.6} cy={14} r={0.8} fill={colours.primaryDark} />
-  </Svg>
-);
-
-const MenuIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M5 7h14M5 12h14M5 17h14"
-      stroke={colours.primary}
-      strokeWidth={2}
-      strokeLinecap="round"
-    />
   </Svg>
 );
 
@@ -111,7 +101,7 @@ export const DashboardHeader = ({ onNewCalculation, onNavigate }: Props) => {
             onPress={() => setMenuVisible(true)}
             accessibilityLabel={t('navigation.openMenu')}
           >
-            <MenuIcon />
+            <MenuIcon color={colours.primary} size={20} strokeWidth={2} />
           </HeaderIconButton>
         </View>
       </View>

@@ -1,0 +1,147 @@
+export { AddDocumentIcon } from "./AddDocumentIcon/AddDocumentIcon";
+export { AlertTriangleIcon } from "./AlertTriangleIcon/AlertTriangleIcon";
+export { ArrowLeftIcon } from "./ArrowLeftIcon/ArrowLeftIcon";
+export { ArrowRightIcon } from "./ArrowRightIcon/ArrowRightIcon";
+export { AwardIcon } from "./AwardIcon/AwardIcon";
+export { BellIcon } from "./BellIcon/BellIcon";
+export { BookmarkIcon } from "./BookmarkIcon/BookmarkIcon";
+export { CalendarDateIcon } from "./CalendarDateIcon/CalendarDateIcon";
+export { CarIcon } from "./CarIcon/CarIcon";
+export { CheckCircleIcon } from "./CheckCircleIcon/CheckCircleIcon";
+export { CheckIcon } from "./CheckIcon/CheckIcon";
+export { ChevronDownIcon } from "./ChevronDownIcon/ChevronDownIcon";
+export { ChevronLeftIcon } from "./ChevronLeftIcon/ChevronLeftIcon";
+export { ChevronRightIcon } from "./ChevronRightIcon/ChevronRightIcon";
+export { ChevronUpIcon } from "./ChevronUpIcon/ChevronUpIcon";
+export { ClockCheckIcon } from "./ClockCheckIcon/ClockCheckIcon";
+export { ClockIcon } from "./ClockIcon/ClockIcon";
+export { CoinsStackedIcon } from "./CoinsStackedIcon/CoinsStackedIcon";
+export { ContentFaceIcon } from "./ContentFaceIcon/ContentFaceIcon";
+export { CopyIcon } from "./CopyIcon/CopyIcon";
+export { DownloadIcon } from "./DownloadIcon/DownloadIcon";
+export { EditIcon } from "./EditIcon/EditIcon";
+export { ExternalLinkIcon } from "./ExternalLinkIcon/ExternalLinkIcon";
+export { EyeIcon } from "./EyeIcon/EyeIcon";
+export { EyeOffIcon } from "./EyeOffIcon/EyeOffIcon";
+export { FileIcon } from "./FileIcon/FileIcon";
+export { FilterIcon } from "./FilterIcon/FilterIcon";
+export { GridIcon } from "./GridIcon/GridIcon";
+export { HappyFaceIcon } from "./HappyFaceIcon/HappyFaceIcon";
+export { HeartIcon } from "./HeartIcon/HeartIcon";
+export { HomeIcon } from "./HomeIcon/HomeIcon";
+export { ImageIcon } from "./ImageIcon/ImageIcon";
+export { InfoCircleIcon } from "./InfoCircleIcon/InfoCircleIcon";
+export { ListIcon } from "./ListIcon/ListIcon";
+export { LocationMarkerIcon } from "./LocationMarkerIcon/LocationMarkerIcon";
+export { MailIcon } from "./MailIcon/MailIcon";
+export { MenuIcon } from "./MenuIcon/MenuIcon";
+export { MessageTextCircleIcon } from "./MessageTextCircleIcon/MessageTextCircleIcon";
+export { PhoneIcon } from "./PhoneIcon/PhoneIcon";
+export { PistonIcon } from "./PistonIcon/PistonIcon";
+export { PlusCircleIcon } from "./PlusCircleIcon/PlusCircleIcon";
+export { PlusIcon } from "./PlusIcon/PlusIcon";
+export { PlusSquareIcon } from "./PlusSquareIcon/PlusSquareIcon";
+export { ProfileIcon } from "./ProfileIcon/ProfileIcon";
+export { RefreshIcon } from "./RefreshIcon/RefreshIcon";
+export { RouteIcon } from "./RouteIcon/RouteIcon";
+export { SaveIcon } from "./SaveIcon/SaveIcon";
+export { SearchIcon } from "./SearchIcon/SearchIcon";
+export { SettingsIcon } from "./SettingsIcon/SettingsIcon";
+export { ShareIcon } from "./ShareIcon/ShareIcon";
+export { ShieldIcon } from "./ShieldIcon/ShieldIcon";
+export { ShieldPlusIcon } from "./ShieldPlusIcon/ShieldPlusIcon";
+export { ShieldTickIcon } from "./ShieldTickIcon/ShieldTickIcon";
+export { SliderIcon } from "./SliderIcon/SliderIcon";
+export { SnowflakeIcon } from "./SnowflakeIcon/SnowflakeIcon";
+export { SprocketIcon } from "./SprocketIcon/SprocketIcon";
+export { StarIcon } from "./StarIcon/StarIcon";
+export { SwitchVerticalIcon } from "./SwitchVerticalIcon/SwitchVerticalIcon";
+export { ThumbsUpIcon } from "./ThumbsUpIcon/ThumbsUpIcon";
+export { ToolIcon } from "./ToolIcon/ToolIcon";
+export { ToolsIcon } from "./ToolsIcon/ToolsIcon";
+export { TrashIcon } from "./TrashIcon/TrashIcon";
+export { TrendUpIcon } from "./TrendUpIcon/TrendUpIcon";
+export { UploadCloudIcon } from "./UploadCloudIcon/UploadCloudIcon";
+export { UsersIcon } from "./UsersIcon/UsersIcon";
+export { WheelIcon } from "./WheelIcon/WheelIcon";
+export { WrenchIcon } from "./WrenchIcon/WrenchIcon";
+export { XCloseCircleIcon } from "./XCloseCircleIcon/XCloseCircleIcon";
+export { XCloseIcon } from "./XCloseIcon/XCloseIcon";
+export { XCloseSquareIcon } from "./XCloseSquareIcon/XCloseSquareIcon";
+export { ZapCircleIcon } from "./ZapCircleIcon/ZapCircleIcon";
+export { ZapIcon } from "./ZapIcon/ZapIcon";
+
+export enum IconType {
+    AddDocumentIcon = "AddDocumentIcon",
+    AlertTriangleIcon = "AlertTriangleIcon",
+    ArrowLeftIcon = "ArrowLeftIcon",
+    ArrowRightIcon = "ArrowRightIcon",
+    AwardIcon = "AwardIcon",
+    BellIcon = "BellIcon",
+    BookmarkIcon = "BookmarkIcon",
+    CalendarDateIcon = "CalendarDateIcon",
+    CarIcon = "CarIcon",
+    CheckCircleIcon = "CheckCircleIcon",
+    CheckIcon = "CheckIcon",
+    ChevronDownIcon = "ChevronDownIcon",
+    ChevronLeftIcon = "ChevronLeftIcon",
+    ChevronRightIcon = "ChevronRightIcon",
+    ChevronUpIcon = "ChevronUpIcon",
+    ClockCheckIcon = "ClockCheckIcon",
+    ClockIcon = "ClockIcon",
+    CoinsStackedIcon = "CoinsStackedIcon",
+    ContentFaceIcon = "ContentFaceIcon",
+    CopyIcon = "CopyIcon",
+    DownloadIcon = "DownloadIcon",
+    EditIcon = "EditIcon",
+    ExternalLinkIcon = "ExternalLinkIcon",
+    EyeIcon = "EyeIcon",
+    EyeOffIcon = "EyeOffIcon",
+    FileIcon = "FileIcon",
+    FilterIcon = "FilterIcon",
+    GridIcon = "GridIcon",
+    HappyFaceIcon = "HappyFaceIcon",
+    HeartIcon = "HeartIcon",
+    HomeIcon = "HomeIcon",
+    ImageIcon = "ImageIcon",
+    InfoCircleIcon = "InfoCircleIcon",
+    ListIcon = "ListIcon",
+    LocationMarkerIcon = "LocationMarkerIcon",
+    MailIcon = "MailIcon",
+    MenuIcon = "MenuIcon",
+    MessageTextCircleIcon = "MessageTextCircleIcon",
+    PhoneIcon = "PhoneIcon",
+    PistonIcon = "PistonIcon",
+    PlusCircleIcon = "PlusCircleIcon",
+    PlusIcon = "PlusIcon",
+    PlusSquareIcon = "PlusSquareIcon",
+    ProfileIcon = "ProfileIcon",
+    RefreshIcon = "RefreshIcon",
+    RouteIcon = "RouteIcon",
+    SaveIcon = "SaveIcon",
+    SearchIcon = "SearchIcon",
+    SettingsIcon = "SettingsIcon",
+    ShareIcon = "ShareIcon",
+    ShieldIcon = "ShieldIcon",
+    ShieldPlusIcon = "ShieldPlusIcon",
+    ShieldTickIcon = "ShieldTickIcon",
+    SliderIcon = "SliderIcon",
+    SnowflakeIcon = "SnowflakeIcon",
+    SprocketIcon = "SprocketIcon",
+    StarIcon = "StarIcon",
+    SwitchVerticalIcon = "SwitchVerticalIcon",
+    ThumbsUpIcon = "ThumbsUpIcon",
+    ToolIcon = "ToolIcon",
+    ToolsIcon = "ToolsIcon",
+    TrashIcon = "TrashIcon",
+    TrendUpIcon = "TrendUpIcon",
+    UploadCloudIcon = "UploadCloudIcon",
+    UsersIcon = "UsersIcon",
+    WheelIcon = "WheelIcon",
+    WrenchIcon = "WrenchIcon",
+    XCloseCircleIcon = "XCloseCircleIcon",
+    XCloseIcon = "XCloseIcon",
+    XCloseSquareIcon = "XCloseSquareIcon",
+    ZapCircleIcon = "ZapCircleIcon",
+    ZapIcon = "ZapIcon",
+}
