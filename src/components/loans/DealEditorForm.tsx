@@ -140,7 +140,6 @@ export const DealEditorForm = ({
   const [additionalBorrowing, setAdditionalBorrowing] = useState(numberText(initialAdditionalBorrowing));
   const [interestRate, setInterestRate] = useState(numberText(initialDeal.interestRate));
   const [repaymentType, setRepaymentType] = useState<MortgageRepaymentType>(initialDeal.repaymentType);
-  const [regularOverpayment, setRegularOverpayment] = useState(numberText(initialDeal.regularOverpayment));
   const [totalTermYears, setTotalTermYears] = useState(numberText(initialTermSplit.years));
   const [totalTermMonths, setTotalTermMonths] = useState(numberText(initialTermSplit.months));
   const [completedAt, setCompletedAt] = useState(initialDeal.completion?.completedAt ?? initialDeal.endDate);
@@ -158,7 +157,6 @@ export const DealEditorForm = ({
     const dealDurationMonthsField = validateAmount(dealDurationMonths, { allowZero: true, integer: true });
     const totalTermYearsField = validateAmount(totalTermYears, { allowZero: true, integer: true });
     const totalTermMonthsField = validateAmount(totalTermMonths, { allowZero: true, integer: true });
-    const regularOverpaymentField = validateAmount(regularOverpayment, { allowZero: true });
     const closingBalanceField = validateAmount(closingBalance, { allowZero: true });
     const feesAddedField = validateAmount(feesAdded, { allowZero: true });
 
@@ -177,7 +175,6 @@ export const DealEditorForm = ({
       dealDurationMonthsField,
       totalTermYearsField,
       totalTermMonthsField,
-      regularOverpaymentField,
       closingBalanceField,
       feesAddedField,
       dealDurationCombinedError,
@@ -193,7 +190,6 @@ export const DealEditorForm = ({
     interestRate,
     isInitialDeal,
     openingBalance,
-    regularOverpayment,
     totalTermMonths,
     totalTermYears,
   ]);
@@ -246,7 +242,6 @@ export const DealEditorForm = ({
     || Boolean(validation.dealDurationMonthsField.errorKey)
     || Boolean(validation.totalTermYearsField.errorKey)
     || Boolean(validation.totalTermMonthsField.errorKey)
-    || Boolean(validation.regularOverpaymentField.errorKey)
     || Boolean(validation.closingBalanceField.errorKey)
     || Boolean(validation.feesAddedField.errorKey)
     || Boolean(validation.dealDurationCombinedError)
@@ -263,7 +258,7 @@ export const DealEditorForm = ({
     interestRate: validation.interestRateField.numeric,
     repaymentType,
     monthlyPayment: calculatedMonthlyPayment,
-    regularOverpayment: validation.regularOverpaymentField.numeric,
+    regularOverpayment: initialDeal.regularOverpayment,
     additionalBorrowing: isInitialDeal ? undefined : additionalBorrowingValue,
     remainingTermInYears: remainingTerm.years,
     remainingTermInMonths: remainingTerm.months,
@@ -295,7 +290,6 @@ export const DealEditorForm = ({
     validation.closingBalanceField.numeric,
     validation.feesAddedField.numeric,
     validation.interestRateField.numeric,
-    validation.regularOverpaymentField.numeric,
   ]);
 
   const validate = () => {
@@ -539,19 +533,6 @@ export const DealEditorForm = ({
         </View>
       </View>
 
-      <View style={styles.fieldGroup}>
-        <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
-        <InputSurface error={Boolean(validation.regularOverpaymentField.errorKey) && !validation.regularOverpaymentField.isEmpty}>
-          <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput
-            keyboardType="decimal-pad"
-            value={regularOverpayment}
-            onChangeText={setRegularOverpayment}
-            placeholder="150"
-          />
-        </InputSurface>
-        <FieldError message={fieldError(validation.regularOverpaymentField)} />
-      </View>
     </FormSection>
   );
 

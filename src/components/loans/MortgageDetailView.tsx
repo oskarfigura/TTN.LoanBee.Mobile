@@ -22,6 +22,7 @@ import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import {
   AlertTriangleIcon,
   CalendarDateIcon,
+  ChevronRightIcon,
   ClockCheckIcon,
   CoinsStackedIcon,
   EyeIcon,
@@ -244,6 +245,10 @@ export const MortgageDetailView = ({
             }}
             onOpenTimeline={() => switchTab('timeline')}
           />
+
+          {activeDeal ? (
+            <CouldPaySoonerCard loan={loan} currentDeal={activeDeal} />
+          ) : null}
 
           {activeDeal ? (
             <DealOverpaymentsCard loan={loan} currentDeal={activeDeal} />
@@ -810,6 +815,79 @@ const ContextMetric = ({
     <Text style={styles.contextMetricValue} numberOfLines={2} adjustsFontSizeToFit>{value}</Text>
   </View>
 );
+
+const CouldPaySoonerCard = ({
+  loan,
+  currentDeal,
+}: {
+  loan: SavedLoan;
+  currentDeal: LoanDeal;
+}) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+
+  const hasRegular = currentDeal.regularOverpayment > 0;
+  const hasLumps = loan.events.some(
+    e => e.type === 'lumpOverpayment' && e.dealId === currentDeal.id,
+  );
+  const hasOverpayments = hasRegular || hasLumps;
+
+  const impact = useMemo(
+    () => hasOverpayments ? getDealOverpaymentImpact(currentDeal, loan.events) : null,
+    [currentDeal, hasOverpayments, loan.events],
+  );
+
+  const destination = `/saved/${loan.id}/deals/${currentDeal.id}/overpayments` as const;
+
+  if (hasOverpayments && impact) {
+    return (
+      <Card style={styles.soonerCardActive}>
+        <View style={styles.soonerCardHeader}>
+          <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
+          <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
+            {t('mortgage.manageDealOverpayments')}
+          </AppText>
+        </View>
+        <View style={styles.soonerSavingsRow}>
+          <View style={styles.soonerMetric}>
+            <Text style={styles.soonerMetricLabel}>{t('mortgage.dealInterestSavedLabel')}</Text>
+            <Text style={styles.soonerMetricValue}>{formatCurrency(impact.interestSaved, loan.currency)}</Text>
+          </View>
+          <View style={styles.soonerMetric}>
+            <Text style={styles.soonerMetricLabel}>{t('mortgage.dealExtraRepaidLabel')}</Text>
+            <Text style={styles.soonerMetricValue}>{formatCurrency(impact.extraPrincipalRepaid, loan.currency)}</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.soonerManageRow}
+          onPress={() => router.push(destination)}
+          activeOpacity={0.84}
+        >
+          <Text style={styles.soonerManageText}>{t('mortgage.manageDealOverpayments')}</Text>
+          <ChevronRightIcon size={14} color={colours.secondary} />
+        </TouchableOpacity>
+      </Card>
+    );
+  }
+
+  return (
+    <View style={styles.soonerNudgeCard}>
+      <View style={styles.soonerNudgeInner}>
+        <CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.8} />
+        <View style={styles.soonerNudgeCopy}>
+          <Text style={styles.soonerNudgeTitle}>{t('mortgage.couldPaySoonerTitle')}</Text>
+          <Text style={styles.soonerNudgeBody}>{t('mortgage.couldPaySoonerBody')}</Text>
+        </View>
+      </View>
+      <Button
+        label={t('mortgage.setUpDealOverpayment')}
+        onPress={() => router.push(destination)}
+        variant="secondary"
+        style={styles.soonerNudgeBtn}
+      />
+    </View>
+  );
+};
 
 const DealOverpaymentsCard = ({
   loan,
@@ -1843,6 +1921,87 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     maxWidth: 92,
     textAlign: 'right',
+  },
+  soonerNudgeCard: {
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colours.border,
+    borderStyle: 'dashed',
+    backgroundColor: colours.surface,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  soonerNudgeInner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  soonerNudgeCopy: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  soonerNudgeTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  soonerNudgeBody: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
+  },
+  soonerNudgeBtn: {},
+  soonerCardActive: {
+    marginBottom: spacing.sm,
+    backgroundColor: colours.successSurface,
+    borderColor: colours.successBorder,
+    gap: spacing.xs,
+  },
+  soonerCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  soonerCardTitle: {
+    flex: 1,
+  },
+  soonerSavingsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  soonerMetric: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    minWidth: 0,
+  },
+  soonerMetricLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    marginBottom: spacing.xxxs,
+  },
+  soonerMetricValue: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.secondary,
+  },
+  soonerManageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colours.successBorder,
+    paddingTop: spacing.xs,
+    marginTop: spacing.xxs,
+  },
+  soonerManageText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.secondary,
+    flex: 1,
   },
   overpaymentCard: {
     marginBottom: 14,

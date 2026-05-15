@@ -486,7 +486,22 @@
     "hiddenCompletedDeals": "{{count}} completed deal(s) not shown",
     "dealOpeningBalance": "Opening",
     "dealClosingBalance": "Closing",
-    "dealPredictedBalance": "Predicted"
+    "dealPredictedBalance": "Predicted",
+    "couldPaySoonerTitle": "Could you pay it off sooner?",
+    "couldPaySoonerBody": "Add a regular monthly overpayment to this deal to reduce your balance faster and save on interest.",
+    "setUpDealOverpayment": "Set up overpayment",
+    "manageDealOverpayments": "Manage overpayments",
+    "dealOverpaymentsTitle": "Deal Overpayments",
+    "dealMonthlyOverpayment": "Monthly overpayment",
+    "dealMonthlyOverpaymentNotSet": "No monthly overpayment set",
+    "dealMonthlyOverpaymentEdit": "Edit",
+    "editDealMonthlyOverpayment": "Edit monthly overpayment",
+    "removeDealMonthlyOverpayment": "Remove",
+    "dealLumpSums": "Lump sum payments",
+    "dealLumpSumsEmpty": "No lump sum payments yet",
+    "dealOverpaymentDateNote": "Overpayments must fall within this deal's dates. Any lump sum after this deal ends can be added as a deposit on your next deal to reduce its opening balance.",
+    "dealInterestSavedLabel": "Interest saved this deal",
+    "dealExtraRepaidLabel": "Extra principal repaid"
   },
   "share": {
     "button": "Share calculation",

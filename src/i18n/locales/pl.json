@@ -474,7 +474,22 @@
     "hiddenCompletedDeals": "{{count}} ukończona/e umowa/y nie jest wyświetlana",
     "dealOpeningBalance": "Otwarcie",
     "dealClosingBalance": "Zamknięcie",
-    "dealPredictedBalance": "Prognoza"
+    "dealPredictedBalance": "Prognoza",
+    "couldPaySoonerTitle": "Czy możesz spłacić szybciej?",
+    "couldPaySoonerBody": "Dodaj stałą miesięczną nadpłatę do tej oferty, aby szybciej zmniejszyć saldo i zaoszczędzić na odsetkach.",
+    "setUpDealOverpayment": "Ustaw nadpłatę",
+    "manageDealOverpayments": "Zarządzaj nadpłatami",
+    "dealOverpaymentsTitle": "Nadpłaty oferty",
+    "dealMonthlyOverpayment": "Miesięczna nadpłata",
+    "dealMonthlyOverpaymentNotSet": "Brak miesięcznej nadpłaty",
+    "dealMonthlyOverpaymentEdit": "Edytuj",
+    "editDealMonthlyOverpayment": "Edytuj miesięczną nadpłatę",
+    "removeDealMonthlyOverpayment": "Usuń",
+    "dealLumpSums": "Jednorazowe nadpłaty",
+    "dealLumpSumsEmpty": "Brak jednorazowych nadpłat",
+    "dealOverpaymentDateNote": "Nadpłaty muszą mieścić się w datach tej oferty. Jednorazową nadpłatę po zakończeniu oferty możesz dodać jako wpłatę na poczet kolejnej oferty, zmniejszając jej saldo otwarcia.",
+    "dealInterestSavedLabel": "Zaoszczędzone odsetki w tej ofercie",
+    "dealExtraRepaidLabel": "Dodatkowy spłacony kapitał"
   },
   "share": {
     "button": "Udostępnij obliczenie",
