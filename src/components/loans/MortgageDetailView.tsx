@@ -1156,7 +1156,7 @@ const QuickActionsDrawer = ({
                   title={t('mortgage.addOverpayment')}
                   description={t('mortgage.addOverpaymentHelp')}
                   icon={<CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.9} />}
-                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
+                  onPress={() => onNavigate(`/saved/${loan.id}/deals/${activeDeal.id}/overpayments`)}
                 />
                 <QuickActionOption
                   title={t('mortgage.recordBalance')}

@@ -13,7 +13,6 @@ import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date
 import { colours, spacing } from '@/theme';
 
 export const mortgageEventTypes: MortgageEventType[] = [
-  'lumpOverpayment',
   'balanceCheckpoint',
   'note',
   'missedPayment',
@@ -54,7 +53,7 @@ export const MortgageEventForm = ({
   const projected = useMemo(() => projectDeal(currentDeal, projectionEvents), [currentDeal, projectionEvents]);
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
   const [eventType, setEventType] = useState<MortgageEventType>(
-    initialEvent?.type ?? initialType ?? 'lumpOverpayment',
+    initialEvent?.type ?? initialType ?? 'missedPayment',
   );
   const [date, setDate] = useState(initialEvent?.date ?? formatIsoDate(new Date()));
   const [amount, setAmount] = useState(initialEvent?.amount !== undefined ? String(initialEvent.amount) : '');
