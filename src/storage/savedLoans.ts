@@ -5,6 +5,7 @@ import {
   LegacySavedLoan,
   LoanDeal,
   LoanGroup,
+  MortgageEvent,
   SavedLoan,
 } from '@/types/SavedLoan';
 
@@ -175,5 +176,41 @@ export const savedLoansStorage = {
 
   getMaxDashboardOrder(): number {
     return loadAll().reduce((max, loan) => Math.max(max, loan.dashboardOrder ?? 0), 0);
+  },
+
+  addEvent(loanId: string, event: MortgageEvent): void {
+    const loans = loadAll();
+    const idx = loans.findIndex(l => l.id === loanId);
+    if (idx === -1) return;
+    loans[idx] = {
+      ...loans[idx],
+      events: [...loans[idx].events, event],
+      updatedAt: new Date().toISOString(),
+    };
+    saveAll(loans);
+  },
+
+  updateEvent(loanId: string, event: MortgageEvent): void {
+    const loans = loadAll();
+    const idx = loans.findIndex(l => l.id === loanId);
+    if (idx === -1) return;
+    loans[idx] = {
+      ...loans[idx],
+      events: loans[idx].events.map(e => (e.id === event.id ? event : e)),
+      updatedAt: new Date().toISOString(),
+    };
+    saveAll(loans);
+  },
+
+  removeEvent(loanId: string, eventId: string): void {
+    const loans = loadAll();
+    const idx = loans.findIndex(l => l.id === loanId);
+    if (idx === -1) return;
+    loans[idx] = {
+      ...loans[idx],
+      events: loans[idx].events.filter(e => e.id !== eventId),
+      updatedAt: new Date().toISOString(),
+    };
+    saveAll(loans);
   },
 };

@@ -9,7 +9,7 @@ import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { CoinsStackedIcon, EditIcon as UiEditIcon, PlusCircleIcon, TrashIcon } from '@/components/ui/Icons';
+import { CoinsStackedIcon, EditIcon as UiEditIcon, TrashIcon } from '@/components/ui/Icons';
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
@@ -141,14 +141,9 @@ export default function LoanDetailScreen() {
       </View>
       <View style={styles.loanQuickActionsRow}>
         <QuickActionTile
-          label={t('recalculate.ctaButton')}
+          label={t('overpayments.title')}
           icon={<CoinsStackedIcon size={21} color={colours.primary} strokeWidth={1.9} />}
-          onPress={() => router.push(`/saved/${id}/recalculate`)}
-        />
-        <QuickActionTile
-          label={t('loan.addLumpSum')}
-          icon={<PlusCircleIcon size={21} color={colours.primary} strokeWidth={1.9} />}
-          onPress={() => router.push(`/saved/${id}/lump-sum/new`)}
+          onPress={() => router.push(`/saved/${id}/overpayments`)}
         />
         <QuickActionTile
           label={t('saved.edit')}
@@ -321,7 +316,7 @@ export default function LoanDetailScreen() {
                 savedLoansStorage.togglePinned(loan.id);
                 refresh();
               }}
-              onTryOverpayments={() => router.push(`/saved/${id}/recalculate`)}
+              onTryOverpayments={() => router.push(`/saved/${id}/overpayments`)}
             />
             {loanQuickActions}
           </>
