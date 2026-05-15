@@ -104,6 +104,45 @@ npm run android   # Gradle build, install, and start on Android emulator/device
 npm run ios       # Xcode build, install, and start on iOS simulator/device
 ```
 
+### Running On A Physical Android Device Over USB
+
+1. On the phone, enable **Developer options** and turn on **USB debugging**.
+2. Connect the phone by USB and accept the RSA debugging prompt on the device if Android shows one.
+3. Verify that `adb` can see the device:
+
+```bash
+adb devices
+```
+
+You should see a line ending in `device`. If it shows `unauthorized`, unlock the phone and accept
+the debugging prompt. If it shows nothing, check the USB cable, USB mode, and that Android SDK
+platform-tools are installed locally.
+
+4. Install and launch the app:
+
+```bash
+npm run android
+```
+
+Expo/Gradle will build the native debug app, install it on the connected device, and start Metro.
+If more than one Android device/emulator is connected, target the phone explicitly:
+
+```bash
+adb devices
+npx expo run:android --device
+```
+
+Useful `adb` commands while developing:
+
+```bash
+adb reverse tcp:8081 tcp:8081   # make Metro reachable from the USB-connected device
+adb logcat                      # Android device logs
+adb shell am force-stop com.cactus.loancalculator.free
+```
+
+If the install succeeds but the app cannot load the JavaScript bundle, re-run `adb reverse` and
+restart Metro with `npx expo start -c`.
+
 Metro will hot-reload most JavaScript-only changes after the app is installed. Re-run the full
 platform command after native changes, app config changes, dependency changes, icon/splash updates,
 or anything inside `ios/` or `android/`.
