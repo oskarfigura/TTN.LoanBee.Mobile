@@ -84,6 +84,54 @@ For Android artifacts without EAS, run `cd android && ./gradlew assembleRelease`
 
 After native dependency changes, run `cd ios && pod install && cd ..` for iOS and re-run the full platform build. For JS-only changes Metro hot-reloads automatically. If stale state appears, try `npx expo start -c`; for Android use `cd android && ./gradlew clean`; for iOS use Xcode Clean Build Folder / DerivedData cleanup.
 
+## Standalone Device Testing (No PC / No Metro)
+
+To install the app permanently on a device without keeping a PC or Metro connection active, build a self-contained APK and sideload it.
+
+### Android — Debug APK (quickest, no signing setup)
+
+```bash
+cd android && ./gradlew assembleDebug
+```
+
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+
+Transfer to the device (USB, Google Drive, email, etc.), enable **Install from unknown sources** in Android settings, and install. The app runs independently — no PC or Metro needed after installation.
+
+### Android — Release APK (requires keystore configured in `android/app/build.gradle`)
+
+```bash
+cd android && ./gradlew assembleRelease
+```
+
+Output: `android/app/build/outputs/apk/release/app-release.apk`
+
+### Android — EAS Preview (no local toolchain needed)
+
+```bash
+eas build --profile preview --platform android
+```
+
+Builds on Expo's servers and returns a download link. Install the APK directly from the device browser.
+
+### iOS
+
+Requires a paid Apple Developer account and a provisioning profile (ad-hoc or development). Build via Xcode (`Product → Archive`) or `eas build --profile preview --platform ios`, then distribute via TestFlight or direct device registration. iOS apps cannot be sideloaded without developer signing.
+
+## Worktree Setup (Android)
+
+Never symlink `node_modules` in a worktree for this project. Gradle's autolinking step bakes absolute `node_modules` paths into `android/app/build/generated/autolinking/Android-autolinking.cmake`. If a symlink is present when any Gradle task runs, that cached file gets the wrong path — then both the build and `gradle clean` crash because cmake reads the stale file before it can clean anything.
+
+Always run a full `npm install` inside the worktree. Before the first `npm run android` in any new worktree, delete the stale android caches:
+
+```bash
+rm -rf android/app/build/generated
+rm -rf android/app/.cxx
+rm -rf android/build
+```
+
+The first native build will be slow; subsequent builds use Gradle's cache normally.
+
 ## EAS Build Profiles
 
 EAS is used for preview and production releases only, not local development.
