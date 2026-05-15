@@ -316,7 +316,7 @@ export default function LoanDetailScreen() {
                 savedLoansStorage.togglePinned(loan.id);
                 refresh();
               }}
-              onTryOverpayments={() => router.push(`/saved/${id}/recalculate`)}
+              onTryOverpayments={() => router.push(`/saved/${id}/overpayments`)}
             />
             {loanQuickActions}
           </>

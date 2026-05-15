@@ -67,7 +67,8 @@ export const LumpSumSheet = ({
   const [amount, setAmount] = useState(event?.amount ? String(event.amount) : '');
   const [note, setNote] = useState(event?.note ?? '');
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const amountDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedAmount, setDebouncedAmount] = useState(parseFloat(amount) || 0);
   const [debouncedDate, setDebouncedDate] = useState(date);
 
@@ -84,16 +85,16 @@ export const LumpSumSheet = ({
 
   const handleAmountChange = (text: string) => {
     setAmount(text);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
+    if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current);
+    amountDebounceRef.current = setTimeout(() => {
       setDebouncedAmount(parseFloat(text) || 0);
     }, 400);
   };
 
   const handleDateChange = (value: string) => {
     setDate(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
+    if (dateDebounceRef.current) clearTimeout(dateDebounceRef.current);
+    dateDebounceRef.current = setTimeout(() => {
       setDebouncedDate(value);
     }, 200);
   };

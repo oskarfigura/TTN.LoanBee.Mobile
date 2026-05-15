@@ -38,12 +38,8 @@ export const DatePickerField = ({
   const displayValue = formatFriendlyDate(value, i18n.language);
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS !== 'ios') {
-      setPickerVisible(false);
-    }
-
+    setPickerVisible(false);
     if (event.type === 'dismissed' || !selectedDate) return;
-
     onChange(formatIsoDate(selectedDate));
   };
 
