@@ -14,8 +14,11 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
+import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { DatePickerField } from '@/components/ui/DatePickerField';
+import { formatIsoDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
 
 const formatDuration = (totalMonths: number, yrsLabel: string, moLabel: string): string => {
   const years = Math.floor(Math.abs(totalMonths) / 12);
@@ -23,6 +26,83 @@ const formatDuration = (totalMonths: number, yrsLabel: string, moLabel: string):
   if (years === 0) return `${months} ${moLabel}`;
   if (months === 0) return `${years} ${yrsLabel}`;
   return `${years} ${yrsLabel} ${months} ${moLabel}`;
+};
+
+const oneYearFromNow = (): string => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return formatIsoDate(d);
+};
+
+type ScenarioTotals = {
+  totalInterestPaid: number;
+  totalTermInMonths: number;
+  monthlyPayments: number;
+};
+
+const computeScenario = (
+  loanAmount: number,
+  interest: number,
+  termInYears: number,
+  termInMonths: number,
+  desiredMonthlyPayment: number,
+  calcType: LoanCalculationType,
+  downPayment: number,
+  dpType: DownPaymentType,
+  startDate: string,
+  monthlyOverpayment: number,
+  lumpSum: number,
+  lumpSumDate: string,
+): ScenarioTotals => {
+  const withOverpayment = getLoanCalculations(
+    loanAmount, interest, termInYears, termInMonths,
+    desiredMonthlyPayment, calcType, downPayment, dpType,
+    monthlyOverpayment, startDate,
+  );
+
+  if (lumpSum <= 0) {
+    return {
+      totalInterestPaid: withOverpayment.totalInterestPaid,
+      totalTermInMonths: withOverpayment.tableItems.length,
+      monthlyPayments: withOverpayment.monthlyPayments,
+    };
+  }
+
+  const lumpSumMonthIndex = monthsBetween(startDate, parseDateLabelValue(lumpSumDate) ?? new Date());
+  if (lumpSumMonthIndex <= 0 || lumpSumMonthIndex >= withOverpayment.tableItems.length) {
+    return {
+      totalInterestPaid: withOverpayment.totalInterestPaid,
+      totalTermInMonths: withOverpayment.tableItems.length,
+      monthlyPayments: withOverpayment.monthlyPayments,
+    };
+  }
+
+  const phase1Interest = withOverpayment.tableItems
+    .slice(0, lumpSumMonthIndex)
+    .reduce((sum, row) => sum + parseFloat(row.interest), 0);
+
+  const balanceAtLumpSum = parseFloat(withOverpayment.tableItems[lumpSumMonthIndex - 1].ending);
+  const newBalance = Math.max(0, balanceAtLumpSum - lumpSum);
+
+  if (newBalance <= 0) {
+    return {
+      totalInterestPaid: phase1Interest,
+      totalTermInMonths: lumpSumMonthIndex,
+      monthlyPayments: withOverpayment.monthlyPayments,
+    };
+  }
+
+  const phase2 = getLoanCalculations(
+    newBalance, interest, 0, 0,
+    withOverpayment.monthlyPayments, 'payment', 0, 'percent',
+    0, lumpSumDate,
+  );
+
+  return {
+    totalInterestPaid: phase1Interest + phase2.totalInterestPaid,
+    totalTermInMonths: lumpSumMonthIndex + phase2.tableItems.length,
+    monthlyPayments: withOverpayment.monthlyPayments,
+  };
 };
 
 export default function RecalculateScreen() {
@@ -35,30 +115,42 @@ export default function RecalculateScreen() {
   const [overpayment, setOverpayment] = useState(
     savedOverpayment > 0 ? String(savedOverpayment) : '',
   );
+  const [lumpSum, setLumpSum] = useState('');
+  const [lumpSumDate, setLumpSumDate] = useState(oneYearFromNow);
 
   const overpaymentAmount = parseFloat(overpayment) || 0;
+  const lumpSumAmount = parseFloat(lumpSum) || 0;
+  const showLumpSumDate = lumpSumAmount > 0;
 
-  const { baselineResult, scenarioResult } = useMemo(() => {
-    if (!loan) return { baselineResult: null, scenarioResult: null };
+  const { baselineTotals, scenarioTotals } = useMemo(() => {
+    if (!loan) return { baselineTotals: null, scenarioTotals: null };
     const form = loan.formSnapshot;
     const calcType = form.calculationType.toLowerCase() as LoanCalculationType;
     const dpType = form.downPaymentType.toLowerCase() as DownPaymentType;
 
-    return {
-      baselineResult: getLoanCalculations(
-        form.loanAmount, form.interest, form.termInYears, form.termInMonths,
-        form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
-        0, form.startDate,
-      ),
-      scenarioResult: getLoanCalculations(
-        form.loanAmount, form.interest, form.termInYears, form.termInMonths,
-        form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
-        overpaymentAmount, form.startDate,
-      ),
-    };
-  }, [loan, overpaymentAmount]);
+    const baseline = getLoanCalculations(
+      form.loanAmount, form.interest, form.termInYears, form.termInMonths,
+      form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
+      0, form.startDate,
+    );
 
-  if (!loan || !baselineResult || !scenarioResult) {
+    const scenario = computeScenario(
+      form.loanAmount, form.interest, form.termInYears, form.termInMonths,
+      form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
+      form.startDate, overpaymentAmount, lumpSumAmount, lumpSumDate,
+    );
+
+    return {
+      baselineTotals: {
+        totalInterestPaid: baseline.totalInterestPaid,
+        totalTermInMonths: baseline.tableItems.length,
+        monthlyPayments: baseline.monthlyPayments,
+      } as ScenarioTotals,
+      scenarioTotals: scenario,
+    };
+  }, [loan, overpaymentAmount, lumpSumAmount, lumpSumDate]);
+
+  if (!loan || !baselineTotals || !scenarioTotals) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
         <ScreenHeader
@@ -74,16 +166,26 @@ export default function RecalculateScreen() {
     );
   }
 
-  const interestSaved = baselineResult.totalInterestPaid - scenarioResult.totalInterestPaid;
-  const monthsSaved = baselineResult.tableItems.length - scenarioResult.tableItems.length;
-  const hasImpact = overpaymentAmount > 0;
+  const interestSaved = baselineTotals.totalInterestPaid - scenarioTotals.totalInterestPaid;
+  const monthsSaved = baselineTotals.totalTermInMonths - scenarioTotals.totalTermInMonths;
+  const hasImpact = overpaymentAmount > 0 || lumpSumAmount > 0;
   const isUnchanged = overpaymentAmount === savedOverpayment;
 
   const handleSave = () => {
+    const extra = overpaymentAmount;
+    const scenarioForSave = getLoanCalculations(
+      loan.formSnapshot.loanAmount, loan.formSnapshot.interest,
+      loan.formSnapshot.termInYears, loan.formSnapshot.termInMonths,
+      loan.formSnapshot.desiredMonthlyPayment ?? 0,
+      loan.formSnapshot.calculationType.toLowerCase() as LoanCalculationType,
+      loan.formSnapshot.downPayment,
+      loan.formSnapshot.downPaymentType.toLowerCase() as DownPaymentType,
+      extra, loan.formSnapshot.startDate,
+    );
     savedLoansStorage.update({
       ...loan,
-      formSnapshot: { ...loan.formSnapshot, additionalMonthlyPayment: overpaymentAmount },
-      resultSnapshot: buildResultSnapshot(scenarioResult, loan.resultSnapshot.totalInterestPaidBaseline),
+      formSnapshot: { ...loan.formSnapshot, additionalMonthlyPayment: extra },
+      resultSnapshot: buildResultSnapshot(scenarioForSave, loan.resultSnapshot.totalInterestPaidBaseline),
       updatedAt: new Date().toISOString(),
     });
     router.back();
@@ -91,10 +193,10 @@ export default function RecalculateScreen() {
 
   const yrs = t('results.years');
   const mo = t('results.months');
+  const loanStartDate = parseDateLabelValue(loan.formSnapshot.startDate) ?? new Date();
   const termLabel = formatDuration(
     (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths,
-    yrs,
-    mo,
+    yrs, mo,
   );
 
   return (
@@ -106,6 +208,8 @@ export default function RecalculateScreen() {
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <FinancialDisclaimer dismissible style={styles.disclaimer} />
+
         <Card style={styles.summaryCard}>
           <AppText variant="title3">{t('recalculate.loanSummaryTitle')}</AppText>
           <View style={styles.summaryRows}>
@@ -120,21 +224,50 @@ export default function RecalculateScreen() {
             <SummaryRow label={t('results.loanTerm')} value={termLabel} />
             <SummaryRow
               label={t('results.monthlyPayment')}
-              value={formatCurrency(baselineResult.monthlyPayments, loan.currency)}
+              value={formatCurrency(baselineTotals.monthlyPayments, loan.currency)}
             />
           </View>
         </Card>
 
-        <View style={styles.inputSection}>
-          <FieldLabel>{t('recalculate.extraPaymentLabel')}</FieldLabel>
-          <InputSurface>
-            <AppTextInput
-              value={overpayment}
-              onChangeText={setOverpayment}
-              placeholder="0.00"
-              keyboardType="decimal-pad"
-            />
-          </InputSurface>
+        <View style={styles.section}>
+          <AppText variant="title3" style={styles.sectionTitle}>{t('recalculate.monthlySection')}</AppText>
+          <View style={styles.field}>
+            <FieldLabel>{t('recalculate.extraPaymentLabel')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput
+                value={overpayment}
+                onChangeText={setOverpayment}
+                placeholder="0.00"
+                keyboardType="decimal-pad"
+              />
+            </InputSurface>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <AppText variant="title3" style={styles.sectionTitle}>{t('recalculate.lumpSumSection')}</AppText>
+          <View style={styles.field}>
+            <FieldLabel>{t('recalculate.lumpSumLabel')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput
+                value={lumpSum}
+                onChangeText={setLumpSum}
+                placeholder="0.00"
+                keyboardType="decimal-pad"
+              />
+            </InputSurface>
+          </View>
+          {showLumpSumDate ? (
+            <View style={styles.field}>
+              <DatePickerField
+                label={t('recalculate.lumpSumDateLabel')}
+                value={lumpSumDate}
+                onChange={setLumpSumDate}
+                hint={t('recalculate.lumpSumDateHint')}
+                minimumDate={loanStartDate}
+              />
+            </View>
+          ) : null}
         </View>
 
         {hasImpact ? (
@@ -153,7 +286,7 @@ export default function RecalculateScreen() {
               />
               <ImpactRow
                 label={t('recalculate.newMonthlyTotal')}
-                value={formatCurrency(scenarioResult.monthlyPayments + overpaymentAmount, loan.currency)}
+                value={formatCurrency(scenarioTotals.monthlyPayments + overpaymentAmount, loan.currency)}
               />
             </View>
           </Card>
@@ -201,7 +334,8 @@ const styles = StyleSheet.create({
   container: { padding: layout.screenPadding, paddingBottom: spacing['3xl'] },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundBtn: { marginTop: spacing.md },
-  summaryCard: { marginTop: spacing.md },
+  disclaimer: { marginBottom: spacing.md },
+  summaryCard: {},
   summaryRows: { marginTop: spacing.sm, gap: spacing.xs },
   summaryRow: {
     flexDirection: 'row',
@@ -209,9 +343,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  inputSection: { marginTop: spacing.lg, gap: spacing.xs },
+  section: { marginTop: spacing.xl },
+  sectionTitle: { marginBottom: spacing.sm },
+  field: { gap: spacing.xs },
   impactCard: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     borderColor: colours.successBorder,
     backgroundColor: colours.successSurface,
   },
@@ -223,7 +359,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   emptyState: {
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     borderRadius: radii.card,
     borderWidth: 1,
     borderColor: colours.border,
