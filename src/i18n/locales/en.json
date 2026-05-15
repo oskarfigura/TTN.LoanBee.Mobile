@@ -367,7 +367,7 @@
     "dealStartDate": "Deal start date",
     "dealStartLockedHint": "Start date is set automatically from the previous deal.",
     "dealEndDate": "Deal end date",
-    "dateFormatHint": "Date format: YYYY-MM-DD.",
+    "dateFormatHint": "Tap to choose a date.",
     "openingBankBalance": "Opening bank-confirmed balance",
     "presetTerm": "Preset term",
     "termPreset2": "2 years",

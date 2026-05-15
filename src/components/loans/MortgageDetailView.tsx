@@ -8,9 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { AmortisationTable } from '@/components/calculator/AmortisationTable';
 import { CumulativeAreaChart } from '@/components/charts/CumulativeAreaChart';
 import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
-import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
+import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
-import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
 import { MoreIcon, PlusIcon } from '@/components/loans/LoanIcons';
 import { MortgageTimelineView, MortgageWarningBanners } from '@/components/loans/MortgageTimelineView';
 import { AppText } from '@/components/ui/AppText';
@@ -29,7 +28,14 @@ import {
   ShieldTickIcon,
 } from '@/components/ui/Icons';
 import { formatCurrency } from '@/currency/format';
-import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightSummary } from '@/loans/loanInsightSummary';
+import {
+  buildSavedLoanDashboardProgress,
+  buildSavedLoanDisplayDetails,
+  buildSavedLoanSummary,
+  LoanDashboardProgress,
+  LoanInsightMetric,
+  LoanInsightSummary,
+} from '@/loans/loanInsightSummary';
 import {
   buildMortgageProjection,
   MortgageProjection,
@@ -45,11 +51,17 @@ import {
 } from '@/mortgage/tracker';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
-import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
+import { colours, elevation, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 
 type MortgageDetailTab = 'overview' | 'projection' | 'timeline';
 type ProjectionPreview = 'repayment' | 'cumulative' | 'schedule';
+
+const SUMMARY_METRIC_KEYS = [
+  'mortgage.currentBalance',
+  'results.monthlyPayment',
+  'results.payoffDate',
+];
 
 interface Props {
   loan: SavedLoan;
@@ -80,6 +92,9 @@ export const MortgageDetailView = ({
   const insightSummary = useMemo(() => (
     buildSavedLoanSummary(loan, result, asOf, i18n.language)
   ), [asOf, i18n.language, loan, result]);
+  const dashboardProgress = useMemo(() => (
+    buildSavedLoanDashboardProgress(loan, result, asOf)
+  ), [asOf, loan, result]);
   const tabs: Array<{ value: MortgageDetailTab; label: string }> = [
     { value: 'overview', label: t('mortgage.overview') },
     { value: 'projection', label: t('mortgage.projection') },
@@ -90,16 +105,6 @@ export const MortgageDetailView = ({
   const publishedDeals = getPublishedDeals(loan);
   const draftDeal = trackerSummary.nextDraftDeal;
   const canPlanNextDeal = !draftDeal;
-  const overviewSummary = useMemo<LoanInsightSummary>(() => ({
-    ...insightSummary,
-    metrics: insightSummary.metrics.slice(0, 3),
-    progress: insightSummary.progress
-      ? {
-        ...insightSummary.progress,
-        metrics: [],
-      }
-      : undefined,
-  }), [insightSummary]);
   const switchTab = (nextTab: MortgageDetailTab) => {
     setActiveTab(nextTab);
     requestAnimationFrame(() => {
@@ -198,34 +203,20 @@ export const MortgageDetailView = ({
       {activeTab === 'overview' ? (
         <View style={styles.tabPanel}>
           <OpeningBalanceHint loan={loan} activeDeal={activeDeal} />
-          <LoanInsightCard
-            summary={overviewSummary}
-            density="full"
-            title={loan.nickname}
-            subtitle={displayDetails.lender || t('saved.category.mortgage')}
-            headerAction={(
-              <DashboardPinButton
-                pinned={loan.pinnedToDashboard}
-                onPress={onTogglePinned}
-                style={styles.pinButton}
-              />
-            )}
-            showProgress
-            footerContent={(
-              <MortgageTopCardContext
-                loan={loan}
-                currentDeal={currentDeal}
-              />
-            )}
-          />
-
-          <TimelinePreview
+          <MortgageSummaryPanel
             loan={loan}
+            summary={insightSummary}
+            dashboardProgress={dashboardProgress}
+            lender={displayDetails.lender}
             currentDeal={activeDeal}
             draftDeal={draftDeal}
             publishedDeals={publishedDeals}
             projection={projection}
+            onTogglePinned={onTogglePinned}
             onAddDeal={() => router.push(`/saved/${loan.id}/deals/new`)}
+            onEditDraft={() => {
+              if (draftDeal) router.push(`/saved/${loan.id}/deals/${draftDeal.id}`);
+            }}
             onOpenTimeline={() => switchTab('timeline')}
           />
 
@@ -432,13 +423,265 @@ const FullscreenIcon = () => (
   </Svg>
 );
 
-const TimelinePreview = ({
+const getRemainingTermCaptionKey = (monthsRemaining: number) => {
+  if (monthsRemaining <= 0) return 'mortgage.remainingTermComplete';
+  const years = Math.floor(monthsRemaining / 12);
+  const months = monthsRemaining % 12;
+
+  if (years > 0 && months > 0) return 'mortgage.remainingTermYearsMonths';
+  if (years > 0) return 'mortgage.remainingTermYears';
+  return 'mortgage.remainingTermMonths';
+};
+
+const getRemainingTermValues = (monthsRemaining: number) => ({
+  years: Math.floor(Math.max(monthsRemaining, 0) / 12),
+  months: Math.max(monthsRemaining, 0) % 12,
+});
+
+const formatRate = (value: number) => `${Number.isFinite(value) ? value : 0}%`;
+
+const getBalanceSource = (
+  loan: SavedLoan,
+  currentDeal: LoanDeal | undefined,
+  locale: string,
+  t: ReturnType<typeof useTranslation>['t'],
+) => {
+  if (!currentDeal) {
+    return t('mortgage.sourceCurrentStateProjection');
+  }
+
+  const latestCheckpoint = [...loan.events]
+    .filter(event => event.type === 'balanceCheckpoint' && event.dealId === currentDeal.id)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+
+  if (latestCheckpoint) {
+    return t('mortgage.sourceBankCheckpoint', { date: formatFriendlyDate(latestCheckpoint.date, locale) });
+  }
+
+  if (currentDeal?.status === 'completed' && currentDeal.completion) {
+    return t('mortgage.sourceCompletedDeal', { date: formatFriendlyDate(currentDeal.completion.completedAt, locale) });
+  }
+
+  return t('mortgage.sourceProjectedFromCurrentDeal');
+};
+
+const getSummaryMetrics = (summary: LoanInsightSummary): LoanInsightMetric[] => {
+  const candidates = [summary.hero, ...summary.metrics];
+  const seenKeys = new Set<string>();
+
+  return SUMMARY_METRIC_KEYS
+    .map(key => candidates.find(metric => metric.labelKey === key))
+    .filter((metric): metric is LoanInsightMetric => {
+      if (!metric || seenKeys.has(metric.labelKey)) return false;
+      seenKeys.add(metric.labelKey);
+      return true;
+    });
+};
+
+const MortgageSummaryPanel = ({
+  loan,
+  summary,
+  dashboardProgress,
+  lender,
+  currentDeal,
+  draftDeal,
+  publishedDeals,
+  projection,
+  onTogglePinned,
+  onAddDeal,
+  onEditDraft,
+  onOpenTimeline,
+}: {
+  loan: SavedLoan;
+  summary: LoanInsightSummary;
+  dashboardProgress: LoanDashboardProgress[];
+  lender?: string;
+  currentDeal?: LoanDeal;
+  draftDeal?: LoanDeal;
+  publishedDeals: LoanDeal[];
+  projection: MortgageProjection;
+  onTogglePinned: () => void;
+  onAddDeal: () => void;
+  onEditDraft: () => void;
+  onOpenTimeline: () => void;
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.mortgageSummaryPanel}>
+      <View style={styles.summaryHeader}>
+        <View style={styles.summaryHeaderCopy}>
+          <Text
+            style={styles.summaryTitle}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.72}
+          >
+            {loan.nickname}
+          </Text>
+          <Text style={styles.summarySubtitle} numberOfLines={1}>
+            {lender || t('saved.category.mortgage')}
+          </Text>
+        </View>
+        <DashboardPinButton
+          pinned={loan.pinnedToDashboard}
+          onPress={onTogglePinned}
+          style={styles.summaryPinButton}
+        />
+      </View>
+
+      <DashboardProgressGauge progress={dashboardProgress} />
+      <MortgageSummaryMetrics summary={summary} progress={dashboardProgress} />
+      <CurrentDealSummaryPanel loan={loan} currentDeal={currentDeal} />
+      <CompactTimelineSummary
+        loan={loan}
+        currentDeal={currentDeal}
+        draftDeal={draftDeal}
+        publishedDeals={publishedDeals}
+        projection={projection}
+        onAddDeal={onAddDeal}
+        onEditDraft={onEditDraft}
+        onOpenTimeline={onOpenTimeline}
+      />
+    </View>
+  );
+};
+
+const MortgageSummaryMetrics = ({
+  summary,
+  progress,
+}: {
+  summary: LoanInsightSummary;
+  progress: LoanDashboardProgress[];
+}) => {
+  const { t } = useTranslation();
+  const metrics = getSummaryMetrics(summary);
+  const timeProgress = progress.find(item => item.labelKey === 'mortgage.timeProgress');
+  const elapsedMonths = Number(timeProgress?.caption.values?.elapsed ?? 0);
+  const totalMonths = Number(timeProgress?.caption.values?.total ?? 0);
+  const remainingMonths = Math.max(0, totalMonths - elapsedMonths);
+  const remainingTermCaptionKey = getRemainingTermCaptionKey(remainingMonths);
+  const remainingTermValues = getRemainingTermValues(remainingMonths);
+
+  return (
+    <View style={styles.summaryRaisedPanel}>
+      {metrics.map((metric, index) => (
+        <View
+          key={`${metric.labelKey}-${index}`}
+          style={styles.summaryMetricRow}
+        >
+          <Text style={styles.summaryMetricLabel} numberOfLines={1}>
+            {t(metric.labelKey)}
+          </Text>
+          <Text style={styles.summaryMetricValue} numberOfLines={1} adjustsFontSizeToFit>
+            {metric.value}
+          </Text>
+          {metric.labelKey === 'results.payoffDate' && totalMonths > 0 ? (
+            <Text style={styles.summaryMetricHelper} numberOfLines={1}>
+              {t(remainingTermCaptionKey, remainingTermValues)}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const SummaryFact = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) => (
+  <View style={styles.summaryFact}>
+    <Text style={styles.summaryFactLabel} numberOfLines={1}>{label}</Text>
+    <Text style={styles.summaryFactValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
+  </View>
+);
+
+const CurrentDealSummaryPanel = ({
+  loan,
+  currentDeal,
+}: {
+  loan: SavedLoan;
+  currentDeal?: LoanDeal;
+}) => {
+  const { t, i18n } = useTranslation();
+  const balanceSource = getBalanceSource(loan, currentDeal, i18n.language, t);
+  const dealImpact = useMemo(
+    () => currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined,
+    [currentDeal, loan.events],
+  );
+
+  if (!currentDeal) {
+    return (
+      <View style={styles.summaryRaisedPanel}>
+        <View style={styles.summarySectionHeader}>
+          <View style={styles.summarySectionCopy}>
+            <Text style={styles.summarySectionKicker}>{t('mortgage.currentDeal')}</Text>
+            <Text style={styles.summarySectionTitle} numberOfLines={2}>
+              {t('mortgage.savedMortgageEstimate')}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.summaryBodyText}>
+          {t('mortgage.currentStateProjectionBody')}
+        </Text>
+        <View style={styles.summarySourceRow}>
+          <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>
+          <Text style={styles.summarySourceValue} numberOfLines={1} adjustsFontSizeToFit>
+            {balanceSource}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.summaryRaisedPanel}>
+      <View style={styles.summarySectionHeader}>
+        <View style={styles.summarySectionCopy}>
+          <Text style={styles.summarySectionKicker}>{t('mortgage.currentDeal')}</Text>
+          <Text style={styles.summarySectionTitle} numberOfLines={2}>
+            {currentDeal.name}
+          </Text>
+          <Text style={styles.summarySectionMeta} numberOfLines={1}>
+            {formatFriendlyDateRange(currentDeal.startDate, currentDeal.endDate, i18n.language)}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.summaryFactGrid}>
+        <SummaryFact
+          label={t('calculator.lender')}
+          value={currentDeal.lender || loan.lender || t('saved.category.mortgage')}
+        />
+        <SummaryFact label={t('calculator.interestRate')} value={formatRate(currentDeal.interestRate)} />
+        <SummaryFact label={t('results.monthlyPayment')} value={formatCurrency(currentDeal.monthlyPayment, loan.currency)} />
+        <SummaryFact label={t('mortgage.currentDealEnds')} value={formatFriendlyDate(currentDeal.endDate, i18n.language)} />
+        <SummaryFact label={t('calculator.additionalPayment')} value={formatCurrency(currentDeal.regularOverpayment, loan.currency)} />
+        {dealImpact?.hasOverpayments ? (
+          <SummaryFact label={t('mortgage.dealSavedSoFar')} value={formatCurrency(dealImpact.interestSaved, loan.currency)} />
+        ) : null}
+      </View>
+      <View style={styles.summarySourceRow}>
+        <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>
+        <Text style={styles.summarySourceValue} numberOfLines={1} adjustsFontSizeToFit>
+          {balanceSource}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
+const CompactTimelineSummary = ({
   loan,
   currentDeal,
   draftDeal,
   publishedDeals,
   projection,
   onAddDeal,
+  onEditDraft,
   onOpenTimeline,
 }: {
   loan: SavedLoan;
@@ -447,14 +690,20 @@ const TimelinePreview = ({
   publishedDeals: LoanDeal[];
   projection: MortgageProjection;
   onAddDeal: () => void;
+  onEditDraft: () => void;
   onOpenTimeline: () => void;
 }) => {
   const { t, i18n } = useTranslation();
   const firstDeal = publishedDeals[0];
-  const completedDealCount = publishedDeals.filter(d => d.status === 'completed').length;
+  const actionLabel = draftDeal
+    ? t('mortgage.editDraftDeal')
+    : firstDeal
+      ? t('mortgage.addDeal')
+      : null;
+  const actionHandler = draftDeal ? onEditDraft : onAddDeal;
   const items: Array<{
     key: string;
-    marker: 'future' | 'current' | 'past' | 'start' | 'hidden';
+    marker: 'future' | 'current' | 'start';
     label: string;
     title: string;
     meta: string;
@@ -467,15 +716,6 @@ const TimelinePreview = ({
       meta: formatCurrency(projection.openingBalance, loan.currency),
     },
   ];
-  if (completedDealCount > 0) {
-    items.push({
-      key: 'hidden-completed',
-      marker: 'hidden',
-      label: t('mortgage.hiddenCompletedDeals', { count: completedDealCount }),
-      title: '',
-      meta: '',
-    });
-  }
   items.push(
     {
       key: currentDeal ? `current-${currentDeal.id}` : 'current-estimate',
@@ -496,67 +736,55 @@ const TimelinePreview = ({
       meta: t('mortgage.includedEstimate'),
     },
   );
-  const showTimelineList = items.length > 0;
 
   return (
-    <Card style={styles.timelinePreviewCard}>
-      <View style={styles.timelinePreviewHeader}>
-        <Text style={styles.sectionTitle}>{t('mortgage.dealTimeline')}</Text>
-        {firstDeal || draftDeal ? (
+    <View style={styles.summaryRaisedPanel}>
+      <View style={styles.summarySectionHeader}>
+        <View style={styles.summarySectionCopy}>
+          <Text style={styles.summarySectionKicker}>{t('mortgage.timeline')}</Text>
+          <Text style={styles.summarySectionTitle}>{t('mortgage.dealTimeline')}</Text>
+        </View>
+        {actionLabel ? (
           <Button
-            label={firstDeal ? t('mortgage.addDeal') : t('mortgage.editDraftDeal')}
+            label={actionLabel}
             leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
-            onPress={onAddDeal}
+            onPress={actionHandler}
             variant="icon-pill"
-            style={styles.timelinePreviewAction}
+            style={styles.summaryTimelineAction}
           />
         ) : null}
       </View>
       {!firstDeal && !draftDeal ? (
-        <Text style={styles.timelinePreviewHelp}>
+        <Text style={styles.summaryBodyText}>
           {t('mortgage.noDealChangesBody')}
         </Text>
       ) : null}
-      {showTimelineList ? (
-        <View style={styles.timelinePreviewList}>
-          <View style={styles.timelinePreviewRail} />
-          {items.map(item => item.marker === 'hidden' ? (
-            <TouchableOpacity
-              key={item.key}
-              style={styles.hiddenPreviewRow}
-              onPress={onOpenTimeline}
-              activeOpacity={0.84}
-              accessibilityRole="button"
-            >
-              <View style={styles.hiddenPreviewNode} />
-              <Text style={styles.hiddenPreviewLabel}>{item.label}</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              key={item.key}
-              style={styles.timelinePreviewRow}
-              onPress={onOpenTimeline}
-              activeOpacity={0.84}
-              accessibilityRole="button"
-            >
-              <View
-                style={[
-                  styles.timelinePreviewNode,
-                  item.marker === 'future' && styles.futurePreviewNode,
-                  item.marker === 'current' && styles.currentPreviewNode,
-                  item.marker === 'past' && styles.pastPreviewNode,
-                  item.marker === 'start' && styles.startPreviewNode,
-                ]}
-              />
-              <View style={styles.timelinePreviewCopy}>
-                <Text style={styles.timelinePreviewLabel}>{item.label}</Text>
-                <Text style={styles.timelinePreviewTitle} numberOfLines={1}>{item.title}</Text>
-                <Text style={styles.timelinePreviewMeta} numberOfLines={1}>{item.meta}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : null}
+      <View style={styles.summaryTimelineList}>
+        <View style={styles.summaryTimelineRail} />
+        {items.map(item => (
+          <TouchableOpacity
+            key={item.key}
+            style={styles.summaryTimelineRow}
+            onPress={onOpenTimeline}
+            activeOpacity={0.84}
+            accessibilityRole="button"
+          >
+            <View
+              style={[
+                styles.summaryTimelineNode,
+                item.marker === 'future' && styles.futurePreviewNode,
+                item.marker === 'current' && styles.currentPreviewNode,
+                item.marker === 'start' && styles.startPreviewNode,
+              ]}
+            />
+            <View style={styles.summaryTimelineCopy}>
+              <Text style={styles.summaryTimelineLabel}>{item.label}</Text>
+              <Text style={styles.summaryTimelineTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.summaryTimelineMeta} numberOfLines={1}>{item.meta}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
       {draftDeal ? (
         <View style={styles.draftExcludedNote}>
           <Text style={styles.draftExcludedTitle}>{t('mortgage.draftExcludedFromEstimate')}</Text>
@@ -573,7 +801,7 @@ const TimelinePreview = ({
       >
         <Text style={styles.viewTimelineLinkText}>{t('mortgage.viewTimeline')}</Text>
       </TouchableOpacity>
-    </Card>
+    </View>
   );
 };
 
@@ -589,66 +817,6 @@ const ContextMetric = ({
     <Text style={styles.contextMetricValue} numberOfLines={2} adjustsFontSizeToFit>{value}</Text>
   </View>
 );
-
-const MortgageTopCardContext = ({
-  loan,
-  currentDeal,
-}: {
-  loan: SavedLoan;
-  currentDeal?: LoanDeal;
-}) => {
-  const { t, i18n } = useTranslation();
-  const latestCheckpoint = [...loan.events]
-    .filter(event => event.type === 'balanceCheckpoint' && (!currentDeal || event.dealId === currentDeal.id))
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
-  const balanceSource = latestCheckpoint
-    ? t('mortgage.sourceBankCheckpoint', { date: formatFriendlyDate(latestCheckpoint.date, i18n.language) })
-    : currentDeal?.status === 'completed' && currentDeal.completion
-      ? t('mortgage.sourceCompletedDeal', { date: formatFriendlyDate(currentDeal.completion.completedAt, i18n.language) })
-      : currentDeal
-        ? t('mortgage.sourceProjectedFromCurrentDeal')
-        : t('mortgage.sourceCurrentStateProjection');
-  const dealImpact = useMemo(
-    () => currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined,
-    [currentDeal, loan.events],
-  );
-
-  return (
-    <View style={styles.topCardContext}>
-      <View style={styles.balanceSourceRow}>
-        <Text style={styles.balanceSourceLabel}>{t('mortgage.balanceSource')}</Text>
-        <Text style={styles.balanceSourceValue} numberOfLines={1} adjustsFontSizeToFit>
-          {balanceSource}
-        </Text>
-      </View>
-      {currentDeal ? (
-        <View style={styles.topDealContext}>
-          <View style={styles.topDealCopy}>
-            <Text style={styles.topDealLabel}>
-              {currentDeal.status === 'completed' ? t('mortgage.historicalContext') : t('mortgage.currentDealDriver')}
-            </Text>
-            <Text style={styles.topDealTitle} numberOfLines={1}>
-              {currentDeal.name}
-            </Text>
-          </View>
-          <View style={styles.topDealFacts}>
-            <Text style={styles.topDealFact} numberOfLines={1}>
-              {t('mortgage.currentDealEnds')}: {formatFriendlyDate(currentDeal.endDate, i18n.language)}
-            </Text>
-            <Text style={styles.topDealFact} numberOfLines={1}>
-              {t('calculator.additionalPayment')}: {formatCurrency(currentDeal.regularOverpayment, loan.currency)}
-            </Text>
-            {dealImpact?.hasOverpayments ? (
-              <Text style={styles.topDealSaved} numberOfLines={1}>
-                {t('mortgage.dealSavedSoFar')}: {formatCurrency(dealImpact.interestSaved, loan.currency)}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-      ) : null}
-    </View>
-  );
-};
 
 const DealOverpaymentsCard = ({
   loan,
@@ -1035,9 +1203,206 @@ const styles = StyleSheet.create({
   tabPanel: {
     marginTop: spacing.xs,
   },
-  pinButton: {
-    marginBottom: 0,
-    marginTop: 4,
+  mortgageSummaryPanel: {
+    gap: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  summaryHeader: {
+    position: 'relative',
+    alignItems: 'center',
+    paddingHorizontal: 44,
+    minHeight: 62,
+  },
+  summaryHeaderCopy: {
+    alignItems: 'center',
+    minWidth: 0,
+  },
+  summaryTitle: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.xl,
+    lineHeight: 32,
+    color: colours.primary,
+    textAlign: 'center',
+  },
+  summarySubtitle: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.md,
+    lineHeight: 22,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
+  },
+  summaryPinButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+  },
+  summaryRaisedPanel: {
+    borderRadius: radii.chip,
+    backgroundColor: colours.white,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    ...elevation.level2,
+  },
+  summaryMetricRow: {
+    minHeight: 66,
+    justifyContent: 'center',
+  },
+  summaryMetricLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.md,
+    lineHeight: 22,
+    color: colours.textSecondary,
+    marginBottom: spacing.xxs,
+  },
+  summaryMetricValue: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.lg,
+    lineHeight: 25,
+    color: colours.primary,
+  },
+  summaryMetricHelper: {
+    ...fontFaces.body.medium,
+    marginTop: spacing.xxxs,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
+  },
+  summarySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  summarySectionCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  summarySectionKicker: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  summarySectionTitle: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.lg,
+    lineHeight: 25,
+    color: colours.primary,
+    marginTop: spacing.xxs,
+  },
+  summarySectionMeta: {
+    ...fontFaces.body.medium,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    marginTop: spacing.xxs,
+  },
+  summaryBodyText: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    lineHeight: 20,
+    color: colours.textSecondary,
+  },
+  summaryFactGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: spacing.sm,
+    columnGap: spacing.md,
+  },
+  summaryFact: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    minWidth: 0,
+  },
+  summaryFactLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    marginBottom: spacing.xxxs,
+  },
+  summaryFactValue: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  summarySourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colours.borderSoft,
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+  },
+  summarySourceLabel: {
+    ...fontFaces.body.medium,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  summarySourceValue: {
+    flex: 1,
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.primary,
+    textAlign: 'right',
+  },
+  summaryTimelineAction: {
+    minHeight: 40,
+    paddingHorizontal: 14,
+  },
+  summaryTimelineList: {
+    position: 'relative',
+    paddingLeft: 34,
+    marginTop: spacing.xs,
+  },
+  summaryTimelineRail: {
+    position: 'absolute',
+    left: 11,
+    top: 8,
+    bottom: 8,
+    width: 2,
+    backgroundColor: colours.border,
+  },
+  summaryTimelineRow: {
+    minHeight: 58,
+    justifyContent: 'center',
+    paddingVertical: spacing.xs,
+  },
+  summaryTimelineNode: {
+    position: 'absolute',
+    left: -34,
+    top: 20,
+    width: 24,
+    height: 24,
+    borderRadius: radii.full,
+    borderWidth: 3,
+    backgroundColor: colours.background,
+  },
+  summaryTimelineCopy: {
+    minWidth: 0,
+  },
+  summaryTimelineLabel: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  summaryTimelineTitle: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.md,
+    color: colours.textPrimary,
+    marginTop: spacing.xxs,
+  },
+  summaryTimelineMeta: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   quickActionsCard: {
     backgroundColor: colours.surfaceMuted,
@@ -1096,65 +1461,6 @@ const styles = StyleSheet.create({
   },
   projectionBasisCard: {
     marginBottom: spacing.sm,
-  },
-  topCardContext: {
-    borderTopWidth: 1,
-    borderTopColor: colours.border,
-    paddingTop: spacing.md,
-    gap: spacing.sm,
-  },
-  balanceSourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  balanceSourceLabel: {
-    ...fontFaces.body.medium,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    textTransform: 'uppercase',
-  },
-  balanceSourceValue: {
-    flex: 1,
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.sm,
-    color: colours.primary,
-    textAlign: 'right',
-  },
-  topDealContext: {
-    borderWidth: 1,
-    borderColor: colours.border,
-    borderRadius: radii.input,
-    backgroundColor: colours.surface,
-    padding: spacing.sm,
-    gap: spacing.xs,
-  },
-  topDealCopy: {
-    gap: spacing.xxxs,
-  },
-  topDealLabel: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    textTransform: 'uppercase',
-  },
-  topDealTitle: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.sm,
-    color: colours.textPrimary,
-  },
-  topDealFacts: {
-    gap: spacing.xxxs,
-  },
-  topDealFact: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-  },
-  topDealSaved: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
-    color: colours.success,
   },
   openingBalanceHint: {
     borderWidth: 1,
@@ -1329,54 +1635,6 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     color: colours.textSecondary,
   },
-  timelinePreviewCard: {
-    marginBottom: spacing.sm,
-  },
-  timelinePreviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  timelinePreviewAction: {
-    minHeight: 40,
-    paddingHorizontal: 14,
-  },
-  timelinePreviewHelp: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
-    color: colours.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  timelinePreviewList: {
-    position: 'relative',
-    paddingLeft: 34,
-  },
-  timelinePreviewRail: {
-    position: 'absolute',
-    left: 11,
-    top: 8,
-    bottom: 8,
-    width: 2,
-    backgroundColor: colours.border,
-  },
-  timelinePreviewRow: {
-    minHeight: 58,
-    justifyContent: 'center',
-    paddingVertical: spacing.xs,
-  },
-  timelinePreviewNode: {
-    position: 'absolute',
-    left: -34,
-    top: 20,
-    width: 24,
-    height: 24,
-    borderRadius: radii.full,
-    borderWidth: 3,
-    backgroundColor: colours.background,
-  },
   futurePreviewNode: {
     borderColor: colours.border,
   },
@@ -1384,51 +1642,8 @@ const styles = StyleSheet.create({
     borderColor: colours.teal,
     backgroundColor: colours.white,
   },
-  pastPreviewNode: {
-    borderColor: colours.textSecondary,
-  },
   startPreviewNode: {
     borderColor: colours.border,
-  },
-  hiddenPreviewRow: {
-    minHeight: 36,
-    justifyContent: 'center',
-    paddingVertical: spacing.xxs,
-  },
-  hiddenPreviewNode: {
-    position: 'absolute',
-    left: -29,
-    top: 11,
-    width: 14,
-    height: 14,
-    borderRadius: radii.full,
-    backgroundColor: colours.border,
-  },
-  hiddenPreviewLabel: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-  },
-  timelinePreviewCopy: {
-    minWidth: 0,
-  },
-  timelinePreviewLabel: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    textTransform: 'uppercase',
-  },
-  timelinePreviewTitle: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.md,
-    color: colours.textPrimary,
-    marginTop: spacing.xxs,
-  },
-  timelinePreviewMeta: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    marginTop: spacing.xxxs,
   },
   draftExcludedNote: {
     borderWidth: 1,

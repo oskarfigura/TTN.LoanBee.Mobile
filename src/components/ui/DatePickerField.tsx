@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import {
   AppTextInput,
   FieldHint,
@@ -8,7 +9,7 @@ import {
   InputSurface,
 } from '@/components/ui/FormPrimitives';
 import { colours, spacing } from '@/theme';
-import { formatIsoDate, parseDateLabelValue } from '@/utils/date';
+import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
 
 interface Props {
   label: string;
@@ -31,8 +32,10 @@ export const DatePickerField = ({
   maximumDate,
   disabled,
 }: Props) => {
+  const { i18n } = useTranslation();
   const [pickerVisible, setPickerVisible] = useState(false);
   const pickerValue = getPickerValue(value);
+  const displayValue = formatFriendlyDate(value, i18n.language);
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     if (Platform.OS !== 'ios') {
@@ -50,48 +53,39 @@ export const DatePickerField = ({
       {disabled ? (
         <InputSurface>
           <AppTextInput
-            value={value}
+            value={displayValue}
             editable={false}
-            placeholder="YYYY-MM-DD"
+            placeholder={label}
             style={styles.dateText}
-          />
-        </InputSurface>
-      ) : Platform.OS === 'ios' ? (
-        <InputSurface style={styles.iosSurface}>
-          <DateTimePicker
-            value={pickerValue}
-            mode="date"
-            display="compact"
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            onChange={handleChange}
           />
         </InputSurface>
       ) : (
         <>
           <TouchableOpacity
-            onPress={() => setPickerVisible(true)}
+            onPress={() => setPickerVisible(current => !current)}
             activeOpacity={0.84}
             accessibilityRole="button"
           >
             <InputSurface>
               <AppTextInput
-                value={value}
+                value={displayValue}
                 editable={false}
-                placeholder="YYYY-MM-DD"
+                placeholder={label}
                 style={styles.dateText}
               />
             </InputSurface>
           </TouchableOpacity>
           {pickerVisible ? (
-            <DateTimePicker
-              value={pickerValue}
-              mode="date"
-              display="default"
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              onChange={handleChange}
-            />
+            <InputSurface style={Platform.OS === 'ios' ? styles.iosSurface : undefined}>
+              <DateTimePicker
+                value={pickerValue}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+                onChange={handleChange}
+              />
+            </InputSurface>
           ) : null}
         </>
       )}

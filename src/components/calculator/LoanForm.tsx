@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import {
-  View, TouchableOpacity, ScrollView,
+  View, ScrollView,
   StyleSheet, Platform, KeyboardAvoidingView,
 } from 'react-native';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   LoanCalculatorFormInputValues,
   LoanCalculatorFormValues,
@@ -14,7 +13,6 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CURRENCIES } from '@/currency/currencies';
 import { layout, spacing } from '@/theme';
-import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import {
   AppTextInput,
@@ -26,7 +24,7 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
-import { formatFriendlyDate } from '@/utils/date';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 import { DownPaymentToggle } from './DownPaymentToggle';
 
 interface Props {
@@ -54,17 +52,15 @@ const displayNumberValue = (value: unknown, formatted: boolean) => {
 };
 
 export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { control, handleSubmit, watch, setValue, formState: { errors } } = form;
   const calculationType = watch('calculationType');
   const downPaymentType = watch('downPaymentType') as DownPaymentType;
   const currency = watch('currency');
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const startDateStr = watch('startDate');
-  const startDate = startDateStr ? new Date(`${startDateStr}T00:00:00`) : new Date();
   const downPaymentAffix = downPaymentType === DownPaymentType.CASH ? currencySymbol : '%';
 
   return (
@@ -173,25 +169,16 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
           </View>
 
           <View style={styles.fieldGroup}>
-            <FieldLabel>{t('calculator.startDate')}</FieldLabel>
-            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.82}>
-              <InputSurface>
-                <AppText variant="bodyMd" style={styles.dateText}>
-                  {formatFriendlyDate(startDateStr, i18n.language) || t('calculator.startDate')}
-                </AppText>
-              </InputSurface>
-            </TouchableOpacity>
-            {showDatePicker ? (
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(_, date) => {
-                  setShowDatePicker(Platform.OS === 'ios');
-                  if (date) setValue('startDate', date.toISOString().split('T')[0]);
-                }}
-              />
-            ) : null}
+            <DatePickerField
+              label={t('calculator.startDate')}
+              value={startDateStr}
+              onChange={value => setValue('startDate', value, {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true,
+              })}
+              hint={t('mortgage.dateFormatHint')}
+            />
           </View>
 
           <View style={styles.fieldGroup}>
@@ -330,9 +317,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.md,
-  },
-  dateText: {
-    flex: 1,
   },
   downPaymentRow: {
     flexDirection: 'row',

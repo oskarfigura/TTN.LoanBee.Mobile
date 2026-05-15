@@ -15,7 +15,7 @@ import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
-import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { formatFriendlyDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
 
 type OverpaymentRow = { id: string; date: string; amount: string };
@@ -39,6 +39,7 @@ const OverpaymentEntryRow = ({
   onAmountChange,
   onRemove,
 }: OverpaymentEntryRowProps) => {
+  const { i18n } = useTranslation();
   const [pickerVisible, setPickerVisible] = useState(false);
   const pickerValue = parseDateLabelValue(row.date) ?? new Date();
 
@@ -51,41 +52,30 @@ const OverpaymentEntryRow = ({
   return (
     <View style={styles.overpaymentRow}>
       <View style={styles.overpaymentDateInput}>
-        {Platform.OS === 'ios' ? (
-          <InputSurface style={styles.iosDateSurface}>
-            <DateTimePicker
-              value={pickerValue}
-              mode="date"
-              display="compact"
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              onChange={handleDateChange}
-            />
-          </InputSurface>
-        ) : (
-          <>
-            <TouchableOpacity onPress={() => setPickerVisible(true)} activeOpacity={0.84}>
-              <InputSurface>
-                <AppTextInput
-                  value={row.date}
-                  editable={false}
-                  placeholder="YYYY-MM-DD"
-                  style={styles.dateText}
-                />
-              </InputSurface>
-            </TouchableOpacity>
-            {pickerVisible ? (
+        <>
+          <TouchableOpacity onPress={() => setPickerVisible(current => !current)} activeOpacity={0.84}>
+            <InputSurface>
+              <AppTextInput
+                value={formatFriendlyDate(row.date, i18n.language)}
+                editable={false}
+                placeholder=""
+                style={styles.dateText}
+              />
+            </InputSurface>
+          </TouchableOpacity>
+          {pickerVisible ? (
+            <InputSurface style={Platform.OS === 'ios' ? styles.iosDateSurface : undefined}>
               <DateTimePicker
                 value={pickerValue}
                 mode="date"
-                display="default"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
                 onChange={handleDateChange}
               />
-            ) : null}
-          </>
-        )}
+            </InputSurface>
+          ) : null}
+        </>
       </View>
       <InputSurface style={styles.overpaymentAmountInput}>
         <InputAffix>{currencySymbol}</InputAffix>

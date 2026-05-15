@@ -355,7 +355,7 @@
     "dealStartDate": "Data rozpoczęcia umowy",
     "dealStartLockedHint": "Data rozpoczecia jest ustawiana automatycznie na podstawie poprzedniej umowy.",
     "dealEndDate": "Data zakończenia umowy",
-    "dateFormatHint": "Format daty: RRRR-MM-DD.",
+    "dateFormatHint": "Stuknij, aby wybrać datę.",
     "openingBankBalance": "Saldo początkowe potwierdzone przez bank",
     "presetTerm": "Gotowy okres",
     "termPreset2": "2 lata",
