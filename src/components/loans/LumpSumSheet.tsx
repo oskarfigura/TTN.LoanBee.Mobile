@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   fields: {
-    gap: spacing.lg,
+    gap: spacing.sm,
   },
   impactCard: {
     borderColor: colours.successBorder,
