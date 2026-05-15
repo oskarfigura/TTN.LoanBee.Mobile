@@ -21,10 +21,10 @@ import {
   LoanDashboardProgress,
   LoanInsightMetric,
   LoanInsightSummary,
+  buildSavedLoanDisplayDetails,
   buildSavedLoanDashboardProgress,
   buildSavedLoanSummary,
 } from '@/loans/loanInsightSummary';
-import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, elevation, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
@@ -221,12 +221,12 @@ const LoanDashboardCard = ({
   const { progress, summary, dealLender } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
     const asOf = new Date();
-    const mortgageSummary = getMortgageTrackerSummary(loan, asOf);
+    const displayDetails = buildSavedLoanDisplayDetails(loan, asOf);
 
     return {
       progress: buildSavedLoanDashboardProgress(loan, result, asOf),
       summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
-      dealLender: mortgageSummary.currentDeal?.lender ?? getPublishedDeals(loan)[0]?.lender ?? loan.lender,
+      dealLender: displayDetails.lender,
     };
   }, [i18n.language, loan]);
 

@@ -11,15 +11,25 @@ import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
 import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { LoanInsightCard } from '@/components/loans/LoanInsightCard';
-import { PlusIcon } from '@/components/loans/LoanIcons';
+import { MoreIcon, PlusIcon } from '@/components/loans/LoanIcons';
 import { MortgageTimelineView, MortgageWarningBanners } from '@/components/loans/MortgageTimelineView';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
+import {
+  AlertTriangleIcon,
+  CalendarDateIcon,
+  ClockCheckIcon,
+  CoinsStackedIcon,
+  EyeIcon,
+  EditIcon as UiEditIcon,
+  MessageTextCircleIcon,
+  ShieldTickIcon,
+} from '@/components/ui/Icons';
 import { formatCurrency } from '@/currency/format';
-import { buildSavedLoanSummary, LoanInsightSummary } from '@/loans/loanInsightSummary';
+import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightSummary } from '@/loans/loanInsightSummary';
 import {
   buildMortgageProjection,
   MortgageProjection,
@@ -34,7 +44,7 @@ import {
   getPublishedDeals,
 } from '@/mortgage/tracker';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
-import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
+import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
 
@@ -48,14 +58,6 @@ interface Props {
   footerActions?: React.ReactNode;
 }
 
-const eventIcon = (event: MortgageEvent) => {
-  if (event.type === 'balanceCheckpoint') return 'B';
-  if (event.type === 'missedPayment') return '!';
-  if (event.type === 'paymentHoliday') return 'P';
-  if (event.type === 'note') return 'N';
-  return '+';
-};
-
 export const MortgageDetailView = ({
   loan,
   onTogglePinned,
@@ -66,6 +68,7 @@ export const MortgageDetailView = ({
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [activeTab, setActiveTab] = useState<MortgageDetailTab>('overview');
+  const [addDrawerVisible, setAddDrawerVisible] = useState(false);
   const [actionDrawerVisible, setActionDrawerVisible] = useState(false);
   const [projectionPreview, setProjectionPreview] = useState<ProjectionPreview | null>(null);
   const isProjectionPreviewOpen = projectionPreview !== null;
@@ -73,6 +76,7 @@ export const MortgageDetailView = ({
   const result = useMemo(() => getResultForSavedLoan(loan), [loan]);
   const projection = useMemo(() => buildMortgageProjection(loan, asOf), [asOf, loan]);
   const trackerSummary = useMemo(() => getMortgageTrackerSummary(loan, asOf), [asOf, loan]);
+  const displayDetails = useMemo(() => buildSavedLoanDisplayDetails(loan, asOf), [asOf, loan]);
   const insightSummary = useMemo(() => (
     buildSavedLoanSummary(loan, result, asOf, i18n.language)
   ), [asOf, i18n.language, loan, result]);
@@ -85,6 +89,7 @@ export const MortgageDetailView = ({
   const activeDeal = getCurrentDeal(loan, asOf);
   const publishedDeals = getPublishedDeals(loan);
   const draftDeal = trackerSummary.nextDraftDeal;
+  const canPlanNextDeal = !draftDeal;
   const overviewSummary = useMemo<LoanInsightSummary>(() => ({
     ...insightSummary,
     metrics: insightSummary.metrics.slice(0, 3),
@@ -102,6 +107,7 @@ export const MortgageDetailView = ({
     });
   };
   const navigateFromActions = (href: string) => {
+    setAddDrawerVisible(false);
     setActionDrawerVisible(false);
     router.push(href as Parameters<typeof router.push>[0]);
   };
@@ -196,7 +202,7 @@ export const MortgageDetailView = ({
             summary={overviewSummary}
             density="full"
             title={loan.nickname}
-            subtitle={currentDeal?.lender || publishedDeals[0]?.lender || loan.lender || t('saved.category.mortgage')}
+            subtitle={displayDetails.lender || t('saved.category.mortgage')}
             headerAction={(
               <DashboardPinButton
                 pinned={loan.pinnedToDashboard}
@@ -228,11 +234,10 @@ export const MortgageDetailView = ({
           ) : null}
 
           {activeDeal ? (
-            <Button
-              label={t('mortgage.quickActions')}
-              onPress={() => setActionDrawerVisible(true)}
-              variant="secondary"
-              style={styles.quickActionsTrigger}
+            <MortgageQuickActionsRow
+              onViewDeal={() => router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
+              onAdd={() => setAddDrawerVisible(true)}
+              onMore={() => setActionDrawerVisible(true)}
             />
           ) : null}
         </View>
@@ -320,16 +325,6 @@ export const MortgageDetailView = ({
               onLoanUpdated={() => onLoanUpdated?.()}
             />
           </View>
-          <View style={styles.timelineSection}>
-            {trackerSummary.recentEvents.length > 0 ? (
-              <RecentActivity
-                loan={loan}
-                events={trackerSummary.recentEvents}
-                canAddActivity={Boolean(activeDeal)}
-                titleKey="mortgage.activityLog"
-              />
-            ) : null}
-          </View>
         </View>
       ) : null}
 
@@ -365,12 +360,27 @@ export const MortgageDetailView = ({
         </SafeAreaView>
       </Modal>
       <QuickActionsDrawer
-            visible={actionDrawerVisible}
-            loan={loan}
-            activeDeal={activeDeal}
-            onClose={() => setActionDrawerVisible(false)}
-            onNavigate={navigateFromActions}
-          />
+        title={t('mortgage.add')}
+        visible={addDrawerVisible}
+        loan={loan}
+        activeDeal={activeDeal}
+        draftDeal={draftDeal}
+        canPlanNextDeal={canPlanNextDeal}
+        mode="add"
+        onClose={() => setAddDrawerVisible(false)}
+        onNavigate={navigateFromActions}
+      />
+      <QuickActionsDrawer
+        title={t('common.more')}
+        visible={actionDrawerVisible}
+        loan={loan}
+        activeDeal={activeDeal}
+        draftDeal={draftDeal}
+        canPlanNextDeal={canPlanNextDeal}
+        mode="more"
+        onClose={() => setActionDrawerVisible(false)}
+        onNavigate={navigateFromActions}
+      />
     </ScrollView>
   );
 };
@@ -697,6 +707,67 @@ const DealOverpaymentsCard = ({
   );
 };
 
+const MortgageQuickActionsRow = ({
+  onViewDeal,
+  onAdd,
+  onMore,
+}: {
+  onViewDeal: () => void;
+  onAdd: () => void;
+  onMore: () => void;
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.quickActionsCard}>
+      <View style={styles.quickActionsHeader}>
+        <Text style={styles.quickActionsTitle}>{t('mortgage.quickActions')}</Text>
+        <Text style={styles.quickActionsHelper}>{t('mortgage.quickActionsHelp')}</Text>
+      </View>
+      <View style={styles.quickActionsRow}>
+        <SummaryQuickAction
+          label={t('mortgage.viewDeal')}
+          icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          onPress={onViewDeal}
+        />
+        <SummaryQuickAction
+          label={t('mortgage.add')}
+          icon={<PlusIcon size={21} color={colours.primary} />}
+          onPress={onAdd}
+        />
+        <SummaryQuickAction
+          label={t('common.more')}
+          icon={<MoreIcon size={21} color={colours.primary} />}
+          onPress={onMore}
+        />
+      </View>
+    </View>
+  );
+};
+
+const SummaryQuickAction = ({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    style={styles.quickActionButton}
+    onPress={onPress}
+    activeOpacity={0.84}
+    accessibilityRole="button"
+    accessibilityLabel={label}
+  >
+    <View style={styles.quickActionIcon}>
+      {icon}
+    </View>
+    <Text style={styles.quickActionLabel} numberOfLines={1}>{label}</Text>
+  </TouchableOpacity>
+);
+
 const getSegmentLabelKey = (segment: MortgageProjectionDealSegment) => {
   if (segment.status === 'completed') return 'saved.completed';
   if (segment.isCurrent && segment.projectedPointCount > 0) return 'mortgage.currentProjection';
@@ -800,15 +871,23 @@ const ProjectionBasisCard = ({
 };
 
 const QuickActionsDrawer = ({
+  title,
   visible,
   loan,
   activeDeal,
+  draftDeal,
+  canPlanNextDeal,
+  mode,
   onClose,
   onNavigate,
 }: {
+  title: string;
   visible: boolean;
   loan: SavedLoan;
   activeDeal?: LoanDeal;
+  draftDeal?: LoanDeal;
+  canPlanNextDeal: boolean;
+  mode: 'add' | 'more';
   onClose: () => void;
   onNavigate: (href: string) => void;
 }) => {
@@ -825,24 +904,78 @@ const QuickActionsDrawer = ({
         <Pressable style={styles.drawer}>
           <View style={styles.drawerHandle} />
           <View style={styles.drawerHeader}>
-            <Text style={styles.drawerTitle}>{t('mortgage.quickActions')}</Text>
+            <Text style={styles.drawerTitle}>{title}</Text>
             <TouchableOpacity onPress={onClose} activeOpacity={0.84}>
               <Text style={styles.closeText}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.drawerOptionList}>
-            {activeDeal ? (
+            {mode === 'add' && activeDeal ? (
               <>
-                <QuickActionOption
-                  title={t('mortgage.reviewCurrentDeal')}
-                  marker="R"
-                  onPress={() => onNavigate(`/saved/${loan.id}/deals/${activeDeal.id}`)}
-                />
+                <Text style={styles.drawerGroupTitle}>{t('mortgage.eventGroup')}</Text>
                 <QuickActionOption
                   title={t('mortgage.addOverpayment')}
-                  marker="+"
+                  description={t('mortgage.addOverpaymentHelp')}
+                  icon={<CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
                 />
+                <QuickActionOption
+                  title={t('mortgage.recordBalance')}
+                  description={t('mortgage.recordBalanceHelp')}
+                  icon={<ShieldTickIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=balanceCheckpoint`)}
+                />
+                <QuickActionOption
+                  title={t('mortgage.addNote')}
+                  description={t('mortgage.addNoteHelp')}
+                  icon={<MessageTextCircleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=note`)}
+                />
+                <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
+                {canPlanNextDeal ? (
+                  <QuickActionOption
+                    title={t('mortgage.addNextDeal')}
+                    description={t('mortgage.addNextDealHelp')}
+                    icon={<CalendarDateIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    onPress={() => onNavigate(`/saved/${loan.id}/deals/new`)}
+                  />
+                ) : null}
+                {draftDeal ? (
+                  <QuickActionOption
+                    title={t('mortgage.editDraftDeal')}
+                    description={t('mortgage.editDraftDealHelp')}
+                    icon={<UiEditIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    onPress={() => onNavigate(`/saved/${loan.id}/deals/${draftDeal.id}`)}
+                  />
+                ) : null}
+              </>
+            ) : null}
+            {mode === 'more' && activeDeal ? (
+              <>
+                <Text style={styles.drawerGroupTitle}>{t('mortgage.eventGroup')}</Text>
+                <QuickActionOption
+                  title={t('mortgage.eventMissedPayment')}
+                  description={t('mortgage.missedPaymentHelp')}
+                  icon={<AlertTriangleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=missedPayment`)}
+                />
+                <QuickActionOption
+                  title={t('mortgage.eventPaymentHoliday')}
+                  description={t('mortgage.paymentHolidayHelp')}
+                  icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=paymentHoliday`)}
+                />
+                {activeDeal.status === 'active' ? (
+                  <>
+                    <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
+                    <QuickActionOption
+                      title={t('mortgage.completeCurrentDeal')}
+                      description={t('mortgage.completeCurrentDealHelp')}
+                      icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                      onPress={() => onNavigate(`/saved/${loan.id}/complete-current`)}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
           </ScrollView>
@@ -854,94 +987,29 @@ const QuickActionsDrawer = ({
 
 const QuickActionOption = ({
   title,
-  marker,
+  description,
+  icon,
   destructive,
   onPress,
 }: {
   title: string;
-  marker: string;
+  description: string;
+  icon: React.ReactNode;
   destructive?: boolean;
   onPress: () => void;
 }) => (
   <TouchableOpacity style={styles.drawerOptionRow} onPress={onPress} activeOpacity={0.84}>
-    <View style={[styles.drawerOptionMarker, destructive && styles.drawerOptionMarkerDanger]}>
-      <Text style={[styles.drawerOptionMarkerText, destructive && styles.drawerOptionMarkerDangerText]}>{marker}</Text>
+    <View style={[styles.drawerOptionIcon, destructive && styles.drawerOptionIconDanger]}>
+      {icon}
     </View>
-    <Text style={[styles.drawerOptionTitle, destructive && styles.drawerOptionTitleDanger]}>{title}</Text>
+    <View style={styles.drawerOptionCopy}>
+      <Text style={[styles.drawerOptionTitle, destructive && styles.drawerOptionTitleDanger]}>{title}</Text>
+      <Text style={[styles.drawerOptionDescription, destructive && styles.drawerOptionTitleDanger]}>
+        {description}
+      </Text>
+    </View>
   </TouchableOpacity>
 );
-
-const RecentActivity = ({
-  loan,
-  events,
-  canAddActivity,
-  limit,
-  onViewAll,
-  titleKey = 'mortgage.recentActivity',
-}: {
-  loan: SavedLoan;
-  events: MortgageEvent[];
-  canAddActivity: boolean;
-  limit?: number;
-  onViewAll?: () => void;
-  titleKey?: string;
-}) => {
-  const { t, i18n } = useTranslation();
-  const router = useRouter();
-  const visibleEvents = typeof limit === 'number' ? events.slice(0, limit) : events;
-  const hasHiddenEvents = typeof limit === 'number' && events.length > limit;
-
-  if (events.length === 0) return null;
-
-  return (
-    <Card style={styles.activityCard}>
-      <View style={styles.activityHeader}>
-        <Text style={styles.sectionTitle}>{t(titleKey)}</Text>
-        {canAddActivity ? (
-          <Button
-            label={t('mortgage.addActivity')}
-            onPress={() => router.push(`/saved/${loan.id}/events/new`)}
-            variant="icon-pill"
-            style={styles.addActivityButton}
-          />
-        ) : null}
-      </View>
-      {visibleEvents.map(event => (
-        <TouchableOpacity
-          key={event.id}
-          style={styles.eventRow}
-          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
-          activeOpacity={0.84}
-        >
-          <View style={styles.eventIcon}>
-            <Text style={styles.eventIconText}>{eventIcon(event)}</Text>
-          </View>
-          <View style={styles.eventCopy}>
-            <Text style={styles.eventTitle}>{t(mortgageEventLabelKey(event.type))}</Text>
-            <Text style={styles.eventMeta}>
-              {event.balance !== undefined
-                ? formatCurrency(event.balance, loan.currency)
-                : event.amount !== undefined
-                  ? formatCurrency(event.amount, loan.currency)
-                  : event.note || t('mortgage.eventNoAmount')}
-            </Text>
-          </View>
-          <Text style={styles.eventDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
-        </TouchableOpacity>
-      ))}
-      {hasHiddenEvents && onViewAll ? (
-        <TouchableOpacity
-          style={styles.viewAllActivity}
-          onPress={onViewAll}
-          activeOpacity={0.84}
-          accessibilityRole="button"
-        >
-          <Text style={styles.viewAllActivityText}>{t('common.viewAll')}</Text>
-        </TouchableOpacity>
-      ) : null}
-    </Card>
-  );
-};
 
 const styles = StyleSheet.create({
   scroll: {
@@ -971,8 +1039,60 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 4,
   },
-  quickActionsTrigger: {
+  quickActionsCard: {
+    backgroundColor: colours.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+    borderRadius: radii.card,
     marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  quickActionsHeader: {
+    gap: spacing.xxxs,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.xs,
+  },
+  quickActionsTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  quickActionsHelper: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+  },
+  quickActionButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxs,
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+  },
+  quickActionLabel: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textPrimary,
+    textAlign: 'center',
   },
   projectionBasisCard: {
     marginBottom: spacing.sm,
@@ -1395,41 +1515,44 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   drawerOptionRow: {
-    minHeight: 56,
+    minHeight: 72,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     borderTopWidth: 1,
     borderTopColor: colours.border,
     paddingVertical: spacing.sm,
   },
-  drawerOptionMarker: {
-    width: 34,
-    height: 34,
+  drawerOptionIcon: {
+    width: 38,
+    height: 38,
     borderRadius: radii.full,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colours.surfaceAccent,
     marginRight: spacing.sm,
+    flexShrink: 0,
   },
-  drawerOptionMarkerDanger: {
+  drawerOptionIconDanger: {
     backgroundColor: colours.errorSurface,
   },
-  drawerOptionMarkerText: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.sm,
-    color: colours.primary,
-  },
-  drawerOptionMarkerDangerText: {
-    color: colours.error,
+  drawerOptionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xxs,
   },
   drawerOptionTitle: {
-    flex: 1,
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.md,
+    fontSize: fontSizes.sm,
     color: colours.textPrimary,
   },
   drawerOptionTitleDanger: {
     color: colours.error,
+  },
+  drawerOptionDescription: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
   },
   chartCard: {
     marginBottom: 14,
@@ -1510,16 +1633,6 @@ const styles = StyleSheet.create({
     color: colours.primary,
     marginBottom: spacing.sm,
   },
-  activityCard: {
-    marginBottom: 14,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
   sectionTitle: {
     ...fontFaces.heading.bold,
     fontSize: fontSizes.lg,
@@ -1536,34 +1649,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colours.border,
   },
-  eventIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colours.surfaceAccent,
-    marginRight: 10,
-  },
-  eventIconText: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.sm,
-    color: colours.primary,
-  },
-  eventCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
   eventTitle: {
     ...fontFaces.heading.bold,
     fontSize: fontSizes.sm,
     color: colours.textPrimary,
-  },
-  eventMeta: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    color: colours.textSecondary,
-    marginTop: 2,
   },
   eventDate: {
     ...fontFaces.body.regular,
@@ -1572,19 +1661,6 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     maxWidth: 92,
     textAlign: 'right',
-  },
-  viewAllActivity: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopWidth: 1,
-    borderTopColor: colours.border,
-    marginTop: spacing.xs,
-  },
-  viewAllActivityText: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.sm,
-    color: colours.primary,
   },
   overpaymentCard: {
     marginBottom: 14,

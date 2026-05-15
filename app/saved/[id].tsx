@@ -17,6 +17,7 @@ import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { getCurrentDeal } from '@/mortgage/tracker';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
@@ -64,6 +65,9 @@ export default function LoanDetailScreen() {
     if (!loan) return null;
     return getResultForSavedLoan(loan);
   }, [loan]);
+  const currentDeal = useMemo(() => (
+    loan?.category === 'mortgage' ? getCurrentDeal(loan) : undefined
+  ), [loan]);
 
   const handleDelete = useCallback(() => {
     if (!loan) return;
@@ -92,6 +96,11 @@ export default function LoanDetailScreen() {
     setRenameValue(loan.nickname);
     setRenameModalVisible(true);
   }, [loan]);
+
+  const navigateFromMortgageMenu = useCallback((href: string) => {
+    setMortgageMenuVisible(false);
+    router.push(href as Parameters<typeof router.push>[0]);
+  }, [router]);
 
   const handleRename = useCallback(() => {
     if (!loan) return;
@@ -172,16 +181,34 @@ export default function LoanDetailScreen() {
           animationType="fade"
           onRequestClose={() => setMortgageMenuVisible(false)}
         >
-          <Pressable style={styles.modalScrim} onPress={() => setMortgageMenuVisible(false)}>
-            <Pressable style={styles.actionMenu}>
-              <TouchableOpacity style={styles.actionMenuRow} onPress={openRenameModal} activeOpacity={0.84}>
-                <Text style={styles.actionMenuText}>{t('mortgage.renameMortgage')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionMenuRow} onPress={handleDelete} activeOpacity={0.84}>
-                <Text style={[styles.actionMenuText, styles.actionMenuDanger]}>{t('mortgage.deleteMortgage')}</Text>
-              </TouchableOpacity>
+            <Pressable style={styles.modalScrim} onPress={() => setMortgageMenuVisible(false)}>
+              <Pressable style={styles.actionMenu}>
+                {currentDeal ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.actionMenuRow}
+                      onPress={() => navigateFromMortgageMenu(`/saved/${loan.id}/deals/${currentDeal.id}`)}
+                      activeOpacity={0.84}
+                    >
+                      <Text style={styles.actionMenuText}>{t('mortgage.reviewCurrentDeal')}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionMenuRow}
+                      onPress={() => navigateFromMortgageMenu(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
+                      activeOpacity={0.84}
+                    >
+                      <Text style={styles.actionMenuText}>{t('mortgage.addOverpaymentToCurrentDeal')}</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : null}
+                <TouchableOpacity style={styles.actionMenuRow} onPress={openRenameModal} activeOpacity={0.84}>
+                  <Text style={styles.actionMenuText}>{t('mortgage.renameMortgage')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.actionMenuRowLast} onPress={handleDelete} activeOpacity={0.84}>
+                  <Text style={[styles.actionMenuText, styles.actionMenuDanger]}>{t('mortgage.deleteMortgage')}</Text>
+                </TouchableOpacity>
+              </Pressable>
             </Pressable>
-          </Pressable>
         </Modal>
         <Modal
           visible={renameModalVisible}
@@ -306,6 +333,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colours.border,
+  },
+  actionMenuRowLast: {
+    minHeight: 52,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
   actionMenuText: {
     ...fontFaces.heading.semibold,

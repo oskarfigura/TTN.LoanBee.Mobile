@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { formatCurrency } from '@/currency/format';
 import { getMortgageTrackerSummary } from '@/mortgage/tracker';
-import { buildSavedLoanSummary } from '@/loans/loanInsightSummary';
+import { buildSavedLoanDisplayDetails, buildSavedLoanSummary } from '@/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { colours, fontFaces, fontSizes, radii, spacing } from '@/theme';
@@ -40,6 +40,7 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned, onLoanUpdated }: Pro
   const currentDeal = summary.currentDeal;
   const draftDeal = summary.nextDraftDeal;
   const result = useMemo(() => getResultForSavedLoan(loan), [loan]);
+  const displayDetails = useMemo(() => buildSavedLoanDisplayDetails(loan), [loan]);
   const insightSummary = useMemo(() => (
     buildSavedLoanSummary(loan, result, new Date(), i18n.language)
   ), [i18n.language, loan, result]);
@@ -54,7 +55,7 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned, onLoanUpdated }: Pro
         summary={insightSummary}
         density="full"
         title={loan.nickname}
-        subtitle={loan.lender || currentDeal?.lender || t('saved.category.mortgage')}
+        subtitle={displayDetails.lender || t('saved.category.mortgage')}
         headerAction={(
           <DashboardPinButton
             pinned={loan.pinnedToDashboard}

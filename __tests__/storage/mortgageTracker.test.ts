@@ -23,6 +23,8 @@ import {
 } from '../../src/mortgage/tracker';
 import { buildMortgageProjection } from '../../src/mortgage/projection';
 import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
+import { buildSavedLoanDisplayDetails, buildSavedLoanSummary } from '../../src/loans/loanInsightSummary';
+import { getResultForSavedLoan } from '../../src/results/loanResultRoute';
 import { LoanGroup } from '../../src/types/SavedLoan';
 
 const makeMortgage = (overrides: Partial<LoanGroup> = {}): LoanGroup => ({
@@ -102,6 +104,33 @@ describe('mortgage tracker', () => {
     expect(summary.nextDraftDeal?.id).toBe('draft');
     expect(summary.currentDeal?.id).toBe('deal-current');
     expect(summary.originalBalance).toBe(240000);
+  });
+
+  it('keeps saved list and mortgage summary display details in sync with the current deal', () => {
+    const loan = makeMortgage({
+      lender: 'Original Bank',
+      deals: [{
+        ...makeMortgage().deals[0],
+        lender: 'Current Bank',
+        interestRate: 5.1,
+        monthlyPayment: 1525,
+      }],
+    });
+    const asOf = new Date('2026-07-01T00:00:00');
+    const displayDetails = buildSavedLoanDisplayDetails(loan, asOf);
+    const savedSummary = buildSavedLoanSummary(
+      loan,
+      getResultForSavedLoan(loan),
+      asOf,
+      'en',
+    );
+
+    expect(displayDetails.currentDeal?.id).toBe('deal-current');
+    expect(displayDetails.lender).toBe('Current Bank');
+    expect(savedSummary.metrics).toEqual(expect.arrayContaining([
+      { labelKey: 'results.monthlyPayment', value: '£1,525.00' },
+      { labelKey: 'calculator.interestRate', value: '5.1%' },
+    ]));
   });
 
   it('projects a saved mortgage without deal history from the current-state snapshot', () => {

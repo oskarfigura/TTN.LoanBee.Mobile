@@ -5,7 +5,7 @@ import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
 import { ChevronRightIcon, LoanCategoryIcon, MortgageIcon, PinIcon } from '@/components/loans/LoanIcons';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
-import { buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSummary';
+import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
@@ -19,11 +19,13 @@ interface Props {
 
 export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const { t, i18n } = useTranslation();
-  const { result, summary } = useMemo(() => {
+  const { displayDetails, result, summary } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
+    const asOf = new Date();
     return {
+      displayDetails: buildSavedLoanDisplayDetails(loan, asOf),
       result,
-      summary: buildSavedLoanSummary(loan, result, new Date(), i18n.language),
+      summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
     };
   }, [i18n.language, loan]);
   const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
@@ -57,9 +59,9 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
                       {t(`saved.category.${loan.category}`)}
                     </AppText>
                   </View>
-                  {loan.lender ? (
+                  {displayDetails.lender ? (
                     <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.metaText}>
-                      {loan.lender}
+                      {displayDetails.lender}
                     </AppText>
                   ) : null}
                 </View>

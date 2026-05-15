@@ -1,9 +1,9 @@
 import { CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { buildMortgageProjection } from '@/mortgage/projection';
-import { getMortgageTrackerSummary } from '@/mortgage/tracker';
+import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
 import { LoanResult } from '@/results/loanResultRoute';
-import { SavedLoan } from '@/types/SavedLoan';
+import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
 
 export type LoanInsightContext = 'saved' | 'calculation';
@@ -41,6 +41,11 @@ export interface LoanInsightSummary {
   progress?: LoanInsightProgress;
 }
 
+export interface SavedLoanDisplayDetails {
+  currentDeal?: LoanDeal;
+  lender?: string;
+}
+
 const clamp = (value: number) => Math.max(0, Math.min(value, 1));
 
 const formatPercent = (value: number) => `${Number.isFinite(value) ? value : 0}%`;
@@ -65,6 +70,23 @@ const getCurrentBalance = (result: LoanResult, startDate: string, asOf: Date) =>
     : principalAmount;
 
   return Number.isFinite(currentBalanceCandidate) ? currentBalanceCandidate : principalAmount;
+};
+
+export const buildSavedLoanDisplayDetails = (
+  loan: SavedLoan,
+  asOf = new Date(),
+): SavedLoanDisplayDetails => {
+  if (loan.category !== 'mortgage') {
+    return { lender: loan.lender };
+  }
+
+  const mortgageSummary = getMortgageTrackerSummary(loan, asOf);
+  const firstPublishedDeal = getPublishedDeals(loan)[0];
+
+  return {
+    currentDeal: mortgageSummary.currentDeal,
+    lender: mortgageSummary.currentDeal?.lender ?? firstPublishedDeal?.lender ?? loan.lender,
+  };
 };
 
 const buildSavedProgress = (
