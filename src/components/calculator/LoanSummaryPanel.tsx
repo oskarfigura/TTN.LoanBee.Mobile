@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { formatCurrency } from '@/currency/format';
+import { formatFriendlyDate } from '@/utils/date';
 import {
   buildSavedLoanDashboardProgress,
   buildSavedLoanSummary,
@@ -71,6 +72,8 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned }: Props) => {
   const totalCost = findMetric(insightSummary.metrics, 'results.totalCost');
 
   const additionalPayment = loan.formSnapshot.additionalMonthlyPayment ?? 0;
+  const lumpSumPayment = loan.formSnapshot.lumpSumAmount ?? 0;
+  const lumpSumDate = loan.formSnapshot.lumpSumDate ?? null;
   const savingsAmount = insightSummary.progress?.savingsAmount;
 
   return (
@@ -159,7 +162,19 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned }: Props) => {
               value={formatCurrency(additionalPayment, loan.currency)}
             />
           ) : null}
-          {additionalPayment > 0 && savingsAmount ? (
+          {lumpSumPayment > 0 ? (
+            <SummaryFact
+              label={t('recalculate.lumpSumLabel')}
+              value={formatCurrency(lumpSumPayment, loan.currency)}
+            />
+          ) : null}
+          {lumpSumPayment > 0 && lumpSumDate ? (
+            <SummaryFact
+              label={t('recalculate.lumpSumDateLabel')}
+              value={formatFriendlyDate(lumpSumDate, i18n.language)}
+            />
+          ) : null}
+          {savingsAmount ? (
             <SummaryFact label={t('mortgage.dealSavedSoFar')} value={savingsAmount} />
           ) : null}
         </View>

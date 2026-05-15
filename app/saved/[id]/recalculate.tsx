@@ -198,7 +198,11 @@ export default function RecalculateScreen() {
         lumpSumAmount: lumpSumAmount > 0 ? lumpSumAmount : null,
         lumpSumDate: lumpSumAmount > 0 ? lumpSumDate : null,
       },
-      resultSnapshot: buildResultSnapshot(scenarioForSave, loan.resultSnapshot.totalInterestPaidBaseline),
+      resultSnapshot: {
+        ...buildResultSnapshot(scenarioForSave, loan.resultSnapshot.totalInterestPaidBaseline),
+        totalInterestPaid: scenarioTotals.totalInterestPaid,
+        totalTermInMonths: scenarioTotals.totalTermInMonths,
+      },
       updatedAt: new Date().toISOString(),
     });
     router.back();
