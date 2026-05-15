@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { PlusIcon } from '@/components/loans/LoanIcons';
+import { LiveDotIcon, PencilIcon, PlusIcon, TickIcon } from '@/components/loans/LoanIcons';
+import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
 import {
@@ -13,15 +14,17 @@ import {
   canEditDeal,
   formatDealDuration,
   getCurrentDeal,
+  getDealOverpaymentImpact,
   getDraftDeals,
   getPublishedDeals,
   getTimelineWarnings,
+  projectDeal,
   removeLatestDealAndEvents,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fontFaces, fontSizes, radii, spacing } from '@/theme';
-import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
-import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
+import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
+import { formatFriendlyDate, formatFriendlyDateRange, parseDateLabelValue } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
@@ -46,8 +49,14 @@ export const MortgageWarningBanners = ({ loan }: { loan: SavedLoan }) => {
   );
 };
 
+const statusIcon = (variant: 'neutral' | 'active' | 'success') => {
+  if (variant === 'success') return <TickIcon color={colours.success} size={12} />;
+  if (variant === 'active') return <LiveDotIcon color={colours.white} size={8} />;
+  return <PencilIcon color={colours.textSecondary} size={12} />;
+};
+
 const StatusBadge = ({ label, variant = 'neutral' }: { label: string; variant?: 'neutral' | 'active' | 'success' }) => (
-  <Badge label={label} variant={variant} />
+  <Badge label={label} variant={variant} leftIcon={statusIcon(variant)} />
 );
 
 type TimelineActionVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -79,23 +88,113 @@ const TimelineAction = ({
   </TouchableOpacity>
 );
 
-const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode }) => {
+const DealStats = ({
+  deal,
+  currency,
+  events,
+  asOf,
+}: {
+  deal: LoanDeal;
+  currency: CurrencyCode;
+  events: MortgageEvent[];
+  asOf: Date;
+}) => {
   const { t, i18n } = useTranslation();
+  const impact = useMemo(() => getDealOverpaymentImpact(deal, events, asOf), [deal, events, asOf]);
+  const closingBalance = useMemo(() => {
+    if (deal.status === 'completed' && deal.completion) {
+      return { value: deal.completion.closingBalance, isPredicted: false };
+    }
+    const endDate = parseDateLabelValue(deal.endDate) ?? asOf;
+    return { value: projectDeal(deal, events, endDate).balance, isPredicted: true };
+  }, [deal, events, asOf]);
 
   return (
-    <View style={styles.dealStats}>
-      <View style={styles.dealStat}>
-        <Text style={styles.statLabel}>{t('mortgage.duration')}</Text>
-        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatDealDuration(deal, i18n.language)}</Text>
+    <View>
+      <View style={styles.dealBalances}>
+        <View style={styles.dealStat}>
+          <Text style={styles.statLabel}>{t('mortgage.dealOpeningBalance')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(deal.openingBalance, currency)}
+          </Text>
+        </View>
+        <View style={styles.dealStat}>
+          <Text style={styles.statLabel}>
+            {closingBalance.isPredicted ? t('mortgage.dealPredictedBalance') : t('mortgage.dealClosingBalance')}
+          </Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+            {formatCurrency(closingBalance.value, currency)}
+          </Text>
+        </View>
       </View>
-      <View style={styles.dealStat}>
-        <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
-        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{deal.interestRate}%</Text>
+      <View style={styles.dealStats}>
+        <View style={styles.dealStat}>
+          <Text style={styles.statLabel}>{t('mortgage.duration')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatDealDuration(deal, i18n.language)}</Text>
+        </View>
+        <View style={styles.dealStat}>
+          <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{deal.interestRate}%</Text>
+        </View>
+        <View style={styles.dealStat}>
+          <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(deal.monthlyPayment, currency)}</Text>
+        </View>
       </View>
-      <View style={styles.dealStat}>
-        <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
-        <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(deal.monthlyPayment, currency)}</Text>
-      </View>
+      {impact.hasOverpayments ? (
+        <View style={styles.dealSavings}>
+          <View style={styles.dealSavingsStat}>
+            <Text style={styles.statLabel}>{t('mortgage.dealInterestSaved')}</Text>
+            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit>
+              {formatCurrency(impact.interestSaved, currency)}
+            </Text>
+          </View>
+          <View style={styles.dealSavingsStat}>
+            <Text style={styles.statLabel}>{t('mortgage.dealExtraPrincipal')}</Text>
+            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit>
+              {formatCurrency(impact.extraPrincipalRepaid, currency)}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+};
+
+const DealActivityList = ({
+  deal,
+  loan,
+}: {
+  deal: LoanDeal;
+  loan: SavedLoan;
+}) => {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+
+  const dealEvents = loan.events
+    .filter(e => e.dealId === deal.id)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (dealEvents.length === 0) return null;
+
+  return (
+    <View style={styles.activityList}>
+      {dealEvents.map(event => (
+        <TouchableOpacity
+          key={event.id}
+          style={styles.activityRow}
+          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
+          activeOpacity={0.84}
+        >
+          <View style={styles.activityLeft}>
+            <Text style={styles.activityType}>{t(mortgageEventLabelKey(event.type))}</Text>
+            {event.amount !== undefined ? (
+              <Text style={styles.activityAmount}> · {formatCurrency(event.amount, loan.currency)}</Text>
+            ) : null}
+          </View>
+          <Text style={styles.activityDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -103,6 +202,7 @@ const DealStats = ({ deal, currency }: { deal: LoanDeal; currency: CurrencyCode 
 export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const asOf = useMemo(() => new Date(), [loan]);
   const timeline = useMemo(() => {
     const publishedDeals = getPublishedDeals(loan);
 
@@ -209,7 +309,8 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
               <Text style={styles.meta}>
                 {formatFriendlyDateRange(timeline.current.startDate, timeline.current.endDate, i18n.language)}
               </Text>
-              <DealStats deal={timeline.current} currency={loan.currency} />
+              <DealStats deal={timeline.current} currency={loan.currency} events={loan.events} asOf={asOf} />
+              <DealActivityList deal={timeline.current} loan={loan} />
               <View style={styles.currentActions}>
                 <TimelineAction
                   label={t('mortgage.completeCurrentDeal')}
@@ -257,7 +358,8 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                 <StatusBadge label={t('saved.completed')} variant="success" />
               </View>
               <Text style={styles.meta}>{formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}</Text>
-              <DealStats deal={deal} currency={loan.currency} />
+              <DealStats deal={deal} currency={loan.currency} events={loan.events} asOf={asOf} />
+              <DealActivityList deal={deal} loan={loan} />
               {deal.completion && (
                 <Text style={styles.completionText}>
                   {t('mortgage.closedAt', { amount: formatCurrency(deal.completion.closingBalance, loan.currency) })}
@@ -453,7 +555,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginTop: spacing.md,
   },
-  dealStats: {
+  dealBalances: {
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: colours.border,
@@ -461,10 +563,31 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     overflow: 'hidden',
   },
+  dealStats: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colours.border,
+    borderRadius: radii.input,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
   dealStat: {
     flex: 1,
     padding: spacing.sm,
     backgroundColor: colours.white,
+  },
+  dealSavings: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colours.successBorder,
+    borderRadius: radii.input,
+    backgroundColor: colours.successSurface,
+    marginTop: spacing.xs,
+    overflow: 'hidden',
+  },
+  dealSavingsStat: {
+    flex: 1,
+    padding: spacing.sm,
   },
   statLabel: {
     ...fontFaces.heading.semibold,
@@ -476,6 +599,13 @@ const styles = StyleSheet.create({
     ...fontFaces.heading.bold,
     fontSize: fontSizes.md,
     color: colours.primary,
+    lineHeight: 22,
+    marginTop: spacing.xs,
+  },
+  statValueAccent: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.md,
+    color: colours.secondary,
     lineHeight: 22,
     marginTop: spacing.xs,
   },
@@ -547,6 +677,42 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: colours.textSecondary,
     paddingTop: spacing.xxs,
+  },
+  activityList: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    paddingTop: spacing.xs,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  activityLeft: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  activityType: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+  },
+  activityAmount: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  activityDate: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+    flexShrink: 0,
   },
 });
 

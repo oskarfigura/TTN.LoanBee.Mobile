@@ -7,6 +7,7 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { FormStepper, FormStepperSection } from '@/components/ui/FormStepper';
 import {
   AppTextInput,
+  FieldError,
   FieldHint,
   FieldLabel,
   FormSection,
@@ -17,7 +18,7 @@ import {
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
-import { calculateDealMonthlyPayment } from '@/mortgage/tracker';
+import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage/tracker';
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
 import { colours, elevation, radii, spacing } from '@/theme';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
@@ -39,6 +40,36 @@ interface Props {
 }
 
 const numberText = (value: number) => (Number.isFinite(value) ? String(value) : '0');
+
+type AmountValidation = { numeric: number; errorKey?: string; isEmpty: boolean };
+
+const validateAmount = (
+  raw: string,
+  options: { allowZero?: boolean; required?: boolean; integer?: boolean } = {},
+): AmountValidation => {
+  const trimmed = raw.trim();
+  if (trimmed === '') {
+    return {
+      numeric: 0,
+      isEmpty: true,
+      errorKey: options.required ? 'forms.required' : undefined,
+    };
+  }
+  const numeric = Number(trimmed);
+  if (!Number.isFinite(numeric)) {
+    return { numeric: 0, isEmpty: false, errorKey: 'forms.invalidNumber' };
+  }
+  if (options.integer && !Number.isInteger(numeric)) {
+    return { numeric, isEmpty: false, errorKey: 'forms.invalidNumber' };
+  }
+  if (numeric < 0) {
+    return { numeric, isEmpty: false, errorKey: 'forms.requiredPositive' };
+  }
+  if (!options.allowZero && numeric <= 0) {
+    return { numeric, isEmpty: false, errorKey: 'forms.requiredPositive' };
+  }
+  return { numeric, isEmpty: false };
+};
 
 const monthsBetweenDates = (startDate: string, endDate: string): number => {
   const start = parseDateLabelValue(startDate);
@@ -76,6 +107,8 @@ export const DealEditorForm = ({
   showSectionTabs = true,
 }: Props) => {
   const { t } = useTranslation();
+  const fieldError = (field: AmountValidation) =>
+    !field.isEmpty && field.errorKey ? t(field.errorKey) : undefined;
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
 
   const initialAdditionalBorrowing = initialDeal.additionalBorrowing ?? 0;
@@ -84,8 +117,14 @@ export const DealEditorForm = ({
     : Math.max(0, initialDeal.openingBalance - initialAdditionalBorrowing);
   const initialTermSplit = splitMonths(Math.max(1, Math.round(mortgageTermInMonths)));
   const initialDealDurationSplit = splitMonths(monthsBetweenDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate));
+  const initialAutoName = generateDefaultDealName(
+    initialDealDurationSplit.years,
+    initialDealDurationSplit.months,
+    initialDeal.repaymentType,
+  );
 
   const [name, setName] = useState(initialDeal.name);
+  const [isNameCustomized, setIsNameCustomized] = useState(() => initialDeal.name !== initialAutoName);
   const [lender, setLender] = useState(initialDeal.lender ?? '');
   const [startDate, setStartDate] = useState(initialDeal.startDate);
   const [endDate, setEndDate] = useState(initialDeal.endDate);
@@ -104,9 +143,58 @@ export const DealEditorForm = ({
   const [completionNotes, setCompletionNotes] = useState(initialDeal.completion?.notes ?? '');
 
   const effectiveStartDate = fixedStartDate ?? startDate;
+
+  const validation = useMemo(() => {
+    const openingBalanceField = validateAmount(openingBalance, { required: isInitialDeal });
+    const additionalBorrowingField = validateAmount(additionalBorrowing, { allowZero: true });
+    const interestRateField = validateAmount(interestRate, { required: true });
+    const dealDurationYearsField = validateAmount(dealDurationYears, { allowZero: true, integer: true });
+    const dealDurationMonthsField = validateAmount(dealDurationMonths, { allowZero: true, integer: true });
+    const totalTermYearsField = validateAmount(totalTermYears, { allowZero: true, integer: true });
+    const totalTermMonthsField = validateAmount(totalTermMonths, { allowZero: true, integer: true });
+    const regularOverpaymentField = validateAmount(regularOverpayment, { allowZero: true });
+    const closingBalanceField = validateAmount(closingBalance, { allowZero: true });
+    const feesAddedField = validateAmount(feesAdded, { allowZero: true });
+
+    const dealDurationMonthsTotal = (dealDurationYearsField.numeric * 12) + dealDurationMonthsField.numeric;
+    const dealDurationCombinedError = dealDurationMonthsTotal <= 0 ? 'forms.requiredPositive' : undefined;
+    const totalTermMonthsTotal = (totalTermYearsField.numeric * 12) + totalTermMonthsField.numeric;
+    const totalTermCombinedError = canEditMortgageTerm && totalTermMonthsTotal <= 0
+      ? 'forms.requiredPositive'
+      : undefined;
+
+    return {
+      openingBalanceField,
+      additionalBorrowingField,
+      interestRateField,
+      dealDurationYearsField,
+      dealDurationMonthsField,
+      totalTermYearsField,
+      totalTermMonthsField,
+      regularOverpaymentField,
+      closingBalanceField,
+      feesAddedField,
+      dealDurationCombinedError,
+      totalTermCombinedError,
+    };
+  }, [
+    additionalBorrowing,
+    canEditMortgageTerm,
+    closingBalance,
+    dealDurationMonths,
+    dealDurationYears,
+    feesAdded,
+    interestRate,
+    isInitialDeal,
+    openingBalance,
+    regularOverpayment,
+    totalTermMonths,
+    totalTermYears,
+  ]);
+
   const dealDurationInMonths = Math.max(
     1,
-    (Math.max(0, Number(dealDurationYears) || 0) * 12) + Math.max(0, Number(dealDurationMonths) || 0),
+    (validation.dealDurationYearsField.numeric * 12) + validation.dealDurationMonthsField.numeric,
   );
 
   // Keep endDate in sync when duration inputs change
@@ -116,12 +204,21 @@ export const DealEditorForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealDurationInMonths, effectiveStartDate]);
 
-  const additionalBorrowingValue = Math.max(0, Number(additionalBorrowing) || 0);
+  // Auto-update deal name when duration or repayment type changes, unless user customised it
+  useEffect(() => {
+    if (!isNameCustomized) {
+      const { years, months } = splitMonths(dealDurationInMonths);
+      setName(generateDefaultDealName(years, months, repaymentType));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealDurationInMonths, repaymentType]);
+
+  const additionalBorrowingValue = validation.additionalBorrowingField.numeric;
   const derivedOpeningBalance = isInitialDeal
-    ? Math.max(0, Number(openingBalance) || 0)
+    ? Math.max(0, validation.openingBalanceField.numeric)
     : Math.max(0, projectedPreviousBalance + additionalBorrowingValue);
   const effectiveTotalMortgageTermInMonths = canEditMortgageTerm
-    ? Math.max(1, (Math.max(0, Number(totalTermYears) || 0) * 12) + Math.max(0, Number(totalTermMonths) || 0))
+    ? Math.max(1, (validation.totalTermYearsField.numeric * 12) + validation.totalTermMonthsField.numeric)
     : mortgageTermInMonths;
   const remainingTermInMonths = Math.max(
     effectiveTotalMortgageTermInMonths - monthsBetweenDates(mortgageStartDate, effectiveStartDate),
@@ -130,9 +227,24 @@ export const DealEditorForm = ({
   const remainingTerm = splitMonths(remainingTermInMonths);
   const calculatedMonthlyPayment = calculateDealMonthlyPayment(
     derivedOpeningBalance,
-    Number(interestRate) || 0,
+    validation.interestRateField.numeric,
     remainingTermInMonths,
     repaymentType,
+  );
+
+  const formHasErrors = (
+    Boolean(validation.openingBalanceField.errorKey)
+    || Boolean(validation.additionalBorrowingField.errorKey)
+    || Boolean(validation.interestRateField.errorKey)
+    || Boolean(validation.dealDurationYearsField.errorKey)
+    || Boolean(validation.dealDurationMonthsField.errorKey)
+    || Boolean(validation.totalTermYearsField.errorKey)
+    || Boolean(validation.totalTermMonthsField.errorKey)
+    || Boolean(validation.regularOverpaymentField.errorKey)
+    || Boolean(validation.closingBalanceField.errorKey)
+    || Boolean(validation.feesAddedField.errorKey)
+    || Boolean(validation.dealDurationCombinedError)
+    || Boolean(validation.totalTermCombinedError)
   );
 
   const dealFromState = useMemo<LoanDeal>(() => ({
@@ -142,41 +254,41 @@ export const DealEditorForm = ({
     startDate: effectiveStartDate,
     endDate,
     openingBalance: derivedOpeningBalance,
-    interestRate: Number(interestRate) || 0,
+    interestRate: validation.interestRateField.numeric,
     repaymentType,
     monthlyPayment: calculatedMonthlyPayment,
-    regularOverpayment: Number(regularOverpayment) || 0,
+    regularOverpayment: validation.regularOverpaymentField.numeric,
     additionalBorrowing: isInitialDeal ? undefined : additionalBorrowingValue,
     remainingTermInYears: remainingTerm.years,
     remainingTermInMonths: remainingTerm.months,
     completion: initialDeal.status === 'completed'
       ? {
         completedAt,
-        closingBalance: Number(closingBalance) || 0,
-        feesAdded: Number(feesAdded) || 0,
+        closingBalance: validation.closingBalanceField.numeric,
+        feesAdded: validation.feesAddedField.numeric,
         notes: completionNotes.trim() || undefined,
       }
       : initialDeal.completion,
     updatedAt: new Date().toISOString(),
   }), [
     additionalBorrowingValue,
-    closingBalance,
     completedAt,
     completionNotes,
     derivedOpeningBalance,
     endDate,
     effectiveStartDate,
-    feesAdded,
     initialDeal,
-    interestRate,
     isInitialDeal,
     lender,
     name,
     calculatedMonthlyPayment,
-    regularOverpayment,
     remainingTerm.months,
     remainingTerm.years,
     repaymentType,
+    validation.closingBalanceField.numeric,
+    validation.feesAddedField.numeric,
+    validation.interestRateField.numeric,
+    validation.regularOverpaymentField.numeric,
   ]);
 
   const validate = () => {
@@ -236,7 +348,12 @@ export const DealEditorForm = ({
         <InputSurface>
           <AppTextInput
             value={name}
-            onChangeText={setName}
+            onChangeText={value => {
+              const { years, months } = splitMonths(dealDurationInMonths);
+              const autoName = generateDefaultDealName(years, months, repaymentType);
+              setIsNameCustomized(value !== autoName);
+              setName(value);
+            }}
             placeholder={t('mortgage.dealNamePlaceholder')}
           />
         </InputSurface>
@@ -263,7 +380,7 @@ export const DealEditorForm = ({
       {!isInitialDeal && (
         <View style={styles.fieldGroup}>
           <FieldLabel>{t('mortgage.additionalBorrowing')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(validation.additionalBorrowingField.errorKey) && !validation.additionalBorrowingField.isEmpty}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               keyboardType="decimal-pad"
@@ -272,6 +389,7 @@ export const DealEditorForm = ({
               placeholder="0"
             />
           </InputSurface>
+          <FieldError message={fieldError(validation.additionalBorrowingField)} />
           <FieldHint>{t('mortgage.additionalBorrowingHint')}</FieldHint>
         </View>
       )}
@@ -279,15 +397,18 @@ export const DealEditorForm = ({
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('mortgage.openingBankBalance')}</FieldLabel>
         {isInitialDeal ? (
-          <InputSurface>
-            <InputAffix>{currencySymbol}</InputAffix>
-            <AppTextInput
-              keyboardType="decimal-pad"
-              value={openingBalance}
-              onChangeText={setOpeningBalance}
-              placeholder="238420"
-            />
-          </InputSurface>
+          <>
+            <InputSurface error={Boolean(validation.openingBalanceField.errorKey) && !validation.openingBalanceField.isEmpty}>
+              <InputAffix>{currencySymbol}</InputAffix>
+              <AppTextInput
+                keyboardType="decimal-pad"
+                value={openingBalance}
+                onChangeText={setOpeningBalance}
+                placeholder="238420"
+              />
+            </InputSurface>
+            <FieldError message={fieldError(validation.openingBalanceField)} />
+          </>
         ) : (
           <View style={styles.readonlyPanel}>
             <AppText variant="title2" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
@@ -309,7 +430,7 @@ export const DealEditorForm = ({
     <FormSection title={t('mortgage.rateAndTerm')}>
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
-        <InputSurface>
+        <InputSurface error={Boolean(validation.interestRateField.errorKey) && !validation.interestRateField.isEmpty}>
           <AppTextInput
             keyboardType="decimal-pad"
             value={interestRate}
@@ -318,13 +439,14 @@ export const DealEditorForm = ({
           />
           <InputAffix trailing>%</InputAffix>
         </InputSurface>
+        <FieldError message={fieldError(validation.interestRateField)} />
       </View>
 
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('mortgage.dealDuration')}</FieldLabel>
         <View style={styles.row}>
           <View style={styles.half}>
-            <InputSurface>
+            <InputSurface error={Boolean(validation.dealDurationYearsField.errorKey) && !validation.dealDurationYearsField.isEmpty}>
               <AppTextInput
                 keyboardType="number-pad"
                 value={dealDurationYears}
@@ -335,7 +457,7 @@ export const DealEditorForm = ({
             </InputSurface>
           </View>
           <View style={styles.half}>
-            <InputSurface>
+            <InputSurface error={Boolean(validation.dealDurationMonthsField.errorKey) && !validation.dealDurationMonthsField.isEmpty}>
               <AppTextInput
                 keyboardType="number-pad"
                 value={dealDurationMonths}
@@ -346,6 +468,7 @@ export const DealEditorForm = ({
             </InputSurface>
           </View>
         </View>
+        <FieldError message={validation.dealDurationCombinedError ? t(validation.dealDurationCombinedError) : undefined} />
         <FieldHint>{t('mortgage.dealDurationHint')}</FieldHint>
       </View>
 
@@ -366,7 +489,7 @@ export const DealEditorForm = ({
           <FieldLabel>{t('mortgage.totalMortgageTerm')}</FieldLabel>
           <View style={styles.row}>
             <View style={styles.half}>
-              <InputSurface>
+              <InputSurface error={Boolean(validation.totalTermYearsField.errorKey) && !validation.totalTermYearsField.isEmpty}>
                 <AppTextInput
                   keyboardType="number-pad"
                   value={totalTermYears}
@@ -377,7 +500,7 @@ export const DealEditorForm = ({
               </InputSurface>
             </View>
             <View style={styles.half}>
-              <InputSurface>
+              <InputSurface error={Boolean(validation.totalTermMonthsField.errorKey) && !validation.totalTermMonthsField.isEmpty}>
                 <AppTextInput
                   keyboardType="number-pad"
                   value={totalTermMonths}
@@ -388,6 +511,7 @@ export const DealEditorForm = ({
               </InputSurface>
             </View>
           </View>
+          <FieldError message={validation.totalTermCombinedError ? t(validation.totalTermCombinedError) : undefined} />
           <FieldHint>{t('mortgage.totalMortgageTermHint')}</FieldHint>
         </View>
       )}
@@ -410,7 +534,7 @@ export const DealEditorForm = ({
 
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
-        <InputSurface>
+        <InputSurface error={Boolean(validation.regularOverpaymentField.errorKey) && !validation.regularOverpaymentField.isEmpty}>
           <InputAffix>{currencySymbol}</InputAffix>
           <AppTextInput
             keyboardType="decimal-pad"
@@ -419,6 +543,7 @@ export const DealEditorForm = ({
             placeholder="150"
           />
         </InputSurface>
+        <FieldError message={fieldError(validation.regularOverpaymentField)} />
       </View>
     </FormSection>
   );
@@ -436,7 +561,7 @@ export const DealEditorForm = ({
 
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('mortgage.closingBankBalance')}</FieldLabel>
-        <InputSurface>
+        <InputSurface error={Boolean(validation.closingBalanceField.errorKey) && !validation.closingBalanceField.isEmpty}>
           <InputAffix>{currencySymbol}</InputAffix>
           <AppTextInput
             keyboardType="decimal-pad"
@@ -445,11 +570,12 @@ export const DealEditorForm = ({
             placeholder="210000"
           />
         </InputSurface>
+        <FieldError message={fieldError(validation.closingBalanceField)} />
       </View>
 
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('mortgage.feesAdded')}</FieldLabel>
-        <InputSurface>
+        <InputSurface error={Boolean(validation.feesAddedField.errorKey) && !validation.feesAddedField.isEmpty}>
           <InputAffix>{currencySymbol}</InputAffix>
           <AppTextInput
             keyboardType="decimal-pad"
@@ -458,6 +584,7 @@ export const DealEditorForm = ({
             placeholder="0"
           />
         </InputSurface>
+        <FieldError message={fieldError(validation.feesAddedField)} />
         <FieldHint>{t('mortgage.feesAddedHint')}</FieldHint>
       </View>
 
@@ -512,9 +639,10 @@ export const DealEditorForm = ({
             onPress={() => saveWithStatus('draft')}
             variant="secondary"
             style={styles.action}
+            disabled={formHasErrors}
           />
         ) : null}
-        <Button label={primaryLabel} onPress={handlePrimary} style={styles.action} />
+        <Button label={primaryLabel} onPress={handlePrimary} style={styles.action} disabled={formHasErrors} />
       </View>
       {onDeleteDraft ? (
         <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="ghost" style={styles.deleteAction} />

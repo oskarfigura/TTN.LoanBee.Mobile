@@ -83,7 +83,13 @@ const monthStart = (dateString: string): Date => {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 };
 
-const dateToIso = (date: Date): string => date.toISOString().split('T')[0];
+const dateToIso = (date: Date): string => {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
 
 const monthKey = (dateString: string): string => dateString.slice(0, 7);
 
@@ -250,12 +256,16 @@ const buildProjection = (
 
     if (deal.status === 'completed' && deal.completion) {
       const bankClosingBalance = toMoney(deal.completion.closingBalance);
+      const feesAdded = toMoney(deal.completion.feesAdded ?? 0);
       const dealPoints = points.filter(point => point.dealId === deal.id);
       const lastPoint = dealPoints[dealPoints.length - 1];
 
       if (lastPoint) {
         const principalAdjustment = Math.max(0, lastPoint.closingBalance - bankClosingBalance);
-        const interestAdjustment = Math.max(0, bankClosingBalance - lastPoint.closingBalance);
+        // Fees rolled into the closing balance grow the balance without being paid yet —
+        // they must not be attributed to interest paid.
+        const balanceShortfall = Math.max(0, bankClosingBalance - lastPoint.closingBalance);
+        const interestAdjustment = Math.max(0, balanceShortfall - feesAdded);
 
         lastPoint.principal = toMoney(lastPoint.principal + principalAdjustment);
         lastPoint.interest = toMoney(lastPoint.interest + interestAdjustment);

@@ -207,6 +207,11 @@
     "close": "Zamknij",
     "viewAll": "Zobacz wszystko"
   },
+  "forms": {
+    "required": "Wymagane",
+    "requiredPositive": "Wprowadź wartość większą od zera",
+    "invalidNumber": "Wprowadź prawidłową liczbę"
+  },
   "navigation": {
     "openMenu": "Otwórz menu",
     "links": "Nawigacja"
@@ -276,6 +281,13 @@
     "estimatedInterestPaid": "Szacowane odsetki zapłacone",
     "interestRemaining": "Szacowane pozostałe odsetki",
     "estimatedSavings": "Szacowane oszczędności",
+    "dealInterestSaved": "Zaoszczędzone odsetki",
+    "dealExtraPrincipal": "Dodatkowo spłacony kapitał",
+    "dealOverpaymentsApplied": "Wpłacone nadpłaty",
+    "dealSavedSoFar": "Zaoszczędzono do tej pory",
+    "openingBalanceHintTitle": "Zaktualizować saldo początkowe?",
+    "openingBalanceHintBody": "Jeśli już spłacasz tę hipotekę, dotknij umowy, aby ustawić saldo początkowe potwierdzone przez bank.",
+    "openingBalanceHintCta": "Zaktualizuj saldo początkowe",
     "projectedEnd": "Prognozowany koniec",
     "nextBestActions": "Najważniejsze działania",
     "quickActions": "Szybkie działania",
@@ -425,7 +437,17 @@
     "invalidEventDate": "Wybierz poprawną datę zdarzenia.",
     "invalidEventAmount": "Podaj kwotę nadpłaty większą od zera.",
     "invalidEventBalance": "Podaj saldo potwierdzone przez bank większe od zera.",
-    "overpaymentTooLarge": "Nadpłata nie może przekraczać aktualnie prognozowanego salda."
+    "overpaymentTooLarge": "Nadpłata nie może przekraczać aktualnie prognozowanego salda.",
+    "overpaymentsDuringDeal": "Nadpłaty podczas tej umowy",
+    "addOverpaymentRow": "Dodaj nadpłatę",
+    "overpayments": "Nadpłaty",
+    "totalOverpaid": "Łącznie nadpłacono",
+    "estInterestSaved": "Szac. oszczędzone odsetki",
+    "dealActivity": "Aktywność",
+    "hiddenCompletedDeals": "{{count}} ukończona/e umowa/y nie jest wyświetlana",
+    "dealOpeningBalance": "Otwarcie",
+    "dealClosingBalance": "Zamknięcie",
+    "dealPredictedBalance": "Prognoza"
   },
   "share": {
     "button": "Udostępnij obliczenie",

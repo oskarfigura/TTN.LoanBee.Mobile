@@ -29,6 +29,7 @@ import {
   CURRENT_STATE_PROJECTION_DEAL_ID,
   formatDealDuration,
   getCurrentDeal,
+  getDealOverpaymentImpact,
   getMortgageTrackerSummary,
   getPublishedDeals,
 } from '@/mortgage/tracker';
@@ -190,6 +191,7 @@ export const MortgageDetailView = ({
 
       {activeTab === 'overview' ? (
         <View style={styles.tabPanel}>
+          <OpeningBalanceHint loan={loan} activeDeal={activeDeal} />
           <LoanInsightCard
             summary={overviewSummary}
             density="full"
@@ -221,14 +223,8 @@ export const MortgageDetailView = ({
             onOpenTimeline={() => switchTab('timeline')}
           />
 
-          {trackerSummary.recentEvents.length > 0 ? (
-            <RecentActivity
-              loan={loan}
-              events={trackerSummary.recentEvents}
-              canAddActivity={Boolean(activeDeal)}
-              limit={3}
-              onViewAll={() => switchTab('timeline')}
-            />
+          {activeDeal ? (
+            <DealOverpaymentsCard loan={loan} currentDeal={activeDeal} />
           ) : null}
 
           {activeDeal ? (
@@ -379,6 +375,41 @@ export const MortgageDetailView = ({
   );
 };
 
+const OPENING_BALANCE_HINT_WINDOW_DAYS = 14;
+
+const OpeningBalanceHint = ({
+  loan,
+  activeDeal,
+}: {
+  loan: SavedLoan;
+  activeDeal?: LoanDeal;
+}) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const onlyActiveDeal = loan.deals.length === 1 && activeDeal?.status === 'active';
+  const hasNoActivityYet = loan.events.length === 0;
+  const createdAt = new Date(loan.createdAt).getTime();
+  const ageInDays = Number.isFinite(createdAt)
+    ? (Date.now() - createdAt) / (1000 * 60 * 60 * 24)
+    : Number.POSITIVE_INFINITY;
+  const isFreshlySaved = ageInDays <= OPENING_BALANCE_HINT_WINDOW_DAYS;
+
+  if (!onlyActiveDeal || !hasNoActivityYet || !activeDeal || !isFreshlySaved) return null;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.84}
+      style={styles.openingBalanceHint}
+      onPress={() => router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
+      accessibilityRole="button"
+    >
+      <AppText style={styles.openingBalanceHintTitle}>{t('mortgage.openingBalanceHintTitle')}</AppText>
+      <AppText style={styles.openingBalanceHintBody}>{t('mortgage.openingBalanceHintBody')}</AppText>
+      <AppText style={styles.openingBalanceHintCta}>{t('mortgage.openingBalanceHintCta')} →</AppText>
+    </TouchableOpacity>
+  );
+};
+
 const FullscreenIcon = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
     <Path
@@ -410,9 +441,10 @@ const TimelinePreview = ({
 }) => {
   const { t, i18n } = useTranslation();
   const firstDeal = publishedDeals[0];
+  const completedDealCount = publishedDeals.filter(d => d.status === 'completed').length;
   const items: Array<{
     key: string;
-    marker: 'future' | 'current' | 'past' | 'start';
+    marker: 'future' | 'current' | 'past' | 'start' | 'hidden';
     label: string;
     title: string;
     meta: string;
@@ -424,6 +456,17 @@ const TimelinePreview = ({
       title: formatFriendlyDate(firstDeal?.startDate ?? loan.formSnapshot.startDate, i18n.language),
       meta: formatCurrency(projection.openingBalance, loan.currency),
     },
+  ];
+  if (completedDealCount > 0) {
+    items.push({
+      key: 'hidden-completed',
+      marker: 'hidden',
+      label: t('mortgage.hiddenCompletedDeals', { count: completedDealCount }),
+      title: '',
+      meta: '',
+    });
+  }
+  items.push(
     {
       key: currentDeal ? `current-${currentDeal.id}` : 'current-estimate',
       marker: 'current' as const,
@@ -442,7 +485,7 @@ const TimelinePreview = ({
         : t('results.payoffDate'),
       meta: t('mortgage.includedEstimate'),
     },
-  ];
+  );
   const showTimelineList = items.length > 0;
 
   return (
@@ -467,7 +510,18 @@ const TimelinePreview = ({
       {showTimelineList ? (
         <View style={styles.timelinePreviewList}>
           <View style={styles.timelinePreviewRail} />
-          {items.map(item => (
+          {items.map(item => item.marker === 'hidden' ? (
+            <TouchableOpacity
+              key={item.key}
+              style={styles.hiddenPreviewRow}
+              onPress={onOpenTimeline}
+              activeOpacity={0.84}
+              accessibilityRole="button"
+            >
+              <View style={styles.hiddenPreviewNode} />
+              <Text style={styles.hiddenPreviewLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ) : (
             <TouchableOpacity
               key={item.key}
               style={styles.timelinePreviewRow}
@@ -544,6 +598,10 @@ const MortgageTopCardContext = ({
       : currentDeal
         ? t('mortgage.sourceProjectedFromCurrentDeal')
         : t('mortgage.sourceCurrentStateProjection');
+  const dealImpact = useMemo(
+    () => currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined,
+    [currentDeal, loan.events],
+  );
 
   return (
     <View style={styles.topCardContext}>
@@ -570,10 +628,72 @@ const MortgageTopCardContext = ({
             <Text style={styles.topDealFact} numberOfLines={1}>
               {t('calculator.additionalPayment')}: {formatCurrency(currentDeal.regularOverpayment, loan.currency)}
             </Text>
+            {dealImpact?.hasOverpayments ? (
+              <Text style={styles.topDealSaved} numberOfLines={1}>
+                {t('mortgage.dealSavedSoFar')}: {formatCurrency(dealImpact.interestSaved, loan.currency)}
+              </Text>
+            ) : null}
           </View>
         </View>
       ) : null}
     </View>
+  );
+};
+
+const DealOverpaymentsCard = ({
+  loan,
+  currentDeal,
+}: {
+  loan: SavedLoan;
+  currentDeal: LoanDeal;
+}) => {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+
+  const lumpOverpayments = loan.events
+    .filter(e => e.type === 'lumpOverpayment' && e.dealId === currentDeal.id)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (lumpOverpayments.length === 0) return null;
+
+  const impact = getDealOverpaymentImpact(currentDeal, loan.events);
+  const totalOverpaid = lumpOverpayments.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+
+  return (
+    <Card style={styles.overpaymentCard}>
+      <View style={styles.overpaymentCardHeader}>
+        <Text style={styles.sectionTitle}>{t('mortgage.overpayments')}</Text>
+        <Button
+          label={t('mortgage.addOverpayment')}
+          onPress={() => router.push(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
+          variant="icon-pill"
+          style={styles.addActivityButton}
+        />
+      </View>
+      {lumpOverpayments.map(event => (
+        <TouchableOpacity
+          key={event.id}
+          style={styles.eventRow}
+          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
+          activeOpacity={0.84}
+        >
+          <View style={styles.overpaymentRowLeft}>
+            <Text style={styles.eventTitle}>{formatCurrency(event.amount ?? 0, loan.currency)}</Text>
+          </View>
+          <Text style={styles.eventDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
+        </TouchableOpacity>
+      ))}
+      <View style={styles.overpaymentCardFooter}>
+        <Text style={styles.overpaymentFooterTotal}>
+          {t('mortgage.totalOverpaid')}: {formatCurrency(totalOverpaid, loan.currency)}
+        </Text>
+        {impact.interestSaved > 0 ? (
+          <Text style={styles.overpaymentFooterSaved}>
+            {t('mortgage.estInterestSaved')}: {formatCurrency(impact.interestSaved, loan.currency)}
+          </Text>
+        ) : null}
+      </View>
+    </Card>
   );
 };
 
@@ -911,6 +1031,37 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
   },
+  topDealSaved: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.success,
+  },
+  openingBalanceHint: {
+    borderWidth: 1,
+    borderColor: colours.accent,
+    backgroundColor: colours.surfaceAccent,
+    borderRadius: radii.card,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    gap: spacing.xxs,
+  },
+  openingBalanceHintTitle: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.md,
+    color: colours.primary,
+  },
+  openingBalanceHintBody: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+    lineHeight: 19,
+  },
+  openingBalanceHintCta: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.primary,
+    marginTop: spacing.xs,
+  },
   contextHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1118,6 +1269,25 @@ const styles = StyleSheet.create({
   },
   startPreviewNode: {
     borderColor: colours.border,
+  },
+  hiddenPreviewRow: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingVertical: spacing.xxs,
+  },
+  hiddenPreviewNode: {
+    position: 'absolute',
+    left: -29,
+    top: 11,
+    width: 14,
+    height: 14,
+    borderRadius: radii.full,
+    backgroundColor: colours.border,
+  },
+  hiddenPreviewLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
   },
   timelinePreviewCopy: {
     minWidth: 0,
@@ -1415,5 +1585,36 @@ const styles = StyleSheet.create({
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     color: colours.primary,
+  },
+  overpaymentCard: {
+    marginBottom: 14,
+  },
+  overpaymentCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  overpaymentRowLeft: {
+    flex: 1,
+    minWidth: 0,
+  },
+  overpaymentCardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+    gap: spacing.xxs,
+  },
+  overpaymentFooterTotal: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  overpaymentFooterSaved: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.secondary,
   },
 });

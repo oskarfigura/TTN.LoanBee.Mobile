@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
+import { savedLoansStorage } from '@/storage/savedLoans';
 import { SavedLoan } from '@/types/SavedLoan';
 import { getLoanCalculations } from '@/core/amortisation';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
@@ -26,6 +27,7 @@ import { colours, layout, spacing } from '@/theme';
 import { useStoreReview } from '@/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  buildInitialDeal,
   buildResultSnapshot,
   normaliseFormSnapshot,
 } from '@/loans/loanGroupFactory';
@@ -78,6 +80,15 @@ export default function SaveNewLoanScreen() {
     const now = new Date().toISOString();
     const formSnapshot = normaliseFormSnapshot(formValues, currency);
     const resultSnapshot = buildResultSnapshot(result, baseline.totalInterestPaid);
+    const initialDeal = buildInitialDeal(createLocalId(), {
+      category,
+      lender: lender || undefined,
+      createdAt: now,
+      updatedAt: now,
+      mortgageTermInMonths,
+      formSnapshot,
+      resultSnapshot,
+    });
     const loan: SavedLoan = {
       id: createLocalId(),
       createdAt: now,
@@ -88,8 +99,9 @@ export default function SaveNewLoanScreen() {
       currency,
       mortgageTermInMonths,
       status: 'tracked',
-      pinnedToDashboard: false,
-      deals: [],
+      pinnedToDashboard: true,
+      dashboardOrder: savedLoansStorage.getMaxDashboardOrder() + 1,
+      deals: [initialDeal],
       events: [],
       formSnapshot,
       resultSnapshot,

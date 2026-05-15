@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import {
   ChevronRightIcon as SystemChevronRightIcon,
   EditIcon as SystemEditIcon,
@@ -161,4 +161,40 @@ export const TimelineIcon = ({ color = colours.primary, size = 20 }: IconProps) 
 
 export const ChevronRightIcon = ({ color = colours.primary, size = 16 }: IconProps) => (
   <SystemChevronRightIcon color={color} size={size} strokeWidth={1.8} />
+);
+
+export const TickIcon = ({ color = colours.success, size = 14 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="m5 12.5 4.5 4.5L19 7.5"
+      stroke={color}
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const PencilIcon = ({ color = colours.textSecondary, size = 14 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 20h4.25L18.7 9.55a2.121 2.121 0 0 0-3-3L5.25 17H4v3z"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M14.5 7.75l1.75 1.75"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const LiveDotIcon = ({ color = colours.white, size = 10 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx={12} cy={12} r={6} fill={color} />
+  </Svg>
 );

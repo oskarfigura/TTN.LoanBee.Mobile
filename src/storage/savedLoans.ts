@@ -1,5 +1,6 @@
 import { storage } from './mmkv';
 import { STORAGE_KEYS } from './keys';
+import { generateDefaultDealName } from '@/mortgage/tracker';
 import {
   LegacySavedLoan,
   LoanDeal,
@@ -38,12 +39,16 @@ const buildMigratedDeal = (loan: LegacySavedLoan): LoanDeal => {
   const totalMonths = loan.resultSnapshot.totalTermInMonths
     || (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths
     || 12;
+  const years = Math.floor(totalMonths / 12);
+  const months = totalMonths % 12;
 
   return {
     id: `${loan.id}-deal-1`,
     createdAt: loan.createdAt,
     updatedAt: now,
-    name: loan.category === 'mortgage' ? 'Initial deal' : 'Fixed loan',
+    name: loan.category === 'mortgage'
+      ? generateDefaultDealName(years, months, 'repayment')
+      : 'Fixed loan',
     lender: loan.lender,
     status: 'active',
     startDate: loan.formSnapshot.startDate,
@@ -165,5 +170,9 @@ export const savedLoansStorage = {
   clear(): void {
     storage.remove(STORAGE_KEYS.SAVED_LOANS);
     storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);
+  },
+
+  getMaxDashboardOrder(): number {
+    return loadAll().reduce((max, loan) => Math.max(max, loan.dashboardOrder ?? 0), 0);
   },
 };

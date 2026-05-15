@@ -60,9 +60,7 @@ const addMonths = (date: Date, months: number): Date => (
   new Date(date.getFullYear(), date.getMonth() + months, 1)
 );
 
-const dateToIso = (date: Date): string => date.toISOString().split('T')[0];
-
-const dateToLocalIso = (date: Date): string => {
+const dateToIso = (date: Date): string => {
   const year = String(date.getFullYear()).padStart(4, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -83,19 +81,38 @@ const monthsBetween = (startDate: string, endDate: string): number => {
 const addDaysIso = (dateString: string, days: number): string => {
   const date = parseDate(dateString);
   date.setDate(date.getDate() + days);
-  return dateToLocalIso(date);
+  return dateToIso(date);
 };
 
 const addMonthsIso = (dateString: string, months: number): string => {
   const date = parseDate(dateString);
   date.setMonth(date.getMonth() + months);
-  return dateToLocalIso(date);
+  return dateToIso(date);
 };
 
 const splitMonths = (totalMonths: number) => ({
   years: Math.floor(totalMonths / 12),
   months: totalMonths % 12,
 });
+
+const repaymentTypeLabel = (repaymentType: LoanDeal['repaymentType']): string => (
+  repaymentType === 'interestOnly' ? 'Interest Only' : 'Fixed'
+);
+
+export const generateDefaultDealName = (
+  years: number,
+  months: number,
+  repaymentType: LoanDeal['repaymentType'],
+): string => {
+  const typeLabel = repaymentTypeLabel(repaymentType);
+  const totalMonths = Math.max(0, Math.round(years) * 12 + Math.round(months));
+  if (totalMonths === 0) return `${typeLabel} deal`;
+  const wholeYears = Math.floor(totalMonths / 12);
+  const remainderMonths = totalMonths % 12;
+  if (wholeYears === 0) return `${remainderMonths}-month ${typeLabel}`;
+  if (remainderMonths === 0) return `${wholeYears}-year ${typeLabel}`;
+  return `${wholeYears}y ${remainderMonths}m ${typeLabel}`;
+};
 
 const getOverallTermInMonths = (loan: Pick<LoanGroup, 'mortgageTermInMonths' | 'formSnapshot' | 'resultSnapshot'>): number => (
   loan.mortgageTermInMonths
@@ -275,7 +292,9 @@ export const buildNextDealDraft = (
       id,
       createdAt: now,
       updatedAt: now,
-      name: loan.category === 'mortgage' ? 'Initial deal' : 'Fixed loan',
+      name: loan.category === 'mortgage'
+        ? generateDefaultDealName(years, months, 'repayment')
+        : 'Fixed loan',
       lender: loan.lender,
       status: 'draft',
       startDate,
@@ -297,12 +316,13 @@ export const buildNextDealDraft = (
   const remainingTermMonths = getRemainingMortgageTermInMonths(loan, startDate);
   const { years, months } = splitMonths(remainingTermMonths);
   const defaultDealDurationMonths = Math.max(1, Math.min(60, remainingTermMonths));
+  const { years: defaultDurationYears, months: defaultDurationMonths } = splitMonths(defaultDealDurationMonths);
 
   return {
     id,
     createdAt: now,
     updatedAt: now,
-    name: defaultDealDurationMonths === 60 ? '5-year Fixed' : 'Next deal',
+    name: generateDefaultDealName(defaultDurationYears, defaultDurationMonths, previousDeal.repaymentType),
     lender: previousDeal.lender ?? loan.lender,
     status: 'draft',
     startDate,
@@ -438,6 +458,54 @@ export const projectDeal = (
   };
 };
 
+export interface DealOverpaymentImpact {
+  interestSaved: number;
+  extraPrincipalRepaid: number;
+  totalOverpayments: number;
+  hasOverpayments: boolean;
+}
+
+export const getDealOverpaymentImpact = (
+  deal: LoanDeal,
+  events: MortgageEvent[],
+  asOf = new Date(),
+): DealOverpaymentImpact => {
+  // For completed deals, the completion block in projectDeal overrides interestPaid via
+  // bank-confirmed reconciliation, which breaks like-for-like comparison. Strip the
+  // completion on both runs and clamp duration to the completion date so the impact
+  // comparison reflects scheduled vs overpayment behaviour at the model level.
+  const dealForImpact: LoanDeal = deal.status === 'completed' && deal.completion
+    ? { ...deal, status: 'active', endDate: deal.completion.completedAt, completion: undefined }
+    : deal;
+
+  const actual = projectDeal(dealForImpact, events, asOf, true);
+  const baseline = projectDeal(dealForImpact, events, asOf, false);
+
+  const dealEvents = events.filter(event => event.dealId === deal.id);
+  const lumpOverpaymentTotal = dealEvents
+    .filter(event => event.type === 'lumpOverpayment')
+    .reduce((sum, event) => sum + (event.amount ?? 0), 0);
+  // projectDeal skips regularOverpayment for any month with a missedPayment or
+  // paymentHoliday event, so the regular total must reflect the same exclusion.
+  const skippedMonthKeys = new Set(
+    dealEvents
+      .filter(event => event.type === 'missedPayment' || event.type === 'paymentHoliday')
+      .map(event => event.date.slice(0, 7)),
+  );
+  const effectiveRegularMonths = Math.max(0, actual.monthsProjected - skippedMonthKeys.size);
+  const regularOverpaymentTotal = deal.regularOverpayment > 0
+    ? deal.regularOverpayment * effectiveRegularMonths
+    : 0;
+  const totalOverpayments = toMoney(lumpOverpaymentTotal + regularOverpaymentTotal);
+
+  return {
+    interestSaved: toMoney(Math.max(0, baseline.interestPaid - actual.interestPaid)),
+    extraPrincipalRepaid: toMoney(Math.max(0, baseline.balance - actual.balance)),
+    totalOverpayments,
+    hasOverpayments: totalOverpayments > 0,
+  };
+};
+
 export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGroup => {
   const deals = getChronologicalDeals(loan);
   if (deals.length < 2) return loan;
@@ -558,6 +626,7 @@ export const getMortgageTrackerSummary = (
     : 0;
 
   const totalOriginatedBalance = originalBalance + additionalBorrowingTotal;
+  const publishedDealIds = new Set(publishedDeals.map(deal => deal.id));
 
   return {
     originalBalance: toMoney(originalBalance),
@@ -571,7 +640,8 @@ export const getMortgageTrackerSummary = (
       : 0,
     currentDeal,
     nextDraftDeal: getSingleDraftDeal(loan),
-    recentEvents: [...loan.events]
+    recentEvents: loan.events
+      .filter(event => publishedDealIds.has(event.dealId))
       .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()),
   };
 };

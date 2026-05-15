@@ -1,4 +1,5 @@
 import { CurrencyCode } from '@/currency/currencies';
+import { generateDefaultDealName } from '@/mortgage/tracker';
 import { LoanDeal, LoanFormSnapshot, LoanGroup, LoanResultSnapshot } from '@/types/SavedLoan';
 
 type RawFormValues = {
@@ -95,7 +96,11 @@ export const buildInitialDeal = (
     id,
     createdAt: loan.createdAt,
     updatedAt: loan.updatedAt,
-    name: options.name?.trim() || (loan.category === 'mortgage' ? 'Initial deal' : 'Fixed loan'),
+    name: options.name?.trim() || (
+      loan.category === 'mortgage'
+        ? generateDefaultDealName(years, months, 'repayment')
+        : 'Fixed loan'
+    ),
     lender: loan.lender,
     status: 'active',
     startDate: loan.formSnapshot.startDate,

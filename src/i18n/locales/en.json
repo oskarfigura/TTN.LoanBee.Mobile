@@ -219,6 +219,11 @@
     "close": "Close",
     "viewAll": "View all"
   },
+  "forms": {
+    "required": "Required",
+    "requiredPositive": "Enter a value greater than zero",
+    "invalidNumber": "Enter a valid number"
+  },
   "navigation": {
     "openMenu": "Open menu",
     "links": "Navigation"
@@ -288,6 +293,13 @@
     "estimatedInterestPaid": "Estimated interest paid",
     "interestRemaining": "Estimated interest remaining",
     "estimatedSavings": "Estimated savings",
+    "dealInterestSaved": "Interest saved",
+    "dealExtraPrincipal": "Extra principal repaid",
+    "dealOverpaymentsApplied": "Overpayments applied",
+    "dealSavedSoFar": "Saved so far",
+    "openingBalanceHintTitle": "Update opening balance?",
+    "openingBalanceHintBody": "If you've already been paying this mortgage, tap your deal to set the bank-confirmed opening balance.",
+    "openingBalanceHintCta": "Update opening balance",
     "projectedEnd": "Projected end",
     "nextBestActions": "Next best actions",
     "quickActions": "Quick actions",
@@ -437,7 +449,17 @@
     "invalidEventDate": "Choose a valid event date.",
     "invalidEventAmount": "Enter an overpayment amount greater than zero.",
     "invalidEventBalance": "Enter a bank-confirmed balance greater than zero.",
-    "overpaymentTooLarge": "The overpayment cannot exceed the current projected balance."
+    "overpaymentTooLarge": "The overpayment cannot exceed the current projected balance.",
+    "overpaymentsDuringDeal": "Overpayments during this deal",
+    "addOverpaymentRow": "Add overpayment",
+    "overpayments": "Overpayments",
+    "totalOverpaid": "Total overpaid",
+    "estInterestSaved": "Est. interest saved",
+    "dealActivity": "Activity",
+    "hiddenCompletedDeals": "{{count}} completed deal(s) not shown",
+    "dealOpeningBalance": "Opening",
+    "dealClosingBalance": "Closing",
+    "dealPredictedBalance": "Predicted"
   },
   "share": {
     "button": "Share calculation",

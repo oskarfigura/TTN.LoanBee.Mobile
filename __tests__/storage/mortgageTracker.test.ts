@@ -7,6 +7,8 @@ import {
   canEditInitialDeal,
   CURRENT_STATE_PROJECTION_DEAL_ID,
   formatDealDuration,
+  generateDefaultDealName,
+  getDealOverpaymentImpact,
   getMortgageTermInMonths,
   getMortgageTrackerSummary,
   getNextDealStartDate,
@@ -419,6 +421,35 @@ describe('mortgage tracker', () => {
     expect(updatedLoan).toBe(loan);
     expect(updatedLoan.deals).toHaveLength(1);
     expect(updatedLoan.events).toHaveLength(1);
+  });
+
+  it('generates default deal names from duration and repayment type', () => {
+    expect(generateDefaultDealName(2, 0, 'repayment')).toBe('2-year Fixed');
+    expect(generateDefaultDealName(5, 0, 'repayment')).toBe('5-year Fixed');
+    expect(generateDefaultDealName(2, 0, 'interestOnly')).toBe('2-year Interest Only');
+    expect(generateDefaultDealName(0, 6, 'repayment')).toBe('6-month Fixed');
+    expect(generateDefaultDealName(2, 6, 'interestOnly')).toBe('2y 6m Interest Only');
+    expect(generateDefaultDealName(0, 0, 'repayment')).toBe('Fixed deal');
+    expect(generateDefaultDealName(0, 0, 'interestOnly')).toBe('Interest Only deal');
+  });
+
+  it('uses generateDefaultDealName when seeding the next deal draft', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      repaymentType: 'interestOnly' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 205000,
+        feesAdded: 0,
+      },
+    };
+    const loan = makeMortgage({ deals: [completed] });
+
+    const draft = buildNextDealDraft(loan, 'next', '2031-06-01T00:00:00.000Z');
+
+    expect(draft.name).toBe('5-year Interest Only');
+    expect(draft.repaymentType).toBe('interestOnly');
   });
 
   it('formats deal durations for years, half-years, mixed terms, and months', () => {
@@ -838,6 +869,173 @@ describe('mortgage tracker', () => {
     expect(summary.originalBalance).toBe(240000);
     expect(summary.currentBalance).toBeCloseTo(230000, 0);
     expect(summary.principalPaid).toBeCloseTo(40000, 0);
+  });
+
+  it('reports zero overpayment impact for a deal without overpayments', () => {
+    const loan = makeMortgage({
+      deals: [
+        {
+          ...makeMortgage().deals[0],
+          regularOverpayment: 0,
+        },
+      ],
+    });
+
+    const impact = getDealOverpaymentImpact(loan.deals[0], loan.events, new Date('2027-06-01T00:00:00'));
+
+    expect(impact.hasOverpayments).toBe(false);
+    expect(impact.totalOverpayments).toBe(0);
+    expect(impact.interestSaved).toBe(0);
+    expect(impact.extraPrincipalRepaid).toBe(0);
+  });
+
+  it('reports interest saved and extra principal repaid for an active deal with overpayments', () => {
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'overpay',
+          createdAt: '2026-07-01T00:00:00.000Z',
+          updatedAt: '2026-07-01T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'lumpOverpayment',
+          date: '2026-07-01',
+          amount: 5000,
+        },
+      ],
+    });
+
+    const impact = getDealOverpaymentImpact(loan.deals[0], loan.events, new Date('2027-06-01T00:00:00'));
+
+    expect(impact.hasOverpayments).toBe(true);
+    expect(impact.totalOverpayments).toBeGreaterThan(5000);
+    expect(impact.interestSaved).toBeGreaterThan(0);
+    expect(impact.extraPrincipalRepaid).toBeGreaterThan(0);
+  });
+
+  it('reports interest saved for a completed deal by ignoring the bank-confirmed override on the baseline', () => {
+    const completed = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      startDate: '2026-06-01',
+      endDate: '2031-06-01',
+      regularOverpayment: 150,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 200000,
+        feesAdded: 0,
+      },
+    };
+    const loan = makeMortgage({ deals: [completed] });
+
+    const impact = getDealOverpaymentImpact(completed, loan.events, new Date('2032-01-01T00:00:00'));
+
+    expect(impact.hasOverpayments).toBe(true);
+    // 5y × £150/mo = £9,000 of regular overpayments on a 240k @ 4.2% mortgage. A regression
+    // that produces near-zero savings would silently pass against `> 0`; pin a lower bound.
+    expect(impact.totalOverpayments).toBeCloseTo(9000, 0);
+    expect(impact.extraPrincipalRepaid).toBeGreaterThan(8000);
+    expect(impact.interestSaved).toBeGreaterThan(800);
+  });
+
+  it('excludes regular overpayment months when the user missed payments or had a payment holiday', () => {
+    const baseDeal = makeMortgage().deals[0];
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'missed-1',
+          createdAt: '2026-08-01T00:00:00.000Z',
+          updatedAt: '2026-08-01T00:00:00.000Z',
+          dealId: baseDeal.id,
+          type: 'missedPayment',
+          date: '2026-08-15',
+        },
+        {
+          id: 'holiday-1',
+          createdAt: '2026-09-01T00:00:00.000Z',
+          updatedAt: '2026-09-01T00:00:00.000Z',
+          dealId: baseDeal.id,
+          type: 'paymentHoliday',
+          date: '2026-09-15',
+        },
+      ],
+    });
+
+    // From 2026-06-01 to 2027-06-01 = 12 months, 2 skipped → 10 effective × £150 = £1,500.
+    const impact = getDealOverpaymentImpact(baseDeal, loan.events, new Date('2027-06-01T00:00:00'));
+
+    expect(impact.totalOverpayments).toBeCloseTo(150 * 10, 0);
+  });
+
+  it('omits events tied to draft deals from recent activity', () => {
+    const draft = {
+      ...makeMortgage().deals[0],
+      id: 'draft',
+      status: 'draft' as const,
+      startDate: '2031-07-01',
+      endDate: '2036-07-01',
+    };
+    const loan = makeMortgage({
+      deals: [makeMortgage().deals[0], draft],
+      events: [
+        {
+          id: 'active-note',
+          createdAt: '2026-07-01T00:00:00.000Z',
+          updatedAt: '2026-07-01T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'note',
+          date: '2026-07-01',
+          note: 'On active deal',
+        },
+        {
+          id: 'draft-note',
+          createdAt: '2031-07-15T00:00:00.000Z',
+          updatedAt: '2031-07-15T00:00:00.000Z',
+          dealId: 'draft',
+          type: 'note',
+          date: '2031-07-15',
+          note: 'Stale draft note',
+        },
+      ],
+    });
+
+    const summary = getMortgageTrackerSummary(loan, new Date('2026-08-01T00:00:00'));
+
+    expect(summary.recentEvents.map(event => event.id)).toEqual(['active-note']);
+  });
+
+  it('does not attribute fees added to interest in completed deal projection', () => {
+    const withoutFees = {
+      ...makeMortgage().deals[0],
+      id: 'no-fees',
+      status: 'completed' as const,
+      startDate: '2026-06-01',
+      endDate: '2031-06-01',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 200000,
+        feesAdded: 0,
+      },
+    };
+    const withFees = {
+      ...withoutFees,
+      id: 'with-fees',
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 200995,
+        feesAdded: 995,
+      },
+    };
+
+    const projectionWithoutFees = buildMortgageProjection(
+      makeMortgage({ deals: [withoutFees] }),
+      new Date('2032-01-01T00:00:00'),
+    );
+    const projectionWithFees = buildMortgageProjection(
+      makeMortgage({ deals: [withFees] }),
+      new Date('2032-01-01T00:00:00'),
+    );
+
+    expect(projectionWithFees.totalInterestPaid).toBeCloseTo(projectionWithoutFees.totalInterestPaid, 1);
   });
 
   it('exposes additional borrowing total and corrected principal paid in mortgage projection', () => {

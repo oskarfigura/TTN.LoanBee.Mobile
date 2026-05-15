@@ -24,7 +24,7 @@ import {
   buildSavedLoanDashboardProgress,
   buildSavedLoanSummary,
 } from '@/loans/loanInsightSummary';
-import { getMortgageTrackerSummary } from '@/mortgage/tracker';
+import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, elevation, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
@@ -226,7 +226,7 @@ const LoanDashboardCard = ({
     return {
       progress: buildSavedLoanDashboardProgress(loan, result, asOf),
       summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
-      dealLender: mortgageSummary.currentDeal?.lender ?? loan.deals[0]?.lender ?? loan.lender,
+      dealLender: mortgageSummary.currentDeal?.lender ?? getPublishedDeals(loan)[0]?.lender ?? loan.lender,
     };
   }, [i18n.language, loan]);
 
