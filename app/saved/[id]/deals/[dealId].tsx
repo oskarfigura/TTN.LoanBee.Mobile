@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +10,8 @@ import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { CurrencyCode } from '@/currency/currencies';
+import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import {
   canActivateDeal,
@@ -25,9 +27,230 @@ import {
   withMortgageTermInMonths,
 } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
-import { LoanDeal, MortgageEvent } from '@/types/SavedLoan';
+import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
-import { formatFriendlyDateRange } from '@/utils/date';
+import { formatFriendlyDateRange, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { createLocalId } from '@/utils/id';
+
+type OverpaymentRow = { id: string; date: string; amount: string };
+
+type OverpaymentEntryRowProps = {
+  row: OverpaymentRow;
+  currencySymbol: string;
+  minimumDate?: Date;
+  maximumDate?: Date;
+  onDateChange: (id: string, date: string) => void;
+  onAmountChange: (id: string, amount: string) => void;
+  onRemove: (id: string) => void;
+};
+
+const OverpaymentEntryRow = ({
+  row,
+  currencySymbol,
+  minimumDate,
+  maximumDate,
+  onDateChange,
+  onAmountChange,
+  onRemove,
+}: OverpaymentEntryRowProps) => {
+  const [pickerVisible, setPickerVisible] = useState(false);
+  const pickerValue = parseDateLabelValue(row.date) ?? new Date();
+
+  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS !== 'ios') setPickerVisible(false);
+    if (event.type === 'dismissed' || !selectedDate) return;
+    onDateChange(row.id, formatIsoDate(selectedDate));
+  };
+
+  return (
+    <View style={styles.overpaymentRow}>
+      <View style={styles.overpaymentDateInput}>
+        {Platform.OS === 'ios' ? (
+          <InputSurface style={styles.iosDateSurface}>
+            <DateTimePicker
+              value={pickerValue}
+              mode="date"
+              display="compact"
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              onChange={handleDateChange}
+            />
+          </InputSurface>
+        ) : (
+          <>
+            <TouchableOpacity onPress={() => setPickerVisible(true)} activeOpacity={0.84}>
+              <InputSurface>
+                <AppTextInput
+                  value={row.date}
+                  editable={false}
+                  placeholder="YYYY-MM-DD"
+                  style={styles.dateText}
+                />
+              </InputSurface>
+            </TouchableOpacity>
+            {pickerVisible ? (
+              <DateTimePicker
+                value={pickerValue}
+                mode="date"
+                display="default"
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+                onChange={handleDateChange}
+              />
+            ) : null}
+          </>
+        )}
+      </View>
+      <InputSurface style={styles.overpaymentAmountInput}>
+        <InputAffix>{currencySymbol}</InputAffix>
+        <AppTextInput
+          value={row.amount}
+          onChangeText={amount => onAmountChange(row.id, amount)}
+          keyboardType="decimal-pad"
+          placeholder="5000"
+        />
+      </InputSurface>
+      <TouchableOpacity style={styles.overpaymentRemove} onPress={() => onRemove(row.id)} activeOpacity={0.84}>
+        <AppText style={styles.overpaymentRemoveText}>×</AppText>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const CompletedDealDetailView = ({
+  initialLoan,
+  deal,
+  onDelete,
+}: {
+  initialLoan: SavedLoan;
+  deal: LoanDeal;
+  onDelete?: () => void;
+}) => {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+
+  const [currentLoan, setCurrentLoan] = useState(initialLoan);
+  const [overpayments, setOverpayments] = useState<OverpaymentRow[]>(() =>
+    initialLoan.events
+      .filter(e => e.type === 'lumpOverpayment' && e.dealId === deal.id)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(e => ({ id: createLocalId('op'), date: e.date, amount: String(e.amount ?? '') }))
+  );
+
+  const currencySymbol = CURRENCIES.find(c => c.code === initialLoan.currency)?.symbol ?? '£';
+  const minimumDate = parseDateLabelValue(deal.startDate) ?? undefined;
+  const maximumDate = parseDateLabelValue(deal.completion?.completedAt ?? deal.endDate) ?? undefined;
+
+  const addRow = () =>
+    setOverpayments(prev => [...prev, { id: createLocalId('op'), date: deal.startDate, amount: '' }]);
+
+  const updateRow = (rowId: string, field: keyof Omit<OverpaymentRow, 'id'>, value: string) =>
+    setOverpayments(prev => prev.map(r => r.id === rowId ? { ...r, [field]: value } : r));
+
+  const removeRow = (rowId: string) =>
+    setOverpayments(prev => prev.filter(r => r.id !== rowId));
+
+  const saveOverpayments = () => {
+    const now = new Date().toISOString();
+    const validOps: MortgageEvent[] = overpayments
+      .filter(row => isValidIsoDate(row.date) && Number(row.amount) > 0)
+      .map(row => ({
+        id: createLocalId('ev'),
+        createdAt: now,
+        updatedAt: now,
+        dealId: deal.id,
+        type: 'lumpOverpayment' as const,
+        date: row.date,
+        amount: Number(row.amount),
+      }));
+    const updatedLoan: SavedLoan = {
+      ...currentLoan,
+      events: [
+        ...currentLoan.events.filter(e => !(e.type === 'lumpOverpayment' && e.dealId === deal.id)),
+        ...validOps,
+      ],
+    };
+    savedLoansStorage.update(updatedLoan);
+    setCurrentLoan(updatedLoan);
+  };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <ScreenHeader
+        title={t('mortgage.dealDetails')}
+        subtitle={deal.name}
+        subtitleVariant="context"
+        variant="detail"
+        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+      />
+      <ScrollView contentContainerStyle={styles.container}>
+        <Card style={styles.readOnlyCard}>
+          <AppText variant="labelMd" tone="muted" style={styles.readOnlyKicker}>{t('saved.completed')}</AppText>
+          <AppText variant="title1" tone="accent" style={styles.readOnlyTitle}>{deal.name}</AppText>
+          <AppText variant="bodySm" tone="muted" style={styles.readOnlyMeta}>
+            {formatFriendlyDateRange(deal.startDate, deal.endDate)}
+          </AppText>
+          <View style={styles.readOnlyGrid}>
+            <ReadOnlyMetric label={t('calculator.interestRate')} value={`${deal.interestRate}%`} />
+            <ReadOnlyMetric label={t('mortgage.duration')} value={formatDealDuration(deal, i18n.language)} />
+            <ReadOnlyMetric label={t('results.monthlyPayment')} value={formatCurrency(deal.monthlyPayment, currentLoan.currency)} />
+            <ReadOnlyMetric label={t('mortgage.openingBankBalance')} value={formatCurrency(deal.openingBalance, currentLoan.currency)} />
+            <ReadOnlyMetric
+              label={t('mortgage.closingBankBalance')}
+              value={formatCurrency(deal.completion?.closingBalance ?? 0, currentLoan.currency)}
+            />
+          </View>
+          <CompletedDealSavings deal={deal} events={currentLoan.events} currency={currentLoan.currency} />
+          {deal.completion?.notes ? (
+            <AppText variant="bodySm" style={styles.readOnlyNotes}>{deal.completion.notes}</AppText>
+          ) : null}
+        </Card>
+
+        <View style={styles.overpaymentSection}>
+          <FieldLabel>{t('mortgage.overpaymentsDuringDeal')}</FieldLabel>
+          {overpayments.map(row => (
+            <OverpaymentEntryRow
+              key={row.id}
+              row={row}
+              currencySymbol={currencySymbol}
+              minimumDate={minimumDate}
+              maximumDate={maximumDate}
+              onDateChange={(rowId, date) => updateRow(rowId, 'date', date)}
+              onAmountChange={(rowId, amount) => updateRow(rowId, 'amount', amount)}
+              onRemove={removeRow}
+            />
+          ))}
+          <Button
+            label={t('mortgage.addOverpaymentRow')}
+            onPress={addRow}
+            variant="icon-pill"
+            style={styles.addOverpaymentButton}
+          />
+          <Button
+            label={t('common.save')}
+            onPress={saveOverpayments}
+            style={styles.saveOverpaymentButton}
+          />
+        </View>
+
+        <Button
+          label={t('mortgage.editDeal')}
+          onPress={() => router.replace(`/saved/${initialLoan.id}/deals/${deal.id}?correct=1`)}
+          variant="secondary"
+          style={styles.correctAction}
+        />
+        {onDelete ? (
+          <Button
+            label={t('mortgage.deleteDeal')}
+            onPress={onDelete}
+            variant="destructive"
+            style={styles.correctAction}
+          />
+        ) : null}
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
 
 export default function EditDealScreen() {
   const { t, i18n } = useTranslation();
@@ -133,52 +356,11 @@ export default function EditDealScreen() {
 
   if (deal.status === 'completed' && !isCorrectionMode) {
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
-        <ScreenHeader
-          title={t('mortgage.dealDetails')}
-          subtitle={deal.name}
-          subtitleVariant="context"
-          variant="detail"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
-        />
-        <ScrollView contentContainerStyle={styles.container}>
-          <Card style={styles.readOnlyCard}>
-            <AppText variant="labelMd" tone="muted" style={styles.readOnlyKicker}>{t('saved.completed')}</AppText>
-            <AppText variant="title1" tone="accent" style={styles.readOnlyTitle}>{deal.name}</AppText>
-            <AppText variant="bodySm" tone="muted" style={styles.readOnlyMeta}>
-              {formatFriendlyDateRange(deal.startDate, deal.endDate)}
-            </AppText>
-            <View style={styles.readOnlyGrid}>
-              <ReadOnlyMetric label={t('calculator.interestRate')} value={`${deal.interestRate}%`} />
-              <ReadOnlyMetric label={t('mortgage.duration')} value={formatDealDuration(deal, i18n.language)} />
-              <ReadOnlyMetric label={t('results.monthlyPayment')} value={formatCurrency(deal.monthlyPayment, loan.currency)} />
-              <ReadOnlyMetric label={t('mortgage.openingBankBalance')} value={formatCurrency(deal.openingBalance, loan.currency)} />
-              <ReadOnlyMetric
-                label={t('mortgage.closingBankBalance')}
-                value={formatCurrency(deal.completion?.closingBalance ?? 0, loan.currency)}
-              />
-            </View>
-            <CompletedDealSavings deal={deal} events={loan.events} currency={loan.currency} />
-            {deal.completion?.notes ? (
-              <AppText variant="bodySm" style={styles.readOnlyNotes}>{deal.completion.notes}</AppText>
-            ) : null}
-          </Card>
-          <Button
-            label={t('mortgage.editDeal')}
-            onPress={() => router.replace(`/saved/${loan.id}/deals/${deal.id}?correct=1`)}
-            variant="secondary"
-            style={styles.correctAction}
-          />
-          {canDeleteDeal(loan, deal.id) ? (
-            <Button
-              label={t('mortgage.deleteDeal')}
-              onPress={deleteLatestDeal}
-              variant="destructive"
-              style={styles.correctAction}
-            />
-          ) : null}
-        </ScrollView>
-      </SafeAreaView>
+      <CompletedDealDetailView
+        initialLoan={loan}
+        deal={deal}
+        onDelete={canDeleteDeal(loan, deal.id) ? deleteLatestDeal : undefined}
+      />
     );
   }
 
@@ -273,6 +455,21 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   correctAction: { marginTop: spacing.sm },
+  overpaymentSection: { marginTop: spacing.md },
+  overpaymentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  overpaymentDateInput: { flex: 3 },
+  iosDateSurface: { justifyContent: 'center' },
+  dateText: { color: colours.textPrimary },
+  overpaymentAmountInput: { flex: 2 },
+  overpaymentRemove: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  overpaymentRemoveText: { color: colours.error, fontSize: 22 },
+  addOverpaymentButton: { marginTop: spacing.xs },
+  saveOverpaymentButton: { marginTop: spacing.sm },
 });
 
 const CompletedDealSavings = ({
