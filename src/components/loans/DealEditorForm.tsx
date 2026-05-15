@@ -18,7 +18,7 @@ import {
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
-import { calculateDealMonthlyPayment } from '@/mortgage/tracker';
+import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage/tracker';
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
 import { colours, elevation, radii, spacing } from '@/theme';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
@@ -117,8 +117,14 @@ export const DealEditorForm = ({
     : Math.max(0, initialDeal.openingBalance - initialAdditionalBorrowing);
   const initialTermSplit = splitMonths(Math.max(1, Math.round(mortgageTermInMonths)));
   const initialDealDurationSplit = splitMonths(monthsBetweenDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate));
+  const initialAutoName = generateDefaultDealName(
+    initialDealDurationSplit.years,
+    initialDealDurationSplit.months,
+    initialDeal.repaymentType,
+  );
 
   const [name, setName] = useState(initialDeal.name);
+  const [isNameCustomized, setIsNameCustomized] = useState(() => initialDeal.name !== initialAutoName);
   const [lender, setLender] = useState(initialDeal.lender ?? '');
   const [startDate, setStartDate] = useState(initialDeal.startDate);
   const [endDate, setEndDate] = useState(initialDeal.endDate);
@@ -197,6 +203,15 @@ export const DealEditorForm = ({
     if (next !== endDate) setEndDate(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealDurationInMonths, effectiveStartDate]);
+
+  // Auto-update deal name when duration or repayment type changes, unless user customised it
+  useEffect(() => {
+    if (!isNameCustomized) {
+      const { years, months } = splitMonths(dealDurationInMonths);
+      setName(generateDefaultDealName(years, months, repaymentType));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealDurationInMonths, repaymentType]);
 
   const additionalBorrowingValue = validation.additionalBorrowingField.numeric;
   const derivedOpeningBalance = isInitialDeal
@@ -333,7 +348,12 @@ export const DealEditorForm = ({
         <InputSurface>
           <AppTextInput
             value={name}
-            onChangeText={setName}
+            onChangeText={value => {
+              const { years, months } = splitMonths(dealDurationInMonths);
+              const autoName = generateDefaultDealName(years, months, repaymentType);
+              setIsNameCustomized(value !== autoName);
+              setName(value);
+            }}
             placeholder={t('mortgage.dealNamePlaceholder')}
           />
         </InputSurface>
