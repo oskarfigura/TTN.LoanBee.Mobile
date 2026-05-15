@@ -4,18 +4,17 @@ import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from '
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
-import { LoanSummaryOverview } from '@/components/calculator/LoanSummaryOverview';
+import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
 import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
-import { CoinsStackedIcon, EditIcon as UiEditIcon } from '@/components/ui/Icons';
+import { CoinsStackedIcon, EditIcon as UiEditIcon, PlusCircleIcon, TrashIcon } from '@/components/ui/Icons';
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
-import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -29,6 +28,7 @@ export default function LoanDetailScreen() {
   const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
   const [mortgageMenuVisible, setMortgageMenuVisible] = useState(false);
   const [loanMenuVisible, setLoanMenuVisible] = useState(false);
+  const [loanMoreDrawerVisible, setLoanMoreDrawerVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [renameValue, setRenameValue] = useState(loan?.nickname ?? '');
   const allowSavedBackRef = useRef(false);
@@ -76,6 +76,7 @@ export default function LoanDetailScreen() {
     if (!loan) return;
     setMortgageMenuVisible(false);
     setLoanMenuVisible(false);
+    setLoanMoreDrawerVisible(false);
 
     Alert.alert(
       t('saved.delete'),
@@ -98,6 +99,7 @@ export default function LoanDetailScreen() {
     if (!loan) return;
     setMortgageMenuVisible(false);
     setLoanMenuVisible(false);
+    setLoanMoreDrawerVisible(false);
     setRenameValue(loan.nickname);
     setRenameModalVisible(true);
   }, [loan]);
@@ -139,11 +141,20 @@ export default function LoanDetailScreen() {
 
   const loanQuickActions = (
     <View style={styles.loanQuickActionsCard}>
+      <View style={styles.quickActionsHeader}>
+        <Text style={styles.quickActionsTitle}>{t('loan.quickActions')}</Text>
+        <Text style={styles.quickActionsHelper}>{t('loan.quickActionsHelp')}</Text>
+      </View>
       <View style={styles.loanQuickActionsRow}>
         <QuickActionTile
           label={t('recalculate.ctaButton')}
           icon={<CoinsStackedIcon size={21} color={colours.primary} strokeWidth={1.9} />}
           onPress={() => router.push(`/saved/${id}/recalculate`)}
+        />
+        <QuickActionTile
+          label={t('loan.addLumpSum')}
+          icon={<PlusCircleIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          onPress={() => router.push(`/saved/${id}/lump-sum/new`)}
         />
         <QuickActionTile
           label={t('saved.edit')}
@@ -153,7 +164,7 @@ export default function LoanDetailScreen() {
         <QuickActionTile
           label={t('common.more')}
           icon={<MoreIcon size={21} color={colours.primary} />}
-          onPress={() => setLoanMenuVisible(true)}
+          onPress={() => setLoanMoreDrawerVisible(true)}
         />
       </View>
     </View>
@@ -296,24 +307,14 @@ export default function LoanDetailScreen() {
         ownsScroll
         summaryContent={(
           <>
-            <LoanSummaryOverview
+            <LoanSummaryPanel
+              loan={loan}
               result={result}
-              startDate={loan.formSnapshot.startDate}
-              currency={loan.currency}
-              mode="saved"
-              savedLoan={loan}
-              title={loan.nickname}
-              subtitle={loan.lender || t('saved.category.loan')}
-              headerAction={(
-                <DashboardPinButton
-                  pinned={loan.pinnedToDashboard}
-                  onPress={() => {
-                    savedLoansStorage.togglePinned(loan.id);
-                    refresh();
-                  }}
-                  style={styles.pinButton}
-                />
-              )}
+              onTogglePinned={() => {
+                savedLoansStorage.togglePinned(loan.id);
+                refresh();
+              }}
+              onTryOverpayments={() => router.push(`/saved/${id}/recalculate`)}
             />
             {loanQuickActions}
           </>
@@ -336,6 +337,42 @@ export default function LoanDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <Modal
+        visible={loanMoreDrawerVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLoanMoreDrawerVisible(false)}
+      >
+        <Pressable style={styles.drawerScrim} onPress={() => setLoanMoreDrawerVisible(false)}>
+          <Pressable style={styles.drawer}>
+            <View style={styles.drawerHandle} />
+            <View style={styles.drawerHeader}>
+              <Text style={styles.drawerTitle}>{t('common.more')}</Text>
+              <TouchableOpacity onPress={() => setLoanMoreDrawerVisible(false)} activeOpacity={0.84}>
+                <Text style={styles.drawerCloseText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.drawerOptionRow} onPress={openRenameModal} activeOpacity={0.84}>
+              <View style={styles.drawerOptionIcon}>
+                <UiEditIcon size={20} color={colours.primary} strokeWidth={1.9} />
+              </View>
+              <View style={styles.drawerOptionCopy}>
+                <Text style={styles.drawerOptionTitle}>{t('loan.renameLoan')}</Text>
+                <Text style={styles.drawerOptionDescription}>{t('loan.renameLoanHelp')}</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.drawerOptionRow} onPress={handleDelete} activeOpacity={0.84}>
+              <View style={[styles.drawerOptionIcon, styles.drawerOptionIconDanger]}>
+                <TrashIcon size={20} color={colours.error} strokeWidth={1.9} />
+              </View>
+              <View style={styles.drawerOptionCopy}>
+                <Text style={[styles.drawerOptionTitle, styles.drawerOptionTitleDanger]}>{t('loan.deleteLoan')}</Text>
+                <Text style={[styles.drawerOptionDescription, styles.drawerOptionTitleDanger]}>{t('loan.deleteLoanHelp')}</Text>
+              </View>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -344,10 +381,6 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { ...fontFaces.heading.semibold, fontSize: fontSizes.md, color: colours.textPrimary, marginBottom: 16 },
-  pinButton: {
-    marginBottom: 0,
-    marginTop: 4,
-  },
   loanQuickActionsCard: {
     backgroundColor: colours.surfaceMuted,
     borderWidth: 1,
@@ -356,6 +389,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    gap: spacing.sm,
+  },
+  quickActionsHeader: {
+    gap: spacing.xxxs,
+  },
+  quickActionsTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  quickActionsHelper: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
   },
   loanQuickActionsRow: {
     flexDirection: 'row',
@@ -420,5 +468,84 @@ const styles = StyleSheet.create({
   },
   renameAction: {
     flex: 1,
+  },
+  drawerScrim: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: colours.modalScrim,
+  },
+  drawer: {
+    maxHeight: '84%',
+    borderTopLeftRadius: radii.card,
+    borderTopRightRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+  },
+  drawerHandle: {
+    alignSelf: 'center',
+    width: 44,
+    height: 4,
+    borderRadius: radii.full,
+    backgroundColor: colours.borderSoft,
+    marginBottom: spacing.md,
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  drawerTitle: {
+    ...fontFaces.heading.bold,
+    fontSize: fontSizes.lg,
+    color: colours.primary,
+  },
+  drawerCloseText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.primary,
+  },
+  drawerOptionRow: {
+    minHeight: 72,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    paddingVertical: spacing.sm,
+  },
+  drawerOptionIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceAccent,
+    marginRight: spacing.sm,
+    flexShrink: 0,
+  },
+  drawerOptionIconDanger: {
+    backgroundColor: colours.errorSurface,
+  },
+  drawerOptionCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xxs,
+  },
+  drawerOptionTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  drawerOptionTitleDanger: {
+    color: colours.error,
+  },
+  drawerOptionDescription: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
   },
 });

@@ -8,6 +8,7 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { formatCurrency } from '@/currency/format';
 import { buildResultSnapshot } from '@/loans/loanGroupFactory';
+import { computeLoanWithEvents } from '@/loans/loanScenario';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
@@ -17,8 +18,6 @@ import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrim
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { DatePickerField } from '@/components/ui/DatePickerField';
-import { formatIsoDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
 
 const formatDuration = (totalMonths: number, yrsLabel: string, moLabel: string): string => {
   const years = Math.floor(Math.abs(totalMonths) / 12);
@@ -28,83 +27,6 @@ const formatDuration = (totalMonths: number, yrsLabel: string, moLabel: string):
   return `${years} ${yrsLabel} ${months} ${moLabel}`;
 };
 
-const oneYearFromNow = (): string => {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() + 1);
-  return formatIsoDate(d);
-};
-
-type ScenarioTotals = {
-  totalInterestPaid: number;
-  totalTermInMonths: number;
-  monthlyPayments: number;
-};
-
-const computeScenario = (
-  loanAmount: number,
-  interest: number,
-  termInYears: number,
-  termInMonths: number,
-  desiredMonthlyPayment: number,
-  calcType: LoanCalculationType,
-  downPayment: number,
-  dpType: DownPaymentType,
-  startDate: string,
-  monthlyOverpayment: number,
-  lumpSum: number,
-  lumpSumDate: string,
-): ScenarioTotals => {
-  const withOverpayment = getLoanCalculations(
-    loanAmount, interest, termInYears, termInMonths,
-    desiredMonthlyPayment, calcType, downPayment, dpType,
-    monthlyOverpayment, startDate,
-  );
-
-  if (lumpSum <= 0) {
-    return {
-      totalInterestPaid: withOverpayment.totalInterestPaid,
-      totalTermInMonths: withOverpayment.tableItems.length,
-      monthlyPayments: withOverpayment.monthlyPayments,
-    };
-  }
-
-  const lumpSumMonthIndex = monthsBetween(startDate, parseDateLabelValue(lumpSumDate) ?? new Date());
-  if (lumpSumMonthIndex <= 0 || lumpSumMonthIndex >= withOverpayment.tableItems.length) {
-    return {
-      totalInterestPaid: withOverpayment.totalInterestPaid,
-      totalTermInMonths: withOverpayment.tableItems.length,
-      monthlyPayments: withOverpayment.monthlyPayments,
-    };
-  }
-
-  const phase1Interest = withOverpayment.tableItems
-    .slice(0, lumpSumMonthIndex)
-    .reduce((sum, row) => sum + parseFloat(row.interest), 0);
-
-  const balanceAtLumpSum = parseFloat(withOverpayment.tableItems[lumpSumMonthIndex - 1].ending);
-  const newBalance = Math.max(0, balanceAtLumpSum - lumpSum);
-
-  if (newBalance <= 0) {
-    return {
-      totalInterestPaid: phase1Interest,
-      totalTermInMonths: lumpSumMonthIndex,
-      monthlyPayments: withOverpayment.monthlyPayments,
-    };
-  }
-
-  const phase2 = getLoanCalculations(
-    newBalance, interest, 0, 0,
-    withOverpayment.monthlyPayments, 'payment', 0, 'percent',
-    0, lumpSumDate,
-  );
-
-  return {
-    totalInterestPaid: phase1Interest + phase2.totalInterestPaid,
-    totalTermInMonths: lumpSumMonthIndex + phase2.tableItems.length,
-    monthlyPayments: withOverpayment.monthlyPayments,
-  };
-};
-
 export default function RecalculateScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -112,21 +34,11 @@ export default function RecalculateScreen() {
   const loan = savedLoansStorage.getById(id);
 
   const savedOverpayment = loan?.formSnapshot.additionalMonthlyPayment ?? 0;
-  const savedLumpSum = loan?.formSnapshot.lumpSumAmount ?? 0;
-  const savedLumpSumDate = loan?.formSnapshot.lumpSumDate ?? null;
   const [overpayment, setOverpayment] = useState(
     savedOverpayment > 0 ? String(savedOverpayment) : '',
   );
-  const [lumpSum, setLumpSum] = useState(
-    savedLumpSum > 0 ? String(savedLumpSum) : '',
-  );
-  const [lumpSumDate, setLumpSumDate] = useState(
-    savedLumpSumDate ?? oneYearFromNow(),
-  );
 
   const overpaymentAmount = parseFloat(overpayment) || 0;
-  const lumpSumAmount = parseFloat(lumpSum) || 0;
-  const showLumpSumDate = lumpSumAmount > 0;
 
   const { baselineTotals, scenarioTotals } = useMemo(() => {
     if (!loan) return { baselineTotals: null, scenarioTotals: null };
@@ -140,21 +52,17 @@ export default function RecalculateScreen() {
       0, form.startDate,
     );
 
-    const scenario = computeScenario(
-      form.loanAmount, form.interest, form.termInYears, form.termInMonths,
-      form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
-      form.startDate, overpaymentAmount, lumpSumAmount, lumpSumDate,
-    );
+    const scenario = computeLoanWithEvents(loan, overpaymentAmount);
 
     return {
       baselineTotals: {
         totalInterestPaid: baseline.totalInterestPaid,
         totalTermInMonths: baseline.tableItems.length,
         monthlyPayments: baseline.monthlyPayments,
-      } as ScenarioTotals,
+      },
       scenarioTotals: scenario,
     };
-  }, [loan, overpaymentAmount, lumpSumAmount, lumpSumDate]);
+  }, [loan, overpaymentAmount]);
 
   if (!loan || !baselineTotals || !scenarioTotals) {
     return (
@@ -174,31 +82,33 @@ export default function RecalculateScreen() {
 
   const interestSaved = baselineTotals.totalInterestPaid - scenarioTotals.totalInterestPaid;
   const monthsSaved = baselineTotals.totalTermInMonths - scenarioTotals.totalTermInMonths;
-  const hasImpact = overpaymentAmount > 0 || lumpSumAmount > 0;
-  const isUnchanged = (
-    overpaymentAmount === savedOverpayment
-    && lumpSumAmount === savedLumpSum
-    && (lumpSumAmount === 0 || lumpSumDate === (savedLumpSumDate ?? lumpSumDate))
-  );
+  const hasImpact = overpaymentAmount > 0;
+  const isUnchanged = overpaymentAmount === savedOverpayment;
 
   const handleSave = () => {
     const form = loan.formSnapshot;
     const calcType = form.calculationType.toLowerCase() as LoanCalculationType;
     const dpType = form.downPaymentType.toLowerCase() as DownPaymentType;
-    const scenarioForSave = getLoanCalculations(
+    const baseResult = getLoanCalculations(
       form.loanAmount, form.interest, form.termInYears, form.termInMonths,
       form.desiredMonthlyPayment ?? 0, calcType, form.downPayment, dpType,
       overpaymentAmount, form.startDate,
     );
-    savedLoansStorage.update({
+    const updatedLoan = {
       ...loan,
       formSnapshot: {
         ...form,
         additionalMonthlyPayment: overpaymentAmount,
-        lumpSumAmount: lumpSumAmount > 0 ? lumpSumAmount : null,
-        lumpSumDate: lumpSumAmount > 0 ? lumpSumDate : null,
       },
-      resultSnapshot: buildResultSnapshot(scenarioForSave, loan.resultSnapshot.totalInterestPaidBaseline),
+    };
+    const scenario = computeLoanWithEvents(updatedLoan);
+    savedLoansStorage.update({
+      ...updatedLoan,
+      resultSnapshot: {
+        ...buildResultSnapshot(baseResult, loan.resultSnapshot.totalInterestPaidBaseline),
+        totalInterestPaid: scenario.totalInterestPaid,
+        totalTermInMonths: scenario.totalTermInMonths,
+      },
       updatedAt: new Date().toISOString(),
     });
     router.back();
@@ -206,14 +116,6 @@ export default function RecalculateScreen() {
 
   const yrs = t('results.years');
   const mo = t('results.months');
-  const loanStartDate = parseDateLabelValue(loan.formSnapshot.startDate) ?? new Date();
-  const today = new Date();
-  const lumpSumMinDate = loanStartDate > today ? loanStartDate : today;
-  const lumpSumMaxDate = (() => {
-    const d = new Date(loanStartDate);
-    d.setMonth(d.getMonth() + baselineTotals.totalTermInMonths - 1);
-    return d;
-  })();
   const termLabel = formatDuration(
     (loan.formSnapshot.termInYears * 12) + loan.formSnapshot.termInMonths,
     yrs, mo,
@@ -262,33 +164,6 @@ export default function RecalculateScreen() {
               />
             </InputSurface>
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <AppText variant="title3" style={styles.sectionTitle}>{t('recalculate.lumpSumSection')}</AppText>
-          <View style={styles.field}>
-            <FieldLabel>{t('recalculate.lumpSumLabel')}</FieldLabel>
-            <InputSurface>
-              <AppTextInput
-                value={lumpSum}
-                onChangeText={setLumpSum}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-              />
-            </InputSurface>
-          </View>
-          {showLumpSumDate ? (
-            <View style={styles.field}>
-              <DatePickerField
-                label={t('recalculate.lumpSumDateLabel')}
-                value={lumpSumDate}
-                onChange={setLumpSumDate}
-                hint={t('recalculate.lumpSumDateHint')}
-                minimumDate={lumpSumMinDate}
-                maximumDate={lumpSumMaxDate}
-              />
-            </View>
-          ) : null}
         </View>
 
         {hasImpact ? (
