@@ -615,7 +615,7 @@ export const removeLaterDealsAndEvents = (
   return {
     ...loan,
     deals: loan.deals.filter(deal => !laterDealIds.has(deal.id)),
-    events: loan.events.filter(event => !laterDealIds.has(event.dealId)),
+    events: loan.events.filter(event => !laterDealIds.has(event.dealId ?? '')),
   };
 };
 
@@ -669,7 +669,7 @@ export const getMortgageTrackerSummary = (
     currentDeal,
     nextDraftDeal: getSingleDraftDeal(loan),
     recentEvents: loan.events
-      .filter(event => publishedDealIds.has(event.dealId))
+      .filter(event => event.dealId != null && publishedDealIds.has(event.dealId))
       .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()),
   };
 };

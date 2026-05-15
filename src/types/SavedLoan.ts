@@ -21,8 +21,6 @@ export interface LoanFormSnapshot {
   downPaymentType: 'CASH' | 'PERCENT';
   desiredMonthlyPayment: number | null;
   additionalMonthlyPayment: number | null;
-  lumpSumAmount?: number | null;
-  lumpSumDate?: string | null;
   startDate: string;
   calculationType: 'TERM' | 'PAYMENT';
   currency: CurrencyCode;
@@ -70,7 +68,7 @@ export interface MortgageEvent {
   id: string;
   createdAt: string;
   updatedAt: string;
-  dealId: string;
+  dealId?: string;
   type: MortgageEventType;
   date: string;
   amount?: number;

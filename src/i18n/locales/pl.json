@@ -226,7 +226,16 @@
     "loanActions": "Akcje kredytu",
     "renameLoan": "Zmień nazwę kredytu",
     "renameLoanHelp": "To zmienia tylko nazwę widoczną w LoanBee. Dane kalkulacji i waluta pozostają bez zmian.",
-    "deleteLoan": "Usuń kredyt"
+    "deleteLoan": "Usuń kredyt",
+    "deleteLoanHelp": "Trwale usuń tę pożyczkę z zapisanych",
+    "loanDetails": "Szczegóły pożyczki",
+    "quickActions": "Szybkie akcje",
+    "quickActionsHelp": "Zarządzaj swoją pożyczką",
+    "addLumpSum": "Dodaj spłatę jednorazową",
+    "addLumpSumHelp": "Dokonaj jednorazowej wpłaty, aby zmniejszyć saldo",
+    "overpaymentSavings": "Oszczędności z nadpłat",
+    "nudgeTitle": "Czy możesz spłacić szybciej?",
+    "nudgeBody": "Podaj nadpłatę miesięczną lub jednorazową, aby sprawdzić ile odsetek możesz zaoszczędzić."
   },
   "mortgage": {
     "summaryTitle": "Podsumowanie Hipoteki",
@@ -494,7 +503,7 @@
     "interestSaved": "Oszczędzone odsetki",
     "timeSaved": "Zaoszczędzony czas",
     "newMonthlyTotal": "Łączna miesięczna płatność",
-    "noImpactMessage": "Wpisz nadpłatę miesięczną lub jednorazową, aby zobaczyć efekt.",
+    "noImpactMessage": "Wpisz nadpłatę miesięczną, aby zobaczyć efekt.",
     "saveToLoan": "Zapisz nadpłatę miesięczną do pożyczki",
     "ctaButton": "Wypróbuj nadpłaty"
   },

@@ -238,7 +238,16 @@
     "loanActions": "Loan actions",
     "renameLoan": "Rename loan",
     "renameLoanHelp": "This only changes the name shown in LoanBee. Calculation figures and currency stay unchanged.",
-    "deleteLoan": "Delete loan"
+    "deleteLoan": "Delete loan",
+    "deleteLoanHelp": "Permanently remove this loan from your saved loans",
+    "loanDetails": "Loan details",
+    "quickActions": "Quick actions",
+    "quickActionsHelp": "Manage your loan",
+    "addLumpSum": "Add lump sum",
+    "addLumpSumHelp": "Make a one-off payment to reduce your balance",
+    "overpaymentSavings": "Overpayment savings",
+    "nudgeTitle": "Could you pay it off sooner?",
+    "nudgeBody": "Enter a monthly overpayment or a one-off lump sum to see how much interest you could save."
   },
   "mortgage": {
     "summaryTitle": "Mortgage Summary",
@@ -506,7 +515,7 @@
     "interestSaved": "Interest saved",
     "timeSaved": "Time saved",
     "newMonthlyTotal": "Total monthly outgoing",
-    "noImpactMessage": "Enter a monthly overpayment or a one-off lump sum to see the impact.",
+    "noImpactMessage": "Enter a monthly overpayment to see the impact.",
     "saveToLoan": "Save monthly overpayment to loan",
     "ctaButton": "Try Overpayments"
   },
