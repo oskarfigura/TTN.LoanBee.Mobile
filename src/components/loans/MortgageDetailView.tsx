@@ -227,23 +227,6 @@ export const MortgageDetailView = ({
             <DealOverpaymentsCard loan={loan} currentDeal={activeDeal} />
           ) : null}
 
-          {(() => {
-            const currentDealEvents = activeDeal
-              ? [...loan.events]
-                  .filter(e => e.dealId === activeDeal.id)
-                  .sort((a, b) => b.date.localeCompare(a.date))
-              : trackerSummary.recentEvents;
-            return currentDealEvents.length > 0 ? (
-              <RecentActivity
-                loan={loan}
-                events={currentDealEvents}
-                canAddActivity={Boolean(activeDeal)}
-                limit={3}
-                onViewAll={() => switchTab('timeline')}
-              />
-            ) : null;
-          })()}
-
           {activeDeal ? (
             <Button
               label={t('mortgage.quickActions')}

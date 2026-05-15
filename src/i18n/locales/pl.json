@@ -438,7 +438,8 @@
     "addOverpaymentRow": "Dodaj nadpłatę",
     "overpayments": "Nadpłaty",
     "totalOverpaid": "Łącznie nadpłacono",
-    "estInterestSaved": "Szac. oszczędzone odsetki"
+    "estInterestSaved": "Szac. oszczędzone odsetki",
+    "dealActivity": "Aktywność"
   },
   "share": {
     "button": "Udostępnij obliczenie",

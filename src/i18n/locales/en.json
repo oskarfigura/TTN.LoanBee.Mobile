@@ -450,7 +450,8 @@
     "addOverpaymentRow": "Add overpayment",
     "overpayments": "Overpayments",
     "totalOverpaid": "Total overpaid",
-    "estInterestSaved": "Est. interest saved"
+    "estInterestSaved": "Est. interest saved",
+    "dealActivity": "Activity"
   },
   "share": {
     "button": "Share calculation",
