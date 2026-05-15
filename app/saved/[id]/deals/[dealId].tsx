@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
@@ -283,25 +284,18 @@ export default function EditDealScreen() {
   const dealForEditor: LoanDeal = isEstimateBackedDeal(loan, deal)
     ? { ...deal, source: 'estimate' }
     : deal;
+  const [deleteDialogMode, setDeleteDialogMode] = useState<'deal' | 'draft' | null>(null);
 
   const deleteLatestDeal = () => {
     if (!canDeleteDeal(loan, deal.id)) return;
+    setDeleteDialogMode('deal');
+  };
 
-    Alert.alert(
-      t('mortgage.deleteDealTitle'),
-      t('mortgage.deleteDealMessage', { name: deal.name }),
-      [
-        { text: t('results.cancelLeave'), style: 'cancel' },
-        {
-          text: t('mortgage.deleteDeal'),
-          style: 'destructive',
-          onPress: () => {
-            savedLoansStorage.update(removeLatestDealAndEvents(loan, deal.id));
-            router.back();
-          },
-        },
-      ],
-    );
+  const confirmDelete = () => {
+    if (!deleteDialogMode) return;
+    setDeleteDialogMode(null);
+    savedLoansStorage.update(removeLatestDealAndEvents(loan, deal.id));
+    router.back();
   };
 
   const saveDeal = (updatedDeal: LoanDeal, updatedMortgageTermInMonths?: number) => {
@@ -371,6 +365,15 @@ export default function EditDealScreen() {
         variant="editor"
         leftAction={<HeaderBackAction onPress={() => router.back()} />}
       />
+      <DestructiveConfirmDialog
+        visible={deleteDialogMode !== null}
+        title={deleteDialogMode === 'draft' ? t('mortgage.deleteDraftTitle') : t('mortgage.deleteDealTitle')}
+        message={deleteDialogMode === 'draft' ? t('mortgage.deleteDraftMessage') : t('mortgage.deleteDealMessage', { name: deal.name })}
+        confirmLabel={deleteDialogMode === 'draft' ? t('mortgage.deleteDraft') : t('mortgage.deleteDeal')}
+        cancelLabel={t('results.cancelLeave')}
+        onCancel={() => setDeleteDialogMode(null)}
+        onConfirm={confirmDelete}
+      />
       <DealEditorForm
         currency={loan.currency}
         initialDeal={dealForEditor}
@@ -383,23 +386,7 @@ export default function EditDealScreen() {
         showSectionTabs={!isCorrectionMode}
         onCancel={() => router.back()}
         onSave={saveDeal}
-        onDeleteDraft={deal.status === 'draft' && canDeleteDeal(loan, deal.id) ? () => {
-          Alert.alert(
-            t('mortgage.deleteDraftTitle'),
-            t('mortgage.deleteDraftMessage'),
-            [
-              { text: t('results.cancelLeave'), style: 'cancel' },
-              {
-                text: t('mortgage.deleteDraft'),
-                style: 'destructive',
-                onPress: () => {
-                  savedLoansStorage.update(removeLatestDealAndEvents(loan, deal.id));
-                  router.back();
-                },
-              },
-            ],
-          );
-        } : undefined}
+        onDeleteDraft={deal.status === 'draft' && canDeleteDeal(loan, deal.id) ? () => setDeleteDialogMode('draft') : undefined}
       />
     </SafeAreaView>
   );

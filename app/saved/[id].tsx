@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Modal, Pressable, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { Modal, Pressable, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -8,6 +8,7 @@ import { LoanSummaryOverview } from '@/components/calculator/LoanSummaryOverview
 import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
+import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { CoinsStackedIcon, EditIcon as UiEditIcon } from '@/components/ui/Icons';
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
@@ -30,6 +31,7 @@ export default function LoanDetailScreen() {
   const [mortgageMenuVisible, setMortgageMenuVisible] = useState(false);
   const [loanMenuVisible, setLoanMenuVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [renameValue, setRenameValue] = useState(loan?.nickname ?? '');
   const allowSavedBackRef = useRef(false);
 
@@ -76,23 +78,15 @@ export default function LoanDetailScreen() {
     if (!loan) return;
     setMortgageMenuVisible(false);
     setLoanMenuVisible(false);
+    setDeleteDialogVisible(true);
+  }, [loan]);
 
-    Alert.alert(
-      t('saved.delete'),
-      loan.nickname,
-      [
-        { text: t('save.cancel'), style: 'cancel' },
-        {
-          text: t('saved.delete'),
-          style: 'destructive',
-          onPress: () => {
-            savedLoansStorage.remove(loan.id);
-            router.replace('/saved');
-          },
-        },
-      ],
-    );
-  }, [loan, router, t]);
+  const confirmDelete = useCallback(() => {
+    if (!loan) return;
+    setDeleteDialogVisible(false);
+    savedLoansStorage.remove(loan.id);
+    router.replace('/saved');
+  }, [loan, router]);
 
   const openRenameModal = useCallback(() => {
     if (!loan) return;
@@ -159,6 +153,51 @@ export default function LoanDetailScreen() {
     </View>
   );
 
+  const renameModal = (
+    <Modal
+      visible={renameModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setRenameModalVisible(false)}
+    >
+      <Pressable style={styles.modalScrim} onPress={() => setRenameModalVisible(false)}>
+        <Pressable style={styles.renameDialog}>
+          <AppText variant="title2">
+            {loan.category === 'mortgage' ? t('mortgage.renameMortgage') : t('loan.renameLoan')}
+          </AppText>
+          <AppText variant="bodySm" tone="muted" style={styles.renameHelp}>
+            {loan.category === 'mortgage' ? t('mortgage.renameMortgageHelp') : t('loan.renameLoanHelp')}
+          </AppText>
+          <View style={styles.renameField}>
+            <FieldLabel>{t('save.nickname')}</FieldLabel>
+            <InputSurface>
+              <AppTextInput
+                value={renameValue}
+                onChangeText={setRenameValue}
+                placeholder={t('save.nicknamePlaceholder')}
+                autoFocus
+              />
+            </InputSurface>
+          </View>
+          <View style={styles.renameActions}>
+            <Button
+              label={t('save.cancel')}
+              onPress={() => setRenameModalVisible(false)}
+              variant="ghost"
+              style={styles.renameAction}
+            />
+            <Button
+              label={t('edit.save')}
+              onPress={handleRename}
+              disabled={!renameValue.trim()}
+              style={styles.renameAction}
+            />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
   if (loan.category === 'mortgage') {
     const mortgageHeaderMenu = (
       <HeaderIconButton
@@ -186,6 +225,15 @@ export default function LoanDetailScreen() {
             refresh();
           }}
           onLoanUpdated={refresh}
+        />
+        <DestructiveConfirmDialog
+          visible={deleteDialogVisible}
+          title={t('mortgage.deleteMortgage')}
+          message={loan.nickname}
+          confirmLabel={t('mortgage.deleteMortgage')}
+          cancelLabel={t('save.cancel')}
+          onCancel={() => setDeleteDialogVisible(false)}
+          onConfirm={confirmDelete}
         />
         <Modal
           visible={mortgageMenuVisible}
@@ -222,48 +270,7 @@ export default function LoanDetailScreen() {
               </Pressable>
             </Pressable>
         </Modal>
-        <Modal
-          visible={renameModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setRenameModalVisible(false)}
-        >
-          <Pressable style={styles.modalScrim} onPress={() => setRenameModalVisible(false)}>
-            <Pressable style={styles.renameDialog}>
-              <AppText variant="title2">
-                {loan.category === 'mortgage' ? t('mortgage.renameMortgage') : t('loan.renameLoan')}
-              </AppText>
-              <AppText variant="bodySm" tone="muted" style={styles.renameHelp}>
-                {loan.category === 'mortgage' ? t('mortgage.renameMortgageHelp') : t('loan.renameLoanHelp')}
-              </AppText>
-              <View style={styles.renameField}>
-                <FieldLabel>{t('save.nickname')}</FieldLabel>
-                <InputSurface>
-                  <AppTextInput
-                    value={renameValue}
-                    onChangeText={setRenameValue}
-                    placeholder={t('save.nicknamePlaceholder')}
-                    autoFocus
-                  />
-                </InputSurface>
-              </View>
-              <View style={styles.renameActions}>
-                <Button
-                  label={t('save.cancel')}
-                  onPress={() => setRenameModalVisible(false)}
-                  variant="ghost"
-                  style={styles.renameAction}
-                />
-                <Button
-                  label={t('edit.save')}
-                  onPress={handleRename}
-                  disabled={!renameValue.trim()}
-                  style={styles.renameAction}
-                />
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
+        {renameModal}
       </SafeAreaView>
     );
   }
@@ -319,6 +326,15 @@ export default function LoanDetailScreen() {
           </>
         )}
       />
+      <DestructiveConfirmDialog
+        visible={deleteDialogVisible}
+        title={t('loan.deleteLoan')}
+        message={loan.nickname}
+        confirmLabel={t('loan.deleteLoan')}
+        cancelLabel={t('save.cancel')}
+        onCancel={() => setDeleteDialogVisible(false)}
+        onConfirm={confirmDelete}
+      />
       <Modal
         visible={loanMenuVisible}
         transparent
@@ -336,6 +352,7 @@ export default function LoanDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {renameModal}
     </SafeAreaView>
   );
 }
