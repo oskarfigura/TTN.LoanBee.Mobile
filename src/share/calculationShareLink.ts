@@ -1,7 +1,7 @@
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { calculateMinPayment } from '@/core/amortisation';
 import { CurrencyCode, CURRENCIES } from '@/currency/currencies';
+import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
 
 const WEB_CALCULATOR_URL = 'https://www.loanamortisationcalculator.com/';
 
@@ -127,11 +127,18 @@ export const normalizeShareableCalculationValues = (
     : LIMITS.downPaymentPercent;
   const safeDownPayment = Math.min(Math.max(downPayment, downPaymentLimit.min), downPaymentLimit.max);
   const finalDownPayment = safeDownPaymentType === DownPaymentType.CASH && safeDownPayment > safeLoanAmount ? 0 : safeDownPayment;
-  const effectiveLoanAmount = safeLoanAmount - (
-    safeDownPaymentType === DownPaymentType.PERCENT ? (finalDownPayment / 100) * safeLoanAmount : finalDownPayment
+  const effectiveLoanAmount = getEffectiveLoanAmount(
+    safeLoanAmount,
+    finalDownPayment,
+    safeDownPaymentType,
   );
   const requestedPayment = Math.max(Number(values.desiredMonthlyPayment ?? 0) || 0, 0);
-  const minimumPayment = calculateMinPayment(effectiveLoanAmount, safeInterest);
+  const minimumPayment = getMinimumAmortisingPayment(
+    safeLoanAmount,
+    safeInterest,
+    finalDownPayment,
+    safeDownPaymentType,
+  );
   const desiredMonthlyPayment = safeCalculationType === LoanCalculationType.PAYMENT && requestedPayment < minimumPayment
     ? minimumPayment
     : requestedPayment;

@@ -9,6 +9,7 @@ import { storage } from '@/storage/mmkv';
 import { STORAGE_KEYS } from '@/storage/keys';
 import { languageToCurrency } from '@/currency/defaults';
 import { getLocales } from 'expo-localization';
+import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
 
 const schema = z.object({
   loanAmount: z.coerce
@@ -75,16 +76,34 @@ const schema = z.object({
     });
   }
 
-  const effectiveLoanAmount = data.loanAmount - (
-    data.downPaymentType === DownPaymentType.PERCENT
-      ? (data.downPayment / 100) * data.loanAmount
-      : data.downPayment
+  const effectiveLoanAmount = getEffectiveLoanAmount(
+    data.loanAmount,
+    data.downPayment,
+    data.downPaymentType,
+  );
+  const minimumAmortisingPayment = getMinimumAmortisingPayment(
+    data.loanAmount,
+    data.interest,
+    data.downPayment,
+    data.downPaymentType,
   );
 
   if (data.calculationType === LoanCalculationType.PAYMENT && (data.desiredMonthlyPayment ?? 0) > effectiveLoanAmount) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: 'Desired monthly payment cannot exceed the loan balance after down payment',
+      path: ['desiredMonthlyPayment'],
+    });
+  }
+
+  if (
+    data.calculationType === LoanCalculationType.PAYMENT
+    && effectiveLoanAmount > 0
+    && (data.desiredMonthlyPayment ?? 0) < minimumAmortisingPayment
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Desired monthly payment must be at least ${minimumAmortisingPayment.toFixed(2)} to reduce the balance`,
       path: ['desiredMonthlyPayment'],
     });
   }
