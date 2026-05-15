@@ -23,6 +23,7 @@ import {
   LoanResult,
   getResultForSavedLoan,
 } from '@/results/loanResultRoute';
+import { getDraftResultSession } from '@/results/draftResultStore';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { setResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 import { useStoreReview } from '@/review';
@@ -32,6 +33,7 @@ import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
 import { EditIcon } from '@/components/loans/LoanIcons';
 
 type ResultParams = {
+  draftId?: string;
   result?: string;
   formValues?: string;
   currency?: string;
@@ -65,15 +67,19 @@ export default function ResultScreen() {
     return params.savedLoanId ? savedLoansStorage.getById(params.savedLoanId) ?? null : null;
   }, [params.savedLoan, params.savedLoanId]);
   const isSavedMode = params.mode === 'saved' && savedLoan !== null;
+  const draftSession = useMemo(() => getDraftResultSession(params.draftId), [params.draftId]);
 
   const result = useMemo(() => {
     if (savedLoan) return getResultForSavedLoan(savedLoan);
+    if (draftSession) return draftSession.result;
     return parseJson<LoanResult>(params.result);
-  }, [params.result, savedLoan]);
+  }, [draftSession, params.result, savedLoan]);
   const formValues = useMemo(() => (
-    savedLoan?.formSnapshot ?? parseJson<Record<string, unknown>>(params.formValues)
-  ), [params.formValues, savedLoan]);
-  const currency = ((savedLoan?.currency ?? params.currency) as CurrencyCode | undefined) ?? 'GBP';
+    savedLoan?.formSnapshot
+    ?? draftSession?.formValues
+    ?? parseJson<Record<string, unknown>>(params.formValues)
+  ), [draftSession?.formValues, params.formValues, savedLoan]);
+  const currency = ((savedLoan?.currency ?? draftSession?.currency ?? params.currency) as CurrencyCode | undefined) ?? 'GBP';
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   useEffect(() => {
@@ -102,11 +108,12 @@ export default function ResultScreen() {
       params: {
         result: params.result ?? JSON.stringify(result),
         formValues: params.formValues ?? JSON.stringify(formValues),
+        draftId: params.draftId,
         currency,
         returnToResult: '1',
       },
     });
-  }, [currency, formValues, params.formValues, params.result, result, router]);
+  }, [currency, formValues, params.draftId, params.formValues, params.result, result, router]);
 
   const handleShare = useCallback(async () => {
     if (!result || !formValues) return;

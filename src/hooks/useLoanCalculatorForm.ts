@@ -150,7 +150,7 @@ export const useLoanCalculatorForm = ({ initialValues }: Props = {}) => {
     defaultValues: { ...defaultValues, ...initialValues },
     resolver: zodResolver(schema),
     reValidateMode: 'onChange',
-    mode: 'all',
+    mode: 'onSubmit',
   });
 
   const calculationType = form.watch('calculationType');

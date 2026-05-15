@@ -3,6 +3,7 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { CurrencyCode } from '@/currency/currencies';
 import { SavedLoan } from '@/types/SavedLoan';
+import { createDraftResultSession } from './draftResultStore';
 
 export type LoanResult = ReturnType<typeof getLoanCalculations>;
 
@@ -36,7 +37,6 @@ export const buildDraftResultParams = (
   currency: CurrencyCode,
 ) => ({
   mode: 'draft',
-  result: JSON.stringify(result),
-  formValues: JSON.stringify(formValues),
+  draftId: createDraftResultSession(result, formValues, currency).id,
   currency,
 });

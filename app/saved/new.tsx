@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
+import { LoanCalculatorFormValues } from '@/hooks/useLoanCalculatorForm';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { SavedLoan } from '@/types/SavedLoan';
 import { getLoanCalculations } from '@/core/amortisation';
@@ -36,10 +37,23 @@ import {
 } from '@/loans/loanGroupFactory';
 import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage/tracker';
 import { MortgageRepaymentType } from '@/types/SavedLoan';
+import { getDraftResultSession } from '@/results/draftResultStore';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
 
-const getResultTermInMonths = (result: LoanResult, formValues: { termInYears?: number; termInMonths?: number }) => {
+const parseJson = <T,>(value?: string): T | null => {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
+};
+
+const getResultTermInMonths = (
+  result: LoanResult,
+  formValues: Pick<LoanCalculatorFormValues, 'termInYears' | 'termInMonths'>,
+) => {
   const formYears = Number(formValues.termInYears) || 0;
   const formMonths = Number(formValues.termInMonths) || 0;
 
@@ -69,12 +83,37 @@ const getDealDurationErrorKey = (durationInMonths: number, mortgageTermInMonths:
 export default function SaveNewLoanScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ result: string; formValues: string; currency: string; returnToResult?: string }>();
+  const params = useLocalSearchParams<{
+    draftId?: string;
+    result?: string;
+    formValues?: string;
+    currency?: string;
+    returnToResult?: string;
+  }>();
   const { add } = useSavedLoans();
   const { recordUsefulAction, requestReview } = useStoreReview();
+  const draftSession = getDraftResultSession<LoanCalculatorFormValues>(params.draftId);
+  const result = draftSession?.result ?? parseJson<LoanResult>(params.result);
+  const formValues = draftSession?.formValues ?? parseJson<LoanCalculatorFormValues>(params.formValues);
 
-  const result = JSON.parse(params.result) as LoanResult;
-  const formValues = JSON.parse(params.formValues);
+  if (!result || !formValues) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['bottom']}>
+        <ScreenHeader
+          title={t('save.title')}
+          variant="editor"
+          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        />
+        <View style={styles.emptyState}>
+          <AppText variant="bodyLg" style={styles.emptyStateText}>
+            {t('results.notFound')}
+          </AppText>
+          <Button label={t('common.goBack')} onPress={() => router.back()} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const mortgageTermInMonths = getResultTermInMonths(result, formValues);
   const defaultDealDuration = getDefaultDealDuration(mortgageTermInMonths);
   const [nickname, setNickname] = useState('');
@@ -318,6 +357,16 @@ export default function SaveNewLoanScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: layout.screenPadding,
+  },
+  emptyStateText: {
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
   fieldGroup: { gap: spacing.xs },
   optionalDeal: {
