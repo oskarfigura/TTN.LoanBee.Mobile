@@ -439,7 +439,8 @@
     "overpayments": "Nadpłaty",
     "totalOverpaid": "Łącznie nadpłacono",
     "estInterestSaved": "Szac. oszczędzone odsetki",
-    "dealActivity": "Aktywność"
+    "dealActivity": "Aktywność",
+    "hiddenCompletedDeals": "{{count}} ukończona/e umowa/y nie jest wyświetlana"
   },
   "share": {
     "button": "Udostępnij obliczenie",

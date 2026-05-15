@@ -451,7 +451,8 @@
     "overpayments": "Overpayments",
     "totalOverpaid": "Total overpaid",
     "estInterestSaved": "Est. interest saved",
-    "dealActivity": "Activity"
+    "dealActivity": "Activity",
+    "hiddenCompletedDeals": "{{count}} completed deal(s) not shown"
   },
   "share": {
     "button": "Share calculation",

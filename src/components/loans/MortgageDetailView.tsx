@@ -441,9 +441,10 @@ const TimelinePreview = ({
 }) => {
   const { t, i18n } = useTranslation();
   const firstDeal = publishedDeals[0];
+  const completedDealCount = publishedDeals.filter(d => d.status === 'completed').length;
   const items: Array<{
     key: string;
-    marker: 'future' | 'current' | 'past' | 'start';
+    marker: 'future' | 'current' | 'past' | 'start' | 'hidden';
     label: string;
     title: string;
     meta: string;
@@ -455,6 +456,17 @@ const TimelinePreview = ({
       title: formatFriendlyDate(firstDeal?.startDate ?? loan.formSnapshot.startDate, i18n.language),
       meta: formatCurrency(projection.openingBalance, loan.currency),
     },
+  ];
+  if (completedDealCount > 0) {
+    items.push({
+      key: 'hidden-completed',
+      marker: 'hidden',
+      label: t('mortgage.hiddenCompletedDeals', { count: completedDealCount }),
+      title: '',
+      meta: '',
+    });
+  }
+  items.push(
     {
       key: currentDeal ? `current-${currentDeal.id}` : 'current-estimate',
       marker: 'current' as const,
@@ -473,7 +485,7 @@ const TimelinePreview = ({
         : t('results.payoffDate'),
       meta: t('mortgage.includedEstimate'),
     },
-  ];
+  );
   const showTimelineList = items.length > 0;
 
   return (
@@ -498,7 +510,18 @@ const TimelinePreview = ({
       {showTimelineList ? (
         <View style={styles.timelinePreviewList}>
           <View style={styles.timelinePreviewRail} />
-          {items.map(item => (
+          {items.map(item => item.marker === 'hidden' ? (
+            <TouchableOpacity
+              key={item.key}
+              style={styles.hiddenPreviewRow}
+              onPress={onOpenTimeline}
+              activeOpacity={0.84}
+              accessibilityRole="button"
+            >
+              <View style={styles.hiddenPreviewNode} />
+              <Text style={styles.hiddenPreviewLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ) : (
             <TouchableOpacity
               key={item.key}
               style={styles.timelinePreviewRow}
@@ -1246,6 +1269,25 @@ const styles = StyleSheet.create({
   },
   startPreviewNode: {
     borderColor: colours.border,
+  },
+  hiddenPreviewRow: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingVertical: spacing.xxs,
+  },
+  hiddenPreviewNode: {
+    position: 'absolute',
+    left: -29,
+    top: 11,
+    width: 14,
+    height: 14,
+    borderRadius: radii.full,
+    backgroundColor: colours.border,
+  },
+  hiddenPreviewLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
   },
   timelinePreviewCopy: {
     minWidth: 0,
