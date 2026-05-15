@@ -433,7 +433,13 @@
     "invalidEventDate": "Wybierz poprawną datę zdarzenia.",
     "invalidEventAmount": "Podaj kwotę nadpłaty większą od zera.",
     "invalidEventBalance": "Podaj saldo potwierdzone przez bank większe od zera.",
-    "overpaymentTooLarge": "Nadpłata nie może przekraczać aktualnie prognozowanego salda."
+    "overpaymentTooLarge": "Nadpłata nie może przekraczać aktualnie prognozowanego salda.",
+    "overpaymentsDuringDeal": "Nadpłaty podczas tej umowy",
+    "addOverpaymentRow": "Dodaj nadpłatę",
+    "overpayments": "Nadpłaty",
+    "totalOverpaid": "Łącznie nadpłacono",
+    "estInterestSaved": "Szac. oszczędzone odsetki",
+    "dealActivity": "Aktywność"
   },
   "share": {
     "button": "Udostępnij obliczenie",

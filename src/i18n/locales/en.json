@@ -445,7 +445,13 @@
     "invalidEventDate": "Choose a valid event date.",
     "invalidEventAmount": "Enter an overpayment amount greater than zero.",
     "invalidEventBalance": "Enter a bank-confirmed balance greater than zero.",
-    "overpaymentTooLarge": "The overpayment cannot exceed the current projected balance."
+    "overpaymentTooLarge": "The overpayment cannot exceed the current projected balance.",
+    "overpaymentsDuringDeal": "Overpayments during this deal",
+    "addOverpaymentRow": "Add overpayment",
+    "overpayments": "Overpayments",
+    "totalOverpaid": "Total overpaid",
+    "estInterestSaved": "Est. interest saved",
+    "dealActivity": "Activity"
   },
   "share": {
     "button": "Share calculation",

@@ -223,15 +223,26 @@ export const MortgageDetailView = ({
             onOpenTimeline={() => switchTab('timeline')}
           />
 
-          {trackerSummary.recentEvents.length > 0 ? (
-            <RecentActivity
-              loan={loan}
-              events={trackerSummary.recentEvents}
-              canAddActivity={Boolean(activeDeal)}
-              limit={3}
-              onViewAll={() => switchTab('timeline')}
-            />
+          {activeDeal ? (
+            <DealOverpaymentsCard loan={loan} currentDeal={activeDeal} />
           ) : null}
+
+          {(() => {
+            const currentDealEvents = activeDeal
+              ? [...loan.events]
+                  .filter(e => e.dealId === activeDeal.id)
+                  .sort((a, b) => b.date.localeCompare(a.date))
+              : trackerSummary.recentEvents;
+            return currentDealEvents.length > 0 ? (
+              <RecentActivity
+                loan={loan}
+                events={currentDealEvents}
+                canAddActivity={Boolean(activeDeal)}
+                limit={3}
+                onViewAll={() => switchTab('timeline')}
+              />
+            ) : null;
+          })()}
 
           {activeDeal ? (
             <Button
@@ -620,6 +631,63 @@ const MortgageTopCardContext = ({
         </View>
       ) : null}
     </View>
+  );
+};
+
+const DealOverpaymentsCard = ({
+  loan,
+  currentDeal,
+}: {
+  loan: SavedLoan;
+  currentDeal: LoanDeal;
+}) => {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+
+  const lumpOverpayments = loan.events
+    .filter(e => e.type === 'lumpOverpayment' && e.dealId === currentDeal.id)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (lumpOverpayments.length === 0) return null;
+
+  const impact = getDealOverpaymentImpact(currentDeal, loan.events);
+  const totalOverpaid = lumpOverpayments.reduce((sum, e) => sum + (e.amount ?? 0), 0);
+
+  return (
+    <Card style={styles.overpaymentCard}>
+      <View style={styles.overpaymentCardHeader}>
+        <Text style={styles.sectionTitle}>{t('mortgage.overpayments')}</Text>
+        <Button
+          label={t('mortgage.addOverpayment')}
+          onPress={() => router.push(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
+          variant="icon-pill"
+          style={styles.addActivityButton}
+        />
+      </View>
+      {lumpOverpayments.map(event => (
+        <TouchableOpacity
+          key={event.id}
+          style={styles.eventRow}
+          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
+          activeOpacity={0.84}
+        >
+          <View style={styles.overpaymentRowLeft}>
+            <Text style={styles.eventTitle}>{formatCurrency(event.amount ?? 0, loan.currency)}</Text>
+          </View>
+          <Text style={styles.eventDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
+        </TouchableOpacity>
+      ))}
+      <View style={styles.overpaymentCardFooter}>
+        <Text style={styles.overpaymentFooterTotal}>
+          {t('mortgage.totalOverpaid')}: {formatCurrency(totalOverpaid, loan.currency)}
+        </Text>
+        {impact.interestSaved > 0 ? (
+          <Text style={styles.overpaymentFooterSaved}>
+            {t('mortgage.estInterestSaved')}: {formatCurrency(impact.interestSaved, loan.currency)}
+          </Text>
+        ) : null}
+      </View>
+    </Card>
   );
 };
 
@@ -1492,5 +1560,36 @@ const styles = StyleSheet.create({
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     color: colours.primary,
+  },
+  overpaymentCard: {
+    marginBottom: 14,
+  },
+  overpaymentCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  overpaymentRowLeft: {
+    flex: 1,
+    minWidth: 0,
+  },
+  overpaymentCardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+    gap: spacing.xxs,
+  },
+  overpaymentFooterTotal: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  overpaymentFooterSaved: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.secondary,
   },
 });

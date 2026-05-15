@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { LiveDotIcon, PencilIcon, PlusIcon, TickIcon } from '@/components/loans/LoanIcons';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
+import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import {
   canDeleteDeal,
   canEditDeal,
@@ -136,6 +137,45 @@ const DealStats = ({
   );
 };
 
+const DealActivityList = ({
+  deal,
+  loan,
+}: {
+  deal: LoanDeal;
+  loan: SavedLoan;
+}) => {
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+
+  const dealEvents = loan.events
+    .filter(e => e.dealId === deal.id)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (dealEvents.length === 0) return null;
+
+  return (
+    <View style={styles.activityList}>
+      <Text style={styles.activityListTitle}>{t('mortgage.dealActivity')}</Text>
+      {dealEvents.map(event => (
+        <TouchableOpacity
+          key={event.id}
+          style={styles.activityRow}
+          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
+          activeOpacity={0.84}
+        >
+          <View style={styles.activityLeft}>
+            <Text style={styles.activityType}>{t(mortgageEventLabelKey(event.type))}</Text>
+            {event.amount !== undefined ? (
+              <Text style={styles.activityAmount}> · {formatCurrency(event.amount, loan.currency)}</Text>
+            ) : null}
+          </View>
+          <Text style={styles.activityDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+};
+
 export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -247,6 +287,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                 {formatFriendlyDateRange(timeline.current.startDate, timeline.current.endDate, i18n.language)}
               </Text>
               <DealStats deal={timeline.current} currency={loan.currency} events={loan.events} asOf={asOf} />
+              <DealActivityList deal={timeline.current} loan={loan} />
               <View style={styles.currentActions}>
                 <TimelineAction
                   label={t('mortgage.completeCurrentDeal')}
@@ -295,6 +336,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
               </View>
               <Text style={styles.meta}>{formatFriendlyDateRange(deal.startDate, deal.endDate, i18n.language)}</Text>
               <DealStats deal={deal} currency={loan.currency} events={loan.events} asOf={asOf} />
+              <DealActivityList deal={deal} loan={loan} />
               {deal.completion && (
                 <Text style={styles.completionText}>
                   {t('mortgage.closedAt', { amount: formatCurrency(deal.completion.closingBalance, loan.currency) })}
@@ -604,6 +646,49 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     color: colours.textSecondary,
     paddingTop: spacing.xxs,
+  },
+  activityList: {
+    marginTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    paddingTop: spacing.xs,
+  },
+  activityListTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+    marginBottom: spacing.xxs,
+  },
+  activityRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  activityLeft: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  activityType: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+  },
+  activityAmount: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  activityDate: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+    flexShrink: 0,
   },
 });
 

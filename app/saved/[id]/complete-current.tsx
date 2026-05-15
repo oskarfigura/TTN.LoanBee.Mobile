@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,7 +13,11 @@ import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
+import { MortgageEvent } from '@/types/SavedLoan';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { createLocalId } from '@/utils/id';
+
+type OverpaymentRow = { id: string; date: string; amount: string };
 
 export default function CompleteCurrentDealScreen() {
   const { t } = useTranslation();
@@ -35,7 +39,17 @@ export default function CompleteCurrentDealScreen() {
   const [closingBalanceEdited, setClosingBalanceEdited] = useState(false);
   const [feesAdded, setFeesAdded] = useState('0');
   const [notes, setNotes] = useState('');
+  const [overpayments, setOverpayments] = useState<OverpaymentRow[]>([]);
   const minimumCompletionDate = currentDeal ? parseDateLabelValue(currentDeal.startDate) ?? undefined : undefined;
+
+  const addOverpaymentRow = () =>
+    setOverpayments(prev => [...prev, { id: createLocalId('op'), date: currentDeal?.startDate ?? formatIsoDate(new Date()), amount: '' }]);
+
+  const updateOverpaymentRow = (id: string, field: keyof Omit<OverpaymentRow, 'id'>, value: string) =>
+    setOverpayments(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
+
+  const removeOverpaymentRow = (id: string) =>
+    setOverpayments(prev => prev.filter(row => row.id !== id));
 
   const handleCompletedAtChange = (value: string) => {
     setCompletedAt(value);
@@ -111,6 +125,39 @@ export default function CompleteCurrentDealScreen() {
         </View>
 
         <View style={styles.field}>
+          <FieldLabel>{t('mortgage.overpaymentsDuringDeal')}</FieldLabel>
+          {overpayments.map(row => (
+            <View key={row.id} style={styles.overpaymentRow}>
+              <InputSurface style={styles.overpaymentDateInput}>
+                <AppTextInput
+                  value={row.date}
+                  onChangeText={value => updateOverpaymentRow(row.id, 'date', value)}
+                  placeholder="YYYY-MM-DD"
+                />
+              </InputSurface>
+              <InputSurface style={styles.overpaymentAmountInput}>
+                <InputAffix>{currencySymbol}</InputAffix>
+                <AppTextInput
+                  value={row.amount}
+                  onChangeText={value => updateOverpaymentRow(row.id, 'amount', value)}
+                  keyboardType="decimal-pad"
+                  placeholder="5000"
+                />
+              </InputSurface>
+              <TouchableOpacity style={styles.overpaymentRemove} onPress={() => removeOverpaymentRow(row.id)} activeOpacity={0.84}>
+                <AppText style={styles.overpaymentRemoveText}>×</AppText>
+              </TouchableOpacity>
+            </View>
+          ))}
+          <Button
+            label={t('mortgage.addOverpaymentRow')}
+            onPress={addOverpaymentRow}
+            variant="icon-pill"
+            style={styles.addOverpaymentButton}
+          />
+        </View>
+
+        <View style={styles.field}>
           <FieldLabel>{t('mortgage.notes')}</FieldLabel>
           <InputSurface multiline>
             <AppTextInput
@@ -131,8 +178,27 @@ export default function CompleteCurrentDealScreen() {
               return;
             }
 
+            const now = new Date().toISOString();
+            const validOverpayments: MortgageEvent[] = overpayments
+              .filter(row =>
+                isValidIsoDate(row.date) &&
+                row.date >= currentDeal.startDate &&
+                row.date <= completedAt &&
+                Number(row.amount) > 0
+              )
+              .map(row => ({
+                id: createLocalId('ev'),
+                createdAt: now,
+                updatedAt: now,
+                dealId: currentDeal.id,
+                type: 'lumpOverpayment' as const,
+                date: row.date,
+                amount: Number(row.amount),
+              }));
+
             const updatedLoan = {
               ...loan,
+              events: [...loan.events, ...validOverpayments],
               deals: loan.deals.map(deal => deal.id === currentDeal.id
                 ? {
                   ...deal,
@@ -143,7 +209,7 @@ export default function CompleteCurrentDealScreen() {
                     feesAdded: Number(feesAdded) || 0,
                     notes: notes.trim() || undefined,
                   },
-                  updatedAt: new Date().toISOString(),
+                  updatedAt: now,
                 }
                 : deal),
             };
@@ -163,6 +229,25 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: spacing.md },
   field: { marginTop: spacing.md },
+  overpaymentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  overpaymentDateInput: { flex: 3 },
+  overpaymentAmountInput: { flex: 2 },
+  overpaymentRemove: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  overpaymentRemoveText: {
+    color: colours.error,
+    fontSize: 22,
+  },
+  addOverpaymentButton: { marginTop: spacing.xs },
   noteInput: {
     minHeight: 88,
     textAlignVertical: 'top',
