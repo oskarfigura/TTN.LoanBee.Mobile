@@ -8,6 +8,8 @@ import { LoanSummaryOverview } from '@/components/calculator/LoanSummaryOverview
 import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
+import { CoinsStackedIcon, EditIcon as UiEditIcon } from '@/components/ui/Icons';
+import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
@@ -26,6 +28,7 @@ export default function LoanDetailScreen() {
   const { id, fromSave } = useLocalSearchParams<{ id: string; fromSave?: string }>();
   const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
   const [mortgageMenuVisible, setMortgageMenuVisible] = useState(false);
+  const [loanMenuVisible, setLoanMenuVisible] = useState(false);
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [renameValue, setRenameValue] = useState(loan?.nickname ?? '');
   const allowSavedBackRef = useRef(false);
@@ -72,6 +75,7 @@ export default function LoanDetailScreen() {
   const handleDelete = useCallback(() => {
     if (!loan) return;
     setMortgageMenuVisible(false);
+    setLoanMenuVisible(false);
 
     Alert.alert(
       t('saved.delete'),
@@ -93,6 +97,7 @@ export default function LoanDetailScreen() {
   const openRenameModal = useCallback(() => {
     if (!loan) return;
     setMortgageMenuVisible(false);
+    setLoanMenuVisible(false);
     setRenameValue(loan.nickname);
     setRenameModalVisible(true);
   }, [loan]);
@@ -132,22 +137,25 @@ export default function LoanDetailScreen() {
     );
   }
 
-  const manageButton = (
-    <View style={styles.detailActions}>
-      <Button
-        label={t('recalculate.ctaButton')}
-        onPress={() => router.push(`/saved/${id}/recalculate`)}
-      />
-      <Button
-        label={t('edit.manageShort')}
-        onPress={() => router.push(`/saved/${id}/edit`)}
-        variant="secondary"
-      />
-      <Button
-        label={t('saved.delete')}
-        onPress={handleDelete}
-        variant="destructive"
-      />
+  const loanQuickActions = (
+    <View style={styles.loanQuickActionsCard}>
+      <View style={styles.loanQuickActionsRow}>
+        <QuickActionTile
+          label={t('recalculate.ctaButton')}
+          icon={<CoinsStackedIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          onPress={() => router.push(`/saved/${id}/recalculate`)}
+        />
+        <QuickActionTile
+          label={t('saved.edit')}
+          icon={<UiEditIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          onPress={() => router.push(`/saved/${id}/edit`)}
+        />
+        <QuickActionTile
+          label={t('common.more')}
+          icon={<MoreIcon size={21} color={colours.primary} />}
+          onPress={() => setLoanMenuVisible(true)}
+        />
+      </View>
     </View>
   );
 
@@ -222,9 +230,11 @@ export default function LoanDetailScreen() {
         >
           <Pressable style={styles.modalScrim} onPress={() => setRenameModalVisible(false)}>
             <Pressable style={styles.renameDialog}>
-              <AppText variant="title2">{t('mortgage.renameMortgage')}</AppText>
+              <AppText variant="title2">
+                {loan.category === 'mortgage' ? t('mortgage.renameMortgage') : t('loan.renameLoan')}
+              </AppText>
               <AppText variant="bodySm" tone="muted" style={styles.renameHelp}>
-                {t('mortgage.renameMortgageHelp')}
+                {loan.category === 'mortgage' ? t('mortgage.renameMortgageHelp') : t('loan.renameLoanHelp')}
               </AppText>
               <View style={styles.renameField}>
                 <FieldLabel>{t('save.nickname')}</FieldLabel>
@@ -258,12 +268,22 @@ export default function LoanDetailScreen() {
     );
   }
 
+  const loanHeaderMenu = (
+    <HeaderIconButton
+      onPress={() => setLoanMenuVisible(true)}
+      accessibilityLabel={t('loan.loanActions')}
+    >
+      <MoreIcon color={colours.primary} size={22} />
+    </HeaderIconButton>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScreenHeader
-        title={t('saved.loanDetail')}
+        title={t('loan.summaryTitle')}
         variant="detail"
         leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
+        rightAction={loanHeaderMenu}
         showBottomBorder={false}
         backgroundColor={colours.background}
       />
@@ -295,10 +315,27 @@ export default function LoanDetailScreen() {
                 />
               )}
             />
-            {manageButton}
+            {loanQuickActions}
           </>
         )}
       />
+      <Modal
+        visible={loanMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLoanMenuVisible(false)}
+      >
+        <Pressable style={styles.modalScrim} onPress={() => setLoanMenuVisible(false)}>
+          <Pressable style={styles.actionMenu}>
+            <TouchableOpacity style={styles.actionMenuRow} onPress={openRenameModal} activeOpacity={0.84}>
+              <Text style={styles.actionMenuText}>{t('loan.renameLoan')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionMenuRowLast} onPress={handleDelete} activeOpacity={0.84}>
+              <Text style={[styles.actionMenuText, styles.actionMenuDanger]}>{t('loan.deleteLoan')}</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -311,9 +348,19 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 4,
   },
-  detailActions: {
-    marginTop: 8,
-    gap: spacing.sm,
+  loanQuickActionsCard: {
+    backgroundColor: colours.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+    borderRadius: radii.card,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  loanQuickActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.xs,
   },
   modalScrim: {
     flex: 1,

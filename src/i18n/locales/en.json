@@ -229,6 +229,13 @@
     "openMenu": "Open menu",
     "links": "Navigation"
   },
+  "loan": {
+    "summaryTitle": "Loan Summary",
+    "loanActions": "Loan actions",
+    "renameLoan": "Rename loan",
+    "renameLoanHelp": "This only changes the name shown in LoanBee. Calculation figures and currency stay unchanged.",
+    "deleteLoan": "Delete loan"
+  },
   "mortgage": {
     "summaryTitle": "Mortgage Summary",
     "mortgageActions": "Mortgage actions",

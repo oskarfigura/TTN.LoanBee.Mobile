@@ -217,6 +217,13 @@
     "openMenu": "Otwórz menu",
     "links": "Nawigacja"
   },
+  "loan": {
+    "summaryTitle": "Podsumowanie Kredytu",
+    "loanActions": "Akcje kredytu",
+    "renameLoan": "Zmień nazwę kredytu",
+    "renameLoanHelp": "To zmienia tylko nazwę widoczną w LoanBee. Dane kalkulacji i waluta pozostają bez zmian.",
+    "deleteLoan": "Usuń kredyt"
+  },
   "mortgage": {
     "summaryTitle": "Podsumowanie Hipoteki",
     "mortgageActions": "Dzialania hipoteki",
