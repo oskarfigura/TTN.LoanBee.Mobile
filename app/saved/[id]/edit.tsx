@@ -220,20 +220,18 @@ export default function EditLoanScreen() {
                 icon={<TimelineIcon color={colours.primary} />}
                 onPress={() => router.push(`/saved/${loan.id}/timeline`)}
               />
+              <TrackingActionTile
+                label={currentDeal ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
+                icon={<PlusIcon color={colours.primary} />}
+                onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
+              />
               {currentDeal ? (
-                <>
-                  <TrackingActionTile
-                    label={t('mortgage.addNextDeal')}
-                    icon={<PlusIcon color={colours.primary} />}
-                    onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
-                  />
-                  <TrackingActionTile
-                    label={t('mortgage.completeCurrentDeal')}
-                    icon={<SwitchIcon color={colours.white} />}
-                    onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
-                    emphasis
-                  />
-                </>
+                <TrackingActionTile
+                  label={t('mortgage.completeCurrentDeal')}
+                  icon={<SwitchIcon color={colours.white} />}
+                  onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
+                  emphasis
+                />
               ) : null}
             </View>
           </View>

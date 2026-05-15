@@ -1,5 +1,5 @@
-import React from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { MortgageEventForm, mortgageEventLabelKey } from '@/components/loans/Mor
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { formatCurrency } from '@/currency/format';
@@ -22,6 +23,7 @@ export default function EditMortgageEventScreen() {
   const loan = savedLoansStorage.getById(id);
   const event = loan?.events.find(item => item.id === eventId);
   const deal = event ? loan?.deals.find(item => item.id === event.dealId) : undefined;
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   if (!loan || !event || !deal) {
     return (
@@ -40,21 +42,13 @@ export default function EditMortgageEventScreen() {
   }
 
   const handleDelete = () => {
-    Alert.alert(
-      t('mortgage.deleteEvent'),
-      t('mortgage.deleteEventMessage'),
-      [
-        { text: t('results.cancelLeave'), style: 'cancel' },
-        {
-          text: t('mortgage.deleteEvent'),
-          style: 'destructive',
-          onPress: () => {
-            savedLoansStorage.update(removeMortgageEvent(loan, event.id));
-            router.back();
-          },
-        },
-      ],
-    );
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDelete = () => {
+    setDeleteDialogVisible(false);
+    savedLoansStorage.update(removeMortgageEvent(loan, event.id));
+    router.back();
   };
 
   if (deal.status === 'completed') {
@@ -115,6 +109,15 @@ export default function EditMortgageEventScreen() {
           onDelete={handleDelete}
         />
       </ScrollView>
+      <DestructiveConfirmDialog
+        visible={deleteDialogVisible}
+        title={t('mortgage.deleteEvent')}
+        message={t('mortgage.deleteEventMessage')}
+        confirmLabel={t('mortgage.deleteEvent')}
+        cancelLabel={t('results.cancelLeave')}
+        onCancel={() => setDeleteDialogVisible(false)}
+        onConfirm={confirmDelete}
+      />
     </SafeAreaView>
   );
 }

@@ -45,6 +45,7 @@ describe('loanGroupFactory', () => {
     const deal = buildInitialDeal('deal-1', makeMortgage(), {
       name: '5-year fixed',
       durationInMonths: 60,
+      source: 'userDeal',
     });
 
     expect(deal.name).toBe('5-year fixed');
@@ -52,5 +53,13 @@ describe('loanGroupFactory', () => {
     expect(deal.endDate).toBe('2031-01-01');
     expect(deal.remainingTermInYears).toBe(35);
     expect(deal.remainingTermInMonths).toBe(0);
+    expect(deal.source).toBe('userDeal');
+  });
+
+  it('marks bare-bones first mortgage deals as estimate-backed by default', () => {
+    const deal = buildInitialDeal('deal-1', makeMortgage());
+
+    expect(deal.endDate).toBe('2061-01-01');
+    expect(deal.source).toBe('estimate');
   });
 });

@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { Alert, StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { LiveDotIcon, PencilIcon, PlusIcon, TickIcon } from '@/components/loans/LoanIcons';
 import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { formatCurrency } from '@/currency/format';
@@ -202,22 +203,25 @@ const DealActivityList = ({
 export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpdated }: Props) => {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const [dealPendingDelete, setDealPendingDelete] = useState<LoanDeal | null>(null);
   const asOf = useMemo(() => new Date(), [loan]);
   const timeline = useMemo(() => {
     const publishedDeals = getPublishedDeals(loan);
+    const drafts = getDraftDeals(loan);
 
     return {
-      drafts: getDraftDeals(loan),
+      drafts,
       current: getCurrentDeal(loan),
       completed: publishedDeals.filter(deal => deal.status === 'completed').reverse(),
       initialDealId: publishedDeals[0]?.id,
+      publishedCount: publishedDeals.length,
     };
   }, [loan]);
-  const hasDeals = loan.deals.length > 0;
+  const hasDeals = timeline.publishedCount + timeline.drafts.length > 0;
   const hasPublishedDeals = Boolean(timeline.initialDealId);
   const addDealButton = (
     <Button
-      label={hasPublishedDeals ? t('mortgage.addNextDeal') : t('mortgage.addFirstDeal')}
+      label={hasPublishedDeals ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
       leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
       onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
       variant="secondary"
@@ -225,29 +229,31 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
   );
   const deleteDeal = (deal: LoanDeal) => {
     if (!canDeleteDeal(loan, deal.id)) return;
+    setDealPendingDelete(deal);
+  };
 
-    const isDraft = deal.status === 'draft';
-    Alert.alert(
-      isDraft ? t('mortgage.deleteDraftTitle') : t('mortgage.deleteDealTitle'),
-      isDraft ? t('mortgage.deleteDraftMessage') : t('mortgage.deleteDealMessage', { name: deal.name }),
-      [
-        { text: t('results.cancelLeave'), style: 'cancel' },
-        {
-          text: isDraft ? t('mortgage.deleteDraft') : t('mortgage.deleteDeal'),
-          style: 'destructive',
-          onPress: () => {
-            const updatedLoan = removeLatestDealAndEvents(loan, deal.id);
-            savedLoansStorage.update(updatedLoan);
-            onLoanUpdated?.(updatedLoan);
-          },
-        },
-      ],
-    );
+  const confirmDeleteDeal = () => {
+    if (!dealPendingDelete) return;
+    const updatedLoan = removeLatestDealAndEvents(loan, dealPendingDelete.id);
+    setDealPendingDelete(null);
+    savedLoansStorage.update(updatedLoan);
+    onLoanUpdated?.(updatedLoan);
   };
 
   return (
     <View>
-      {showFooterAction && hasPublishedDeals ? (
+      <DestructiveConfirmDialog
+        visible={Boolean(dealPendingDelete)}
+        title={dealPendingDelete?.status === 'draft' ? t('mortgage.deleteDraftTitle') : t('mortgage.deleteDealTitle')}
+        message={dealPendingDelete?.status === 'draft'
+          ? t('mortgage.deleteDraftMessage')
+          : t('mortgage.deleteDealMessage', { name: dealPendingDelete?.name ?? '' })}
+        confirmLabel={dealPendingDelete?.status === 'draft' ? t('mortgage.deleteDraft') : t('mortgage.deleteDeal')}
+        cancelLabel={t('results.cancelLeave')}
+        onCancel={() => setDealPendingDelete(null)}
+        onConfirm={confirmDeleteDeal}
+      />
+      {showFooterAction ? (
         <View style={styles.topAction}>
           {addDealButton}
         </View>

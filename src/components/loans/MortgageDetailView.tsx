@@ -628,6 +628,11 @@ const CurrentDealSummaryPanel = ({
         <Text style={styles.summaryBodyText}>
           {t('mortgage.currentStateProjectionBody')}
         </Text>
+        <View style={styles.summaryFactGrid}>
+          <SummaryFact label={t('calculator.interestRate')} value={formatRate(loan.formSnapshot.interest)} />
+          <SummaryFact label={t('results.monthlyPayment')} value={formatCurrency(loan.resultSnapshot.monthlyPayments, loan.currency)} />
+          <SummaryFact label={t('calculator.additionalPayment')} value={formatCurrency(loan.formSnapshot.additionalMonthlyPayment ?? 0, loan.currency)} />
+        </View>
         <View style={styles.summarySourceRow}>
           <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>
           <Text style={styles.summarySourceValue} numberOfLines={1} adjustsFontSizeToFit>
@@ -699,7 +704,7 @@ const CompactTimelineSummary = ({
     ? t('mortgage.editDraftDeal')
     : firstDeal
       ? t('mortgage.addDeal')
-      : null;
+      : t('mortgage.addCurrentDeal');
   const actionHandler = draftDeal ? onEditDraft : onAddDeal;
   const items: Array<{
     key: string;
@@ -723,8 +728,8 @@ const CompactTimelineSummary = ({
       label: currentDeal ? t('mortgage.currentDeal') : t('mortgage.currentEstimate'),
       title: currentDeal?.name ?? t('mortgage.currentBalance'),
       meta: currentDeal
-        ? `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatDealDuration(currentDeal, i18n.language)}`
-        : formatCurrency(projection.currentBalance, loan.currency),
+        ? `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(currentDeal.interestRate)} · ${formatDealDuration(currentDeal, i18n.language)}`
+        : `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(loan.formSnapshot.interest)}`,
     },
     {
       key: 'projected-end',

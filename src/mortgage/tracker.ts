@@ -159,6 +159,26 @@ export const getDealDurationInMonths = (deal: LoanDeal): number => (
 
 export const getMortgageTermInMonths = getOverallTermInMonths;
 
+export const isEstimateBackedDeal = (loan: LoanGroup, deal: LoanDeal): boolean => {
+  if (loan.category !== 'mortgage') return false;
+  if (deal.source === 'estimate') return true;
+  if (deal.source === 'userDeal') return false;
+
+  const publishedDeals = getChronologicalDeals(loan).filter(item => item.status !== 'draft');
+  if (publishedDeals.length !== 1 || publishedDeals[0]?.id !== deal.id) return false;
+
+  const totalMonths = getOverallTermInMonths(loan);
+  return (
+    deal.status === 'active'
+    && deal.startDate === loan.formSnapshot.startDate
+    && getDealDurationInMonths(deal) >= totalMonths
+  );
+};
+
+export const getEstimateBackedDeal = (loan: LoanGroup): LoanDeal | undefined => (
+  getChronologicalDeals(loan).find(deal => isEstimateBackedDeal(loan, deal))
+);
+
 export const getRemainingMortgageTermInMonths = (
   loan: Pick<LoanGroup, 'mortgageTermInMonths' | 'formSnapshot' | 'resultSnapshot'>,
   dealStartDate: string,
@@ -251,6 +271,7 @@ export const buildCurrentStateProjectionDeal = (loan: LoanGroup): LoanDeal => {
     regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
     remainingTermInYears: years,
     remainingTermInMonths: months,
+    source: 'estimate',
   };
 };
 
@@ -280,25 +301,27 @@ export const buildNextDealDraft = (
   const existingDraft = getSingleDraftDeal(loan);
   if (existingDraft) return existingDraft;
 
-  const deals = getChronologicalDeals(loan);
+  const deals = getChronologicalDeals(loan).filter(deal => !isEstimateBackedDeal(loan, deal));
   const previousDeal = deals[deals.length - 1];
 
   if (!previousDeal) {
     const totalMonths = getOverallTermInMonths(loan);
+    const defaultDealDurationMonths = Math.max(1, Math.min(60, totalMonths));
     const startDate = loan.formSnapshot.startDate;
     const { years, months } = splitMonths(totalMonths);
+    const { years: defaultDurationYears, months: defaultDurationMonths } = splitMonths(defaultDealDurationMonths);
 
     return {
       id,
       createdAt: now,
       updatedAt: now,
       name: loan.category === 'mortgage'
-        ? generateDefaultDealName(years, months, 'repayment')
+        ? generateDefaultDealName(defaultDurationYears, defaultDurationMonths, 'repayment')
         : 'Fixed loan',
       lender: loan.lender,
       status: 'draft',
       startDate,
-      endDate: addMonthsIso(startDate, totalMonths),
+      endDate: addMonthsIso(startDate, defaultDealDurationMonths),
       openingBalance: getEffectiveOpeningBalance(loan),
       interestRate: loan.formSnapshot.interest,
       repaymentType: 'repayment',
@@ -307,6 +330,7 @@ export const buildNextDealDraft = (
       additionalBorrowing: 0,
       remainingTermInYears: years,
       remainingTermInMonths: months,
+      source: 'userDeal',
     };
   }
 
@@ -340,6 +364,7 @@ export const buildNextDealDraft = (
     additionalBorrowing: 0,
     remainingTermInYears: years,
     remainingTermInMonths: months,
+    source: 'userDeal',
   };
 };
 
@@ -377,7 +402,10 @@ const getProjectionEndDate = (deal: LoanDeal, asOf: Date): string => {
 };
 
 export const getPublishedDeals = (loan: LoanGroup): LoanDeal[] => (
-  orderDeals(loan.deals.filter(deal => deal.status !== 'draft'))
+  orderDeals(loan.deals.filter(deal => (
+    deal.status !== 'draft'
+    && !isEstimateBackedDeal(loan, deal)
+  )))
 );
 
 export const getDraftDeals = (loan: LoanGroup): LoanDeal[] => (

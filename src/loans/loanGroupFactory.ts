@@ -27,6 +27,7 @@ type RawResultValues = {
 interface InitialDealOptions {
   name?: string;
   durationInMonths?: number;
+  source?: LoanDeal['source'];
 }
 
 const addMonths = (dateString: string, months: number): string => {
@@ -112,5 +113,6 @@ export const buildInitialDeal = (
     regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
     remainingTermInYears: years,
     remainingTermInMonths: months,
+    source: loan.category === 'mortgage' ? options.source ?? 'estimate' : undefined,
   };
 };

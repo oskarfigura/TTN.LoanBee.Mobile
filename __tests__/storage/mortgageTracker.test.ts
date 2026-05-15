@@ -12,6 +12,7 @@ import {
   getMortgageTermInMonths,
   getMortgageTrackerSummary,
   getNextDealStartDate,
+  getPublishedDeals,
   getRemainingMortgageTermInMonths,
   getTimelineWarnings,
   normaliseDealChain,
@@ -154,6 +155,59 @@ describe('mortgage tracker', () => {
     expect(projection.dealSegments[0]?.dealId).toBe(CURRENT_STATE_PROJECTION_DEAL_ID);
     expect(projection.dealSegments[0]?.isCurrent).toBe(true);
     expect(projection.points.length).toBeGreaterThan(0);
+  });
+
+  it('treats a marker-backed estimate deal as the saved mortgage estimate', () => {
+    const loan = makeMortgage({
+      deals: [{
+        ...makeMortgage().deals[0],
+        name: '25-year Fixed',
+        endDate: '2051-06-01',
+        source: 'estimate',
+      }],
+    });
+
+    const summary = getMortgageTrackerSummary(loan, new Date('2026-07-15T12:00:00Z'));
+    const projection = buildMortgageProjection(loan, new Date('2026-07-15T12:00:00Z'));
+
+    expect(getPublishedDeals(loan)).toHaveLength(0);
+    expect(summary.currentDeal).toBeUndefined();
+    expect(projection.publishedDealCount).toBe(0);
+    expect(projection.dealSegments[0]?.dealId).toBe(CURRENT_STATE_PROJECTION_DEAL_ID);
+  });
+
+  it('treats an old unmarked single full-term deal as estimate-backed', () => {
+    const loan = makeMortgage({
+      deals: [{
+        ...makeMortgage().deals[0],
+        name: '25-year Fixed',
+        endDate: '2051-06-01',
+      }],
+    });
+
+    const summary = getMortgageTrackerSummary(loan, new Date('2026-07-15T12:00:00Z'));
+    const displayDetails = buildSavedLoanDisplayDetails(loan, new Date('2026-07-15T12:00:00Z'));
+
+    expect(getPublishedDeals(loan)).toHaveLength(0);
+    expect(summary.currentDeal).toBeUndefined();
+    expect(displayDetails.currentDeal).toBeUndefined();
+    expect(displayDetails.lender).toBe('Halifax');
+  });
+
+  it('keeps an explicit user deal visible even when it spans the full mortgage term', () => {
+    const loan = makeMortgage({
+      deals: [{
+        ...makeMortgage().deals[0],
+        name: '25-year Fixed',
+        endDate: '2051-06-01',
+        source: 'userDeal',
+      }],
+    });
+
+    const summary = getMortgageTrackerSummary(loan, new Date('2026-07-15T12:00:00Z'));
+
+    expect(getPublishedDeals(loan)).toHaveLength(1);
+    expect(summary.currentDeal?.name).toBe('25-year Fixed');
   });
 
   it('applies lump overpayments and missed payments to active deal projections', () => {

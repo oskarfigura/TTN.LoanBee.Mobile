@@ -3,6 +3,7 @@ import { CurrencyCode } from '@/currency/currencies';
 export type LoanCategory = 'mortgage' | 'loan';
 export type LoanGroupStatus = 'draft' | 'tracked';
 export type LoanDealStatus = 'draft' | 'active' | 'completed';
+export type LoanDealSource = 'estimate' | 'userDeal';
 export type MortgageRepaymentType = 'repayment' | 'interestOnly';
 export type MortgageEventType =
   | 'lumpOverpayment'
@@ -59,6 +60,7 @@ export interface LoanDeal {
   additionalBorrowing?: number;
   remainingTermInYears: number;
   remainingTermInMonths: number;
+  source?: LoanDealSource;
   completion?: LoanDealCompletion;
 }
 

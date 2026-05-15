@@ -11,10 +11,13 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
 import {
   buildNextDealDraft,
+  getEstimateBackedDeal,
   getChronologicalDeals,
   getMortgageTermInMonths,
   getNextDealStartDate,
+  getPublishedDeals,
   getSingleDraftDeal,
+  isEstimateBackedDeal,
   normaliseDealChain,
   withMortgageTermInMonths,
 } from '@/mortgage/tracker';
@@ -29,6 +32,8 @@ export default function NewDealScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const loan = savedLoansStorage.getById(id);
   const existingDraft = useMemo(() => (loan ? getSingleDraftDeal(loan) : undefined), [loan]);
+  const estimateDeal = useMemo(() => (loan ? getEstimateBackedDeal(loan) : undefined), [loan]);
+  const realPublishedDeals = useMemo(() => (loan ? getPublishedDeals(loan) : []), [loan]);
 
   useEffect(() => {
     if (!loan || !existingDraft) return;
@@ -36,12 +41,18 @@ export default function NewDealScreen() {
     router.replace(`/saved/${loan.id}/deals/${existingDraft.id}`);
   }, [existingDraft, loan, router]);
 
-  const initialDeal = useMemo<LoanDeal | null>(() => {
-    if (!loan || existingDraft) return null;
-    return buildNextDealDraft(loan, createLocalId());
-  }, [existingDraft, loan]);
+  useEffect(() => {
+    if (!loan || existingDraft || !estimateDeal || realPublishedDeals.length > 0) return;
 
-  if (loan && existingDraft) {
+    router.replace(`/saved/${loan.id}/deals/${estimateDeal.id}`);
+  }, [estimateDeal, existingDraft, loan, realPublishedDeals.length, router]);
+
+  const initialDeal = useMemo<LoanDeal | null>(() => {
+    if (!loan || existingDraft || (estimateDeal && realPublishedDeals.length === 0)) return null;
+    return buildNextDealDraft(loan, createLocalId());
+  }, [estimateDeal, existingDraft, loan, realPublishedDeals.length]);
+
+  if (loan && (existingDraft || (estimateDeal && realPublishedDeals.length === 0))) {
     return <SafeAreaView style={styles.safe} edges={['bottom']} />;
   }
 
@@ -61,7 +72,7 @@ export default function NewDealScreen() {
     );
   }
 
-  const deals = getChronologicalDeals(loan);
+  const deals = getChronologicalDeals(loan).filter(item => !isEstimateBackedDeal(loan, item));
   const previous = deals[deals.length - 1];
   const canPublish = !previous || previous.status === 'completed';
   const fixedStartDate = previous ? getNextDealStartDate(previous, loan.formSnapshot.startDate) : undefined;

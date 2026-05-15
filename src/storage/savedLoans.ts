@@ -60,6 +60,7 @@ const buildMigratedDeal = (loan: LegacySavedLoan): LoanDeal => {
     regularOverpayment: loan.formSnapshot.additionalMonthlyPayment ?? 0,
     remainingTermInYears: loan.formSnapshot.termInYears,
     remainingTermInMonths: loan.formSnapshot.termInMonths,
+    source: loan.category === 'mortgage' ? 'estimate' : undefined,
   };
 };
 

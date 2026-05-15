@@ -3,6 +3,7 @@ export * from './Badge';
 export * from './Button';
 export * from './Card';
 export * from './DatePickerField';
+export * from './DestructiveConfirmDialog';
 export * from './DismissibleBanner';
 export * from './Disclaimer';
 export * from './EmptyState';

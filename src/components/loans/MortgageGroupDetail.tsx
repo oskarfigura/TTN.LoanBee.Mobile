@@ -179,7 +179,7 @@ export const MortgageGroupDetail = ({ loan, onTogglePinned, onLoanUpdated }: Pro
 
               <Text style={styles.optionGroupTitle}>{t('mortgage.dealGroup')}</Text>
               <ActivityOption
-                title={t('mortgage.addNextDeal')}
+                title={currentDeal ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
                 description={t('mortgage.addNextDealHelp')}
                 marker="D"
                 onPress={() => navigateFromPicker(`/saved/${loan.id}/deals/new`)}

@@ -116,18 +116,24 @@ export const DealEditorForm = ({
     ? 0
     : Math.max(0, initialDeal.openingBalance - initialAdditionalBorrowing);
   const initialTermSplit = splitMonths(Math.max(1, Math.round(mortgageTermInMonths)));
-  const initialDealDurationSplit = splitMonths(monthsBetweenDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate));
+  const isEstimateInitialDeal = isInitialDeal && initialDeal.source === 'estimate';
+  const initialDealDurationInMonths = isEstimateInitialDeal
+    ? Math.min(Math.max(1, mortgageTermInMonths), 60)
+    : monthsBetweenDates(fixedStartDate ?? initialDeal.startDate, initialDeal.endDate);
+  const initialDealDurationSplit = splitMonths(initialDealDurationInMonths);
   const initialAutoName = generateDefaultDealName(
     initialDealDurationSplit.years,
     initialDealDurationSplit.months,
     initialDeal.repaymentType,
   );
 
-  const [name, setName] = useState(initialDeal.name);
-  const [isNameCustomized, setIsNameCustomized] = useState(() => initialDeal.name !== initialAutoName);
+  const [name, setName] = useState(isEstimateInitialDeal ? initialAutoName : initialDeal.name);
+  const [isNameCustomized, setIsNameCustomized] = useState(() => (
+    isEstimateInitialDeal ? false : initialDeal.name !== initialAutoName
+  ));
   const [lender, setLender] = useState(initialDeal.lender ?? '');
   const [startDate, setStartDate] = useState(initialDeal.startDate);
-  const [endDate, setEndDate] = useState(initialDeal.endDate);
+  const [endDate, setEndDate] = useState(addMonthsIso(fixedStartDate ?? initialDeal.startDate, initialDealDurationInMonths));
   const [dealDurationYears, setDealDurationYears] = useState(numberText(initialDealDurationSplit.years));
   const [dealDurationMonths, setDealDurationMonths] = useState(numberText(initialDealDurationSplit.months));
   const [openingBalance, setOpeningBalance] = useState(numberText(initialDeal.openingBalance));
@@ -261,6 +267,7 @@ export const DealEditorForm = ({
     additionalBorrowing: isInitialDeal ? undefined : additionalBorrowingValue,
     remainingTermInYears: remainingTerm.years,
     remainingTermInMonths: remainingTerm.months,
+    source: 'userDeal',
     completion: initialDeal.status === 'completed'
       ? {
         completedAt,
