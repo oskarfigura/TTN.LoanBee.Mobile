@@ -238,7 +238,7 @@
     "loanActions": "Loan actions",
     "renameLoan": "Rename loan",
     "renameLoanHelp": "This only changes the name shown in LoanBee. Calculation figures and currency stay unchanged.",
-    "deleteLoan": "Delete loan",
+    "deleteLoan": "Delete",
     "deleteLoanHelp": "Permanently remove this loan from your saved loans",
     "loanDetails": "Loan details",
     "quickActions": "Quick actions",
