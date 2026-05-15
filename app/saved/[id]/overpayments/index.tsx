@@ -84,7 +84,10 @@ export default function OverpaymentsScreen() {
     );
     const end = new Date(start);
     end.setMonth(end.getMonth() + baseline.tableItems.length - 1);
-    return { loanMinDate: start, loanMaxDate: end };
+    // Lump sums require at least one payment period (monthIndex must be >= 1)
+    const minDate = new Date(start);
+    minDate.setMonth(minDate.getMonth() + 1);
+    return { loanMinDate: minDate, loanMaxDate: end };
   }, [form]);
 
   const handleSaveMonthly = useCallback((amount: number) => {
@@ -130,7 +133,7 @@ export default function OverpaymentsScreen() {
     refresh();
   }, [loan, refresh]);
 
-  const handleSaveLumpSum = useCallback((date: string, amount: number, note: string) => {
+  const handleSaveLumpSum = useCallback((date: string, amount: number) => {
     if (!loan) return;
     const now = new Date().toISOString();
     if (editingEvent) {
@@ -138,7 +141,6 @@ export default function OverpaymentsScreen() {
         ...editingEvent,
         date,
         amount,
-        note: note || undefined,
         updatedAt: now,
       });
     } else {
@@ -149,7 +151,6 @@ export default function OverpaymentsScreen() {
         type: 'lumpOverpayment',
         date,
         amount,
-        note: note || undefined,
       };
       savedLoansStorage.addEvent(loan.id, event);
     }
@@ -284,7 +285,6 @@ export default function OverpaymentsScreen() {
                       </AppText>
                       <AppText variant="bodySm" tone="muted">
                         {formatFriendlyDate(event.date, i18n.language)}
-                        {event.note ? ` · ${event.note}` : ''}
                       </AppText>
                     </View>
                     <ChevronRightIcon size={16} color={colours.textSecondary} />

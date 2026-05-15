@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -19,8 +19,10 @@ import { colours, radii, spacing } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { DatePickerField } from '@/components/ui/DatePickerField';
+import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
 import { FieldLabel, InputSurface, AppTextInput } from '@/components/ui/FormPrimitives';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 interface Props {
   visible: boolean;
@@ -30,7 +32,7 @@ interface Props {
   minDate: Date;
   maxDate: Date;
   currency: CurrencyCode;
-  onSave: (date: string, amount: number, note: string) => void;
+  onSave: (date: string, amount: number) => void;
   onDelete: (eventId: string) => void;
   onClose: () => void;
 }
@@ -62,10 +64,10 @@ export const LumpSumSheet = ({
 }: Props) => {
   const { t } = useTranslation();
   const isEditing = event !== null;
+  const datePickerRef = useRef<DatePickerFieldHandle>(null);
 
   const [date, setDate] = useState(() => event?.date ?? defaultDate(minDate));
   const [amount, setAmount] = useState(event?.amount ? String(event.amount) : '');
-  const [note, setNote] = useState(event?.note ?? '');
 
   const amountDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,7 +78,6 @@ export const LumpSumSheet = ({
     if (visible) {
       setDate(event?.date ?? defaultDate(minDate));
       setAmount(event?.amount ? String(event.amount) : '');
-      setNote(event?.note ?? '');
       const initAmount = event?.amount ?? 0;
       setDebouncedAmount(initAmount);
       setDebouncedDate(event?.date ?? defaultDate(minDate));
@@ -103,7 +104,6 @@ export const LumpSumSheet = ({
 
   const impact = useMemo(() => {
     if (debouncedAmount <= 0) return null;
-    // Show marginal impact of this single lump sum only
     return computeLoanOverpayments(form, monthlyOverpayment, [
       { date: debouncedDate, amount: debouncedAmount },
     ]);
@@ -144,23 +144,18 @@ export const LumpSumSheet = ({
                 : t('overpayments.lumpSumAdd')}
             </AppText>
 
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-            >
-              <View style={styles.field}>
-                <DatePickerField
-                  label={t('overpayments.lumpSumDate')}
-                  value={date}
-                  onChange={handleDateChange}
-                  hint=""
-                  minimumDate={minDate}
-                  maximumDate={maxDate}
-                />
-              </View>
+            <View style={styles.fields}>
+              <DatePickerField
+                ref={datePickerRef}
+                label={t('overpayments.lumpSumDate')}
+                value={date}
+                onChange={handleDateChange}
+                hint=""
+                minimumDate={minDate}
+                maximumDate={maxDate}
+              />
 
-              <View style={styles.field}>
+              <View>
                 <FieldLabel>{t('overpayments.lumpSumAmount')}</FieldLabel>
                 <InputSurface>
                   <AppTextInput
@@ -168,17 +163,7 @@ export const LumpSumSheet = ({
                     onChangeText={handleAmountChange}
                     placeholder="0.00"
                     keyboardType="decimal-pad"
-                  />
-                </InputSurface>
-              </View>
-
-              <View style={styles.field}>
-                <FieldLabel>{t('overpayments.lumpSumNote')}</FieldLabel>
-                <InputSurface>
-                  <AppTextInput
-                    value={note}
-                    onChangeText={setNote}
-                    placeholder={t('overpayments.lumpSumNote')}
+                    onFocus={() => datePickerRef.current?.closePicker()}
                   />
                 </InputSurface>
               </View>
@@ -202,7 +187,7 @@ export const LumpSumSheet = ({
                   </View>
                 </Card>
               ) : null}
-            </ScrollView>
+            </View>
 
             <View style={styles.actions}>
               {isEditing ? (
@@ -222,7 +207,7 @@ export const LumpSumSheet = ({
               )}
               <Button
                 label={t('overpayments.save')}
-                onPress={() => onSave(date, parsedAmount, note.trim())}
+                onPress={() => onSave(date, parsedAmount)}
                 disabled={!canSave}
                 style={styles.actionBtn}
               />
@@ -255,8 +240,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radii.card,
     borderTopRightRadius: radii.card,
     padding: spacing.xl,
-    paddingBottom: spacing['3xl'],
-    maxHeight: '85%',
+    paddingBottom: spacing['2xl'],
+    maxHeight: SCREEN_HEIGHT * 0.92,
   },
   handle: {
     width: 40,
@@ -267,14 +252,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   heading: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  scrollContent: {
+  fields: {
     gap: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  field: {
-    gap: spacing.xs,
   },
   impactCard: {
     borderColor: colours.successBorder,
@@ -292,7 +273,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   actionBtn: {
     flex: 1,

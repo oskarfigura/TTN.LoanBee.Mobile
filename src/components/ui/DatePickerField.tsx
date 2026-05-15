@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,10 @@ import {
 } from '@/components/ui/FormPrimitives';
 import { colours, spacing } from '@/theme';
 import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
+
+export interface DatePickerFieldHandle {
+  closePicker: () => void;
+}
 
 interface Props {
   label: string;
@@ -23,7 +27,7 @@ interface Props {
 
 const getPickerValue = (value: string): Date => parseDateLabelValue(value) ?? new Date();
 
-export const DatePickerField = ({
+export const DatePickerField = forwardRef<DatePickerFieldHandle, Props>(({
   label,
   value,
   onChange,
@@ -31,11 +35,15 @@ export const DatePickerField = ({
   minimumDate,
   maximumDate,
   disabled,
-}: Props) => {
+}, ref) => {
   const { i18n } = useTranslation();
   const [pickerVisible, setPickerVisible] = useState(false);
   const pickerValue = getPickerValue(value);
   const displayValue = formatFriendlyDate(value, i18n.language);
+
+  useImperativeHandle(ref, () => ({
+    closePicker: () => setPickerVisible(false),
+  }));
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setPickerVisible(false);
@@ -88,7 +96,7 @@ export const DatePickerField = ({
       <FieldHint>{hint}</FieldHint>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   field: {
