@@ -26,6 +26,8 @@ export interface LoanInsightProgress {
   endCaption?: LoanInsightCaption;
   metrics: LoanInsightMetric[];
   savingsAmount?: string;
+  interestSaved?: number;
+  termSavedMonths?: number;
 }
 
 export interface LoanDashboardProgress {
@@ -141,6 +143,8 @@ const buildSavedProgress = (
   const hasOverpayment = (loan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
     || loan.events.some(e => e.type === 'lumpOverpayment' && (e.amount ?? 0) > 0);
   const savings = loan.resultSnapshot.totalInterestPaidBaseline - loan.resultSnapshot.totalInterestPaid;
+  const baselineTermMonths = loan.resultSnapshot.termInYears * 12 + loan.resultSnapshot.termInMonths;
+  const termSaved = Math.max(0, baselineTermMonths - loan.resultSnapshot.totalTermInMonths);
 
   return {
     labelKey: 'saved.loanProgress',
@@ -161,6 +165,8 @@ const buildSavedProgress = (
     savingsAmount: hasOverpayment && savings > 0
       ? formatCurrency(savings, loan.currency)
       : undefined,
+    interestSaved: hasOverpayment && savings > 0 ? savings : undefined,
+    termSavedMonths: hasOverpayment && termSaved > 0 ? termSaved : undefined,
   };
 };
 

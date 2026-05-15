@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
@@ -17,6 +17,7 @@ interface Props {
   loan: SavedLoan;
   result: LoanResult;
   onTogglePinned: () => void;
+  onTryOverpayments: () => void;
 }
 
 const getRemainingTermCaptionKey = (monthsRemaining: number) => {
@@ -44,7 +45,15 @@ const SummaryFact = ({ label, value }: { label: string; value: string }) => (
 const findMetric = (metrics: LoanInsightMetric[], labelKey: string) =>
   metrics.find(m => m.labelKey === labelKey);
 
-export const LoanSummaryPanel = ({ loan, result, onTogglePinned }: Props) => {
+const formatTermDuration = (months: number, yrsLabel: string, moLabel: string): string => {
+  const years = Math.floor(months / 12);
+  const mo = months % 12;
+  if (years === 0) return `${mo} ${moLabel}`;
+  if (mo === 0) return `${years} ${yrsLabel}`;
+  return `${years} ${yrsLabel} ${mo} ${moLabel}`;
+};
+
+export const LoanSummaryPanel = ({ loan, result, onTogglePinned, onTryOverpayments }: Props) => {
   const { t, i18n } = useTranslation();
   const asOf = useMemo(() => new Date(), []);
   const insightSummary = useMemo(
@@ -74,7 +83,9 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned }: Props) => {
   const lumpSumEvents = loan.events
     .filter(e => e.type === 'lumpOverpayment' && (e.amount ?? 0) > 0)
     .sort((a, b) => a.date.localeCompare(b.date));
-  const savingsAmount = insightSummary.progress?.savingsAmount;
+  const hasOverpayment = additionalPayment > 0 || lumpSumEvents.length > 0;
+  const interestSaved = insightSummary.progress?.interestSaved;
+  const termSavedMonths = insightSummary.progress?.termSavedMonths;
 
   return (
     <View style={styles.panel}>
@@ -169,11 +180,37 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned }: Props) => {
               value={formatCurrency(event.amount ?? 0, loan.currency)}
             />
           ))}
-          {savingsAmount ? (
-            <SummaryFact label={t('mortgage.dealSavedSoFar')} value={savingsAmount} />
-          ) : null}
         </View>
       </View>
+
+      {/* Overpayment savings / nudge card */}
+      {hasOverpayment && interestSaved ? (
+        <View style={styles.savingsCard}>
+          <Text style={styles.savingsKicker}>{t('loan.overpaymentSavings')}</Text>
+          <View style={styles.savingsRow}>
+            <Text style={styles.savingsRowLabel}>{t('recalculate.interestSaved')}</Text>
+            <Text style={styles.savingsRowValue}>
+              {formatCurrency(interestSaved, loan.currency)}
+            </Text>
+          </View>
+          {termSavedMonths ? (
+            <View style={styles.savingsRow}>
+              <Text style={styles.savingsRowLabel}>{t('recalculate.timeSaved')}</Text>
+              <Text style={styles.savingsRowValue}>
+                {formatTermDuration(termSavedMonths, t('results.years'), t('results.months'))}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.nudgeCard}>
+          <Text style={styles.nudgeTitle}>{t('loan.nudgeTitle')}</Text>
+          <Text style={styles.nudgeBody}>{t('loan.nudgeBody')}</Text>
+          <TouchableOpacity onPress={onTryOverpayments} activeOpacity={0.84} style={styles.nudgeCta}>
+            <Text style={styles.nudgeCtaText}>{t('recalculate.ctaButton')} →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -277,5 +314,67 @@ const styles = StyleSheet.create({
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     color: colours.textPrimary,
+  },
+  savingsCard: {
+    borderRadius: radii.chip,
+    backgroundColor: colours.successSurface,
+    borderWidth: 1,
+    borderColor: colours.successBorder,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  savingsKicker: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.secondary,
+    textTransform: 'uppercase',
+    marginBottom: spacing.xxxs,
+  },
+  savingsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  savingsRowLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.sm,
+    color: colours.textSecondary,
+  },
+  savingsRowValue: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.secondary,
+  },
+  nudgeCard: {
+    borderRadius: radii.chip,
+    borderWidth: 1,
+    borderColor: colours.border,
+    borderStyle: 'dashed',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  nudgeTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+    textAlign: 'center',
+  },
+  nudgeBody: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textAlign: 'center',
+  },
+  nudgeCta: {
+    marginTop: spacing.xxxs,
+  },
+  nudgeCtaText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
+    color: colours.primary,
   },
 });

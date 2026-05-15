@@ -240,7 +240,10 @@
     "quickActions": "Quick actions",
     "quickActionsHelp": "Manage your loan",
     "addLumpSum": "Add lump sum",
-    "addLumpSumHelp": "Make a one-off payment to reduce your balance"
+    "addLumpSumHelp": "Make a one-off payment to reduce your balance",
+    "overpaymentSavings": "Overpayment savings",
+    "nudgeTitle": "Could you pay it off sooner?",
+    "nudgeBody": "Enter a monthly overpayment or a one-off lump sum to see how much interest you could save."
   },
   "mortgage": {
     "summaryTitle": "Mortgage Summary",
