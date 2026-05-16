@@ -54,20 +54,6 @@ export const CalculationSummaryPanel = ({
     <View style={styles.panel}>
       {/* Panel 1 — Key Metrics: 2×2 grid with equal visual prominence */}
       <View style={styles.summaryRaisedPanel}>
-        {onShare ? (
-          <TouchableOpacity
-            style={styles.shareAction}
-            onPress={onShare}
-            activeOpacity={0.82}
-            accessibilityRole="button"
-          >
-            {shareIcon ? <View style={styles.shareIcon}>{shareIcon}</View> : null}
-            <Text style={styles.shareText} numberOfLines={1}>
-              {shareLabel ?? t('share.short')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-
         {/* Row 1: Monthly Payment | Payoff Date */}
         <View style={styles.metricRow}>
           <View style={styles.metricCell}>
@@ -107,6 +93,21 @@ export const CalculationSummaryPanel = ({
           </View>
         </View>
       </View>
+
+      {/* Share action — outlined pill button below the key metrics */}
+      {onShare ? (
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={onShare}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+        >
+          {shareIcon ? <View style={styles.shareIcon}>{shareIcon}</View> : null}
+          <Text style={styles.shareButtonText} numberOfLines={1}>
+            {shareLabel ?? t('share.short')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       {/* Panel 2 — Loan Details (secondary info) */}
       <View style={styles.summaryRaisedPanel}>
@@ -150,20 +151,24 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     ...elevation.level2,
   },
-  shareAction: {
-    alignSelf: 'flex-end',
+  shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.xs,
-    minHeight: 32,
-    marginBottom: spacing.xs,
+    justifyContent: 'center',
+    minHeight: 48,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.white,
+    paddingHorizontal: spacing.xl,
+    gap: spacing.xs,
   },
   shareIcon: {
-    marginRight: 5,
+    marginRight: 2,
   },
-  shareText: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.xs,
+  shareButtonText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
     color: colours.primary,
   },
   metricRow: {
