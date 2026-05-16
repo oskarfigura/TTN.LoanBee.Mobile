@@ -52,7 +52,7 @@ const clamp = (value: number) => Math.max(0, Math.min(value, 1));
 
 const formatPercent = (value: number) => `${Number.isFinite(value) ? value : 0}%`;
 
-const formatPayoffDate = (startDate: string, totalMonths: number, locale?: string) => {
+export const formatPayoffDate = (startDate: string, totalMonths: number, locale?: string) => {
   const date = parseDateLabelValue(startDate);
   if (!date) return '—';
 

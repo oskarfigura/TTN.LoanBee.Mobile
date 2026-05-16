@@ -31,6 +31,7 @@ import { formatCurrency } from '@/currency/format';
 import { getCalculationWebShareUrl, ShareableCalculationValues } from '@/share/calculationShareLink';
 import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
 import { EditIcon } from '@/components/loans/LoanIcons';
+import { CalculationSummaryPanel } from '@/components/calculator/CalculationSummaryPanel';
 
 type ResultParams = {
   draftId?: string;
@@ -80,6 +81,10 @@ export default function ResultScreen() {
     ?? parseJson<Record<string, unknown>>(params.formValues)
   ), [draftSession?.formValues, params.formValues, savedLoan]);
   const currency = ((savedLoan?.currency ?? draftSession?.currency ?? params.currency) as CurrencyCode | undefined) ?? 'GBP';
+  const additionalMonthlyPayment =
+    typeof (formValues as Record<string, unknown>)?.additionalMonthlyPayment === 'number'
+      ? (formValues as Record<string, unknown>).additionalMonthlyPayment as number
+      : 0;
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   useEffect(() => {
@@ -244,6 +249,17 @@ export default function ResultScreen() {
         tabStyle="underline"
         showFinancialDisclaimer
         ownsScroll
+        summaryContent={!isSavedMode ? (
+          <CalculationSummaryPanel
+            result={result}
+            currency={currency}
+            startDate={String(formValues.startDate)}
+            additionalMonthlyPayment={additionalMonthlyPayment}
+            onShare={handleShare}
+            shareLabel={t('share.short')}
+            shareIcon={<ShareIcon color={colours.primary} />}
+          />
+        ) : undefined}
       />
 
       <View style={styles.adFooter}>
