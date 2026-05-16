@@ -469,6 +469,21 @@ export const projectDeal = (
     }
   }
 
+  // Apply lump-sum events in the current partial month (the period after the last
+  // complete-month projection). This handles the case where asOf is mid-month or
+  // the deal started in the same calendar month as asOf (monthsToProject = 0).
+  if (includeOverpayments) {
+    const partialMonthCursor = addMonths(monthStart(deal.startDate), monthsToProject);
+    const partialKey = `${partialMonthCursor.getFullYear()}-${String(partialMonthCursor.getMonth() + 1).padStart(2, '0')}`;
+    dealEvents
+      .filter(e => e.type === 'lumpOverpayment' && typeof e.amount === 'number' && monthKey(e.date) === partialKey)
+      .forEach(e => {
+        const amount = e.amount ?? 0;
+        balance = Math.max(0, balance - amount);
+        totalPaid += amount;
+      });
+  }
+
   if (deal.status === 'completed' && deal.completion) {
     const closingBalance = deal.completion.closingBalance;
     const principalPaid = Math.max(0, deal.openingBalance + deal.completion.feesAdded - closingBalance);
