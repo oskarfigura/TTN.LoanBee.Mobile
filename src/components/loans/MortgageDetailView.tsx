@@ -1929,6 +1929,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     backgroundColor: colours.surface,
     padding: spacing.md,
+    marginHorizontal: spacing.sm,
     marginBottom: spacing.sm,
     gap: spacing.sm,
   },
@@ -1942,6 +1943,7 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   soonerCardActive: {
+    marginHorizontal: spacing.sm,
     marginBottom: spacing.sm,
     backgroundColor: colours.successSurface,
     borderColor: colours.successBorder,

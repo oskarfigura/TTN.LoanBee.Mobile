@@ -398,6 +398,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colours.surfaceStrong,
     borderRadius: radii.card,
+    marginHorizontal: spacing.sm,
     marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
