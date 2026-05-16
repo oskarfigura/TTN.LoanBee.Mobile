@@ -103,7 +103,7 @@ const DealStats = ({
   asOf: Date;
 }) => {
   const { t, i18n } = useTranslation();
-  const impact = useMemo(() => getDealOverpaymentImpact(deal, events, asOf), [deal, events, asOf]);
+  const impact = useMemo(() => getDealOverpaymentImpact(deal, events), [deal, events]);
   const closingBalance = useMemo(() => {
     if (deal.status === 'completed' && deal.completion) {
       return { value: deal.completion.closingBalance, isPredicted: false };

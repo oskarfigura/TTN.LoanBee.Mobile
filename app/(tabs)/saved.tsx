@@ -1,6 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { LoanProfileCard } from '@/components/loans/LoanProfileCard';
@@ -16,8 +16,10 @@ export default function SavedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ fromDashboard?: string }>();
-  const { loans, togglePinned } = useSavedLoans();
+  const { loans, togglePinned, refresh } = useSavedLoans();
   const openedFromDashboard = params.fromDashboard === '1';
+
+  useFocusEffect(refresh);
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
