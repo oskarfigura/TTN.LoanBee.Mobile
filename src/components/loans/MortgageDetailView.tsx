@@ -1480,6 +1480,7 @@ const styles = StyleSheet.create({
     borderColor: colours.surfaceStrong,
     borderRadius: radii.card,
     marginBottom: spacing.sm,
+    marginHorizontal: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     gap: spacing.sm,
@@ -1976,6 +1977,7 @@ const styles = StyleSheet.create({
   },
   overpaymentCard: {
     marginBottom: 14,
+    marginHorizontal: spacing.sm,
   },
   overpaymentCardHeader: {
     flexDirection: 'row',
