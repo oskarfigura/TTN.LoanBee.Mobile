@@ -94,21 +94,6 @@ export const CalculationSummaryPanel = ({
         </View>
       </View>
 
-      {/* Share action — outlined pill button below the key metrics */}
-      {onShare ? (
-        <TouchableOpacity
-          style={styles.shareButton}
-          onPress={onShare}
-          activeOpacity={0.82}
-          accessibilityRole="button"
-        >
-          {shareIcon ? <View style={styles.shareIcon}>{shareIcon}</View> : null}
-          <Text style={styles.shareButtonText} numberOfLines={1}>
-            {shareLabel ?? t('share.short')}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-
       {/* Panel 2 — Loan Details (secondary info) */}
       <View style={styles.summaryRaisedPanel}>
         <View style={styles.summarySectionHeader}>
@@ -131,6 +116,21 @@ export const CalculationSummaryPanel = ({
           ) : null}
         </View>
       </View>
+
+      {/* Share action — outlined pill button below Loan Details */}
+      {onShare ? (
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={onShare}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+        >
+          {shareIcon ? <View style={styles.shareIcon}>{shareIcon}</View> : null}
+          <Text style={styles.shareButtonText} numberOfLines={1}>
+            {shareLabel ?? t('share.short')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
