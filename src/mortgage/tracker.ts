@@ -536,6 +536,55 @@ export const getDealOverpaymentImpact = (
   };
 };
 
+export const buildDealBalanceArrays = (
+  deal: LoanDeal,
+  events: MortgageEvent[],
+): { baseline: number[]; scenario: number[] } => {
+  const dealForChart: LoanDeal = deal.status === 'completed' && deal.completion
+    ? { ...deal, status: 'active', endDate: deal.completion.completedAt, completion: undefined }
+    : deal;
+
+  const dealEvents = getDealEvents(events, dealForChart.id);
+  const monthsToProject = monthsBetween(dealForChart.startDate, dealForChart.endDate);
+  const monthlyInterestRate = dealForChart.interestRate / 100 / 12;
+
+  const buildArray = (includeOverpayments: boolean): number[] => {
+    let balance = dealForChart.openingBalance;
+    const arr: number[] = [];
+
+    for (let month = 0; month < monthsToProject; month++) {
+      const cursor = addMonths(monthStart(dealForChart.startDate), month);
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+      const eventsInMonth = dealEvents.filter(event => monthKey(event.date) === key);
+      const hasSkippedPayment = eventsInMonth.some(event => (
+        event.type === 'missedPayment' || event.type === 'paymentHoliday'
+      ));
+
+      eventsInMonth
+        .filter(event => event.type === 'balanceCheckpoint' && typeof event.balance === 'number')
+        .forEach(event => { balance = event.balance ?? balance; });
+
+      const interest = balance * monthlyInterestRate;
+      const scheduledPayment = hasSkippedPayment ? 0 : dealForChart.monthlyPayment;
+      const regularOverpayment = includeOverpayments && !hasSkippedPayment ? dealForChart.regularOverpayment : 0;
+
+      balance = Math.max(0, balance + interest - scheduledPayment - regularOverpayment);
+
+      if (includeOverpayments) {
+        eventsInMonth
+          .filter(event => event.type === 'lumpOverpayment' && typeof event.amount === 'number')
+          .forEach(event => { balance = Math.max(0, balance - (event.amount ?? 0)); });
+      }
+
+      arr.push(toMoney(balance));
+    }
+
+    return arr;
+  };
+
+  return { baseline: buildArray(false), scenario: buildArray(true) };
+};
+
 export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGroup => {
   const deals = getChronologicalDeals(loan);
   if (deals.length < 2) return loan;

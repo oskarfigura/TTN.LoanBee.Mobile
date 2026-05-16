@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,9 +11,11 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { AppText } from '@/components/ui/AppText';
 import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { Button } from '@/components/ui/Button';
@@ -22,15 +24,28 @@ import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePick
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ChevronRightIcon, CoinsStackedIcon, InfoCircleIcon, PlusIcon } from '@/components/ui/Icons';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
 import { CURRENCIES } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { upsertMortgageEvent, removeMortgageEvent } from '@/mortgage/events';
-import { getDealOverpaymentImpact, normaliseDealChain } from '@/mortgage/tracker';
+import { buildDealBalanceArrays, getDealOverpaymentImpact, normaliseDealChain } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal, MortgageEvent } from '@/types/SavedLoan';
 import { colours, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
+
+const FullscreenIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M14 10L21 3M21 3H16.5M21 3V7.5M10 14L3 21M3 21H7.5M3 21L3 16.5"
+      stroke={colours.primary}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 export default function DealOverpaymentsScreen() {
   const { t, i18n } = useTranslation();
@@ -41,6 +56,21 @@ export default function DealOverpaymentsScreen() {
   const [monthlySheetVisible, setMonthlySheetVisible] = useState(false);
   const [lumpSumSheetVisible, setLumpSumSheetVisible] = useState(false);
   const [editingEvent, setEditingEvent] = useState<MortgageEvent | null>(null);
+  const [chartFullscreen, setChartFullscreen] = useState(false);
+
+  const openFullscreen = useCallback(() => {
+    setChartFullscreen(true);
+    ScreenOrientation.unlockAsync().catch(() => undefined);
+  }, []);
+
+  const closeFullscreen = useCallback(() => {
+    setChartFullscreen(false);
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
+  }, []);
+
+  useEffect(() => () => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
+  }, []);
 
   const refresh = useCallback(() => {
     setLoan(savedLoansStorage.getById(id));
@@ -63,6 +93,12 @@ export default function DealOverpaymentsScreen() {
     const result = getDealOverpaymentImpact(deal, loan.events);
     return result.hasOverpayments ? result : null;
   }, [deal, loan]);
+
+  const chartData = useMemo(() => {
+    if (!impact || !deal || !loan) return null;
+    const { baseline, scenario } = buildDealBalanceArrays(deal, loan.events);
+    return { baselineRemaining: baseline, scenarioRemaining: scenario };
+  }, [impact, deal, loan]);
 
   const saveMonthlyOverpayment = useCallback((amount: number) => {
     if (!loan || !deal) return;
@@ -230,6 +266,31 @@ export default function DealOverpaymentsScreen() {
           />
         </View>
 
+        {/* Balance Comparison Chart */}
+        {chartData ? (
+          <Pressable
+            onPress={openFullscreen}
+            accessibilityRole="button"
+            style={({ pressed }) => [pressed && styles.previewPressed]}
+          >
+            <Card style={styles.chartCard} padding={0}>
+              <View style={styles.chartHeader}>
+                <AppText variant="title3" style={styles.previewTitle}>{t('overpayments.balanceChart')}</AppText>
+                <View style={styles.fullscreenButton}>
+                  <FullscreenIcon />
+                </View>
+              </View>
+              <View style={styles.chartBody}>
+                <OverpaymentsComparisonChart
+                  baselineRemaining={chartData.baselineRemaining}
+                  scenarioRemaining={chartData.scenarioRemaining}
+                  currency={currency}
+                />
+              </View>
+            </Card>
+          </Pressable>
+        ) : null}
+
         {/* Date guidance note */}
         <View style={styles.dateNoteCard}>
           <InfoCircleIcon size={16} color={colours.textSecondary} strokeWidth={1.8} />
@@ -261,6 +322,33 @@ export default function DealOverpaymentsScreen() {
           setEditingEvent(null);
         }}
       />
+
+      <Modal
+        visible={chartFullscreen}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        supportedOrientations={['portrait', 'landscape', 'landscape-left', 'landscape-right']}
+        onRequestClose={closeFullscreen}
+      >
+        <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
+          <View style={styles.fullscreenHeader}>
+            <AppText variant="title3" style={styles.previewTitle}>{t('overpayments.balanceChart')}</AppText>
+            <TouchableOpacity style={styles.closeButton} onPress={closeFullscreen} activeOpacity={0.8}>
+              <AppText variant="labelSm" tone="accent" style={styles.actionButtonText}>{t('common.close')}</AppText>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.fullscreenBody} contentContainerStyle={styles.fullscreenContent}>
+            {chartData ? (
+              <OverpaymentsComparisonChart
+                baselineRemaining={chartData.baselineRemaining}
+                scenarioRemaining={chartData.scenarioRemaining}
+                currency={currency}
+                height={320}
+              />
+            ) : null}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -529,6 +617,57 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   dateNoteText: { flex: 1, lineHeight: 18 },
+  chartCard: { overflow: 'hidden' },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  chartBody: { padding: spacing.md, paddingBottom: spacing.sm },
+  previewPressed: { opacity: 0.84 },
+  previewTitle: { flex: 1 },
+  fullscreenButton: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderRadius: radii.button,
+    backgroundColor: colours.white,
+    borderWidth: 1,
+    borderColor: colours.border,
+  },
+  actionButtonText: { textTransform: 'uppercase' },
+  fullscreenSafe: { flex: 1, backgroundColor: colours.background },
+  fullscreenHeader: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: layout.screenPadding,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
+    backgroundColor: colours.background,
+  },
+  closeButton: {
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: radii.button,
+    backgroundColor: colours.surface,
+    borderWidth: 1,
+    borderColor: colours.border,
+  },
+  fullscreenBody: { flex: 1 },
+  fullscreenContent: { padding: layout.screenPadding, paddingBottom: spacing['2xl'] },
 });
 
 const sheetStyles = StyleSheet.create({
