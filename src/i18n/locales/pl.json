@@ -546,7 +546,10 @@
     "cancel": "Anuluj",
     "deleteConfirmTitle": "Usunąć nadpłatę?",
     "deleteConfirmMessage": "Ta jednorazowa nadpłata zostanie usunięta z pożyczki.",
-    "deleteConfirm": "Usuń"
+    "deleteConfirm": "Usuń",
+    "balanceChart": "Saldo w czasie",
+    "withOverpayments": "Z nadpłatami",
+    "withoutOverpayments": "Bez nadpłat"
   },
   "tabs": {
     "home": "Start",

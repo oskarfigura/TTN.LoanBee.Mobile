@@ -10,7 +10,7 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { formatCurrency } from '@/currency/format';
 import { buildResultSnapshot } from '@/loans/loanGroupFactory';
-import { computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
+import { buildScenarioRemainingArray, computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
 import { MortgageEvent } from '@/types/SavedLoan';
 import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
@@ -23,6 +23,7 @@ import { ChevronRightIcon, CoinsStackedIcon, PlusIcon } from '@/components/ui/Ic
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { MonthlyOverpaymentSheet } from '@/components/loans/MonthlyOverpaymentSheet';
 import { LumpSumSheet } from '@/components/loans/LumpSumSheet';
+import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
 
 const formatDuration = (totalMonths: number, yrs: string, mo: string): string => {
   const years = Math.floor(totalMonths / 12);
@@ -71,8 +72,8 @@ export default function OverpaymentsScreen() {
     return computeLoanOverpayments(form, monthlyOverpayment, lumpSumEntries);
   }, [form, monthlyOverpayment, lumpSumEntries]);
 
-  const { loanMinDate, loanMaxDate } = useMemo(() => {
-    if (!form) return { loanMinDate: new Date(), loanMaxDate: new Date() };
+  const { loanMinDate, loanMaxDate, baselineRemainingArray } = useMemo(() => {
+    if (!form) return { loanMinDate: new Date(), loanMaxDate: new Date(), baselineRemainingArray: [] };
     const start = parseDateLabelValue(form.startDate) ?? new Date();
     const baseline = getLoanCalculations(
       form.loanAmount, form.interest, form.termInYears, form.termInMonths,
@@ -87,8 +88,14 @@ export default function OverpaymentsScreen() {
     // Lump sums require at least one payment period (monthIndex must be >= 1)
     const minDate = new Date(start);
     minDate.setMonth(minDate.getMonth() + 1);
-    return { loanMinDate: minDate, loanMaxDate: end };
+    return { loanMinDate: minDate, loanMaxDate: end, baselineRemainingArray: baseline.loanChartRemainingArray };
   }, [form]);
+
+  const chartData = useMemo(() => {
+    if (!impact || !form) return null;
+    const scenarioRemaining = buildScenarioRemainingArray(form, monthlyOverpayment, lumpSumEntries);
+    return { baselineRemaining: baselineRemainingArray, scenarioRemaining };
+  }, [impact, form, monthlyOverpayment, lumpSumEntries, baselineRemainingArray]);
 
   const calcArgs = useMemo(() => {
     if (!form) return null;
@@ -254,6 +261,22 @@ export default function OverpaymentsScreen() {
             </AppText>
           </View>
         )}
+
+        {/* Balance Comparison Chart */}
+        {chartData ? (
+          <View style={styles.section}>
+            <AppText variant="title3" style={styles.sectionTitle}>
+              {t('overpayments.balanceChart')}
+            </AppText>
+            <Card style={styles.chartCard}>
+              <OverpaymentsComparisonChart
+                baselineRemaining={chartData.baselineRemaining}
+                scenarioRemaining={chartData.scenarioRemaining}
+                currency={currency}
+              />
+            </Card>
+          </View>
+        ) : null}
 
         {/* Monthly Overpayment */}
         <View style={styles.section}>
@@ -426,4 +449,8 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
   },
   addLumpSumBtn: {},
+  chartCard: {
+    padding: spacing.md,
+    paddingBottom: spacing.sm,
+  },
 });

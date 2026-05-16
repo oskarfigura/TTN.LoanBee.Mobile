@@ -558,7 +558,10 @@
     "cancel": "Cancel",
     "deleteConfirmTitle": "Delete overpayment?",
     "deleteConfirmMessage": "This lump-sum payment will be removed from your loan.",
-    "deleteConfirm": "Delete"
+    "deleteConfirm": "Delete",
+    "balanceChart": "Balance over time",
+    "withOverpayments": "With overpayments",
+    "withoutOverpayments": "Without overpayments"
   },
   "tabs": {
     "home": "Home",
