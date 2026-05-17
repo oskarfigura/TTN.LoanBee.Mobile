@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import {
+  AddDocumentIcon,
   AlertTriangleIcon,
   CalendarDateIcon,
   ChevronRightIcon,
@@ -149,6 +150,11 @@ export const MortgageDetailView = ({
     setActionDrawerVisible(false);
     router.push(href as Parameters<typeof router.push>[0]);
   };
+  const goToNewCalculation = () => {
+    setAddDrawerVisible(false);
+    setActionDrawerVisible(false);
+    router.push({ pathname: '/' as never, params: { calculator: '1' } });
+  };
   const openProjectionPreview = useCallback((preview: ProjectionPreview) => {
     setProjectionPreview(preview);
     ScreenOrientation.unlockAsync().catch(() => undefined);
@@ -257,13 +263,13 @@ export const MortgageDetailView = ({
             <DealOverpaymentsCard loan={loan} deal={overpaymentDeal} />
           ) : null}
 
-          {activeDeal ? (
-            <MortgageQuickActionsRow
-              onViewDeal={() => router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
-              onAdd={() => setAddDrawerVisible(true)}
-              onMore={() => setActionDrawerVisible(true)}
-            />
-          ) : null}
+          <MortgageQuickActionsRow
+            hasActiveDeal={!!activeDeal}
+            onViewDeal={() => activeDeal && router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
+            onNewCalculation={goToNewCalculation}
+            onAdd={() => setAddDrawerVisible(true)}
+            onMore={() => setActionDrawerVisible(true)}
+          />
         </View>
       ) : null}
 
@@ -391,6 +397,7 @@ export const MortgageDetailView = ({
         mode="add"
         onClose={() => setAddDrawerVisible(false)}
         onNavigate={navigateFromActions}
+        onNewCalculation={goToNewCalculation}
       />
       <QuickActionsDrawer
         title={t('common.more')}
@@ -402,6 +409,7 @@ export const MortgageDetailView = ({
         mode="more"
         onClose={() => setActionDrawerVisible(false)}
         onNavigate={navigateFromActions}
+        onNewCalculation={goToNewCalculation}
       />
     </ScrollView>
     </GestureDetector>
@@ -895,11 +903,15 @@ const DealOverpaymentsCard = ({
 };
 
 const MortgageQuickActionsRow = ({
+  hasActiveDeal,
   onViewDeal,
+  onNewCalculation,
   onAdd,
   onMore,
 }: {
+  hasActiveDeal: boolean;
   onViewDeal: () => void;
+  onNewCalculation: () => void;
   onAdd: () => void;
   onMore: () => void;
 }) => {
@@ -912,11 +924,19 @@ const MortgageQuickActionsRow = ({
         <Text style={styles.quickActionsHelper}>{t('mortgage.quickActionsHelp')}</Text>
       </View>
       <View style={styles.quickActionsRow}>
-        <SummaryQuickAction
-          label={t('mortgage.viewDeal')}
-          icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
-          onPress={onViewDeal}
-        />
+        {hasActiveDeal ? (
+          <SummaryQuickAction
+            label={t('mortgage.viewDeal')}
+            icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            onPress={onViewDeal}
+          />
+        ) : (
+          <SummaryQuickAction
+            label={t('results.newCalculation')}
+            icon={<AddDocumentIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            onPress={onNewCalculation}
+          />
+        )}
         <SummaryQuickAction
           label={t('mortgage.add')}
           icon={<PlusIcon size={21} color={colours.primary} />}
@@ -1067,6 +1087,7 @@ const QuickActionsDrawer = ({
   mode,
   onClose,
   onNavigate,
+  onNewCalculation,
 }: {
   title: string;
   visible: boolean;
@@ -1077,6 +1098,7 @@ const QuickActionsDrawer = ({
   mode: 'add' | 'more';
   onClose: () => void;
   onNavigate: (href: string) => void;
+  onNewCalculation: () => void;
 }) => {
   const { t } = useTranslation();
 
@@ -1132,7 +1154,18 @@ const QuickActionsDrawer = ({
                 />
               </>
             ) : null}
-            {mode === 'more' && activeDeal ? (
+            {mode === 'add' && !activeDeal ? (
+              <>
+                <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
+                <QuickActionOption
+                  title={t('mortgage.addDeal')}
+                  description={t('mortgage.addNextDealHelp')}
+                  icon={<CalendarDateIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/deals/new`)}
+                />
+              </>
+            ) : null}
+            {mode === 'more' ? (
               <>
                 <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
                 {canPlanNextDeal ? (
@@ -1151,7 +1184,7 @@ const QuickActionsDrawer = ({
                     onPress={() => onNavigate(`/saved/${loan.id}/deals/${draftDeal.id}`)}
                   />
                 ) : null}
-                {activeDeal.status === 'active' ? (
+                {activeDeal?.status === 'active' ? (
                   <QuickActionOption
                     title={t('mortgage.completeCurrentDeal')}
                     description={t('mortgage.completeCurrentDealHelp')}
@@ -1159,6 +1192,12 @@ const QuickActionsDrawer = ({
                     onPress={() => onNavigate(`/saved/${loan.id}/complete-current`)}
                   />
                 ) : null}
+                <QuickActionOption
+                  title={t('results.newCalculation')}
+                  description={t('mortgage.newCalculationHelp')}
+                  icon={<AddDocumentIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={onNewCalculation}
+                />
               </>
             ) : null}
           </ScrollView>
