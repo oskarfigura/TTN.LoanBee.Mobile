@@ -8,7 +8,7 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
@@ -143,7 +143,7 @@ export default function CompleteCurrentDealScreen() {
         <ScreenHeader
           title={t('mortgage.completeCurrentDeal')}
           variant="editor"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+          leftAction={<HeaderCloseAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
           <AppText variant="title3" style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</AppText>
@@ -159,7 +159,7 @@ export default function CompleteCurrentDealScreen() {
         title={t('mortgage.completeCurrentDeal')}
         subtitle={t('mortgage.completeDealHelp')}
         variant="editor"
-        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        leftAction={<HeaderCloseAction onPress={() => router.back()} />}
       />
       <KeyboardAvoidingView
         style={styles.keyboardView}
@@ -290,6 +290,12 @@ export default function CompleteCurrentDealScreen() {
           }}
           style={styles.action}
         />
+        <Button
+          label={t('save.cancel')}
+          onPress={() => router.back()}
+          variant="ghost"
+          style={styles.cancelBtn}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -329,4 +335,5 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   action: { marginTop: spacing.xl },
+  cancelBtn: { marginTop: spacing.xs },
 });

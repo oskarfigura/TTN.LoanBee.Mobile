@@ -24,7 +24,7 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { createLocalId } from '@/utils/id';
 import { colours, layout, radii, spacing } from '@/theme';
@@ -102,7 +102,7 @@ export default function SaveNewLoanScreen() {
         <ScreenHeader
           title={t('save.title')}
           variant="editor"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+          leftAction={<HeaderCloseAction onPress={() => router.back()} />}
         />
         <View style={styles.emptyState}>
           <AppText variant="bodyLg" style={styles.emptyStateText}>
@@ -216,7 +216,7 @@ export default function SaveNewLoanScreen() {
         title={t('save.title')}
         subtitle={t('save.subtitle')}
         variant="editor"
-        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        leftAction={<HeaderCloseAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
         <FormSection title={t('save.title')} accent>

@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
 
 const sheetStyles = StyleSheet.create({
   scrim: { flex: 1, backgroundColor: colours.modalScrim, justifyContent: 'flex-end' },
-  kav: { justifyContent: 'flex-end' },
+  kav: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colours.background,
     borderTopLeftRadius: radii.card,

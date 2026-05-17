@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DismissibleBanner } from '@/components/ui/DismissibleBanner';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
 import {
@@ -62,7 +62,7 @@ export default function NewDealScreen() {
         <ScreenHeader
           title={t('mortgage.addNextDeal')}
           variant="editor"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+          leftAction={<HeaderCloseAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
           <AppText variant="title3" style={styles.notFoundText}>{t('saved.notFound')}</AppText>
@@ -95,7 +95,7 @@ export default function NewDealScreen() {
       <ScreenHeader
         title={isInitialDeal ? t('mortgage.addFirstDeal') : t('mortgage.addNextDeal')}
         variant="editor"
-        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        leftAction={<HeaderCloseAction onPress={() => router.back()} />}
       />
       <DealEditorForm
         currency={loan.currency}

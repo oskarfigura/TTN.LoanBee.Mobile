@@ -20,6 +20,7 @@ import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import {
+  AddDocumentIcon,
   AlertTriangleIcon,
   CalendarDateIcon,
   ChevronRightIcon,
@@ -108,6 +109,7 @@ export const MortgageDetailView = ({
   const publishedDeals = getPublishedDeals(loan);
   const draftDeal = trackerSummary.nextDraftDeal;
   const canPlanNextDeal = !draftDeal;
+  const overpaymentDeal = activeDeal ?? publishedDeals[publishedDeals.length - 1];
   const switchTab = useCallback((nextTab: MortgageDetailTab) => {
     setActiveTab(nextTab);
     requestAnimationFrame(() => {
@@ -137,10 +139,21 @@ export const MortgageDetailView = ({
       if (event.translationX < -40) runOnJS(goNext)();
       else if (event.translationX > 40) runOnJS(goPrev)();
     }), [goNext, goPrev]);
+  // The amortisation table scrolls horizontally; while it is being scrolled the
+  // tab-swipe Pan must yield so a sideways drag on the table doesn't change tabs.
+  const tableScrollGesture = useMemo(
+    () => Gesture.Native().blocksExternalGesture(swipeGesture),
+    [swipeGesture],
+  );
   const navigateFromActions = (href: string) => {
     setAddDrawerVisible(false);
     setActionDrawerVisible(false);
     router.push(href as Parameters<typeof router.push>[0]);
+  };
+  const goToNewCalculation = () => {
+    setAddDrawerVisible(false);
+    setActionDrawerVisible(false);
+    router.push({ pathname: '/' as never, params: { calculator: '1' } });
   };
   const openProjectionPreview = useCallback((preview: ProjectionPreview) => {
     setProjectionPreview(preview);
@@ -246,21 +259,17 @@ export const MortgageDetailView = ({
             onOpenTimeline={() => switchTab('timeline')}
           />
 
-          {activeDeal ? (
-            <CouldPaySoonerCard loan={loan} currentDeal={activeDeal} />
+          {overpaymentDeal ? (
+            <DealOverpaymentsCard loan={loan} deal={overpaymentDeal} />
           ) : null}
 
-          {activeDeal ? (
-            <DealOverpaymentsCard loan={loan} currentDeal={activeDeal} />
-          ) : null}
-
-          {activeDeal ? (
-            <MortgageQuickActionsRow
-              onViewDeal={() => router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
-              onAdd={() => setAddDrawerVisible(true)}
-              onMore={() => setActionDrawerVisible(true)}
-            />
-          ) : null}
+          <MortgageQuickActionsRow
+            hasActiveDeal={!!activeDeal}
+            onViewDeal={() => activeDeal && router.push(`/saved/${loan.id}/deals/${activeDeal.id}`)}
+            onNewCalculation={goToNewCalculation}
+            onAdd={() => setAddDrawerVisible(true)}
+            onMore={() => setActionDrawerVisible(true)}
+          />
         </View>
       ) : null}
 
@@ -328,6 +337,7 @@ export const MortgageDetailView = ({
               items={projection.tableItems}
               startDate={publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate}
               currency={loan.currency}
+              scrollGesture={tableScrollGesture}
             />
           </Card>
         </View>
@@ -387,6 +397,7 @@ export const MortgageDetailView = ({
         mode="add"
         onClose={() => setAddDrawerVisible(false)}
         onNavigate={navigateFromActions}
+        onNewCalculation={goToNewCalculation}
       />
       <QuickActionsDrawer
         title={t('common.more')}
@@ -398,6 +409,7 @@ export const MortgageDetailView = ({
         mode="more"
         onClose={() => setActionDrawerVisible(false)}
         onNavigate={navigateFromActions}
+        onNewCalculation={goToNewCalculation}
       />
     </ScrollView>
     </GestureDetector>
@@ -816,28 +828,28 @@ const ContextMetric = ({
   </View>
 );
 
-const CouldPaySoonerCard = ({
+const DealOverpaymentsCard = ({
   loan,
-  currentDeal,
+  deal,
 }: {
   loan: SavedLoan;
-  currentDeal: LoanDeal;
+  deal: LoanDeal;
 }) => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const hasRegular = currentDeal.regularOverpayment > 0;
+  const hasRegular = deal.regularOverpayment > 0;
   const hasLumps = loan.events.some(
-    e => e.type === 'lumpOverpayment' && e.dealId === currentDeal.id,
+    e => e.type === 'lumpOverpayment' && e.dealId === deal.id,
   );
   const hasOverpayments = hasRegular || hasLumps;
 
   const impact = useMemo(
-    () => hasOverpayments ? getDealOverpaymentImpact(currentDeal, loan.events) : null,
-    [currentDeal, hasOverpayments, loan.events],
+    () => hasOverpayments ? getDealOverpaymentImpact(deal, loan.events) : null,
+    [deal, hasOverpayments, loan.events],
   );
 
-  const destination = `/saved/${loan.id}/deals/${currentDeal.id}/overpayments` as const;
+  const destination = `/saved/${loan.id}/deals/${deal.id}/overpayments` as const;
 
   if (hasOverpayments && impact) {
     return (
@@ -870,6 +882,8 @@ const CouldPaySoonerCard = ({
     );
   }
 
+  if (deal.status === 'completed') return null;
+
   return (
     <View style={styles.soonerNudgeCard}>
       <View style={styles.soonerNudgeInner}>
@@ -888,69 +902,16 @@ const CouldPaySoonerCard = ({
   );
 };
 
-const DealOverpaymentsCard = ({
-  loan,
-  currentDeal,
-}: {
-  loan: SavedLoan;
-  currentDeal: LoanDeal;
-}) => {
-  const { t, i18n } = useTranslation();
-  const router = useRouter();
-
-  const lumpOverpayments = loan.events
-    .filter(e => e.type === 'lumpOverpayment' && e.dealId === currentDeal.id)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  if (lumpOverpayments.length === 0) return null;
-
-  const impact = getDealOverpaymentImpact(currentDeal, loan.events);
-  const totalOverpaid = lumpOverpayments.reduce((sum, e) => sum + (e.amount ?? 0), 0);
-
-  return (
-    <Card style={styles.overpaymentCard}>
-      <View style={styles.overpaymentCardHeader}>
-        <Text style={styles.sectionTitle}>{t('mortgage.overpayments')}</Text>
-        <Button
-          label={t('mortgage.addOverpayment')}
-          onPress={() => router.push(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
-          variant="icon-pill"
-          style={styles.addActivityButton}
-        />
-      </View>
-      {lumpOverpayments.map(event => (
-        <TouchableOpacity
-          key={event.id}
-          style={styles.eventRow}
-          onPress={() => router.push(`/saved/${loan.id}/events/${event.id}`)}
-          activeOpacity={0.84}
-        >
-          <View style={styles.overpaymentRowLeft}>
-            <Text style={styles.eventTitle}>{formatCurrency(event.amount ?? 0, loan.currency)}</Text>
-          </View>
-          <Text style={styles.eventDate}>{formatFriendlyDate(event.date, i18n.language)}</Text>
-        </TouchableOpacity>
-      ))}
-      <View style={styles.overpaymentCardFooter}>
-        <Text style={styles.overpaymentFooterTotal}>
-          {t('mortgage.totalOverpaid')}: {formatCurrency(totalOverpaid, loan.currency)}
-        </Text>
-        {impact.interestSaved > 0 ? (
-          <Text style={styles.overpaymentFooterSaved}>
-            {t('mortgage.estInterestSaved')}: {formatCurrency(impact.interestSaved, loan.currency)}
-          </Text>
-        ) : null}
-      </View>
-    </Card>
-  );
-};
-
 const MortgageQuickActionsRow = ({
+  hasActiveDeal,
   onViewDeal,
+  onNewCalculation,
   onAdd,
   onMore,
 }: {
+  hasActiveDeal: boolean;
   onViewDeal: () => void;
+  onNewCalculation: () => void;
   onAdd: () => void;
   onMore: () => void;
 }) => {
@@ -963,11 +924,19 @@ const MortgageQuickActionsRow = ({
         <Text style={styles.quickActionsHelper}>{t('mortgage.quickActionsHelp')}</Text>
       </View>
       <View style={styles.quickActionsRow}>
-        <SummaryQuickAction
-          label={t('mortgage.viewDeal')}
-          icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
-          onPress={onViewDeal}
-        />
+        {hasActiveDeal ? (
+          <SummaryQuickAction
+            label={t('mortgage.viewDeal')}
+            icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            onPress={onViewDeal}
+          />
+        ) : (
+          <SummaryQuickAction
+            label={t('results.newCalculation')}
+            icon={<AddDocumentIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            onPress={onNewCalculation}
+          />
+        )}
         <SummaryQuickAction
           label={t('mortgage.add')}
           icon={<PlusIcon size={21} color={colours.primary} />}
@@ -1118,6 +1087,7 @@ const QuickActionsDrawer = ({
   mode,
   onClose,
   onNavigate,
+  onNewCalculation,
 }: {
   title: string;
   visible: boolean;
@@ -1128,6 +1098,7 @@ const QuickActionsDrawer = ({
   mode: 'add' | 'more';
   onClose: () => void;
   onNavigate: (href: string) => void;
+  onNewCalculation: () => void;
 }) => {
   const { t } = useTranslation();
 
@@ -1169,6 +1140,33 @@ const QuickActionsDrawer = ({
                   icon={<MessageTextCircleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=note`)}
                 />
+                <QuickActionOption
+                  title={t('mortgage.eventMissedPayment')}
+                  description={t('mortgage.missedPaymentHelp')}
+                  icon={<AlertTriangleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=missedPayment`)}
+                />
+                <QuickActionOption
+                  title={t('mortgage.eventPaymentHoliday')}
+                  description={t('mortgage.paymentHolidayHelp')}
+                  icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=paymentHoliday`)}
+                />
+              </>
+            ) : null}
+            {mode === 'add' && !activeDeal ? (
+              <>
+                <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
+                <QuickActionOption
+                  title={t('mortgage.addDeal')}
+                  description={t('mortgage.addNextDealHelp')}
+                  icon={<CalendarDateIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={() => onNavigate(`/saved/${loan.id}/deals/new`)}
+                />
+              </>
+            ) : null}
+            {mode === 'more' ? (
+              <>
                 <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
                 {canPlanNextDeal ? (
                   <QuickActionOption
@@ -1186,34 +1184,20 @@ const QuickActionsDrawer = ({
                     onPress={() => onNavigate(`/saved/${loan.id}/deals/${draftDeal.id}`)}
                   />
                 ) : null}
-              </>
-            ) : null}
-            {mode === 'more' && activeDeal ? (
-              <>
-                <Text style={styles.drawerGroupTitle}>{t('mortgage.eventGroup')}</Text>
-                <QuickActionOption
-                  title={t('mortgage.eventMissedPayment')}
-                  description={t('mortgage.missedPaymentHelp')}
-                  icon={<AlertTriangleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
-                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=missedPayment`)}
-                />
-                <QuickActionOption
-                  title={t('mortgage.eventPaymentHoliday')}
-                  description={t('mortgage.paymentHolidayHelp')}
-                  icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
-                  onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=paymentHoliday`)}
-                />
-                {activeDeal.status === 'active' ? (
-                  <>
-                    <Text style={styles.drawerGroupTitle}>{t('mortgage.dealGroup')}</Text>
-                    <QuickActionOption
-                      title={t('mortgage.completeCurrentDeal')}
-                      description={t('mortgage.completeCurrentDealHelp')}
-                      icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
-                      onPress={() => onNavigate(`/saved/${loan.id}/complete-current`)}
-                    />
-                  </>
+                {activeDeal?.status === 'active' ? (
+                  <QuickActionOption
+                    title={t('mortgage.completeCurrentDeal')}
+                    description={t('mortgage.completeCurrentDealHelp')}
+                    icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    onPress={() => onNavigate(`/saved/${loan.id}/complete-current`)}
+                  />
                 ) : null}
+                <QuickActionOption
+                  title={t('results.newCalculation')}
+                  description={t('mortgage.newCalculationHelp')}
+                  icon={<AddDocumentIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  onPress={onNewCalculation}
+                />
               </>
             ) : null}
           </ScrollView>

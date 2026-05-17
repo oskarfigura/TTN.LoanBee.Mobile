@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageEventForm, mortgageEventTypes } from '@/components/loans/MortgageEventForm';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { upsertMortgageEvent } from '@/mortgage/events';
 import { getCurrentDeal } from '@/mortgage/tracker';
@@ -28,7 +28,7 @@ export default function NewMortgageEventScreen() {
         <ScreenHeader
           title={t('mortgage.addEvent')}
           variant="editor"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+          leftAction={<HeaderCloseAction onPress={() => router.back()} />}
         />
         <View style={styles.notFound}>
           <AppText variant="title3" style={styles.notFoundText}>{t('mortgage.noCurrentDeal')}</AppText>
@@ -44,7 +44,7 @@ export default function NewMortgageEventScreen() {
         title={t('mortgage.addEvent')}
         subtitle={t('mortgage.eventHelp')}
         variant="editor"
-        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        leftAction={<HeaderCloseAction onPress={() => router.back()} />}
       />
       <KeyboardAvoidingView
         style={styles.keyboardView}

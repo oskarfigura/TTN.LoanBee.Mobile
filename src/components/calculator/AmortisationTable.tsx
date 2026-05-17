@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutChangeEvent } from 'react-native';
+import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { colours, fontFaces, fontSizes } from '@/theme';
 import { formatCurrency } from '@/currency/format';
@@ -16,6 +17,10 @@ interface Props {
   startDate: string;
   currency: CurrencyCode;
   pageSize?: number;
+  // When the table sits inside a horizontally-swipeable container (e.g. the
+  // mortgage tab pager), pass a Gesture.Native() so the parent swipe yields to
+  // the table's own horizontal scroll instead of changing tabs.
+  scrollGesture?: NativeGesture;
 }
 
 const TABLE_WIDTH = 452;
@@ -23,7 +28,7 @@ const PERIOD_COLUMN_WIDTH = 96;
 const BALANCE_COLUMN_WIDTH = 116;
 const PAYMENT_COLUMN_WIDTH = 124;
 
-export const AmortisationTable = ({ items, startDate, currency, pageSize = 12 }: Props) => {
+export const AmortisationTable = ({ items, startDate, currency, pageSize = 12, scrollGesture }: Props) => {
   const { t, i18n } = useTranslation();
   const [page, setPage] = useState(0);
   const [isPagePickerOpen, setIsPagePickerOpen] = useState(false);
@@ -54,13 +59,12 @@ export const AmortisationTable = ({ items, startDate, currency, pageSize = 12 }:
     return t('mortgage.future');
   };
 
-  return (
-    <View onLayout={handleTableLayout}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tableScrollContent}
-      >
+  const tableScroll = (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.tableScrollContent}
+    >
         <View style={[styles.table, { width: tableWidth }]}>
           <View style={styles.headerRow}>
             <Text style={[styles.headerCell, styles.periodCell, periodColumnStyle]}>
@@ -120,7 +124,16 @@ export const AmortisationTable = ({ items, startDate, currency, pageSize = 12 }:
             );
           })}
         </View>
-      </ScrollView>
+    </ScrollView>
+  );
+
+  return (
+    <View onLayout={handleTableLayout}>
+      {scrollGesture ? (
+        <GestureDetector gesture={scrollGesture}>{tableScroll}</GestureDetector>
+      ) : (
+        tableScroll
+      )}
 
       {totalPages > 1 && (
         <View style={styles.paginationWrap}>

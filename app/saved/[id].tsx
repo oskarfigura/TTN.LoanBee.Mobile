@@ -260,13 +260,20 @@ export default function LoanDetailScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionMenuRow}
-                      onPress={() => navigateFromMortgageMenu(`/saved/${loan.id}/events/new?type=lumpOverpayment`)}
+                      onPress={() => navigateFromMortgageMenu(`/saved/${loan.id}/deals/${currentDeal.id}/overpayments`)}
                       activeOpacity={0.84}
                     >
                       <Text style={styles.actionMenuText}>{t('mortgage.addOverpaymentToCurrentDeal')}</Text>
                     </TouchableOpacity>
                   </>
                 ) : null}
+                <TouchableOpacity
+                  style={styles.actionMenuRow}
+                  onPress={() => navigateFromMortgageMenu(`/saved/${loan.id}/edit`)}
+                  activeOpacity={0.84}
+                >
+                  <Text style={styles.actionMenuText}>{t('mortgage.manageDetails')}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.actionMenuRow} onPress={openRenameModal} activeOpacity={0.84}>
                   <Text style={styles.actionMenuText}>{t('mortgage.renameMortgage')}</Text>
                 </TouchableOpacity>

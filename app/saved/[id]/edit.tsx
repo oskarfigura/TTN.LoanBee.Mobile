@@ -1,55 +1,22 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/currency/format';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
-import { PinIcon, PlusIcon, SwitchIcon, TimelineIcon } from '@/components/loans/LoanIcons';
+import { PinIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { getDraftDeals, getMortgageTrackerSummary } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
-import { formatFriendlyDate, formatFriendlyDateRange } from '@/utils/date';
-
-const TrackingActionTile = ({
-  label,
-  icon,
-  onPress,
-  emphasis = false,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onPress: () => void;
-  emphasis?: boolean;
-}) => (
-  <TouchableOpacity
-    style={[styles.trackingActionTile, emphasis && styles.trackingActionTilePrimary]}
-    onPress={onPress}
-    activeOpacity={0.84}
-    accessibilityRole="button"
-  >
-    <View style={[styles.trackingActionIcon, emphasis && styles.trackingActionIconPrimary]}>
-      {icon}
-    </View>
-    <AppText
-      variant="labelMd"
-      tone={emphasis ? 'inverse' : 'accent'}
-      style={styles.trackingActionLabel}
-      numberOfLines={2}
-    >
-      {label}
-    </AppText>
-  </TouchableOpacity>
-);
 
 export default function EditLoanScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const loan = savedLoansStorage.getById(id);
@@ -57,13 +24,6 @@ export default function EditLoanScreen() {
   const [nickname, setNickname] = useState(loan?.nickname ?? '');
   const [lender, setLender] = useState(loan?.lender ?? '');
   const [pinnedToDashboard, setPinnedToDashboard] = useState(loan?.pinnedToDashboard ?? false);
-
-  const mortgageSummary = useMemo(() => (
-    loan?.category === 'mortgage' ? getMortgageTrackerSummary(loan) : null
-  ), [loan]);
-  const draftDeals = useMemo(() => (
-    loan?.category === 'mortgage' ? getDraftDeals(loan) : []
-  ), [loan]);
 
   if (!loan) {
     return (
@@ -98,8 +58,6 @@ export default function EditLoanScreen() {
     });
     router.back();
   };
-
-  const currentDeal = mortgageSummary?.currentDeal;
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -169,74 +127,6 @@ export default function EditLoanScreen() {
           </AppText>
         </TouchableOpacity>
 
-        {loan.category === 'mortgage' && (
-          <View style={styles.trackingSection}>
-            <AppText variant="title2">{t('edit.specifics')}</AppText>
-
-            <Card style={styles.specificsCard}>
-              <AppText variant="title3">
-                {currentDeal ? t('mortgage.currentDeal') : t('mortgage.savedMortgageEstimate')}
-              </AppText>
-              {currentDeal ? (
-                <>
-                  <AppText variant="title2" tone="accent" style={styles.dealTitle}>{currentDeal.name}</AppText>
-                  <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
-                    {formatFriendlyDateRange(currentDeal.startDate, currentDeal.endDate, i18n.language)}
-                  </AppText>
-                  <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
-                    {currentDeal.interestRate}% · {currentDeal.repaymentType === 'interestOnly' ? t('mortgage.interestOnly') : t('mortgage.repayment')}
-                  </AppText>
-                </>
-              ) : (
-                <AppText variant="bodyMd" tone="muted" style={styles.bodyText}>{t('mortgage.noDealChangesBody')}</AppText>
-              )}
-            </Card>
-
-            {draftDeals.length > 0 && (
-              <Card style={styles.specificsCard}>
-                <AppText variant="title3">{t('mortgage.nextDealDraft')}</AppText>
-                {draftDeals.map(deal => (
-                  <TouchableOpacity
-                    key={deal.id}
-                    style={styles.draftRow}
-                    onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
-                  >
-                    <View>
-                      <AppText variant="title2" tone="accent" style={styles.dealTitle}>{deal.name}</AppText>
-                      <AppText variant="bodySm" tone="muted" style={styles.dealMeta}>
-                        {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
-                      </AppText>
-                    </View>
-                    <AppText variant="labelMd" tone="accent">{t('saved.edit')}</AppText>
-                  </TouchableOpacity>
-                ))}
-              </Card>
-            )}
-
-            <AppText variant="bodySm" tone="muted" style={styles.helperText}>{t('edit.mortgageSpecificsHelp')}</AppText>
-            <View style={styles.trackingActions}>
-              <TrackingActionTile
-                label={t('mortgage.viewTimeline')}
-                icon={<TimelineIcon color={colours.primary} />}
-                onPress={() => router.push(`/saved/${loan.id}/timeline`)}
-              />
-              <TrackingActionTile
-                label={currentDeal ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
-                icon={<PlusIcon color={colours.primary} />}
-                onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
-              />
-              {currentDeal ? (
-                <TrackingActionTile
-                  label={t('mortgage.completeCurrentDeal')}
-                  icon={<SwitchIcon color={colours.white} />}
-                  onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
-                  emphasis
-                />
-              ) : null}
-            </View>
-          </View>
-        )}
-
         <Button
           label={t('edit.save')}
           onPress={handleSave}
@@ -290,56 +180,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   pinMeta: { marginTop: spacing.xs },
-  trackingSection: { marginTop: spacing.xl },
-  specificsCard: { marginTop: spacing.md },
-  dealTitle: { marginTop: spacing.sm },
-  dealMeta: { marginTop: spacing.xxs },
-  draftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    paddingTop: spacing.sm,
-  },
   bodyText: { marginTop: spacing.xs },
-  helperText: { marginTop: spacing.md },
   stackAction: { marginTop: spacing.sm },
-  trackingActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  trackingActionTile: {
-    flexGrow: 1,
-    flexBasis: '46%',
-    minHeight: 78,
-    borderRadius: radii.input,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surfaceRaised,
-    padding: spacing.sm,
-    justifyContent: 'space-between',
-  },
-  trackingActionTilePrimary: {
-    flexBasis: '100%',
-    backgroundColor: colours.primary,
-    borderColor: colours.primary,
-  },
-  trackingActionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colours.surfaceMuted,
-  },
-  trackingActionIconPrimary: {
-    backgroundColor: colours.whiteSubtle,
-  },
-  trackingActionLabel: {
-    marginTop: spacing.sm,
-  },
   saveBtn: { marginTop: spacing.xl },
   cancelBtn: { marginTop: spacing.xs },
 });
