@@ -54,6 +54,14 @@ export default function SettingsScreen() {
         <Card style={styles.section} padding={layout.cardPadding}>
           <TouchableOpacity
             style={styles.linkRow}
+            onPress={() => router.push('/guide')}
+          >
+            <AppText variant="bodyMd" tone="accent">{t('guide.settingsEntry')}</AppText>
+            <AppText variant="title2" tone="muted">›</AppText>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.linkRow}
             onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
           >
             <AppText variant="bodyMd" tone="accent">{t('settings.termsAndConditions')}</AppText>

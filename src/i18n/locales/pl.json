@@ -166,17 +166,163 @@
     "faqItems": [
       {
         "q": "Czym jest amortyzacja kredytu?",
-        "a": "Amortyzacja kredytu to spłata zobowiązania w regularnych ratach, które stopniowo zmniejszają saldo. Każda rata zwykle obejmuje kapitał i odsetki."
+        "a": "Amortyzacja kredytu to systematyczna spłata zobowiązania w regularnych ratach. Każda rata jest zwykle dzielona na kapitał i odsetki. Wczesne raty zawierają więcej odsetek, bo saldo jest wysokie, a z czasem coraz większa część raty idzie na kapitał."
       },
       {
-        "q": "Czy mogę uwzględnić nadpłaty?",
-        "a": "Tak. Możesz dodać dodatkową miesięczną spłatę, aby zobaczyć, jak może skrócić okres kredytu i obniżyć łączny koszt odsetek."
+        "q": "Harmonogram spłat kredytu w czasie",
+        "a": "Harmonogram amortyzacji pokazuje, jak każda rata może dzielić się na kapitał i odsetki oraz jak saldo może maleć w czasie. Jest przydatny do planowania, ale rzeczywiste harmonogramy banku mogą się różnić z powodu opłat, zmiennego oprocentowania, zaokrągleń lub zasad konkretnego kredytodawcy."
+      },
+      {
+        "q": "Czy warto nadpłacać, aby szybciej spłacić kredyt?",
+        "a": "Nadpłaty szybciej obniżają kapitał, co może zmniejszyć łączne odsetki i skrócić okres spłaty. Przed nadpłatą rozważ poduszkę finansową, inne zadłużenie o wysokim oprocentowaniu, oszczędności emerytalne oraz ewentualne opłaty za wcześniejszą spłatę."
+      },
+      {
+        "q": "Co wziąć pod uwagę przy nadpłatach kredytu",
+        "a": "Uwzględnij swój budżet, zadłużenie o wysokim oprocentowaniu, fundusz awaryjny, cele emerytalne oraz to, czy pomocna byłaby porada specjalisty. Nadpłaty bywają korzystne, ale powinny pasować do szerszego planu finansowego."
+      },
+      {
+        "q": "Podstawowe pojęcia kredytowe w prosty sposób",
+        "a": "Kapitał to kwota, którą pożyczasz. Odsetki to dodatkowy koszt naliczany przez kredytodawcę. Okres to czas spłaty kredytu. Rata miesięczna to kwota płacona co miesiąc. Saldo to kwota, którą wciąż jesteś winien."
       },
       {
         "q": "Jakie są dwa tryby kalkulatora?",
         "a": "Tryb według okresu oblicza ratę z długości kredytu. Tryb według raty oblicza przewidywany czas spłaty z docelowej miesięcznej płatności."
+      },
+      {
+        "q": "Jak zapisać kredyt lub kredyt hipoteczny?",
+        "a": "Po wykonaniu obliczeń dotknij Zapisz ten kredyt na ekranie wyników. Nadaj nazwę i wybierz, czy to kredyt, czy kredyt hipoteczny. Pojawi się w zakładce Zapisane, gdzie możesz śledzić postęp w czasie."
+      },
+      {
+        "q": "Czym różni się tu kredyt od kredytu hipotecznego?",
+        "a": "Kredyt ma prosty widok postępu skupiony na oszczędnościach z nadpłat. Kredyt hipoteczny odblokowuje pełny pulpit śledzenia, gdzie zapisujesz realne salda, zarządzasz okresami oprocentowania i widzisz oś czasu aktywności."
+      },
+      {
+        "q": "Czym jest okres oprocentowania (deal)?",
+        "a": "To jeden okres oprocentowania kredytu hipotecznego — na przykład stała stopa na 2 lub 5 lat. Większość kredytów przechodzi przez kilka takich okresów, a LoanBee pozwala zapisać każdy z nich, by prognozy odzwierciedlały rzeczywistość."
+      },
+      {
+        "q": "Jak dodać lub zmienić bieżący okres oprocentowania?",
+        "a": "Otwórz zapisany kredyt hipoteczny i użyj Dodaj okres (lub Dodaj bieżący okres), a następnie podaj stopę, podstawę raty, czas trwania i datę początku. Po zakończeniu okres się finalizuje, a kolejny można przygotować z wyprzedzeniem jako wersję roboczą."
+      },
+      {
+        "q": "Co się dzieje, gdy okres oprocentowania się kończy?",
+        "a": "Zakończ okres, aby zapisać to, co naprawdę się wydarzyło — saldo końcowe, doliczone opłaty, dodatkowe finansowanie i pozostały okres. LoanBee korzysta z tych potwierdzonych danych, by dalsza prognoza pozostała dokładna."
+      },
+      {
+        "q": "Jak zapisać nadpłaty?",
+        "a": "Otwórz kredyt lub kredyt hipoteczny i dodaj miesięczną nadpłatę albo jednorazową wpłatę. Nadpłaty miesięczne obowiązują w każdym miesiącu okresu; wpłaty jednorazowe w wybranej dacie."
+      },
+      {
+        "q": "Jak obliczane są moje oszczędności na odsetkach?",
+        "a": "LoanBee wykonuje obliczenia dwukrotnie — raz z nadpłatami, raz bez — i pokazuje różnicę w łącznych odsetkach jako oszczędność. Plakietka oszczędności pojawia się dopiero po dodaniu nadpłaty."
+      },
+      {
+        "q": "Dlaczego prognozowana spłata różni się od danych mojego banku?",
+        "a": "Prognozy mają charakter poglądowy. Rzeczywiste harmonogramy banków różnią się z powodu opłat, zaokrągleń, zmiennego oprocentowania, terminów płatności i zasad konkretnego kredytodawcy. Zapisywanie realnego salda utrzymuje szacunek blisko rzeczywistości."
+      },
+      {
+        "q": "Jak utrzymać dokładność prognoz w czasie?",
+        "a": "Zapisuj punkt kontrolny salda zawsze, gdy znasz realne saldo zadłużenia. LoanBee zakotwicza przyszłe prognozy na tej potwierdzonej kwocie, zamiast oddalać się od pierwotnego szacunku."
+      },
+      {
+        "q": "Czym jest pulpit główny i jak przypiąć kredyt hipoteczny?",
+        "a": "W zapisanym kredycie hipotecznym użyj Przypnij do pulpitu. Przypięte kredyty są pierwszą rzeczą widoczną po otwarciu aplikacji, z saldem i postępem na pierwszy rzut oka. Możesz przypiąć kilka i zmieniać ich kolejność."
+      },
+      {
+        "q": "Czy mogę zmienić walutę?",
+        "a": "Tak. Ustaw domyślną walutę w Ustawieniach, a każdy zapisany kredyt zachowuje walutę, w której powstał. Obsługiwane waluty to GBP, EUR, USD i PLN."
+      },
+      {
+        "q": "Czy mogę zmienić język aplikacji?",
+        "a": "Tak. W Ustawieniach jest przełącznik języka. LoanBee obsługuje obecnie angielski i polski, a przy pierwszym uruchomieniu używa języka urządzenia."
+      },
+      {
+        "q": "Czy moje dane są prywatne?",
+        "a": "Wszystkie kredyty i kredyty hipoteczne są przechowywane wyłącznie na Twoim urządzeniu. Nie ma konta i nic nie jest wysyłane na serwer."
+      },
+      {
+        "q": "Gdzie mogę ponownie zobaczyć ten przewodnik?",
+        "a": "Przewodnik Jak to działa jest zawsze dostępny w zakładce O Aplikacji oraz w Ustawieniach, więc możesz wrócić do każdej funkcji w dowolnej chwili."
       }
     ]
+  },
+  "guide": {
+    "title": "Jak to działa",
+    "headerKicker": "WITAMY W LOANBEE",
+    "headerTitle": "Planuj kredyty, śledź hipotekę",
+    "headerBody": "LoanBee zamienia liczby kryjące się za każdym kredytem lub kredytem hipotecznym w przejrzysty obraz — ile zapłacisz, jak szybko możesz być bez długu i ile naprawdę daje nadpłacanie. Oto dwuminutowy przegląd.",
+    "sections": [
+      {
+        "icon": "calculator",
+        "title": "1 · Wykonaj obliczenia",
+        "body": "Otwórz zakładkę Kalkulator i podaj kwotę, oprocentowanie i okres. Wybierz walutę oraz opcjonalnie datę początku, kredytodawcę i wkład własny.",
+        "steps": [
+          "Według okresu — podaj długość kredytu, a LoanBee obliczy ratę miesięczną.",
+          "Według raty — podaj miesięczną kwotę, na jaką Cię stać, a LoanBee obliczy czas spłaty.",
+          "Dodaj opcjonalną miesięczną nadpłatę, aby od razu zobaczyć efekt."
+        ]
+      },
+      {
+        "icon": "results",
+        "title": "2 · Odczytaj wyniki",
+        "body": "Każde obliczenie podaje ratę miesięczną, łączne odsetki, łączny koszt i datę spłaty.",
+        "steps": [
+          "Przełączaj się między wykresami a pełnym harmonogramem miesiąc po miesiącu.",
+          "Wyeksportuj harmonogram do CSV lub udostępnij link z podsumowaniem.",
+          "Zmieniaj dane i przeliczaj tyle razy, ile chcesz."
+        ]
+      },
+      {
+        "icon": "save",
+        "title": "3 · Zapisz kredyt lub hipotekę",
+        "body": "Dotknij Zapisz ten kredyt na ekranie wyników. Nadaj nazwę, wybierz Kredyt lub Hipoteka, a pozycja pojawi się w zakładce Zapisane.",
+        "steps": [
+          "Kredyty mają prosty widok postępu z oszczędnościami z nadpłat.",
+          "Kredyty hipoteczne odblokowują pełny pulpit śledzenia.",
+          "Każda zapisana pozycja zachowuje własną walutę."
+        ]
+      },
+      {
+        "icon": "dashboard",
+        "title": "4 · Śledź kredyt hipoteczny",
+        "body": "Otwórz zapisaną hipotekę, aby zobaczyć pulpit: bieżące saldo, postęp czasu i kwoty, szacowane zapłacone odsetki i prognozowaną datę końca.",
+        "steps": [
+          "Przypnij kredyt, aby był ekranem widocznym po uruchomieniu aplikacji.",
+          "Zapisuj realne saldo z banku, aby prognozy były rzetelne.",
+          "Oś czasu wymienia po kolei każdy okres i każdą aktywność."
+        ]
+      },
+      {
+        "icon": "deals",
+        "title": "5 · Zarządzaj okresami oprocentowania",
+        "body": "Kredyt hipoteczny składa się z okresów oprocentowania — stałych lub zmiennych. Dodaj bieżący okres, a potem planuj lub finalizuj kolejne wraz z biegiem kredytu.",
+        "steps": [
+          "Dodaj bieżący okres z jego stopą, czasem trwania i datą początku.",
+          "Zakończ okres, gdy się kończy, aby zapisać, co naprawdę się stało.",
+          "Przygotuj kolejny okres jako wersję roboczą, by zobaczyć zmianę z wyprzedzeniem."
+        ]
+      },
+      {
+        "icon": "overpayments",
+        "title": "6 · Zobacz, ile daje nadpłacanie",
+        "body": "Dodaj regularną miesięczną nadpłatę lub jednorazowe wpłaty do dowolnego okresu. LoanBee pokazuje zaoszczędzone odsetki i skrócony czas — w tym tkwi cała wartość aplikacji.",
+        "steps": [
+          "Nadpłaty miesięczne obowiązują w każdym miesiącu okresu.",
+          "Wpłaty jednorazowe obowiązują w wybranej dacie.",
+          "Oszczędności aktualizują się automatycznie na pulpicie i osi czasu."
+        ]
+      }
+    ],
+    "faqKicker": "MASZ WIĘCEJ PYTAŃ?",
+    "faqTitle": "Więcej odpowiedzi w FAQ",
+    "faqBody": "Zakładka O Aplikacji zawiera rozszerzone FAQ o nadpłatach, walutach, Twoich danych i nie tylko.",
+    "faqCta": "Otwórz FAQ",
+    "primaryCtaFirstRun": "Zaczynamy",
+    "primaryCta": "Gotowe",
+    "aboutEntryTitle": "Pierwszy raz w LoanBee?",
+    "aboutEntryBody": "Zobacz szybki przegląd wszystkich funkcji.",
+    "aboutEntryCta": "Jak to działa",
+    "settingsEntry": "Jak to działa"
   },
   "settings": {
     "title": "Ustawienia",

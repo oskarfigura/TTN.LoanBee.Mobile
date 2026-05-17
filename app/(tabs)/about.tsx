@@ -3,9 +3,11 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { ArrowRightIcon } from '@/components/ui/Icons';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -34,6 +36,17 @@ export default function AboutScreen() {
         ) : undefined}
       />
       <ScrollView contentContainerStyle={styles.container}>
+        <Card style={styles.guideCard} variant="status" padding={layout.cardPadding}>
+          <AppText variant="title3" style={styles.guideTitle}>{t('guide.aboutEntryTitle')}</AppText>
+          <AppText variant="bodySm" tone="muted" style={styles.guideBody}>{t('guide.aboutEntryBody')}</AppText>
+          <Button
+            label={t('guide.aboutEntryCta')}
+            variant="secondary"
+            onPress={() => router.push('/guide')}
+            rightIcon={<ArrowRightIcon color={colours.primaryInk} size={18} strokeWidth={2} />}
+          />
+        </Card>
+
         <Card style={styles.card} variant="accent" padding={layout.cardPadding}>
           <AppText variant="title2" tone="accent" style={styles.title}>{t('about.formula')}</AppText>
           <AppText variant="bodyMd" tone="muted" style={styles.body}>{t('about.formulaDesc')}</AppText>
@@ -100,6 +113,9 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
+  guideCard: { marginBottom: spacing.md },
+  guideTitle: { marginBottom: spacing.xxs },
+  guideBody: { marginBottom: spacing.sm },
   card: { marginBottom: spacing.md },
   title: {
     marginBottom: spacing.sm,

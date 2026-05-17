@@ -62,6 +62,7 @@ export default function RootLayout() {
           <AdProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="guide" />
               <Stack.Screen
                 name="saved/new"
                 options={{
