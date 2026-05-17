@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
 import { hasSeenGuide } from '@/onboarding/guideState';
+import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
 
 export default function CalculatorScreen() {
   const { t } = useTranslation();
@@ -39,9 +40,18 @@ export default function CalculatorScreen() {
   useEffect(() => {
     if (firstRunChecked.current) return;
     firstRunChecked.current = true;
-    if (!hasSeenGuide()) {
-      router.push('/guide?firstRun=1');
-    }
+    if (hasSeenGuide()) return;
+    let cancelled = false;
+    // Hold the guide until the ad-consent flow resolves so first-launch EU
+    // users aren't shown the guide underneath the GDPR consent sheet.
+    whenConsentFlowComplete().then(() => {
+      if (!cancelled) {
+        router.push('/guide?firstRun=1');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   useEffect(() => {

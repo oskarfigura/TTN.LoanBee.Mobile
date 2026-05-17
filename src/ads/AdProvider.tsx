@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import MobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
+import { markConsentFlowComplete } from '@/onboarding/firstRunGate';
 
 interface Props {
   children: React.ReactNode;
@@ -19,6 +20,9 @@ export const AdProvider = ({ children }: Props) => {
         await MobileAds().initialize();
       } catch {
         // silently fail so ads don't block the app
+      } finally {
+        // Unblock the first-launch guide whether consent succeeded or failed.
+        markConsentFlowComplete();
       }
     })();
   }, []);
