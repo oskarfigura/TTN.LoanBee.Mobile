@@ -195,10 +195,13 @@
     "skip": "Pomiń",
     "next": "Dalej",
     "tryItNow": "Spróbuj teraz",
+    "example": "Przykład: zaoszczędź ~{{savings}} i {{years}} lat na kredycie {{amount}}",
+    "exampleDisclaimer": "Tylko dla ilustracji. Twoje wartości będą się różnić.",
     "slides": [
       {
         "icon": "overpay",
         "theme": "primary",
+        "example": true,
         "title": "Spłać kredyt hipoteczny lata wcześniej",
         "subtitle": "Zobacz dokładnie, ile oszczędza każda nadpłata — w odsetkach i w latach."
       },

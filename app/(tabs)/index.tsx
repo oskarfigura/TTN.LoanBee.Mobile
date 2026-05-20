@@ -22,6 +22,7 @@ import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
 import { hasSeenGuide } from '@/onboarding/guideState';
 import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
+import { getSampleScenario } from '@/onboarding/sampleScenario';
 
 export default function CalculatorScreen() {
   const { t } = useTranslation();
@@ -68,24 +69,27 @@ export default function CalculatorScreen() {
     }
   }, [params.dashboard]);
 
-  // One-shot sample handoff from the onboarding guide: prefill a mortgage-shaped
-  // scenario with a non-zero overpayment so the user sees savings on the first tap.
+  // One-shot sample handoff from the onboarding guide. Uses the same scenario
+  // module the guide uses to compute the headline savings figure, so the
+  // calculator confirms the number the user just read on slide 1.
   const samplePrefilled = useRef(false);
   useEffect(() => {
     if (params.sample !== '1' || samplePrefilled.current) return;
     samplePrefilled.current = true;
+    const currency = getDefaultCurrency();
+    const scenario = getSampleScenario(currency);
     form.reset({
-      loanAmount: 200000,
-      interest: 4.5,
-      termInYears: 25,
+      loanAmount: scenario.loanAmount,
+      interest: scenario.interest,
+      termInYears: scenario.termInYears,
       termInMonths: 0,
       downPayment: 0,
       downPaymentType: DownPaymentType.PERCENT,
       desiredMonthlyPayment: 0,
-      additionalMonthlyPayment: 200,
+      additionalMonthlyPayment: scenario.additionalMonthlyPayment,
       startDate: new Date().toISOString().split('T')[0],
       calculationType: LoanCalculationType.TERM,
-      currency: getDefaultCurrency(),
+      currency,
     });
     setShowCalculator(true);
   }, [params.sample, form]);

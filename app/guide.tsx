@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   NativeScrollEvent,
@@ -28,6 +28,12 @@ import {
 } from '@/components/ui/Icons';
 import { SvgProps } from '@/components/ui/Svg';
 import { markGuideSeen } from '@/onboarding/guideState';
+import {
+  computeSampleSavings,
+  getSampleScenario,
+} from '@/onboarding/sampleScenario';
+import { getDefaultCurrency } from '@/hooks/useLoanCalculatorForm';
+import { formatCurrencyCompact } from '@/currency/format';
 import { colours, layout, radii, spacing } from '@/theme';
 
 interface Slide {
@@ -35,6 +41,13 @@ interface Slide {
   theme: string;
   title: string;
   subtitle: string;
+  example?: boolean;
+}
+
+interface ExampleData {
+  savings: string;
+  amount: string;
+  years: number;
 }
 
 type IconComponent = (props: SvgProps) => React.JSX.Element;
@@ -87,6 +100,19 @@ export default function GuideScreen() {
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Slide>>(null);
   const scrollX = useSharedValue(0);
+
+  // Compute the savings shown on slide 1 from the same scenario the "Try it
+  // now" CTA prefills, so the headline figure matches the calculator result.
+  const exampleData: ExampleData = useMemo(() => {
+    const currency = getDefaultCurrency();
+    const scenario = getSampleScenario(currency);
+    const savings = computeSampleSavings(scenario);
+    return {
+      savings: formatCurrencyCompact(savings.interestSaved, currency),
+      amount: formatCurrencyCompact(scenario.loanAmount, currency),
+      years: Math.round(savings.monthsSaved / 12),
+    };
+  }, []);
 
   // Reaching this screen counts as having seen the guide, so it never
   // re-triggers on next launch regardless of how the user leaves it.
@@ -155,7 +181,13 @@ export default function GuideScreen() {
         getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
         style={styles.list}
         renderItem={({ item, index: i }) => (
-          <SlideView slide={item} index={i} width={width} scrollX={scrollX} />
+          <SlideView
+            slide={item}
+            index={i}
+            width={width}
+            scrollX={scrollX}
+            exampleData={exampleData}
+          />
         )}
       />
 
@@ -201,9 +233,11 @@ interface SlideViewProps {
   index: number;
   width: number;
   scrollX: SharedValue<number>;
+  exampleData: ExampleData;
 }
 
-function SlideView({ slide, index, width, scrollX }: SlideViewProps) {
+function SlideView({ slide, index, width, scrollX, exampleData }: SlideViewProps) {
+  const { t } = useTranslation();
   const Icon = SLIDE_ICONS[slide.icon] ?? ZapIcon;
   const theme = SLIDE_THEMES[slide.theme] ?? SLIDE_THEMES.primary;
   const slideOffset = width * index;
@@ -265,6 +299,22 @@ function SlideView({ slide, index, width, scrollX }: SlideViewProps) {
           >
             {slide.subtitle}
           </AppText>
+          {slide.example ? (
+            <View style={styles.exampleBlock}>
+              <AppText
+                variant="bodySm"
+                style={[styles.exampleStat, { color: theme.titleColor }]}
+              >
+                {t('guide.example', { ...exampleData })}
+              </AppText>
+              <AppText
+                variant="helper"
+                style={[styles.exampleDisclaimer, { color: theme.subtitleColor }]}
+              >
+                {t('guide.exampleDisclaimer')}
+              </AppText>
+            </View>
+          ) : null}
         </Animated.View>
       </View>
     </View>
@@ -324,6 +374,21 @@ const styles = StyleSheet.create({
   slideSubtitle: {
     textAlign: 'center',
     maxWidth: 300,
+  },
+  exampleBlock: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  exampleStat: {
+    textAlign: 'center',
+    maxWidth: 320,
+    opacity: 0.92,
+  },
+  exampleDisclaimer: {
+    textAlign: 'center',
+    opacity: 0.75,
+    fontStyle: 'italic',
   },
   footer: {
     paddingHorizontal: layout.screenPadding,

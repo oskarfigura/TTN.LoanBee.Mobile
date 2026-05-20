@@ -195,10 +195,13 @@
     "skip": "Skip",
     "next": "Next",
     "tryItNow": "Try it now",
+    "example": "Example: save ~{{savings}} and {{years}} years on a {{amount}} mortgage",
+    "exampleDisclaimer": "For illustration only. Your figures will differ.",
     "slides": [
       {
         "icon": "overpay",
         "theme": "primary",
+        "example": true,
         "title": "Pay your mortgage off years early",
         "subtitle": "See exactly what each overpayment saves you — in interest and in years."
       },
