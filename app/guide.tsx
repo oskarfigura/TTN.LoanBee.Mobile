@@ -18,6 +18,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Path } from 'react-native-svg';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -32,15 +33,16 @@ import {
 import { SvgProps } from '@/components/ui/Svg';
 import { markGuideSeen } from '@/onboarding/guideState';
 import {
+  BalanceSeries,
+  computeBalanceSeries,
   computeSampleSavings,
   getSampleScenario,
   SampleSavings,
   SampleScenario,
 } from '@/onboarding/sampleScenario';
 import { getDefaultCurrency } from '@/hooks/useLoanCalculatorForm';
-import { CurrencyCode } from '@/currency/currencies';
-import { formatCurrencyCompact } from '@/currency/format';
-import { colours, layout, radii, spacing } from '@/theme';
+import { CurrencyCode, CURRENCIES } from '@/currency/currencies';
+import { colours, fontFaces, layout, radii, spacing } from '@/theme';
 
 interface Slide {
   icon: string;
@@ -53,6 +55,7 @@ interface Slide {
 interface ChartData {
   scenario: SampleScenario;
   savings: SampleSavings;
+  series: BalanceSeries;
   currency: CurrencyCode;
 }
 
@@ -70,6 +73,10 @@ interface SlideTheme {
   iconColor: string;
   titleColor: string;
   subtitleColor: string;
+  heroAccent: string;
+  chartLineBaseline: string;
+  chartLineWith: string;
+  chartFillWith: string;
 }
 
 const SLIDE_THEMES: Record<string, SlideTheme> = {
@@ -79,6 +86,10 @@ const SLIDE_THEMES: Record<string, SlideTheme> = {
     iconColor: colours.white,
     titleColor: colours.white,
     subtitleColor: colours.textInverse,
+    heroAccent: colours.honey,
+    chartLineBaseline: 'rgba(255,255,255,0.35)',
+    chartLineWith: colours.honey,
+    chartFillWith: 'rgba(244,180,0,0.18)',
   },
   accent: {
     cardBg: colours.surfaceStrong,
@@ -86,6 +97,10 @@ const SLIDE_THEMES: Record<string, SlideTheme> = {
     iconColor: colours.primary,
     titleColor: colours.primaryInk,
     subtitleColor: colours.textSecondary,
+    heroAccent: colours.primary,
+    chartLineBaseline: 'rgba(15,23,42,0.18)',
+    chartLineWith: colours.primary,
+    chartFillWith: 'rgba(0,45,114,0.12)',
   },
   success: {
     cardBg: colours.successLight,
@@ -93,6 +108,10 @@ const SLIDE_THEMES: Record<string, SlideTheme> = {
     iconColor: colours.success,
     titleColor: colours.primaryInk,
     subtitleColor: colours.textSecondary,
+    heroAccent: colours.success,
+    chartLineBaseline: 'rgba(15,23,42,0.18)',
+    chartLineWith: colours.success,
+    chartFillWith: 'rgba(4,109,64,0.14)',
   },
 };
 
@@ -107,13 +126,18 @@ export default function GuideScreen() {
   const listRef = useRef<FlatList<Slide>>(null);
   const scrollX = useSharedValue(0);
 
-  // Compute the savings shown on the slide-1 chart from the same scenario the
-  // "Try it now" CTA prefills, so the headline figure matches the calculator
-  // result and the visible bar delta matches the headline savings.
+  // Compute the example shown on slide 1 from the same scenario the "Try it
+  // now" CTA prefills, so the headline savings figure and the sparkline curves
+  // both match the calculator result.
   const chartData: ChartData = useMemo(() => {
     const currency = getDefaultCurrency();
     const scenario = getSampleScenario(currency);
-    return { scenario, savings: computeSampleSavings(scenario), currency };
+    return {
+      scenario,
+      savings: computeSampleSavings(scenario),
+      series: computeBalanceSeries(scenario),
+      currency,
+    };
   }, []);
 
   // Reaching this screen counts as having seen the guide, so it never
@@ -262,8 +286,6 @@ function SlideView({ slide, index, width, scrollX, chartData }: SlideViewProps) 
     return { opacity, transform: [{ translateX }] };
   });
 
-  // Text settles in slightly later than the hero and fades over a tighter
-  // range, which produces a soft cross-fade between adjacent slides.
   const textStyle = useAnimatedStyle(() => {
     const distance = scrollX.value - slideOffset;
     const opacity = interpolate(
@@ -281,132 +303,203 @@ function SlideView({ slide, index, width, scrollX, chartData }: SlideViewProps) 
     return { opacity, transform: [{ translateY }] };
   });
 
+  if (slide.example) {
+    return (
+      <View style={[styles.slideOuter, { width }]}>
+        <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
+          <View style={styles.cardInner}>
+            <Animated.View style={[styles.heroExample, heroStyle]}>
+              <SavingsHero chartData={chartData} theme={theme} />
+            </Animated.View>
+            <Animated.View style={[styles.textWrap, textStyle]}>
+              <AppText
+                variant="title1"
+                style={[styles.slideTitle, { color: theme.titleColor }]}
+              >
+                {slide.title}
+              </AppText>
+            </Animated.View>
+          </View>
+          <AppText
+            variant="helper"
+            style={[styles.exampleDisclaimer, { color: theme.subtitleColor }]}
+          >
+            {t('guide.exampleDisclaimer')}
+          </AppText>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.slideOuter, { width }]}>
       <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
-        {slide.example ? (
-          <Animated.View style={[styles.chartHero, heroStyle]}>
-            <SavingsChart chartData={chartData} theme={theme} />
-          </Animated.View>
-        ) : (
+        <View style={styles.cardInner}>
           <Animated.View style={[styles.iconWrap, heroStyle]}>
             <View style={[styles.blob, { backgroundColor: theme.blobBg }]} />
             <Icon color={theme.iconColor} size={104} strokeWidth={1.6} />
           </Animated.View>
-        )}
-
-        <Animated.View style={[styles.textWrap, textStyle]}>
-          <AppText
-            variant="title1"
-            style={[styles.slideTitle, { color: theme.titleColor }]}
-          >
-            {slide.title}
-          </AppText>
-          <AppText
-            variant="bodyLg"
-            style={[styles.slideSubtitle, { color: theme.subtitleColor }]}
-          >
-            {slide.subtitle}
-          </AppText>
-          {slide.example ? (
+          <Animated.View style={[styles.textWrap, textStyle]}>
             <AppText
-              variant="helper"
-              style={[styles.exampleDisclaimer, { color: theme.subtitleColor }]}
+              variant="title1"
+              style={[styles.slideTitle, { color: theme.titleColor }]}
             >
-              {t('guide.exampleDisclaimer')}
+              {slide.title}
             </AppText>
-          ) : null}
-        </Animated.View>
+            <AppText
+              variant="bodyLg"
+              style={[styles.slideSubtitle, { color: theme.subtitleColor }]}
+            >
+              {slide.subtitle}
+            </AppText>
+          </Animated.View>
+        </View>
       </View>
     </View>
   );
 }
 
-interface SavingsChartProps {
+function useCountUp(target: number, duration = 1100, delay = 120): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    let raf: number | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let startTime: number;
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setValue(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    timeout = setTimeout(() => {
+      startTime = Date.now();
+      raf = requestAnimationFrame(tick);
+    }, delay);
+    return () => {
+      if (timeout) clearTimeout(timeout);
+      if (raf !== undefined) cancelAnimationFrame(raf);
+    };
+  }, [target, duration, delay]);
+  return value;
+}
+
+interface SavingsHeroProps {
   chartData: ChartData;
   theme: SlideTheme;
 }
 
-function SavingsChart({ chartData, theme }: SavingsChartProps) {
+function SavingsHero({ chartData, theme }: SavingsHeroProps) {
   const { t } = useTranslation();
-  const { scenario, savings, currency } = chartData;
-  const progress = useSharedValue(0);
+  const { savings, series, currency } = chartData;
+  const symbol = (CURRENCIES.find(c => c.code === currency) ?? CURRENCIES[0]).symbol;
+  const heroTarget = Math.round(savings.interestSaved / 1000) * 1000;
+  const animatedValue = useCountUp(heroTarget);
+  const years = Math.round(savings.monthsSaved / 12);
+  const sparklineOpacity = useSharedValue(0);
+  const sparklineLift = useSharedValue(8);
 
   useEffect(() => {
-    // Bars grow from zero to their final width on first render.
-    progress.value = withDelay(
-      120,
-      withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }),
-    );
-  }, [progress]);
+    // Sparkline fades in after the count-up number settles.
+    sparklineOpacity.value = 0;
+    sparklineLift.value = 8;
+    const timing = { duration: 600, easing: Easing.out(Easing.cubic) };
+    sparklineOpacity.value = withDelay(600, withTiming(1, timing));
+    sparklineLift.value = withDelay(600, withTiming(0, timing));
+  }, [sparklineOpacity, sparklineLift]);
 
-  const baselineFmt = formatCurrencyCompact(savings.baselineInterest, currency);
-  const withFmt = formatCurrencyCompact(savings.withOverpaymentInterest, currency);
-  const monthlyFmt = formatCurrencyCompact(scenario.additionalMonthlyPayment, currency).replace(/\.00$/, '');
-  const savingsFmt = formatCurrencyCompact(savings.interestSaved, currency);
-  const years = Math.round(savings.monthsSaved / 12);
-  const withRatio = savings.withOverpaymentInterest / savings.baselineInterest;
-
-  const baselineBarStyle = useAnimatedStyle(() => ({
-    width: `${interpolate(progress.value, [0, 1], [0, 100], 'clamp')}%`,
-  }));
-
-  const withBarStyle = useAnimatedStyle(() => ({
-    width: `${interpolate(progress.value, [0, 1], [0, withRatio * 100], 'clamp')}%`,
-  }));
-
-  const summaryStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.6, 1], [0, 1], 'clamp'),
-    transform: [{ translateY: interpolate(progress.value, [0.6, 1], [8, 0], 'clamp') }],
+  const sparklineStyle = useAnimatedStyle(() => ({
+    opacity: sparklineOpacity.value,
+    transform: [{ translateY: sparklineLift.value }],
   }));
 
   return (
-    <View style={styles.chartWrap}>
-      <View style={styles.chartRow}>
-        <AppText
-          variant="labelSm"
-          style={[styles.chartCaption, { color: theme.subtitleColor }]}
-        >
-          {t('guide.exampleWithout')}
-        </AppText>
-        <AppText
-          variant="labelMd"
-          style={[styles.chartValue, { color: theme.titleColor }]}
-        >
-          {baselineFmt}
-        </AppText>
-      </View>
-      <View style={styles.barTrack}>
-        <Animated.View style={[styles.barFill, styles.barFillBaseline, baselineBarStyle]} />
-      </View>
-
-      <View style={[styles.chartRow, styles.chartRowGap]}>
-        <AppText
-          variant="labelSm"
-          style={[styles.chartCaption, { color: theme.subtitleColor }]}
-        >
-          {t('guide.exampleWith', { amount: monthlyFmt })}
-        </AppText>
-        <AppText
-          variant="labelMd"
-          style={[styles.chartValue, { color: colours.honey }]}
-        >
-          {withFmt}
-        </AppText>
-      </View>
-      <View style={styles.barTrack}>
-        <Animated.View style={[styles.barFill, styles.barFillWith, withBarStyle]} />
-      </View>
-
-      <Animated.View style={[styles.chartSummaryWrap, summaryStyle]}>
-        <AppText
-          variant="title3"
-          style={[styles.chartSummary, { color: theme.titleColor }]}
-        >
-          {t('guide.exampleSaves', { savings: savingsFmt, years })}
-        </AppText>
+    <View style={styles.heroBlock}>
+      <AppText style={[styles.heroNumber, { color: theme.titleColor }]} numberOfLines={1}>
+        {`${symbol}${animatedValue.toLocaleString('en-GB')}`}
+      </AppText>
+      <AppText
+        variant="labelMd"
+        style={[styles.heroCaption, { color: theme.subtitleColor }]}
+      >
+        {t('guide.exampleCaption', { years })}
+      </AppText>
+      <Animated.View style={[styles.sparklineWrap, sparklineStyle]}>
+        <Sparkline series={series} theme={theme} />
       </Animated.View>
     </View>
+  );
+}
+
+interface SparklineProps {
+  series: BalanceSeries;
+  theme: SlideTheme;
+}
+
+function Sparkline({ series, theme }: SparklineProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  // The sparkline lives inside the card; the card has spacing.xl horizontal
+  // padding and the slideOuter has spacing.md outside it.
+  const width = Math.min(screenWidth - spacing.md * 2 - spacing.xl * 2, 340);
+  const height = 64;
+  const padX = 2;
+  const padY = 4;
+  const usableW = width - padX * 2;
+  const usableH = height - padY * 2;
+
+  const points = series.baseline.length;
+  const project = (val: number, i: number) => {
+    const x = padX + (i / (points - 1)) * usableW;
+    const y = padY + usableH - (val / series.initialBalance) * usableH;
+    return { x, y };
+  };
+
+  const toPath = (arr: number[]): string => {
+    let d = '';
+    arr.forEach((val, i) => {
+      const { x, y } = project(val, i);
+      d += i === 0 ? `M ${x.toFixed(2)} ${y.toFixed(2)}` : ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    });
+    return d;
+  };
+
+  // Filled "savings region" — trace the with-overpayment curve left-to-right
+  // then the baseline curve right-to-left, then close. The enclosed area is
+  // the visible gap between the two curves: that gap IS the saving.
+  const toRegionPath = (): string => {
+    let d = '';
+    series.withOverpayment.forEach((val, i) => {
+      const { x, y } = project(val, i);
+      d += i === 0 ? `M ${x.toFixed(2)} ${y.toFixed(2)}` : ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    });
+    for (let i = points - 1; i >= 0; i--) {
+      const { x, y } = project(series.baseline[i], i);
+      d += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }
+    d += ' Z';
+    return d;
+  };
+
+  return (
+    <Svg width={width} height={height}>
+      <Path d={toRegionPath()} fill={theme.chartFillWith} />
+      <Path
+        d={toPath(series.baseline)}
+        stroke={theme.chartLineBaseline}
+        strokeWidth={1.25}
+        fill="none"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <Path
+        d={toPath(series.withOverpayment)}
+        stroke={theme.chartLineWith}
+        strokeWidth={2}
+        fill="none"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </Svg>
   );
 }
 
@@ -433,7 +526,10 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 28,
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing['2xl'],
+    paddingVertical: spacing.xl,
+  },
+  cardInner: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -451,52 +547,33 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     opacity: 0.55,
   },
-  chartHero: {
+  heroExample: {
     width: '100%',
-    maxWidth: 340,
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
-  chartWrap: {
+  heroBlock: {
     width: '100%',
-  },
-  chartRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginBottom: spacing.xxs,
-  },
-  chartRowGap: {
-    marginTop: spacing.md,
-  },
-  chartCaption: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    opacity: 0.85,
-  },
-  chartValue: {},
-  barTrack: {
-    width: '100%',
-    height: 10,
-    borderRadius: radii.full,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: radii.full,
-  },
-  barFillBaseline: {
-    backgroundColor: 'rgba(255,255,255,0.55)',
-  },
-  barFillWith: {
-    backgroundColor: colours.honey,
-  },
-  chartSummaryWrap: {
-    marginTop: spacing.lg,
     alignItems: 'center',
   },
-  chartSummary: {
+  heroNumber: {
+    ...fontFaces.heading.bold,
+    fontSize: 56,
+    lineHeight: 60,
+    letterSpacing: -1.2,
     textAlign: 'center',
+  },
+  heroCaption: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    opacity: 0.78,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  sparklineWrap: {
+    width: '100%',
+    alignItems: 'center',
   },
   textWrap: {
     alignItems: 'center',
@@ -513,9 +590,9 @@ const styles = StyleSheet.create({
   },
   exampleDisclaimer: {
     textAlign: 'center',
-    marginTop: spacing.sm,
-    opacity: 0.75,
+    opacity: 0.65,
     fontStyle: 'italic',
+    marginTop: spacing.md,
   },
   footer: {
     paddingHorizontal: layout.screenPadding,

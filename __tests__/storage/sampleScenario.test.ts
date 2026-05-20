@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import {
+  computeBalanceSeries,
   computeSampleSavings,
   getSampleScenario,
 } from '../../src/onboarding/sampleScenario';
@@ -57,6 +58,32 @@ describe('sampleScenario', () => {
       expect(interestSaved).toBeLessThan(80_000);
       expect(monthsSaved).toBeGreaterThan(36);
       expect(monthsSaved).toBeLessThan(120);
+    });
+  });
+
+  describe('computeBalanceSeries', () => {
+    it('returns equal-length arrays at the requested sample count', () => {
+      const series = computeBalanceSeries(getSampleScenario('GBP'), 32);
+      expect(series.baseline).toHaveLength(32);
+      expect(series.withOverpayment).toHaveLength(32);
+    });
+
+    it('starts both series at the initial balance and ends both at zero', () => {
+      const series = computeBalanceSeries(getSampleScenario('GBP'));
+      expect(series.baseline[0]).toBeCloseTo(series.initialBalance, 0);
+      expect(series.withOverpayment[0]).toBeCloseTo(series.initialBalance, 0);
+      expect(series.baseline[series.baseline.length - 1]).toBeCloseTo(0, 0);
+      expect(series.withOverpayment[series.withOverpayment.length - 1]).toBeCloseTo(0, 0);
+    });
+
+    it('with-overpayment series is at or below the baseline at every sample', () => {
+      // The shaded "savings region" between the two curves on the sparkline
+      // depends on this monotonic relationship — the chart would invert and
+      // look wrong if the with-overpayment balance ever exceeded the baseline.
+      const series = computeBalanceSeries(getSampleScenario('GBP'));
+      series.baseline.forEach((baseValue, i) => {
+        expect(series.withOverpayment[i]).toBeLessThanOrEqual(baseValue + 0.01);
+      });
     });
   });
 });

@@ -195,9 +195,7 @@
     "skip": "Pomiń",
     "next": "Dalej",
     "tryItNow": "Spróbuj teraz",
-    "exampleWithout": "Bez nadpłaty",
-    "exampleWith": "Z nadpłatą {{amount}}/mc",
-    "exampleSaves": "Oszczędzasz ~{{savings}} i {{years}} lat",
+    "exampleCaption": "mniej odsetek · {{years}} lat krócej",
     "exampleDisclaimer": "Tylko dla ilustracji. Twoje wartości będą się różnić.",
     "slides": [
       {

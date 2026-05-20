@@ -38,6 +38,12 @@ export interface SampleSavings {
   monthsSaved: number;
 }
 
+export interface BalanceSeries {
+  baseline: number[];
+  withOverpayment: number[];
+  initialBalance: number;
+}
+
 export function computeSampleSavings(scenario: SampleScenario): SampleSavings {
   const startDate = new Date().toISOString().split('T')[0];
   const baseline = getLoanCalculations(
@@ -69,5 +75,64 @@ export function computeSampleSavings(scenario: SampleScenario): SampleSavings {
     withOverpaymentInterest: withOverpayment.totalInterestPaid,
     interestSaved: Math.max(0, baseline.totalInterestPaid - withOverpayment.totalInterestPaid),
     monthsSaved: Math.max(0, baseline.tableItems.length - withOverpayment.tableItems.length),
+  };
+}
+
+/**
+ * Returns subsampled balance arrays for the onboarding sparkline. Both arrays
+ * are aligned to the same X axis (the baseline term, which is longer), so the
+ * with-overpayment series is padded with zeros after its earlier payoff point.
+ */
+export function computeBalanceSeries(
+  scenario: SampleScenario,
+  points = 48,
+): BalanceSeries {
+  const startDate = new Date().toISOString().split('T')[0];
+  const baseline = getLoanCalculations(
+    scenario.loanAmount,
+    scenario.interest,
+    scenario.termInYears,
+    0,
+    0,
+    LoanCalculationType.TERM,
+    0,
+    DownPaymentType.PERCENT,
+    0,
+    startDate,
+  );
+  const withOver = getLoanCalculations(
+    scenario.loanAmount,
+    scenario.interest,
+    scenario.termInYears,
+    0,
+    0,
+    LoanCalculationType.TERM,
+    0,
+    DownPaymentType.PERCENT,
+    scenario.additionalMonthlyPayment,
+    startDate,
+  );
+
+  const baselineRem = baseline.loanChartRemainingArray;
+  const withRem = withOver.loanChartRemainingArray;
+  const total = baselineRem.length - 1;
+
+  const sampleAt = (arr: number[], monthIndex: number): number => {
+    if (monthIndex >= arr.length) return 0;
+    return Math.max(0, arr[monthIndex] ?? 0);
+  };
+
+  const baselineSamples: number[] = [];
+  const withSamples: number[] = [];
+  for (let i = 0; i < points; i++) {
+    const monthIndex = Math.round((i / (points - 1)) * total);
+    baselineSamples.push(sampleAt(baselineRem, monthIndex));
+    withSamples.push(sampleAt(withRem, monthIndex));
+  }
+
+  return {
+    baseline: baselineSamples,
+    withOverpayment: withSamples,
+    initialBalance: scenario.loanAmount,
   };
 }
