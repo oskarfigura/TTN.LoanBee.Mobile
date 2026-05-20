@@ -26,7 +26,7 @@ import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
 export default function CalculatorScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ calculator?: string; dashboard?: string }>();
+  const params = useLocalSearchParams<{ calculator?: string; dashboard?: string; sample?: string }>();
   const form = useLoanCalculatorForm();
   const { loans, refresh } = useSavedLoans();
   const [showCalculator, setShowCalculator] = useState(false);
@@ -67,6 +67,28 @@ export default function CalculatorScreen() {
       setShowCalculator(false);
     }
   }, [params.dashboard]);
+
+  // One-shot sample handoff from the onboarding guide: prefill a mortgage-shaped
+  // scenario with a non-zero overpayment so the user sees savings on the first tap.
+  const samplePrefilled = useRef(false);
+  useEffect(() => {
+    if (params.sample !== '1' || samplePrefilled.current) return;
+    samplePrefilled.current = true;
+    form.reset({
+      loanAmount: 200000,
+      interest: 4.5,
+      termInYears: 25,
+      termInMonths: 0,
+      downPayment: 0,
+      downPaymentType: DownPaymentType.PERCENT,
+      desiredMonthlyPayment: 0,
+      additionalMonthlyPayment: 200,
+      startDate: new Date().toISOString().split('T')[0],
+      calculationType: LoanCalculationType.TERM,
+      currency: getDefaultCurrency(),
+    });
+    setShowCalculator(true);
+  }, [params.sample, form]);
 
   useFocusEffect(
     useCallback(() => {

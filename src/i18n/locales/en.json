@@ -194,32 +194,26 @@
     "title": "How it works",
     "skip": "Skip",
     "next": "Next",
-    "getStarted": "Get started",
+    "trySample": "Try a sample",
+    "startFresh": "Start fresh",
     "slides": [
       {
-        "icon": "coins",
-        "title": "See what your loan really costs",
-        "subtitle": "LoanBee turns any loan or mortgage into a clear picture — payments, interest, and payoff date."
-      },
-      {
-        "icon": "modes",
-        "title": "Two ways to calculate",
-        "subtitle": "Enter a term to find the monthly payment, or enter a payment to find the term."
+        "icon": "overpay",
+        "theme": "primary",
+        "title": "Pay your mortgage off years early",
+        "subtitle": "See exactly what each overpayment saves you — in interest and in years."
       },
       {
         "icon": "track",
-        "title": "Track every mortgage milestone",
-        "subtitle": "Save a mortgage to log real balances, manage rate deals, and see your progress on one dashboard."
+        "theme": "accent",
+        "title": "One dashboard for the whole journey",
+        "subtitle": "Log real balances and rate deals as your mortgage evolves."
       },
       {
-        "icon": "overpay",
-        "title": "Watch overpayments add up",
-        "subtitle": "Add a monthly overpayment or lump sum to see the interest you'd save and the years off your term."
-      },
-      {
-        "icon": "privacy",
-        "title": "Private by default",
-        "subtitle": "Nothing leaves your device — no accounts, no uploads. You can revisit this guide anytime from Settings."
+        "icon": "ready",
+        "theme": "success",
+        "title": "Ready when you are",
+        "subtitle": "All on-device. No accounts, no uploads."
       }
     ],
     "aboutEntryTitle": "New to LoanBee?",

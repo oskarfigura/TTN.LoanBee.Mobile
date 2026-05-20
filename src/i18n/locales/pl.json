@@ -194,32 +194,26 @@
     "title": "Jak to działa",
     "skip": "Pomiń",
     "next": "Dalej",
-    "getStarted": "Zaczynamy",
+    "trySample": "Wypróbuj przykład",
+    "startFresh": "Zacznij od zera",
     "slides": [
       {
-        "icon": "coins",
-        "title": "Zobacz, ile naprawdę kosztuje Twój kredyt",
-        "subtitle": "LoanBee zamienia każdy kredyt lub hipotekę w przejrzysty obraz — raty, odsetki i datę spłaty."
-      },
-      {
-        "icon": "modes",
-        "title": "Dwa sposoby obliczeń",
-        "subtitle": "Podaj długość kredytu, by poznać miesięczną ratę, lub ratę, by poznać czas spłaty."
+        "icon": "overpay",
+        "theme": "primary",
+        "title": "Spłać kredyt hipoteczny lata wcześniej",
+        "subtitle": "Zobacz dokładnie, ile oszczędza każda nadpłata — w odsetkach i w latach."
       },
       {
         "icon": "track",
-        "title": "Śledź każdy etap kredytu hipotecznego",
-        "subtitle": "Zapisz kredyt, by rejestrować realne salda, prowadzić okresy oprocentowania i widzieć postęp na jednym pulpicie."
+        "theme": "accent",
+        "title": "Jeden pulpit na całą drogę",
+        "subtitle": "Rejestruj realne salda i okresy oprocentowania, gdy kredyt się zmienia."
       },
       {
-        "icon": "overpay",
-        "title": "Zobacz, ile dają nadpłaty",
-        "subtitle": "Dodaj miesięczną nadpłatę lub wpłatę jednorazową, by zobaczyć zaoszczędzone odsetki i skrócony czas spłaty."
-      },
-      {
-        "icon": "privacy",
-        "title": "Prywatność na pierwszym miejscu",
-        "subtitle": "Nic nie opuszcza Twojego urządzenia — bez kont, bez wysyłania. Do przewodnika wrócisz w Ustawieniach."
+        "icon": "ready",
+        "theme": "success",
+        "title": "Gotowe, kiedy Ty będziesz",
+        "subtitle": "Wszystko na urządzeniu. Bez kont, bez wysyłania."
       }
     ],
     "aboutEntryTitle": "Pierwszy raz w LoanBee?",
