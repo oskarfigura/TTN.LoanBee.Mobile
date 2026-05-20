@@ -44,8 +44,10 @@ export default function CalculatorScreen() {
     let cancelled = false;
     // Hold the guide until the ad-consent flow resolves so first-launch EU
     // users aren't shown the guide underneath the GDPR consent sheet.
+    // Re-check `hasSeenGuide()` once the gate resolves — if the user opened
+    // the guide manually (via About/Settings) during the wait, don't push again.
     whenConsentFlowComplete().then(() => {
-      if (!cancelled) {
+      if (!cancelled && !hasSeenGuide()) {
         router.push('/guide?firstRun=1');
       }
     });

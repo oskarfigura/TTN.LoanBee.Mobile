@@ -1,43 +1,43 @@
-import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import {
-  CheckIcon,
   CoinsStackedIcon,
   GridIcon,
   ListIcon,
-  MessageTextCircleIcon,
-  RouteIcon,
-  SaveIcon,
+  ShieldIcon,
   ZapIcon,
 } from '@/components/ui/Icons';
-import { markGuideSeen } from '@/onboarding/guideState';
-import { colours, layout, spacing } from '@/theme';
 import { SvgProps } from '@/components/ui/Svg';
+import { markGuideSeen } from '@/onboarding/guideState';
+import { colours, layout, radii, spacing } from '@/theme';
 
-interface GuideSection {
+interface Slide {
   icon: string;
   title: string;
-  body: string;
-  steps?: string[];
+  subtitle: string;
 }
 
 type IconComponent = (props: SvgProps) => React.JSX.Element;
 
-const SECTION_ICONS: Record<string, IconComponent> = {
-  calculator: CoinsStackedIcon,
-  results: ListIcon,
-  save: SaveIcon,
-  dashboard: GridIcon,
-  deals: RouteIcon,
-  overpayments: ZapIcon,
+const SLIDE_ICONS: Record<string, IconComponent> = {
+  coins: CoinsStackedIcon,
+  modes: ListIcon,
+  track: GridIcon,
+  overpay: ZapIcon,
+  privacy: ShieldIcon,
 };
 
 export default function GuideScreen() {
@@ -45,11 +45,14 @@ export default function GuideScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ firstRun?: string }>();
   const isFirstRun = params.firstRun === '1';
-  const sections = t('guide.sections', { returnObjects: true }) as GuideSection[];
+  const { width } = useWindowDimensions();
+  const slides = t('guide.slides', { returnObjects: true }) as Slide[];
+  const [index, setIndex] = useState(0);
+  const listRef = useRef<FlatList<Slide>>(null);
 
   // Reaching this screen counts as having seen the guide, so it never
   // re-triggers on next launch regardless of how the user leaves it
-  // (CTA, header back, or the Android hardware back button).
+  // (skip, swipe through, CTA, or hardware back).
   useEffect(() => {
     markGuideSeen();
   }, []);
@@ -62,166 +65,141 @@ export default function GuideScreen() {
     }
   };
 
-  const openFaq = () => {
-    router.replace('/about');
+  const goNext = () => {
+    if (index >= slides.length - 1) {
+      finish();
+      return;
+    }
+    listRef.current?.scrollToIndex({ index: index + 1, animated: true });
   };
 
+  const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (next !== index) setIndex(next);
+  };
+
+  const isLast = index === slides.length - 1;
+
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScreenHeader
-        title={t('guide.title')}
-        variant="detail"
-        leftAction={<HeaderBackAction onPress={finish} accessibilityLabel={t('common.goBack')} />}
-      />
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Card style={styles.headerCard} variant="accent" padding={layout.cardPadding}>
-          <AppText variant="labelSm" tone="muted" style={styles.kicker}>
-            {t('guide.headerKicker')}
-          </AppText>
-          <AppText variant="title1" style={styles.headerTitle}>
-            {t('guide.headerTitle')}
-          </AppText>
-          <AppText variant="bodyMd" tone="muted">
-            {t('guide.headerBody')}
-          </AppText>
-        </Card>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <View style={styles.topBar}>
+        {!isLast ? (
+          <TouchableOpacity
+            onPress={finish}
+            accessibilityRole="button"
+            accessibilityLabel={t('guide.skip')}
+            hitSlop={8}
+            style={styles.skipBtn}
+          >
+            <AppText variant="labelMd" tone="muted">{t('guide.skip')}</AppText>
+          </TouchableOpacity>
+        ) : (
+          <View />
+        )}
+      </View>
 
-        {sections.map(section => {
-          const Icon = SECTION_ICONS[section.icon] ?? CoinsStackedIcon;
+      <FlatList
+        ref={listRef}
+        data={slides}
+        keyExtractor={item => item.icon}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        onMomentumScrollEnd={onMomentumEnd}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+        style={styles.list}
+        renderItem={({ item }) => {
+          const Icon = SLIDE_ICONS[item.icon] ?? CoinsStackedIcon;
           return (
-            <Card key={section.icon} style={styles.sectionCard} padding={layout.cardPadding}>
-              <View style={styles.sectionHead}>
-                <View style={styles.iconBadge}>
-                  <Icon color={colours.primary} size={22} strokeWidth={1.9} />
-                </View>
-                <AppText variant="title3" style={styles.sectionTitle}>
-                  {section.title}
-                </AppText>
+            <View style={[styles.slide, { width }]}>
+              <View style={styles.iconCircle}>
+                <Icon color={colours.primary} size={64} strokeWidth={1.6} />
               </View>
-              <AppText variant="bodySm" tone="muted" style={styles.sectionBody}>
-                {section.body}
+              <AppText variant="display" style={styles.slideTitle}>
+                {item.title}
               </AppText>
-              {section.steps && section.steps.length > 0 ? (
-                <View style={styles.stepList}>
-                  {section.steps.map(step => (
-                    <View key={step} style={styles.stepRow}>
-                      <View style={styles.stepBullet}>
-                        <CheckIcon color={colours.success} size={13} strokeWidth={2.4} />
-                      </View>
-                      <AppText variant="bodySm" tone="muted" style={styles.stepText}>
-                        {step}
-                      </AppText>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </Card>
+              <AppText variant="bodyLg" tone="muted" style={styles.slideSubtitle}>
+                {item.subtitle}
+              </AppText>
+            </View>
           );
-        })}
+        }}
+      />
 
-        <Card style={styles.faqCard} variant="status" padding={layout.cardPadding}>
-          <View style={styles.sectionHead}>
-            <View style={[styles.iconBadge, styles.faqIconBadge]}>
-              <MessageTextCircleIcon color={colours.success} size={22} strokeWidth={1.9} />
-            </View>
-            <View style={styles.faqHeadCopy}>
-              <AppText variant="labelSm" tone="muted" style={styles.kicker}>
-                {t('guide.faqKicker')}
-              </AppText>
-              <AppText variant="title3">{t('guide.faqTitle')}</AppText>
-            </View>
-          </View>
-          <AppText variant="bodySm" tone="muted" style={styles.sectionBody}>
-            {t('guide.faqBody')}
-          </AppText>
-          <Button
-            label={t('guide.faqCta')}
-            variant="secondary"
-            onPress={openFaq}
-            style={styles.faqButton}
-          />
-        </Card>
-
+      <View style={styles.footer}>
+        <View style={styles.dots}>
+          {slides.map((s, i) => (
+            <View
+              key={s.icon}
+              style={[styles.dot, i === index ? styles.dotActive : undefined]}
+            />
+          ))}
+        </View>
         <Button
-          label={isFirstRun ? t('guide.primaryCtaFirstRun') : t('guide.primaryCta')}
-          onPress={finish}
-          style={styles.primaryCta}
+          label={isLast ? t('guide.getStarted') : t('guide.next')}
+          onPress={goNext}
         />
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
-  container: { padding: layout.screenPadding, paddingBottom: 40 },
-  headerCard: { marginBottom: spacing.md },
-  kicker: {
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  headerTitle: {
-    marginBottom: spacing.sm,
-  },
-  sectionCard: { marginBottom: spacing.md },
-  sectionHead: {
+  topBar: {
+    height: 48,
+    paddingHorizontal: layout.screenPadding,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    justifyContent: 'flex-end',
   },
-  iconBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colours.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
+  skipBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  list: { flex: 1 },
+  slide: {
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  faqIconBadge: {
-    backgroundColor: colours.successLight,
-    borderColor: colours.successBorder,
+  iconCircle: {
+    width: 128,
+    height: 128,
+    borderRadius: radii.full,
+    backgroundColor: colours.surfaceAccent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing['2xl'],
   },
-  sectionTitle: {
-    flex: 1,
+  slideTitle: {
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
-  faqHeadCopy: {
-    flex: 1,
+  slideSubtitle: {
+    textAlign: 'center',
+    maxWidth: 320,
   },
-  sectionBody: {
-    marginBottom: spacing.sm,
+  footer: {
+    paddingHorizontal: layout.screenPadding,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.md,
+    gap: spacing.lg,
   },
-  stepList: {
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     gap: spacing.xs,
-    marginTop: spacing.xxs,
   },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
+    backgroundColor: colours.borderSoft,
   },
-  stepBullet: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colours.successLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-  },
-  stepText: {
-    flex: 1,
-  },
-  faqCard: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
-  faqButton: {
-    marginTop: spacing.xs,
-  },
-  primaryCta: {
-    marginBottom: spacing.sm,
+  dotActive: {
+    width: 24,
+    backgroundColor: colours.primary,
   },
 });

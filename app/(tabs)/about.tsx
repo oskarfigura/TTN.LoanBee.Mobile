@@ -23,7 +23,7 @@ export default function AboutScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ fromDashboard?: string }>();
   const faqItems = t('about.faqItems', { returnObjects: true }) as FaqItem[];
-  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [openFaqIndex, setOpenFaqIndex] = useState(-1);
   const openedFromDashboard = params.fromDashboard === '1';
 
   return (

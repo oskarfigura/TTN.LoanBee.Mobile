@@ -165,52 +165,12 @@
     "faqTitle": "Frequently Asked Questions",
     "faqItems": [
       {
-        "q": "What is loan amortisation?",
-        "a": "Loan amortisation is the systematic repayment of a loan over time through regular instalments. Each payment is usually split between principal and interest. Early payments often contain more interest because the balance is high, then more of each payment goes toward principal as the balance falls."
-      },
-      {
-        "q": "Scheduling loan repayments over time",
-        "a": "An amortisation schedule shows how each payment may be split between principal and interest, and how the balance may reduce over time. It is useful for planning, but actual lender schedules can differ because of fees, variable rates, rounding, or lender-specific rules."
-      },
-      {
-        "q": "Should I make extra payments to pay off a loan quicker?",
-        "a": "Extra payments can reduce the principal balance faster, which may lower the total interest paid and shorten the repayment time. Before overpaying, consider emergency savings, other high-interest debt, retirement saving, and whether your lender charges early repayment fees."
-      },
-      {
-        "q": "Things to consider when calculating extra loan payments",
-        "a": "Consider your budget, high-interest debt, emergency fund, retirement goals, and whether professional advice would help. Extra payments can be useful, but they should fit your wider financial plan."
-      },
-      {
-        "q": "Common loan terms explained simply",
-        "a": "Principal is the amount you borrow. Interest is the extra cost charged by the lender. Term is how long you take to repay the loan. Monthly payment is what you pay each month. Balance is what you still owe."
-      },
-      {
-        "q": "What are the two calculator modes?",
-        "a": "By Term means you enter the loan length and the calculator works out the monthly payment. By Payment means you enter the monthly payment you want and the calculator works out how long the loan could take to repay."
-      },
-      {
-        "q": "How do I save a loan or mortgage?",
-        "a": "After running a calculation, tap Save this loan on the results screen. Give it a nickname and choose whether it is a loan or a mortgage. It then appears in the Saved tab, where you can track its progress over time."
-      },
-      {
         "q": "What is the difference between a loan and a mortgage here?",
         "a": "A loan gets a simple progress view focused on overpayment savings. A mortgage unlocks the full tracking dashboard, where you can record real balances, manage rate deals, and see a timeline of activity."
       },
       {
-        "q": "What is a mortgage deal?",
-        "a": "A deal is one rate period of your mortgage — for example a 2-year or 5-year fixed rate. Most mortgages run through several deals over their lifetime, and LoanBee lets you record each one so projections reflect what actually happened."
-      },
-      {
-        "q": "How do I add or change my current mortgage deal?",
-        "a": "Open the saved mortgage and use Add deal (or Add current deal), then enter the rate, payment basis, term and start date. When the deal ends you complete it, and you can draft the next deal in advance to preview the switch."
-      },
-      {
-        "q": "What happens when a deal ends?",
-        "a": "Complete the deal to lock in what actually happened — the closing balance, any fees added, additional borrowing and the remaining term. LoanBee uses these confirmed figures so the rest of the projection stays accurate."
-      },
-      {
-        "q": "How do I record overpayments?",
-        "a": "Open the loan or mortgage and add a monthly overpayment or a one-off lump sum. Monthly overpayments apply every month of the deal; lump sums apply on the date you choose."
+        "q": "What are the two calculator modes?",
+        "a": "By Term means you enter the loan length and the calculator works out the monthly payment. By Payment means you enter the monthly payment you want and the calculator works out how long the loan could take to repay."
       },
       {
         "q": "How are my interest savings calculated?",
@@ -225,102 +185,45 @@
         "a": "Record a bank balance checkpoint whenever you know your real outstanding balance. LoanBee anchors future projections to that confirmed figure instead of drifting away from the original estimate."
       },
       {
-        "q": "What is the home dashboard and how do I pin a mortgage?",
-        "a": "From a saved mortgage, use Pin to dashboard. Pinned mortgages become the first thing you see when you open the app, showing balance and progress at a glance. You can pin more than one and reorder them."
-      },
-      {
-        "q": "Can I change the currency?",
-        "a": "Yes. Set a default currency in Settings, and every saved loan keeps the currency it was created with. Supported currencies are GBP, EUR, USD and PLN."
-      },
-      {
-        "q": "Can I change the app language?",
-        "a": "Yes. Settings has a language toggle. LoanBee currently supports English and Polish, and defaults to your device language on first launch."
-      },
-      {
         "q": "Is my data private?",
         "a": "All of your loans and mortgages are stored only on your device. There is no account and nothing is uploaded to a server."
-      },
-      {
-        "q": "Where can I see this guide again?",
-        "a": "The How it works guide is always available from the About tab and from Settings, so you can revisit any feature at any time."
       }
     ]
   },
   "guide": {
     "title": "How it works",
-    "headerKicker": "WELCOME TO LOANBEE",
-    "headerTitle": "Plan loans, track your mortgage",
-    "headerBody": "LoanBee turns the numbers behind any loan or mortgage into a clear picture — what you'll pay, how soon you could be debt-free, and what overpaying really saves you. Here's a two-minute tour.",
-    "sections": [
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get started",
+    "slides": [
       {
-        "icon": "calculator",
-        "title": "1 · Run a calculation",
-        "body": "Open the Calculator tab and enter the amount, interest rate and term. Choose a currency, and optionally a start date, lender and down payment.",
-        "steps": [
-          "By term — enter how long the loan runs and LoanBee works out the monthly payment.",
-          "By payment — enter the monthly amount you can afford and LoanBee works out how long it takes.",
-          "Add an optional monthly overpayment to see the impact straight away."
-        ]
+        "icon": "coins",
+        "title": "See what your loan really costs",
+        "subtitle": "LoanBee turns any loan or mortgage into a clear picture — payments, interest, and payoff date."
       },
       {
-        "icon": "results",
-        "title": "2 · Read your results",
-        "body": "Every calculation gives you the monthly payment, total interest, total cost and payoff date.",
-        "steps": [
-          "Switch between the charts and the full month-by-month schedule.",
-          "Export the schedule to CSV or share a summary link.",
-          "Tweak the inputs and recalculate as often as you like."
-        ]
+        "icon": "modes",
+        "title": "Two ways to calculate",
+        "subtitle": "Enter a term to find the monthly payment, or enter a payment to find the term."
       },
       {
-        "icon": "save",
-        "title": "3 · Save a loan or mortgage",
-        "body": "Tap Save this loan on the results screen. Give it a nickname, choose Loan or Mortgage, and it appears in the Saved tab.",
-        "steps": [
-          "Loans get a simple progress view with overpayment savings.",
-          "Mortgages unlock the full tracking dashboard.",
-          "Each saved item keeps its own currency."
-        ]
+        "icon": "track",
+        "title": "Track every mortgage milestone",
+        "subtitle": "Save a mortgage to log real balances, manage rate deals, and see your progress on one dashboard."
       },
       {
-        "icon": "dashboard",
-        "title": "4 · Track a mortgage",
-        "body": "Open a saved mortgage for the dashboard: current balance, time and money progress, estimated interest paid and the projected end date.",
-        "steps": [
-          "Pin a mortgage to make it the screen you see at app launch.",
-          "Record your real bank balance so projections stay honest.",
-          "The timeline lists every deal and activity in order."
-        ]
+        "icon": "overpay",
+        "title": "Watch overpayments add up",
+        "subtitle": "Add a monthly overpayment or lump sum to see the interest you'd save and the years off your term."
       },
       {
-        "icon": "deals",
-        "title": "5 · Manage mortgage deals",
-        "body": "A mortgage is made of deals — your fixed or variable rate periods. Add your current deal, then plan or complete deals as the mortgage moves on.",
-        "steps": [
-          "Add the current deal with its rate, term and start date.",
-          "Complete a deal when it ends to lock in what actually happened.",
-          "Draft the next deal to preview the switch before it starts."
-        ]
-      },
-      {
-        "icon": "overpayments",
-        "title": "6 · See what overpaying saves",
-        "body": "Add a regular monthly overpayment or one-off lump sums to any deal. LoanBee shows the interest saved and time knocked off — the whole point of the app.",
-        "steps": [
-          "Monthly overpayments apply every month of the deal.",
-          "Lump sums apply on the date you choose.",
-          "Savings update across the dashboard and timeline automatically."
-        ]
+        "icon": "privacy",
+        "title": "Private by default",
+        "subtitle": "Nothing leaves your device — no accounts, no uploads. You can revisit this guide anytime from Settings."
       }
     ],
-    "faqKicker": "STILL CURIOUS?",
-    "faqTitle": "More answers in the FAQ",
-    "faqBody": "The About tab has an extended FAQ covering overpayments, currencies, your data and more.",
-    "faqCta": "Open the FAQ",
-    "primaryCtaFirstRun": "Get started",
-    "primaryCta": "Done",
     "aboutEntryTitle": "New to LoanBee?",
-    "aboutEntryBody": "Take the quick tour of every feature.",
+    "aboutEntryBody": "Take the quick tour.",
     "aboutEntryCta": "How it works",
     "settingsEntry": "How it works"
   },
