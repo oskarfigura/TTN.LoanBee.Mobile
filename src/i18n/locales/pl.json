@@ -195,7 +195,11 @@
     "skip": "Pomiń",
     "next": "Dalej",
     "tryItNow": "Spróbuj teraz",
-    "exampleCaption": "mniej odsetek · {{years}} lat krócej",
+    "exampleBadge": "PRZYKŁAD",
+    "heroLabel": "Zaoszczędzisz",
+    "yearsSooner": "{{years}} lat krócej",
+    "legendWith": "Z nadpłatami",
+    "legendWithout": "Bez nadpłat",
     "exampleDisclaimer": "Tylko dla ilustracji. Twoje wartości będą się różnić.",
     "slides": [
       {

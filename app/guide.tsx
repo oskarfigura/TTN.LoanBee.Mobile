@@ -87,9 +87,9 @@ const SLIDE_THEMES: Record<string, SlideTheme> = {
     titleColor: colours.white,
     subtitleColor: colours.textInverse,
     heroAccent: colours.honey,
-    chartLineBaseline: 'rgba(255,255,255,0.35)',
-    chartLineWith: colours.honey,
-    chartFillWith: 'rgba(244,180,0,0.18)',
+    chartLineBaseline: 'rgba(11,28,48,0.32)',
+    chartLineWith: colours.primary,
+    chartFillWith: 'rgba(244,180,0,0.22)',
   },
   accent: {
     cardBg: colours.surfaceStrong,
@@ -307,17 +307,23 @@ function SlideView({ slide, index, width, scrollX, chartData }: SlideViewProps) 
     return (
       <View style={[styles.slideOuter, { width }]}>
         <View style={[styles.card, { backgroundColor: theme.cardBg }]}>
-          <View style={styles.cardInner}>
-            <Animated.View style={[styles.heroExample, heroStyle]}>
-              <SavingsHero chartData={chartData} theme={theme} />
-            </Animated.View>
-            <Animated.View style={[styles.textWrap, textStyle]}>
+          <View style={styles.exampleInner}>
+            <Animated.View style={[styles.exampleTextWrap, textStyle]}>
               <AppText
                 variant="title1"
                 style={[styles.slideTitle, { color: theme.titleColor }]}
               >
                 {slide.title}
               </AppText>
+              <AppText
+                variant="bodyLg"
+                style={[styles.slideSubtitle, { color: theme.subtitleColor }]}
+              >
+                {slide.subtitle}
+              </AppText>
+            </Animated.View>
+            <Animated.View style={[styles.heroExample, heroStyle]}>
+              <SavingsHero chartData={chartData} theme={theme} />
             </Animated.View>
           </View>
           <AppText
@@ -414,19 +420,56 @@ function SavingsHero({ chartData, theme }: SavingsHeroProps) {
   }));
 
   return (
-    <View style={styles.heroBlock}>
-      <AppText style={[styles.heroNumber, { color: theme.titleColor }]} numberOfLines={1}>
-        {`${symbol}${animatedValue.toLocaleString('en-GB')}`}
+    <View style={[styles.heroPanel, { backgroundColor: colours.whiteSubtle }]}>
+      <View style={styles.heroHeader}>
+        <View style={[styles.exampleBadge, { backgroundColor: theme.heroAccent }]}>
+          <AppText style={[styles.exampleBadgeText, { color: colours.primary }]}>
+            {t('guide.exampleBadge')}
+          </AppText>
+        </View>
+        <View style={[styles.yearsPill, { backgroundColor: theme.cardBg }]}>
+          <AppText style={[styles.yearsPillText, { color: theme.titleColor }]}>
+            {t('guide.yearsSooner', { years })}
+          </AppText>
+        </View>
+      </View>
+
+      <AppText
+        style={[styles.heroLabel, { color: theme.cardBg }]}
+      >
+        {t('guide.heroLabel')}
       </AppText>
       <AppText
-        variant="labelMd"
-        style={[styles.heroCaption, { color: theme.subtitleColor }]}
+        style={[styles.heroNumber, { color: theme.cardBg }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
       >
-        {t('guide.exampleCaption', { years })}
+        {`${symbol}${animatedValue.toLocaleString('en-GB')}`}
       </AppText>
+
       <Animated.View style={[styles.sparklineWrap, sparklineStyle]}>
         <Sparkline series={series} theme={theme} />
       </Animated.View>
+
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendSwatch, { backgroundColor: theme.chartLineWith }]} />
+          <AppText style={[styles.legendText, { color: theme.cardBg }]}>
+            {t('guide.legendWith')}
+          </AppText>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={styles.legendSwatchDashed}>
+            <View style={[styles.legendDash, { backgroundColor: theme.cardBg }]} />
+            <View style={[styles.legendDash, { backgroundColor: theme.cardBg }]} />
+            <View style={[styles.legendDash, { backgroundColor: theme.cardBg }]} />
+          </View>
+          <AppText style={[styles.legendText, { color: theme.cardBg }]}>
+            {t('guide.legendWithout')}
+          </AppText>
+        </View>
+      </View>
     </View>
   );
 }
@@ -438,10 +481,14 @@ interface SparklineProps {
 
 function Sparkline({ series, theme }: SparklineProps) {
   const { width: screenWidth } = useWindowDimensions();
-  // The sparkline lives inside the card; the card has spacing.xl horizontal
-  // padding and the slideOuter has spacing.md outside it.
-  const width = Math.min(screenWidth - spacing.md * 2 - spacing.xl * 2, 340);
-  const height = 64;
+  // The sparkline lives inside the hero panel, which is inside the card.
+  // slideOuter pads spacing.md outside; card pads spacing.xl; hero panel
+  // pads spacing.lg — subtract them all.
+  const width = Math.min(
+    screenWidth - spacing.md * 2 - spacing.xl * 2 - spacing.lg * 2,
+    320,
+  );
+  const height = 84;
   const padX = 2;
   const padY = 4;
   const usableW = width - padX * 2;
@@ -486,7 +533,8 @@ function Sparkline({ series, theme }: SparklineProps) {
       <Path
         d={toPath(series.baseline)}
         stroke={theme.chartLineBaseline}
-        strokeWidth={1.25}
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
         fill="none"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -494,7 +542,7 @@ function Sparkline({ series, theme }: SparklineProps) {
       <Path
         d={toPath(series.withOverpayment)}
         stroke={theme.chartLineWith}
-        strokeWidth={2}
+        strokeWidth={2.5}
         fill="none"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -547,33 +595,116 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     opacity: 0.55,
   },
+  exampleInner: {
+    flex: 1,
+    width: '100%',
+  },
+  exampleTextWrap: {
+    alignItems: 'center',
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.lg,
+  },
   heroExample: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: spacing.xl,
+    flex: 1,
+    justifyContent: 'center',
   },
-  heroBlock: {
+  heroPanel: {
     width: '100%',
+    borderRadius: 22,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
     alignItems: 'center',
   },
-  heroNumber: {
-    ...fontFaces.heading.bold,
-    fontSize: 56,
-    lineHeight: 60,
-    letterSpacing: -1.2,
-    textAlign: 'center',
+  heroHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
   },
-  heroCaption: {
+  exampleBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs + 1,
+    borderRadius: radii.full,
+  },
+  exampleBadgeText: {
+    ...fontFaces.heading.extrabold,
+    fontSize: 10,
+    lineHeight: 12,
+    letterSpacing: 1.2,
+  },
+  yearsPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs + 1,
+    borderRadius: radii.full,
+  },
+  yearsPillText: {
+    ...fontFaces.heading.bold,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.3,
+  },
+  heroLabel: {
+    ...fontFaces.body.medium,
+    fontSize: 12,
+    lineHeight: 14,
+    letterSpacing: 0.4,
+    opacity: 0.72,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    opacity: 0.78,
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-    textAlign: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xxs,
+  },
+  heroNumber: {
+    ...fontFaces.heading.extrabold,
+    fontSize: 44,
+    lineHeight: 48,
+    letterSpacing: -1.1,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.sm,
   },
   sparklineWrap: {
     width: '100%',
     alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    columnGap: spacing.md,
+    rowGap: spacing.xxs,
+    marginTop: spacing.md,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  legendSwatch: {
+    width: 18,
+    height: 3,
+    borderRadius: 2,
+  },
+  legendSwatchDashed: {
+    width: 18,
+    height: 3,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  legendDash: {
+    width: 4,
+    height: 2,
+    borderRadius: 1,
+    opacity: 0.55,
+  },
+  legendText: {
+    ...fontFaces.body.semibold,
+    fontSize: 11,
+    lineHeight: 14,
   },
   textWrap: {
     alignItems: 'center',
@@ -590,9 +721,9 @@ const styles = StyleSheet.create({
   },
   exampleDisclaimer: {
     textAlign: 'center',
-    opacity: 0.65,
+    opacity: 0.55,
     fontStyle: 'italic',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   footer: {
     paddingHorizontal: layout.screenPadding,

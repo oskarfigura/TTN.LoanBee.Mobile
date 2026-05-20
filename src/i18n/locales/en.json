@@ -195,7 +195,11 @@
     "skip": "Skip",
     "next": "Next",
     "tryItNow": "Try it now",
-    "exampleCaption": "saved in interest · {{years}} years sooner",
+    "exampleBadge": "EXAMPLE",
+    "heroLabel": "You'd save",
+    "yearsSooner": "{{years}} years sooner",
+    "legendWith": "With overpayments",
+    "legendWithout": "Without",
     "exampleDisclaimer": "For illustration only. Your figures will differ.",
     "slides": [
       {
