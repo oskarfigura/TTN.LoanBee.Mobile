@@ -188,6 +188,34 @@
       }
     ]
   },
+  "guide": {
+    "title": "Start with your loan, then explore what could change.",
+    "skip": "Close",
+    "eyebrow": "Quick guide",
+    "body": "LoanBee keeps the maths out of the way so you can try numbers, compare options and save what matters.",
+    "stepLabel": "Step {{number}}",
+    "startCalculating": "Start calculating",
+    "steps": {
+      "details": {
+        "title": "Add your loan details",
+        "body": "Enter the amount, rate and term."
+      },
+      "compare": {
+        "title": "Compare your options",
+        "body": "See the monthly payment and how overpayments could help."
+      },
+      "save": {
+        "title": "Save and revisit",
+        "body": "Keep a loan, update it later and track progress."
+      }
+    },
+    "inviteTitle": "No perfect setup needed",
+    "inviteBody": "Start with what you know. You can adjust the numbers whenever you like.",
+    "aboutEntryTitle": "New to LoanBee?",
+    "aboutEntryBody": "Take the quick tour.",
+    "aboutEntryCta": "How it works",
+    "settingsEntry": "How it works"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

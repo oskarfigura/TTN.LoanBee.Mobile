@@ -176,6 +176,34 @@
       }
     ]
   },
+  "guide": {
+    "title": "Wpisz swój kredyt i spokojnie sprawdź możliwości.",
+    "skip": "Zamknij",
+    "eyebrow": "Szybki przewodnik",
+    "body": "LoanBee ukrywa skomplikowane obliczenia, żeby łatwo sprawdzić liczby, porównać opcje i zapisać to, co ważne.",
+    "stepLabel": "Krok {{number}}",
+    "startCalculating": "Zacznij liczyć",
+    "steps": {
+      "details": {
+        "title": "Dodaj dane kredytu",
+        "body": "Wpisz kwotę, oprocentowanie i okres."
+      },
+      "compare": {
+        "title": "Porównaj opcje",
+        "body": "Zobacz ratę miesięczną i wpływ nadpłat."
+      },
+      "save": {
+        "title": "Zapisz i wróć później",
+        "body": "Zachowaj kredyt, aktualizuj go i śledź postęp."
+      }
+    },
+    "inviteTitle": "Nie musisz mieć wszystkiego od razu",
+    "inviteBody": "Zacznij od tego, co wiesz. Liczby możesz zmienić w każdej chwili.",
+    "aboutEntryTitle": "Pierwszy raz w LoanBee?",
+    "aboutEntryBody": "Zobacz szybki przegląd.",
+    "aboutEntryCta": "Jak to działa",
+    "settingsEntry": "Jak to działa"
+  },
   "settings": {
     "title": "Ustawienia",
     "language": "Język",

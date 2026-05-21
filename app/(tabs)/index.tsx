@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,8 @@ import { buildDraftResultParams } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
+import { hasSeenGuide } from '@/onboarding/guideState';
+import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
 
 export default function CalculatorScreen() {
   const { t } = useTranslation();
@@ -33,6 +35,25 @@ export default function CalculatorScreen() {
       .filter(loan => loan.pinnedToDashboard)
       .sort((a, b) => (a.dashboardOrder ?? 0) - (b.dashboardOrder ?? 0))
   ), [loans]);
+  const firstRunChecked = useRef(false);
+
+  useEffect(() => {
+    if (firstRunChecked.current) return;
+    firstRunChecked.current = true;
+    if (hasSeenGuide()) return;
+
+    let cancelled = false;
+
+    whenConsentFlowComplete().then(() => {
+      if (!cancelled && !hasSeenGuide()) {
+        router.push('/guide?firstRun=1');
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   useEffect(() => {
     if (params.calculator === '1') {
