@@ -15,6 +15,7 @@ describe('firstRunGate', () => {
   });
 
   it('resolves once the consent flow is marked complete', async () => {
+    jest.useFakeTimers();
     const { markConsentFlowComplete, whenConsentFlowComplete } = await import('../../src/onboarding/firstRunGate');
     const pending = whenConsentFlowComplete(10000);
     markConsentFlowComplete();
