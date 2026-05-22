@@ -6,7 +6,7 @@ import { colours, radii, spacing } from '@/theme';
 interface Props {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive' | 'icon-pill';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'destructive' | 'destructive-ghost' | 'icon-pill';
   disabled?: boolean;
   loading?: boolean;
   leftIcon?: React.ReactNode;
@@ -28,7 +28,9 @@ export const Button = ({
     ? colours.white
     : variant === 'ghost'
       ? colours.primary
-      : colours.primaryInk;
+      : variant === 'destructive-ghost'
+        ? colours.error
+        : colours.primaryInk;
 
   return (
     <TouchableOpacity
@@ -44,7 +46,15 @@ export const Button = ({
           {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
           <AppText
             variant="labelMd"
-            tone={variant === 'primary' || variant === 'destructive' ? 'inverse' : variant === 'secondary' ? 'default' : 'accent'}
+            tone={
+              variant === 'primary' || variant === 'destructive'
+                ? 'inverse'
+                : variant === 'secondary'
+                  ? 'default'
+                  : variant === 'destructive-ghost'
+                    ? 'error'
+                    : 'accent'
+            }
             style={styles.label}
           >
             {label}
@@ -105,6 +115,10 @@ const variantStyles = StyleSheet.create({
   destructive: {
     backgroundColor: colours.error,
     borderColor: colours.error,
+  },
+  'destructive-ghost': {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
   },
   'icon-pill': {
     backgroundColor: colours.surfaceRaised,

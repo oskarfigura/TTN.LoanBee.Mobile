@@ -613,7 +613,7 @@ export const DealEditorForm = ({
         <Button label={t('save.cancel')} onPress={onCancel} variant="ghost" style={styles.cancelAction} />
       ) : null}
       {onDeleteDraft ? (
-        <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="ghost" style={styles.deleteAction} />
+        <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="destructive-ghost" style={styles.deleteAction} />
       ) : null}
     </View>
   );
@@ -661,5 +661,5 @@ const styles = StyleSheet.create({
   },
   action: { flex: 1 },
   cancelAction: { marginTop: spacing.xxs },
-  deleteAction: { marginTop: spacing.xs },
+  deleteAction: { marginTop: spacing.xxs },
 });
