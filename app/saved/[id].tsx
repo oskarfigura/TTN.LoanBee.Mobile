@@ -9,7 +9,6 @@ import { MoreIcon } from '@/components/loans/LoanIcons';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { CoinsStackedIcon, EditIcon as UiEditIcon, TrashIcon } from '@/components/ui/Icons';
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
@@ -20,6 +19,9 @@ import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getCurrentDeal } from '@/mortgage/tracker';
+import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
+import { EditIcon as UiEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
+import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();

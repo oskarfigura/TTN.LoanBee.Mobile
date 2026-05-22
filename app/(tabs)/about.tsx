@@ -6,8 +6,8 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ArrowRightIcon } from '@/components/ui/Icons';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { ArrowRightIcon } from '@/components/ui/Icons/ArrowRightIcon/ArrowRightIcon';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

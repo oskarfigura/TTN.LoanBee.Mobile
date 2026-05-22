@@ -79,7 +79,7 @@ const scenarioTotals = (
     const lumpSumDate = parseDateLabelValue(ls.date) ?? new Date();
     const monthIndex = monthsBetween(currentStartDate, lumpSumDate);
 
-    if (monthIndex <= 0 || monthIndex >= currentResult.tableItems.length) {
+    if (monthIndex >= currentResult.tableItems.length) {
       continue;
     }
 
@@ -91,7 +91,9 @@ const scenarioTotals = (
     accumulatedInterest += phaseInterest;
     accumulatedMonths += monthIndex;
 
-    const balanceAtLumpSum = parseFloat(currentResult.tableItems[monthIndex - 1].ending);
+    const balanceAtLumpSum = monthIndex === 0
+      ? currentResult.loanChartRemainingArray[0]
+      : parseFloat(currentResult.tableItems[monthIndex - 1].ending);
     const newBalance = Math.max(0, balanceAtLumpSum - ls.amount);
 
     if (newBalance <= 0) {
@@ -155,7 +157,7 @@ export const buildScenarioRemainingArray = (
     const lumpSumDate = parseDateLabelValue(ls.date) ?? new Date();
     const monthIndex = monthsBetween(currentStartDate, lumpSumDate);
 
-    if (monthIndex <= 0 || monthIndex >= currentResult.tableItems.length) {
+    if (monthIndex >= currentResult.tableItems.length) {
       continue;
     }
 

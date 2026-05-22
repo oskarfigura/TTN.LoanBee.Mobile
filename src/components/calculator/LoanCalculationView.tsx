@@ -164,7 +164,6 @@ export const LoanCalculationView = ({
         <RepaymentBarChart
           monthlyArray={result.loanChartMonthlyArray}
           interestArray={result.loanChartInterestArray}
-          labelArray={result.loanChartLabelArray}
           currency={currency}
           height={320}
         />
@@ -246,7 +245,6 @@ export const LoanCalculationView = ({
               <RepaymentBarChart
                 monthlyArray={result.loanChartMonthlyArray}
                 interestArray={result.loanChartInterestArray}
-                labelArray={result.loanChartLabelArray}
                 currency={currency}
               />
             </Card>

@@ -1,5 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
-import { buildSavedLoanResultParams } from '../../src/results/loanResultRoute';
+import { getDraftResultSession } from '../../src/results/draftResultStore';
+import {
+  buildDraftResultParams,
+  buildSavedLoanResultParams,
+  getResultForSavedLoan,
+} from '../../src/results/loanResultRoute';
 import { SavedLoan } from '../../src/types/SavedLoan';
 
 const loan: SavedLoan = {
@@ -63,5 +68,28 @@ describe('saved loan result params', () => {
     expect(params.savedLoanId).toBe('loan-1');
     expect(params.currency).toBe('GBP');
     expect(JSON.parse(params.savedLoan)).toEqual(loan);
+  });
+
+  it('creates a retrievable draft result session for draft routing', () => {
+    const result = getResultForSavedLoan(loan);
+    const formValues = {
+      currency: 'USD',
+      loanAmount: 180000,
+      additionalMonthlyPayment: 250,
+    };
+
+    const params = buildDraftResultParams(result, formValues, 'USD');
+    const session = getDraftResultSession<typeof formValues>(params.draftId);
+
+    expect(params.mode).toBe('draft');
+    expect(params.currency).toBe('USD');
+    expect(params.draftId).toMatch(/^draft_/);
+    expect(session).toMatchObject({
+      id: params.draftId,
+      result,
+      formValues,
+      currency: 'USD',
+    });
+    expect(typeof session?.createdAt).toBe('number');
   });
 });

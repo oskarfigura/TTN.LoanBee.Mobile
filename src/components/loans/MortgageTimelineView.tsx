@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { TrashIcon } from '@/components/ui/Icons';
 import { LiveDotIcon, PencilIcon, PlusIcon, TickIcon } from '@/components/loans/LoanIcons';
 import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { formatCurrency } from '@/currency/format';
@@ -28,6 +27,7 @@ import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fontFaces, fontSizes, radii, spacing } from '@/theme';
 import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate, formatFriendlyDateRange, parseDateLabelValue } from '@/utils/date';
+import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 
 interface Props {
   loan: SavedLoan;

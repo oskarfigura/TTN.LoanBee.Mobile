@@ -1,14 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -17,23 +13,26 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { AppText } from '@/components/ui/AppText';
-import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ChevronRightIcon, CoinsStackedIcon, InfoCircleIcon, PlusIcon } from '@/components/ui/Icons';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
-import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
+import { CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { upsertMortgageEvent, removeMortgageEvent } from '@/mortgage/events';
 import { buildDealBalanceArrays, getDealOverpaymentImpact, normaliseDealChain } from '@/mortgage/tracker';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal, MortgageEvent } from '@/types/SavedLoan';
 import { colours, layout, radii, spacing } from '@/theme';
-import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
+import { formatFriendlyDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
+import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
+import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
+import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
+import { PlusIcon } from '@/components/ui/Icons/PlusIcon/PlusIcon';
+import { DealMonthlyOverpaymentSheet } from '@/components/loans/DealMonthlyOverpaymentSheet';
+import { DealLumpSumSheet } from '@/components/loans/DealLumpSumSheet';
 
 const FullscreenIcon = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -301,7 +300,7 @@ export default function DealOverpaymentsScreen() {
 
       </ScrollView>
 
-      <MonthlySheet
+      <DealMonthlyOverpaymentSheet
         visible={monthlySheetVisible}
         current={deal.regularOverpayment}
         currency={currency}
@@ -311,7 +310,7 @@ export default function DealOverpaymentsScreen() {
         onClose={() => setMonthlySheetVisible(false)}
       />
 
-      <LumpSumSheet
+      <DealLumpSumSheet
         visible={lumpSumSheetVisible}
         event={editingEvent}
         currency={currency}
@@ -356,303 +355,6 @@ export default function DealOverpaymentsScreen() {
     </SafeAreaView>
   );
 }
-
-// ─── Monthly Overpayment Sheet ────────────────────────────────────────────────
-
-const MonthlySheet = ({
-  visible,
-  current,
-  currency,
-  deal,
-  loanEvents,
-  onSave,
-  onClose,
-}: {
-  visible: boolean;
-  current: number;
-  currency: CurrencyCode;
-  deal: LoanDeal;
-  loanEvents: MortgageEvent[];
-  onSave: (amount: number) => void;
-  onClose: () => void;
-}) => {
-  const { t } = useTranslation();
-  const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
-  const [value, setValue] = useState(current > 0 ? String(current) : '');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedAmount, setDebouncedAmount] = useState(current);
-
-  React.useEffect(() => {
-    if (visible) {
-      setValue(current > 0 ? String(current) : '');
-      setDebouncedAmount(current);
-    }
-  }, [visible, current]);
-
-  const handleChange = (text: string) => {
-    setValue(text);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedAmount(parseFloat(text) || 0), 400);
-  };
-
-  const amount = parseFloat(value) || 0;
-
-  const impact = useMemo(() => {
-    if (debouncedAmount <= 0) return null;
-    const tempDeal: LoanDeal = { ...deal, regularOverpayment: debouncedAmount };
-    const result = getDealOverpaymentImpact(tempDeal, loanEvents);
-    return result.hasOverpayments ? result : null;
-  }, [deal, loanEvents, debouncedAmount]);
-
-  const isUnchanged = amount === current;
-  const canSave = amount > 0 && !isUnchanged;
-  const canRemove = current > 0;
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={sheetStyles.scrim} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheetStyles.kav}>
-          <Pressable style={sheetStyles.sheet}>
-            <View style={sheetStyles.handle} />
-            <AppText variant="title2">
-              {t('mortgage.dealMonthlyOverpayment')}
-            </AppText>
-            <View style={sheetStyles.field}>
-              <FieldLabel>{t('overpayments.monthlyAmountLabel')}</FieldLabel>
-              <InputSurface>
-                <InputAffix>{currencySymbol}</InputAffix>
-                <AppTextInput
-                  value={value}
-                  onChangeText={handleChange}
-                  placeholder="150"
-                  keyboardType="decimal-pad"
-                  autoFocus={visible}
-                />
-              </InputSurface>
-            </View>
-            {impact && impact.interestSaved > 0 ? (
-              <Card style={sheetStyles.impactCard}>
-                <AppText variant="labelSm" tone="muted">{t('overpayments.monthlySavings')}</AppText>
-                <View style={sheetStyles.impactRows}>
-                  <View style={sheetStyles.impactRow}>
-                    <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
-                    <AppText variant="labelMd" tone="success">{formatCurrency(impact.interestSaved, currency)}</AppText>
-                  </View>
-                  {impact.extraPrincipalRepaid > 0 ? (
-                    <View style={sheetStyles.impactRow}>
-                      <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
-                      <AppText variant="labelMd" tone="success">{formatCurrency(impact.extraPrincipalRepaid, currency)}</AppText>
-                    </View>
-                  ) : null}
-                </View>
-              </Card>
-            ) : null}
-            <View style={sheetStyles.actions}>
-              {canRemove ? (
-                <Button
-                  label={t('overpayments.monthlyRemove')}
-                  onPress={() => onSave(0)}
-                  variant="ghost"
-                  style={sheetStyles.actionBtn}
-                />
-              ) : (
-                <Button
-                  label={t('overpayments.cancel')}
-                  onPress={onClose}
-                  variant="ghost"
-                  style={sheetStyles.actionBtn}
-                />
-              )}
-              <Button
-                label={t('overpayments.save')}
-                onPress={() => onSave(amount)}
-                disabled={!canSave}
-                style={sheetStyles.actionBtn}
-              />
-            </View>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
-  );
-};
-
-// ─── Lump Sum Sheet ───────────────────────────────────────────────────────────
-
-const LumpSumSheet = ({
-  visible,
-  event,
-  currency,
-  minDate,
-  maxDate,
-  deal,
-  loanEvents,
-  onSave,
-  onDelete,
-  onClose,
-}: {
-  visible: boolean;
-  event: MortgageEvent | null;
-  currency: CurrencyCode;
-  minDate: Date;
-  maxDate: Date;
-  deal: LoanDeal;
-  loanEvents: MortgageEvent[];
-  onSave: (date: string, amount: number) => void;
-  onDelete: (eventId: string) => void;
-  onClose: () => void;
-}) => {
-  const { t } = useTranslation();
-  const { height: screenHeight } = useWindowDimensions();
-  const isEditing = event !== null;
-  const datePickerRef = useRef<DatePickerFieldHandle>(null);
-  const minDateRef = useRef(minDate);
-  minDateRef.current = minDate;
-  const amountDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const initialDate = () => {
-    const fallback = minDate > new Date() ? minDate : new Date();
-    return event?.date ?? formatIsoDate(fallback);
-  };
-
-  const [date, setDate] = useState(initialDate);
-  const [amount, setAmount] = useState(event?.amount ? String(event.amount) : '');
-  const [debouncedAmount, setDebouncedAmount] = useState(event?.amount ?? 0);
-  const [debouncedDate, setDebouncedDate] = useState(initialDate);
-
-  React.useEffect(() => {
-    if (visible) {
-      const fallback = minDateRef.current > new Date() ? minDateRef.current : new Date();
-      const d = event?.date ?? formatIsoDate(fallback);
-      setDate(d);
-      setDebouncedDate(d);
-      setAmount(event?.amount ? String(event.amount) : '');
-      setDebouncedAmount(event?.amount ?? 0);
-    }
-  }, [visible, event]);
-
-  const handleAmountChange = (text: string) => {
-    setAmount(text);
-    if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current);
-    amountDebounceRef.current = setTimeout(() => setDebouncedAmount(parseFloat(text) || 0), 400);
-  };
-
-  const handleDateChange = (newDate: string) => {
-    setDate(newDate);
-    if (dateDebounceRef.current) clearTimeout(dateDebounceRef.current);
-    dateDebounceRef.current = setTimeout(() => setDebouncedDate(newDate), 200);
-  };
-
-  const impact = useMemo(() => {
-    if (debouncedAmount <= 0) return null;
-    const tempEvent: MortgageEvent = {
-      id: event?.id ?? 'preview',
-      createdAt: '',
-      updatedAt: '',
-      dealId: deal.id,
-      type: 'lumpOverpayment',
-      date: debouncedDate,
-      amount: debouncedAmount,
-    };
-    const tempEvents = [...loanEvents.filter(e => e.id !== event?.id), tempEvent];
-    const result = getDealOverpaymentImpact(deal, tempEvents);
-    return result.hasOverpayments ? result : null;
-  }, [deal, loanEvents, event, debouncedAmount, debouncedDate]);
-
-  const parsedAmount = parseFloat(amount) || 0;
-  const canSave = parsedAmount > 0;
-
-  const handleDelete = () => {
-    if (!event) return;
-    Alert.alert(
-      t('overpayments.deleteConfirmTitle'),
-      t('overpayments.deleteConfirmMessage'),
-      [
-        { text: t('overpayments.cancel'), style: 'cancel' },
-        { text: t('overpayments.deleteConfirm'), style: 'destructive', onPress: () => onDelete(event.id) },
-      ],
-    );
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={sheetStyles.scrim} onPress={onClose}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={sheetStyles.kav}>
-          <Pressable style={[sheetStyles.sheet, { maxHeight: screenHeight * 0.92 }]}>
-            <View style={sheetStyles.handle} />
-            <AppText variant="title2">
-              {isEditing ? t('overpayments.lumpSumSection') : t('overpayments.lumpSumAdd')}
-            </AppText>
-            <View style={sheetStyles.fields}>
-              <DatePickerField
-                ref={datePickerRef}
-                label={t('overpayments.lumpSumDate')}
-                value={date}
-                onChange={handleDateChange}
-                hint=""
-                minimumDate={minDate}
-                maximumDate={maxDate}
-              />
-              <View>
-                <FieldLabel>{t('overpayments.lumpSumAmount')}</FieldLabel>
-                <InputSurface>
-                  <AppTextInput
-                    value={amount}
-                    onChangeText={handleAmountChange}
-                    placeholder="5000"
-                    keyboardType="decimal-pad"
-                    onFocus={() => datePickerRef.current?.closePicker()}
-                  />
-                </InputSurface>
-              </View>
-            </View>
-            {impact && impact.interestSaved > 0 ? (
-              <Card style={sheetStyles.impactCard}>
-                <AppText variant="labelSm" tone="muted">{t('overpayments.lumpSumImpact')}</AppText>
-                <View style={sheetStyles.impactRows}>
-                  <View style={sheetStyles.impactRow}>
-                    <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
-                    <AppText variant="labelMd" tone="success">{formatCurrency(impact.interestSaved, currency)}</AppText>
-                  </View>
-                  {impact.extraPrincipalRepaid > 0 ? (
-                    <View style={sheetStyles.impactRow}>
-                      <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
-                      <AppText variant="labelMd" tone="success">{formatCurrency(impact.extraPrincipalRepaid, currency)}</AppText>
-                    </View>
-                  ) : null}
-                </View>
-              </Card>
-            ) : null}
-            <View style={sheetStyles.actions}>
-              {isEditing ? (
-                <Button
-                  label={t('overpayments.delete')}
-                  onPress={handleDelete}
-                  variant="destructive"
-                  style={sheetStyles.actionBtn}
-                />
-              ) : (
-                <Button
-                  label={t('overpayments.cancel')}
-                  onPress={onClose}
-                  variant="ghost"
-                  style={sheetStyles.actionBtn}
-                />
-              )}
-              <Button
-                label={t('overpayments.save')}
-                onPress={() => onSave(date, parsedAmount)}
-                disabled={!canSave}
-                style={sheetStyles.actionBtn}
-              />
-            </View>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
-  );
-};
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -770,36 +472,4 @@ const styles = StyleSheet.create({
   },
   fullscreenBody: { flex: 1 },
   fullscreenContent: { padding: layout.screenPadding, paddingBottom: spacing['2xl'] },
-});
-
-const sheetStyles = StyleSheet.create({
-  scrim: { flex: 1, backgroundColor: colours.modalScrim, justifyContent: 'flex-end' },
-  kav: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colours.background,
-    borderTopLeftRadius: radii.card,
-    borderTopRightRadius: radii.card,
-    padding: spacing.xl,
-    paddingBottom: spacing['3xl'],
-    gap: spacing.lg,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colours.border,
-    alignSelf: 'center',
-    marginBottom: spacing.xs,
-  },
-  field: { gap: spacing.xs },
-  fields: { gap: spacing.sm },
-  impactCard: {
-    backgroundColor: colours.successLight,
-    borderColor: colours.successBorder,
-    gap: spacing.xs,
-  },
-  impactRows: { gap: spacing.xs },
-  impactRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  actionBtn: { flex: 1 },
 });

@@ -27,7 +27,7 @@ import {
 } from '@/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
-import { colours, elevation, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
+import { colours, elevation, fontFaces, fontSizes, layout, spacing } from '@/theme';
 
 interface Props {
   loans: SavedLoan[];

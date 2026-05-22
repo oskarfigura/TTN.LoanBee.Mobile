@@ -1,6 +1,6 @@
 # Saved Mortgage — User Journeys
 
-This document is the source of truth for how a saved mortgage behaves end-to-end: the entity model, every user journey, what is deliberately *out* of scope, and the validation and storage rules that underpin the experience.
+This document is the source of truth for how a saved mortgage behaves end-to-end: the entity model, every user journey, what is deliberately *out* of scope, and the validation and storage rules that underpin the experience. For the broader app-shell route map, pair this with [developer-action-map.md](./developer-action-map.md).
 
 ## Product principles
 
@@ -199,8 +199,8 @@ The projection uses **monthly interest**, the standard model for amortization ca
 
 ## Storage
 
-- **MMKV key:** `saved_loans_v1` (JSON array of `LoanGroup`).
-- **Legacy key:** `saved_loans` — the loader migrates legacy records into a one-active-deal `LoanGroup` and removes the legacy key.
+- **MMKV key:** `saved_loans_v2` (JSON array of `LoanGroup`).
+- **Legacy key:** `saved_loans_v1` — the loader migrates legacy records into a one-active-deal `LoanGroup` and removes the legacy key.
 - **`dashboardOrder`** uses the `max + 1` pattern for both auto-pin on save (J1) and toggle-pin from detail (J13). Helper: `savedLoansStorage.getMaxDashboardOrder()`.
 
 ## Acceptance criteria (regression tests)

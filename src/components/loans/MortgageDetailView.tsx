@@ -19,18 +19,16 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
-import {
-  AddDocumentIcon,
-  AlertTriangleIcon,
-  CalendarDateIcon,
-  ChevronRightIcon,
-  ClockCheckIcon,
-  CoinsStackedIcon,
-  EyeIcon,
-  EditIcon as UiEditIcon,
-  MessageTextCircleIcon,
-  ShieldTickIcon,
-} from '@/components/ui/Icons';
+import { AddDocumentIcon } from '@/components/ui/Icons/AddDocumentIcon/AddDocumentIcon';
+import { AlertTriangleIcon } from '@/components/ui/Icons/AlertTriangleIcon/AlertTriangleIcon';
+import { CalendarDateIcon } from '@/components/ui/Icons/CalendarDateIcon/CalendarDateIcon';
+import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
+import { ClockCheckIcon } from '@/components/ui/Icons/ClockCheckIcon/ClockCheckIcon';
+import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
+import { EyeIcon } from '@/components/ui/Icons/EyeIcon/EyeIcon';
+import { EditIcon as UiEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
+import { MessageTextCircleIcon } from '@/components/ui/Icons/MessageTextCircleIcon/MessageTextCircleIcon';
+import { ShieldTickIcon } from '@/components/ui/Icons/ShieldTickIcon/ShieldTickIcon';
 import { formatCurrency } from '@/currency/format';
 import {
   buildSavedLoanDashboardProgress,
@@ -175,7 +173,6 @@ export const MortgageDetailView = ({
           <RepaymentBarChart
             monthlyArray={projection.loanChartMonthlyArray}
             interestArray={projection.loanChartInterestArray}
-            labelArray={projection.loanChartLabelArray}
             currency={loan.currency}
             height={320}
           />
@@ -295,7 +292,6 @@ export const MortgageDetailView = ({
               <RepaymentBarChart
                 monthlyArray={projection.loanChartMonthlyArray}
                 interestArray={projection.loanChartInterestArray}
-                labelArray={projection.loanChartLabelArray}
                 currency={loan.currency}
               />
               <DealSegmentStrip segments={projection.dealSegments} />

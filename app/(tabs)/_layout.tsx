@@ -1,12 +1,10 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import {
-  BookmarkIcon,
-  CoinsStackedIcon,
-  InfoCircleIcon,
-  SettingsIcon,
-} from '@/components/ui/Icons';
+import { BookmarkIcon } from '@/components/ui/Icons/BookmarkIcon/BookmarkIcon';
+import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
+import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
+import { SettingsIcon } from '@/components/ui/Icons/SettingsIcon/SettingsIcon';
 import { colours, elevation, fontFaces, fontSizes, radii } from '@/theme';
 import { confirmResultLeave, hasResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 

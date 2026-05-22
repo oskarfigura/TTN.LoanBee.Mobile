@@ -5,8 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { ArrowRightIcon, GridIcon, SaveIcon, TrendUpIcon, XCloseIcon } from '@/components/ui/Icons';
 import { SvgProps } from '@/components/ui/Svg';
+import { ArrowRightIcon } from '@/components/ui/Icons/ArrowRightIcon/ArrowRightIcon';
+import { GridIcon } from '@/components/ui/Icons/GridIcon/GridIcon';
+import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { TrendUpIcon } from '@/components/ui/Icons/TrendUpIcon/TrendUpIcon';
+import { XCloseIcon } from '@/components/ui/Icons/XCloseIcon/XCloseIcon';
 import { markGuideSeen } from '@/onboarding/guideState';
 import { colours, layout, radii, spacing } from '@/theme';
 

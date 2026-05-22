@@ -1,10 +1,8 @@
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
-import {
-  ChevronRightIcon as SystemChevronRightIcon,
-  EditIcon as SystemEditIcon,
-  PlusIcon as SystemPlusIcon,
-} from '@/components/ui/Icons';
+import { ChevronRightIcon as SystemChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
+import { EditIcon as SystemEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
+import { PlusIcon as SystemPlusIcon } from '@/components/ui/Icons/PlusIcon/PlusIcon';
 import { colours } from '@/theme';
 
 interface IconProps {

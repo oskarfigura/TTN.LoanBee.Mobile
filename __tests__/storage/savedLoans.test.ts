@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { savedLoansStorage } from '../../src/storage/savedLoans';
-import { LegacySavedLoan, SavedLoan } from '../../src/types/SavedLoan';
+import { LegacySavedLoan, MortgageEvent, SavedLoan } from '../../src/types/SavedLoan';
 import { storage } from '../../src/storage/mmkv';
 import { STORAGE_KEYS } from '../../src/storage/keys';
 
@@ -54,6 +54,17 @@ const makeLoan = (overrides: Partial<SavedLoan> = {}): SavedLoan => ({
     termInMonths: 0,
     totalTermInMonths: 120,
   },
+  ...overrides,
+});
+
+const makeEvent = (overrides: Partial<MortgageEvent> = {}): MortgageEvent => ({
+  id: 'event-1',
+  createdAt: '2024-02-01T00:00:00.000Z',
+  updatedAt: '2024-02-01T00:00:00.000Z',
+  dealId: 'deal-1',
+  type: 'lumpOverpayment',
+  date: '2024-02-01',
+  amount: 5000,
   ...overrides,
 });
 
@@ -123,6 +134,33 @@ describe('savedLoansStorage', () => {
 
     savedLoansStorage.togglePinned('test-id-1');
     expect(savedLoansStorage.getById('test-id-1')?.pinnedToDashboard).toBe(false);
+  });
+
+  it('returns the highest dashboard order across pinned loans', () => {
+    savedLoansStorage.add(makeLoan({ id: 'first', pinnedToDashboard: true, dashboardOrder: 2 }));
+    savedLoansStorage.add(makeLoan({ id: 'second', pinnedToDashboard: true, dashboardOrder: 5 }));
+    savedLoansStorage.add(makeLoan({ id: 'third', pinnedToDashboard: false }));
+
+    expect(savedLoansStorage.getMaxDashboardOrder()).toBe(5);
+  });
+
+  it('adds, updates, and removes mortgage events for a loan', () => {
+    savedLoansStorage.add(makeLoan());
+
+    const originalEvent = makeEvent();
+    savedLoansStorage.addEvent('test-id-1', originalEvent);
+    expect(savedLoansStorage.getById('test-id-1')?.events).toEqual([originalEvent]);
+
+    const updatedEvent = makeEvent({
+      amount: 7500,
+      note: 'Confirmed with lender',
+      updatedAt: '2024-02-02T00:00:00.000Z',
+    });
+    savedLoansStorage.updateEvent('test-id-1', updatedEvent);
+    expect(savedLoansStorage.getById('test-id-1')?.events).toEqual([updatedEvent]);
+
+    savedLoansStorage.removeEvent('test-id-1', updatedEvent.id);
+    expect(savedLoansStorage.getById('test-id-1')?.events).toEqual([]);
   });
 
   it('migrates legacy v1 loans into loan groups with one active deal', () => {

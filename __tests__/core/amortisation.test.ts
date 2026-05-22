@@ -98,17 +98,13 @@ describe('calculateTerm', () => {
 
 describe('getTableItems', () => {
   const AMOUNT = 270000;
-  const INTEREST = 3;
   const MONTHLY_INTEREST = 0.0025;
   const MONTHLY_PAYMENT = calculateMonthlyPayments(MONTHLY_INTEREST, 10, 0, AMOUNT);
   const DOWN_PAYMENT = 30000;
 
   const result = getTableItems(
     AMOUNT,
-    INTEREST,
     MONTHLY_INTEREST,
-    10,
-    0,
     MONTHLY_PAYMENT,
     DOWN_PAYMENT
   );

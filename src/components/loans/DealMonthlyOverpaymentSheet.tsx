@@ -1,41 +1,39 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
-import { LoanFormSnapshot } from '@/types/SavedLoan';
-import { formatCurrency } from '@/currency/format';
-import { CurrencyCode } from '@/currency/currencies';
 import { Button } from '@/components/ui/Button';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
+import { formatCurrency } from '@/currency/format';
+import { getDealOverpaymentImpact } from '@/mortgage/tracker';
+import { LoanDeal, MortgageEvent } from '@/types/SavedLoan';
 import {
   OverpaymentFieldGroup,
   OverpaymentImpactCard,
   OverpaymentSheetActions,
   OverpaymentSheetModal,
-  formatOverpaymentDuration,
 } from '@/components/loans/OverpaymentSheetPrimitives';
 
 interface Props {
   visible: boolean;
   current: number;
-  form: LoanFormSnapshot;
-  existingLumpSums: LumpSumEntry[];
   currency: CurrencyCode;
+  deal: LoanDeal;
+  loanEvents: MortgageEvent[];
   onSave: (amount: number) => void;
-  onRemove: () => void;
   onClose: () => void;
 }
 
-export const MonthlyOverpaymentSheet = ({
+export const DealMonthlyOverpaymentSheet = ({
   visible,
   current,
-  form,
-  existingLumpSums,
   currency,
+  deal,
+  loanEvents,
   onSave,
-  onRemove,
   onClose,
 }: Props) => {
   const { t } = useTranslation();
+  const currencySymbol = CURRENCIES.find(item => item.code === currency)?.symbol ?? '£';
   const [value, setValue] = useState(current > 0 ? String(current) : '');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedAmount, setDebouncedAmount] = useState(current);
@@ -50,20 +48,18 @@ export const MonthlyOverpaymentSheet = ({
   const handleChange = (text: string) => {
     setValue(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedAmount(parseFloat(text) || 0);
-    }, 400);
+    debounceRef.current = setTimeout(() => setDebouncedAmount(parseFloat(text) || 0), 400);
   };
 
   const amount = parseFloat(value) || 0;
 
   const impact = useMemo(() => {
     if (debouncedAmount <= 0) return null;
-    return computeLoanOverpayments(form, debouncedAmount, existingLumpSums);
-  }, [form, debouncedAmount, existingLumpSums]);
+    const tempDeal: LoanDeal = { ...deal, regularOverpayment: debouncedAmount };
+    const result = getDealOverpaymentImpact(tempDeal, loanEvents);
+    return result.hasOverpayments ? result : null;
+  }, [deal, loanEvents, debouncedAmount]);
 
-  const yrs = t('results.years');
-  const mo = t('results.months');
   const isUnchanged = amount === current;
   const canSave = amount > 0 && !isUnchanged;
   const canRemove = current > 0;
@@ -71,14 +67,14 @@ export const MonthlyOverpaymentSheet = ({
   return (
     <OverpaymentSheetModal
       visible={visible}
-      title={t('overpayments.monthlySection')}
+      title={t('mortgage.dealMonthlyOverpayment')}
       onClose={onClose}
       footer={(
         <OverpaymentSheetActions
           leadingAction={canRemove ? (
             <Button
               label={t('overpayments.monthlyRemove')}
-              onPress={onRemove}
+              onPress={() => onSave(0)}
               variant="ghost"
             />
           ) : (
@@ -100,10 +96,11 @@ export const MonthlyOverpaymentSheet = ({
     >
       <OverpaymentFieldGroup label={t('overpayments.monthlyAmountLabel')}>
         <InputSurface>
+          <InputAffix>{currencySymbol}</InputAffix>
           <AppTextInput
             value={value}
             onChangeText={handleChange}
-            placeholder="0.00"
+            placeholder="150"
             keyboardType="decimal-pad"
             autoFocus={visible}
           />
@@ -115,12 +112,12 @@ export const MonthlyOverpaymentSheet = ({
           title={t('overpayments.monthlySavings')}
           rows={[
             {
-              label: t('overpayments.interestSaved'),
+              label: t('mortgage.dealInterestSavedLabel'),
               value: formatCurrency(impact.interestSaved, currency),
             },
-            ...(impact.monthsSaved > 0 ? [{
-              label: t('overpayments.timeSaved'),
-              value: formatOverpaymentDuration(impact.monthsSaved, yrs, mo),
+            ...(impact.extraPrincipalRepaid > 0 ? [{
+              label: t('mortgage.dealExtraRepaidLabel'),
+              value: formatCurrency(impact.extraPrincipalRepaid, currency),
             }] : []),
           ]}
         />

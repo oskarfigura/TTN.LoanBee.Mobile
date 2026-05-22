@@ -10,14 +10,13 @@ import { getProjectionChartWidth } from './dimensions';
 interface Props {
   monthlyArray: number[];
   interestArray: number[];
-  labelArray: string[];
   currency: CurrencyCode;
   height?: number;
 }
 
 const SAMPLE_STEP = 12;
 
-export const RepaymentBarChart = ({ monthlyArray, interestArray, labelArray, currency, height = 196 }: Props) => {
+export const RepaymentBarChart = ({ monthlyArray, interestArray, currency, height = 196 }: Props) => {
   const { t } = useTranslation();
   const [containerWidth, setContainerWidth] = useState(0);
   const width = getProjectionChartWidth(containerWidth);

@@ -13,19 +13,22 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { formatCurrency } from '@/currency/format';
 import { buildResultSnapshot } from '@/loans/loanGroupFactory';
 import { buildScenarioRemainingArray, computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
+import { formatOverpaymentDuration } from '@/components/loans/OverpaymentSheetPrimitives';
 import { MortgageEvent } from '@/types/SavedLoan';
-import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
+import { formatFriendlyDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
 import { colours, layout, radii, spacing } from '@/theme';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ChevronRightIcon, CoinsStackedIcon, PlusIcon } from '@/components/ui/Icons';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { MonthlyOverpaymentSheet } from '@/components/loans/MonthlyOverpaymentSheet';
 import { LumpSumSheet } from '@/components/loans/LumpSumSheet';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
+import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
+import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
+import { PlusIcon } from '@/components/ui/Icons/PlusIcon/PlusIcon';
 
 const FullscreenIcon = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -38,14 +41,6 @@ const FullscreenIcon = () => (
     />
   </Svg>
 );
-
-const formatDuration = (totalMonths: number, yrs: string, mo: string): string => {
-  const years = Math.floor(totalMonths / 12);
-  const months = totalMonths % 12;
-  if (years === 0) return `${months} ${mo}`;
-  if (months === 0) return `${years} ${yrs}`;
-  return `${years} ${yrs} ${months} ${mo}`;
-};
 
 export default function OverpaymentsScreen() {
   const { t, i18n } = useTranslation();
@@ -277,7 +272,7 @@ export default function OverpaymentsScreen() {
                 </AppText>
                 {impact.monthsSaved > 0 ? (
                   <AppText variant="bodySm" tone="muted">
-                    {t('overpayments.timeSaved')}: {formatDuration(impact.monthsSaved, yrs, mo)}
+                    {t('overpayments.timeSaved')}: {formatOverpaymentDuration(impact.monthsSaved, yrs, mo)}
                   </AppText>
                 ) : null}
               </View>

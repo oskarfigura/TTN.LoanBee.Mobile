@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/Button';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { SaveIcon, ShareIcon } from '@/components/ui/Icons';
 import { BannerAd } from '@/ads/BannerAd';
 import { colours, layout } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
@@ -32,6 +31,8 @@ import { getCalculationWebShareUrl, ShareableCalculationValues } from '@/share/c
 import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
 import { EditIcon } from '@/components/loans/LoanIcons';
 import { CalculationSummaryPanel } from '@/components/calculator/CalculationSummaryPanel';
+import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 
 type ResultParams = {
   draftId?: string;

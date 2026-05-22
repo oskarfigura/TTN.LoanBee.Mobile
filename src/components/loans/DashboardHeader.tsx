@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { MenuIcon } from '@/components/ui/Icons';
+import { MenuIcon } from '@/components/ui/Icons/MenuIcon/MenuIcon';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
 type DashboardRoute = '/saved' | '/settings' | '/about';

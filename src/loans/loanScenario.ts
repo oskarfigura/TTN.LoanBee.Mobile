@@ -45,13 +45,15 @@ export const computeLoanWithEvents = (
   for (const event of lumpSums) {
     const relativeIndex = monthsBetween(currentStartDate, parseDateLabelValue(event.date) ?? new Date());
 
-    if (relativeIndex <= 0 || relativeIndex >= currentResult.tableItems.length) continue;
+    if (relativeIndex >= currentResult.tableItems.length) continue;
 
     accumulatedInterest += currentResult.tableItems
       .slice(0, relativeIndex)
       .reduce((sum, row) => sum + parseFloat(row.interest), 0);
 
-    const balanceAtEvent = parseFloat(currentResult.tableItems[relativeIndex - 1].ending);
+    const balanceAtEvent = relativeIndex === 0
+      ? currentResult.loanChartRemainingArray[0]
+      : parseFloat(currentResult.tableItems[relativeIndex - 1].ending);
     const newBalance = Math.max(0, balanceAtEvent - (event.amount ?? 0));
 
     if (newBalance <= 0) {

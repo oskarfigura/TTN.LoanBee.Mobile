@@ -428,6 +428,7 @@ export const projectDeal = (
 ): DealProjection => {
   const dealEvents = getDealEvents(events, deal.id);
   const endDate = getProjectionEndDate(deal, asOf);
+  const asOfIso = dateToIso(asOf);
   const monthsToProject = monthsBetween(deal.startDate, endDate);
   const monthlyInterestRate = deal.interestRate / 100 / 12;
 
@@ -449,14 +450,13 @@ export const projectDeal = (
         balance = event.balance ?? balance;
       });
 
-    const interest = balance * monthlyInterestRate;
-    const scheduledPayment = hasSkippedPayment ? 0 : deal.monthlyPayment;
-    const regularOverpayment = includeOverpayments && !hasSkippedPayment ? deal.regularOverpayment : 0;
-    const interestCovered = Math.min(scheduledPayment, interest);
+      const interest = balance * monthlyInterestRate;
+      const scheduledPayment = hasSkippedPayment ? 0 : deal.monthlyPayment;
+      const regularOverpayment = includeOverpayments && !hasSkippedPayment ? deal.regularOverpayment : 0;
 
-    balance = Math.max(0, balance + interest - scheduledPayment - regularOverpayment);
-    interestPaid += interestCovered;
-    totalPaid += scheduledPayment + regularOverpayment;
+      balance = Math.max(0, balance + interest - scheduledPayment - regularOverpayment);
+      interestPaid += interest;
+      totalPaid += scheduledPayment + regularOverpayment;
 
     if (includeOverpayments) {
       eventsInMonth
@@ -476,7 +476,13 @@ export const projectDeal = (
     const partialMonthCursor = addMonths(monthStart(deal.startDate), monthsToProject);
     const partialKey = `${partialMonthCursor.getFullYear()}-${String(partialMonthCursor.getMonth() + 1).padStart(2, '0')}`;
     dealEvents
-      .filter(e => e.type === 'lumpOverpayment' && typeof e.amount === 'number' && monthKey(e.date) === partialKey)
+      .filter(e => (
+        e.type === 'lumpOverpayment'
+        && typeof e.amount === 'number'
+        && monthKey(e.date) === partialKey
+        && e.date >= deal.startDate
+        && e.date <= asOfIso
+      ))
       .forEach(e => {
         const amount = e.amount ?? 0;
         balance = Math.max(0, balance - amount);
@@ -689,10 +695,12 @@ export const getMortgageTrackerSummary = (
   loan: LoanGroup,
   asOf = new Date(),
 ): MortgageTrackerSummary => {
+  const todayIso = dateToIso(asOf);
   const publishedDeals = getPublishedDeals(loan);
   const projectionDeals = publishedDeals.length > 0 ? publishedDeals : [buildCurrentStateProjectionDeal(loan)];
   const originalBalance = projectionDeals[0]?.openingBalance ?? getEffectiveOpeningBalance(loan);
-  const additionalBorrowingTotal = publishedDeals
+  const originatedDeals = publishedDeals.filter(deal => deal.startDate <= todayIso);
+  const additionalBorrowingTotal = originatedDeals
     .slice(1)
     .reduce((sum, deal) => sum + Math.max(0, deal.additionalBorrowing ?? 0), 0);
   // When no published deals exist we project via buildCurrentStateProjectionDeal (id =
@@ -705,12 +713,15 @@ export const getMortgageTrackerSummary = (
 
   const projections = projectionDeals.map(deal => projectDeal(deal, eventsForProjection, asOf, true));
   const baselineProjections = projectionDeals.map(deal => projectDeal(deal, eventsForProjection, asOf, false));
-  const lastProjection = projections[projections.length - 1];
-  const currentBalance = lastProjection?.balance ?? originalBalance;
   const interestPaidEstimate = projections.reduce((sum, projection) => sum + projection.interestPaid, 0);
   const baselineInterestEstimate = baselineProjections.reduce((sum, projection) => sum + projection.interestPaid, 0);
   const currentDeal = getCurrentDeal(loan, asOf) ?? publishedDeals[publishedDeals.length - 1];
-  const currentProjectionDeal = currentDeal ?? projectionDeals[projectionDeals.length - 1];
+  const currentProjectionDeal = currentDeal
+    ?? originatedDeals[originatedDeals.length - 1]
+    ?? projectionDeals[projectionDeals.length - 1];
+  const currentBalance = projections.find(
+    projection => projection.dealId === currentProjectionDeal?.id,
+  )?.balance ?? originalBalance;
   const interestRemainingEstimate = currentProjectionDeal
     ? projectDeal(
       {

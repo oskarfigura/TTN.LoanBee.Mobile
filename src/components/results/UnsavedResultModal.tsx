@@ -2,12 +2,10 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import {
-  AlertTriangleIcon,
-  EditIcon,
-  SaveIcon,
-  TrashIcon,
-} from '@/components/ui/Icons';
+import { AlertTriangleIcon } from '@/components/ui/Icons/AlertTriangleIcon/AlertTriangleIcon';
+import { EditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
+import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 import { colours, fontFaces, fontSizes } from '@/theme';
 
 interface Props {

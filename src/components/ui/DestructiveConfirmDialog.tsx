@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { Card } from './Card';
-import { TrashIcon } from './Icons';
+import { TrashIcon } from './Icons/TrashIcon/TrashIcon';
 import { colours, spacing } from '@/theme';
 
 interface Props {

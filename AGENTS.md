@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Expo Router app with a 4-tab bottom navigator. All navigation is file-based under `app/`. The core maths engine in `src/core/` is pure TypeScript with zero React Native dependencies — it is copied verbatim from the web repo and must stay that way.
+Expo Router app with a 4-tab bottom navigator plus hidden/detail routes under `app/`. The Home tab can render the first-run guide, the pinned mortgage dashboard, or the calculator form depending on MMKV state and route params. The core maths engine in `src/core/` is pure TypeScript with zero React Native dependencies — it is copied verbatim from the web repo and must stay that way.
 
 ## Key Invariants
 
@@ -11,7 +11,7 @@ Expo Router app with a 4-tab bottom navigator. All navigation is file-based unde
 - **All font families must use `fonts.body` or `fonts.heading`** from `src/theme/typography.ts`. Never write `fontFamily: 'Inter'` inline.
 - **All font weights must use `fontWeights.*`** from `src/theme/typography.ts`. Never write `fontWeight: '700'` inline.
 - **Ads are fully isolated in `src/ads/`**. No ad import should appear outside that directory except `<AdProvider>` in `app/_layout.tsx` and `<BannerAd>` placements in screens.
-- **MMKV storage key names are versioned** (`saved_loans_v1`, etc. in `src/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/storage/savedLoans.ts`.
+- **MMKV storage key names are versioned** (`saved_loans_v2`, `guide_seen_v1`, etc. in `src/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/storage/savedLoans.ts`.
 
 ## Design Tokens
 
@@ -38,13 +38,18 @@ Screen padding: `paddingHorizontal: 16` (content), `20` (headers).
 
 ## Test Setup
 
-Tests use **ts-jest** in two isolated Jest projects (`core`, `storage`). Do NOT switch to jest-expo — react-native-mmkv requires a manual mock that ts-jest handles cleanly without the jest-expo Babel pipeline.
+Tests use **ts-jest** in three isolated Jest projects (`core`, `storage`, `design-system`). Do NOT switch to jest-expo — react-native-mmkv requires a manual mock that ts-jest handles cleanly without the jest-expo Babel pipeline.
 
 ```bash
-npm test    # runs all 63 tests
+npm test    # runs all Jest projects
 ```
 
 Mocks live in `src/__mocks__/`: `react-native-mmkv.ts` (in-memory Map) and `react-native-reanimated.ts` (stubs). The storage project jest config maps `react-native-mmkv` to the mock.
+
+## Developer Docs
+
+- `docs/developer-action-map.md` — quickest route-to-action map for future developers
+- `docs/saved-mortgage-journeys.md` — mortgage lifecycle, validation, scope boundaries, regression expectations
 
 ## Currency System
 
@@ -55,6 +60,8 @@ Mocks live in `src/__mocks__/`: `react-native-mmkv.ts` (in-memory Map) and `reac
 `resultSnapshot.totalInterestPaidBaseline` is computed at save time by running `getLoanCalculations()` a second time with `additionalMonthlyPayment = 0`. This avoids re-running the calculation on every list render. Overpayment savings = `totalInterestPaidBaseline - totalInterestPaid`. Only show the savings badge when `additionalMonthlyPayment > 0`.
 
 `resultSnapshot.totalTermInMonths` = `tableItems.length` from the calculation result. The progress bar uses `monthsBetween(formSnapshot.startDate, today) / totalTermInMonths`.
+
+`SavedLoan` is now a deal-based `LoanGroup`: `deals` stores mortgage periods (`draft`, `active`, `completed`), `events` stores one-off mortgage activity, and `pinnedToDashboard` / `dashboardOrder` control the Home dashboard carousel. Read `docs/saved-mortgage-journeys.md` before changing deal/event behaviour.
 
 `parentLoanId` is reserved for Phase 2 (UK remortgage chaining). Do not populate it in Phase 1.
 
@@ -67,12 +74,16 @@ Locale detection order: MMKV `user_language` → `getLocales()[0].languageCode` 
 Production unit IDs flow via environment variables:
 1. `ADMOB_ANDROID_ID` / `ADMOB_IOS_ID` → `app.config.js` plugins (app-level IDs)
 2. `ADMOB_BANNER_ANDROID_ID` / `ADMOB_BANNER_IOS_ID` → `app.config.js` `extra` → `expo-constants` → `src/ads/adUnits.ts`
+3. `ADMOB_INTERSTITIAL_ANDROID_ID` / `ADMOB_INTERSTITIAL_IOS_ID` → `app.config.js` `extra` → `expo-constants` → `src/ads/adUnits.ts`
 
 Google test IDs are used automatically when env vars are unset or `__DEV__` is true. The GDPR consent check in `AdProvider.tsx` fires once on first launch for EU users.
 
 ## Local Development
 
-The project always runs via local builds — Expo Go is not supported due to native modules (`react-native-mmkv`, `react-native-google-mobile-ads`). Local builds do not require a paid Expo plan or EAS; use the committed `android/` and `ios/` projects with Gradle/Xcode.
+The project always runs via local builds — Expo Go is not supported due to native modules (`react-native-mmkv`, `react-native-google-mobile-ads`). Local builds do not require a paid Expo plan or EAS.
+
+- `android/` is currently checked in and can be used directly with Gradle.
+- `ios/` is currently generated locally and ignored by git. Create it with `npm run ios` or `npx expo prebuild --platform ios` before attempting Xcode/Pods work.
 
 ```bash
 npm install
@@ -80,9 +91,9 @@ npm run android   # expo run:android — builds with Gradle and installs on conn
 npm run ios       # expo run:ios — builds with Xcode and installs on connected device/simulator
 ```
 
-For Android artifacts without EAS, run `cd android && ./gradlew assembleRelease` for an APK or `./gradlew bundleRelease` for an AAB. For iOS archives without EAS, open `ios/LoanBee.xcworkspace` and use Xcode Product → Archive. Store/device distribution still needs the normal Apple/Google signing/accounts.
+For Android artifacts without EAS, run `cd android && ./gradlew assembleRelease` for an APK or `./gradlew bundleRelease` for an AAB. For iOS archives without EAS, first generate `ios/` if needed, then open `ios/LoanBee.xcworkspace` and use Xcode Product → Archive. Store/device distribution still needs the normal Apple/Google signing/accounts.
 
-After native dependency changes, run `cd ios && pod install && cd ..` for iOS and re-run the full platform build. For JS-only changes Metro hot-reloads automatically. If stale state appears, try `npx expo start -c`; for Android use `cd android && ./gradlew clean`; for iOS use Xcode Clean Build Folder / DerivedData cleanup.
+After native dependency changes, use `npx expo install` for Expo/native packages where possible, regenerate iOS with `npx expo prebuild --platform ios` if needed, run `cd ios && pod install && cd ..`, and re-run the full platform build. For JS-only changes Metro hot-reloads automatically. If stale state appears, try `npx expo start -c`; for Android use `cd android && ./gradlew clean`; for iOS prefer `npx expo prebuild --clean --platform ios` plus `pod install`, then fall back to Xcode Clean Build Folder / DerivedData cleanup.
 
 ## EAS Build Profiles
 

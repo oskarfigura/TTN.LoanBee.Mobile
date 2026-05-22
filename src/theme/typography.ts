@@ -118,13 +118,13 @@ export const textStyles = {
   labelMd: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
-    lineHeight: 15,
+    lineHeight: 18,
     letterSpacing: letterSpacing.wide,
   },
   labelSm: {
     ...fontFaces.heading.bold,
     fontSize: fontSizes.xs,
-    lineHeight: 13,
+    lineHeight: 15,
     letterSpacing: letterSpacing.wider,
   },
   metricLg: {

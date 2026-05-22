@@ -1,6 +1,6 @@
 import React from 'react';
 import { colours } from '@/theme';
-import { XCloseIcon } from './Icons';
+import { XCloseIcon } from './Icons/XCloseIcon/XCloseIcon';
 import { HeaderIconButton } from './HeaderIconButton';
 
 interface Props {

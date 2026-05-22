@@ -56,10 +56,7 @@ export const getLoanCalculations = (
 
     let result = getTableItems(
         amount,
-        interest,
         monthlyInterest,
-        termInYears,
-        termInMonths,
         monthlyPayments,
         downPayment
     );
@@ -118,10 +115,7 @@ export const calculateTerm = (
 
 export const getTableItems = (
     amount: number,
-    interest: number,
     monthlyInterest: number,
-    termInYears: number,
-    termInMonths: number,
     monthlyPayments: number,
     downPayment: number
 ) => {

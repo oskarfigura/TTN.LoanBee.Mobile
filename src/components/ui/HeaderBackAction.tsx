@@ -1,6 +1,6 @@
 import React from 'react';
 import { colours } from '@/theme';
-import { ArrowLeftIcon } from './Icons';
+import { ArrowLeftIcon } from './Icons/ArrowLeftIcon/ArrowLeftIcon';
 import { HeaderIconButton } from './HeaderIconButton';
 
 interface Props {

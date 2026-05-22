@@ -134,6 +134,30 @@ describe('mortgage tracker', () => {
     ]));
   });
 
+  it('formats saved-loan summary amounts using the loan currency', () => {
+    const loan = makeMortgage({
+      currency: 'PLN',
+      formSnapshot: {
+        ...makeMortgage().formSnapshot,
+        currency: 'GBP',
+      },
+    });
+    const asOf = new Date('2026-07-01T00:00:00');
+    const savedSummary = buildSavedLoanSummary(
+      loan,
+      getResultForSavedLoan(loan),
+      asOf,
+      'pl',
+    );
+
+    expect(savedSummary.hero.value.startsWith('zł')).toBe(true);
+    expect(savedSummary.metrics).toEqual(expect.arrayContaining([
+      { labelKey: 'results.monthlyPayment', value: 'zł1,385.00' },
+      { labelKey: 'results.totalInterest', value: expect.stringMatching(/^zł/) },
+      { labelKey: 'results.totalCost', value: expect.stringMatching(/^zł/) },
+    ]));
+  });
+
   it('projects a saved mortgage without deal history from the current-state snapshot', () => {
     const loan = makeMortgage({
       deals: [],
@@ -238,6 +262,53 @@ describe('mortgage tracker', () => {
 
     expect(actual.balance).toBeLessThan(baseline.balance);
     expect(actual.totalPaid).toBeGreaterThan(baseline.totalPaid);
+  });
+
+  it('does not apply lump sums scheduled later in the same month as the as-of date', () => {
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'late-overpay',
+          createdAt: '2026-09-30T00:00:00.000Z',
+          updatedAt: '2026-09-30T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'lumpOverpayment',
+          date: '2026-09-30',
+          amount: 5000,
+        },
+      ],
+    });
+    const asOf = new Date('2026-09-01T00:00:00');
+
+    const actual = projectDeal(loan.deals[0], loan.events, asOf, true);
+    const withoutFutureLump = projectDeal(loan.deals[0], [], asOf, true);
+
+    expect(actual.balance).toBe(withoutFutureLump.balance);
+    expect(actual.totalPaid).toBe(withoutFutureLump.totalPaid);
+  });
+
+  it('keeps current balance anchored to the current deal before future deals begin', () => {
+    const currentDeal = makeMortgage().deals[0];
+    const nextDeal = {
+      ...currentDeal,
+      id: 'deal-next',
+      name: 'Tracker follow-up',
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      openingBalance: 210000,
+      additionalBorrowing: 25000,
+    };
+    const loan = makeMortgage({
+      deals: [currentDeal, nextDeal],
+    });
+    const asOf = new Date('2026-09-01T00:00:00');
+
+    const summary = getMortgageTrackerSummary(loan, asOf);
+    const currentProjection = projectDeal(currentDeal, loan.events, asOf, true);
+
+    expect(summary.currentBalance).toBeCloseTo(currentProjection.balance, 2);
+    expect(summary.principalPaid).toBeCloseTo(240000 - currentProjection.balance, 2);
+    expect(summary.balanceProgress).toBeCloseTo((240000 - currentProjection.balance) / 240000, 4);
   });
 
   it('uses bank-confirmed closing balance when a deal is completed', () => {
