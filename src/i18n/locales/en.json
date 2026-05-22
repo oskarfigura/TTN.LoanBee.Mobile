@@ -269,7 +269,11 @@
   "forms": {
     "required": "Required",
     "requiredPositive": "Enter a value greater than zero",
-    "invalidNumber": "Enter a valid number"
+    "requiredNonNegative": "Enter a value of zero or more",
+    "invalidNumber": "Enter a valid number",
+    "invalidInteger": "Enter a whole number of zero or more",
+    "monthRange": "Enter months from 0 to 11",
+    "durationTooLong": "Enter a duration no longer than the total mortgage term"
   },
   "navigation": {
     "openMenu": "Open menu",

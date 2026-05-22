@@ -4,12 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { AppTextInput, FieldLabel, InputAffix, InputSurface, PillSelector } from '@/components/ui/FormPrimitives';
+import {
+  AppTextInput,
+  FieldError,
+  FieldLabel,
+  InputAffix,
+  InputSurface,
+  PillSelector,
+} from '@/components/ui/FormPrimitives';
 import { CURRENCIES } from '@/currency/currencies';
 import { projectDeal } from '@/mortgage/tracker';
 import { LoanDeal, MortgageEvent, MortgageEventType } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { validateMoneyText } from '@/utils/formValidation';
 import { colours, spacing } from '@/theme';
 
 export const mortgageEventTypes: MortgageEventType[] = [
@@ -66,32 +74,47 @@ export const MortgageEventForm = ({
   const needsBalance = eventType === 'balanceCheckpoint';
   const minEventDate = parseDateLabelValue(currentDeal.startDate) ?? undefined;
   const maxEventDate = parseDateLabelValue(currentDeal.endDate) ?? undefined;
+  const baseAmountValidation = validateMoneyText(amount);
+  const amountValidation = needsAmount && baseAmountValidation.isValid && baseAmountValidation.numeric > projected.balance
+    ? { ...baseAmountValidation, errorKey: 'mortgage.overpaymentTooLarge', isValid: false }
+    : baseAmountValidation;
+  const balanceValidation = validateMoneyText(balance);
+  const dateErrorKey = !isValidIsoDate(date)
+    ? 'mortgage.invalidEventDate'
+    : date < currentDeal.startDate || date > currentDeal.endDate
+      ? 'mortgage.eventOutsideDealDates'
+      : undefined;
+  const amountError = needsAmount && amountValidation.errorKey ? t(amountValidation.errorKey) : undefined;
+  const balanceError = needsBalance && balanceValidation.errorKey ? t(balanceValidation.errorKey) : undefined;
+  const canSave = (
+    !dateErrorKey
+    && (!needsAmount || amountValidation.isValid)
+    && (!needsBalance || balanceValidation.isValid)
+  );
 
   const handleSave = () => {
-    const numericAmount = Number(amount) || 0;
-    const numericBalance = Number(balance) || 0;
-
     if (currentDeal.status !== 'active') {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.eventRequiresActiveDeal'));
       return;
     }
-    if (!isValidIsoDate(date)) {
+    if (dateErrorKey === 'mortgage.invalidEventDate') {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventDate'));
       return;
     }
-    if (date < currentDeal.startDate || date > currentDeal.endDate) {
+    if (dateErrorKey === 'mortgage.eventOutsideDealDates') {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.eventOutsideDealDates'));
       return;
     }
-    if (needsAmount && numericAmount <= 0) {
-      Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventAmount'));
+    if (needsAmount && !amountValidation.isValid) {
+      Alert.alert(
+        t('mortgage.invalidEventTitle'),
+        t(amountValidation.errorKey === 'mortgage.overpaymentTooLarge'
+          ? 'mortgage.overpaymentTooLarge'
+          : 'mortgage.invalidEventAmount'),
+      );
       return;
     }
-    if (needsAmount && numericAmount > projected.balance) {
-      Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.overpaymentTooLarge'));
-      return;
-    }
-    if (needsBalance && numericBalance <= 0) {
+    if (needsBalance && !balanceValidation.isValid) {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventBalance'));
       return;
     }
@@ -104,8 +127,8 @@ export const MortgageEventForm = ({
       dealId: initialEvent?.dealId ?? currentDeal.id,
       type: eventType,
       date,
-      amount: needsAmount ? numericAmount : undefined,
-      balance: needsBalance ? numericBalance : undefined,
+      amount: needsAmount ? amountValidation.numeric : undefined,
+      balance: needsBalance ? balanceValidation.numeric : undefined,
       note: note.trim() || undefined,
     });
   };
@@ -131,12 +154,13 @@ export const MortgageEventForm = ({
           minimumDate={minEventDate}
           maximumDate={maxEventDate}
         />
+        <FieldError message={dateErrorKey ? t(dateErrorKey) : undefined} />
       </View>
 
       {needsAmount && (
         <View style={styles.field}>
           <FieldLabel>{t('mortgage.amount')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(amountError)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={amount}
@@ -145,13 +169,14 @@ export const MortgageEventForm = ({
               placeholder="5000"
             />
           </InputSurface>
+          <FieldError message={amountError} />
         </View>
       )}
 
       {needsBalance && (
         <View style={styles.field}>
           <FieldLabel>{t('mortgage.bankConfirmedBalance')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(balanceError)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={balance}
@@ -160,6 +185,7 @@ export const MortgageEventForm = ({
               placeholder="238420"
             />
           </InputSurface>
+          <FieldError message={balanceError} />
         </View>
       )}
 
@@ -179,6 +205,7 @@ export const MortgageEventForm = ({
       <Button
         label={initialEvent ? t('mortgage.saveEventChanges') : t('mortgage.saveEvent')}
         onPress={handleSave}
+        disabled={!canSave}
         style={styles.action}
       />
 

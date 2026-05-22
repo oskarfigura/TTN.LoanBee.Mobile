@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -7,11 +7,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
 import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
+import {
+  validateCompletionAmounts,
+  validateCompletionOverpaymentRow,
+} from '@/mortgage/validation';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
@@ -25,6 +29,8 @@ type OverpaymentEntryRowProps = {
   currencySymbol: string;
   minimumDate?: Date;
   maximumDate?: Date;
+  dateError?: string;
+  amountError?: string;
   onDateChange: (id: string, date: string) => void;
   onAmountChange: (id: string, amount: string) => void;
   onRemove: (id: string) => void;
@@ -35,6 +41,8 @@ const OverpaymentEntryRow = ({
   currencySymbol,
   minimumDate,
   maximumDate,
+  dateError,
+  amountError,
   onDateChange,
   onAmountChange,
   onRemove,
@@ -76,16 +84,20 @@ const OverpaymentEntryRow = ({
             </InputSurface>
           ) : null}
         </>
+        <FieldError message={dateError} />
       </View>
-      <InputSurface style={styles.overpaymentAmountInput}>
-        <InputAffix>{currencySymbol}</InputAffix>
-        <AppTextInput
-          value={row.amount}
-          onChangeText={amount => onAmountChange(row.id, amount)}
-          keyboardType="decimal-pad"
-          placeholder="5000"
-        />
-      </InputSurface>
+      <View style={styles.overpaymentAmountGroup}>
+        <InputSurface style={styles.overpaymentAmountInput} error={Boolean(amountError)}>
+          <InputAffix>{currencySymbol}</InputAffix>
+          <AppTextInput
+            value={row.amount}
+            onChangeText={amount => onAmountChange(row.id, amount)}
+            keyboardType="decimal-pad"
+            placeholder="5000"
+          />
+        </InputSurface>
+        <FieldError message={amountError} />
+      </View>
       <TouchableOpacity style={styles.overpaymentRemove} onPress={() => onRemove(row.id)} activeOpacity={0.84}>
         <AppText style={styles.overpaymentRemoveText}>×</AppText>
       </TouchableOpacity>
@@ -115,6 +127,30 @@ export default function CompleteCurrentDealScreen() {
   const [notes, setNotes] = useState('');
   const [overpayments, setOverpayments] = useState<OverpaymentRow[]>([]);
   const minimumCompletionDate = currentDeal ? parseDateLabelValue(currentDeal.startDate) ?? undefined : undefined;
+  const completionAmounts = validateCompletionAmounts(closingBalance, feesAdded);
+  const completedAtErrorKey: string | undefined = currentDeal
+    ? (
+      !isValidIsoDate(completedAt)
+        ? 'mortgage.invalidEventDate'
+        : completedAt < currentDeal.startDate
+          ? 'mortgage.eventOutsideDealDates'
+          : undefined
+    )
+    : undefined;
+  const overpaymentValidations = useMemo(() => {
+    if (!currentDeal) return new Map<string, ReturnType<typeof validateCompletionOverpaymentRow>>();
+    return new Map(overpayments.map(row => [
+      row.id,
+      validateCompletionOverpaymentRow(row, currentDeal, completedAt),
+    ]));
+  }, [completedAt, currentDeal, overpayments]);
+  const hasInvalidOverpayment = [...overpaymentValidations.values()].some(validation => !validation.isValid);
+  const canComplete = (
+    completionAmounts.closingBalance.isValid
+    && completionAmounts.feesAdded.isValid
+    && !completedAtErrorKey
+    && !hasInvalidOverpayment
+  );
 
   const addOverpaymentRow = () =>
     setOverpayments(prev => [...prev, { id: createLocalId('op'), date: currentDeal?.startDate ?? formatIsoDate(new Date()), amount: '' }]);
@@ -179,11 +215,12 @@ export default function CompleteCurrentDealScreen() {
             hint={t('mortgage.dateFormatHint')}
             minimumDate={minimumCompletionDate}
           />
+          <FieldError message={completedAtErrorKey ? t(completedAtErrorKey) : undefined} />
         </View>
 
         <View style={styles.field}>
           <FieldLabel>{t('mortgage.closingBankBalance')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(completionAmounts.closingBalance.errorKey)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={closingBalance}
@@ -192,11 +229,12 @@ export default function CompleteCurrentDealScreen() {
               placeholder="238420"
             />
           </InputSurface>
+          <FieldError message={completionAmounts.closingBalance.errorKey ? t(completionAmounts.closingBalance.errorKey) : undefined} />
         </View>
 
         <View style={styles.field}>
           <FieldLabel>{t('mortgage.feesAdded')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(completionAmounts.feesAdded.errorKey)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={feesAdded}
@@ -205,6 +243,7 @@ export default function CompleteCurrentDealScreen() {
               placeholder="0"
             />
           </InputSurface>
+          <FieldError message={completionAmounts.feesAdded.errorKey ? t(completionAmounts.feesAdded.errorKey) : undefined} />
         </View>
 
         <View style={styles.field}>
@@ -216,6 +255,8 @@ export default function CompleteCurrentDealScreen() {
               currencySymbol={currencySymbol}
               minimumDate={minimumCompletionDate}
               maximumDate={parseDateLabelValue(completedAt) ?? undefined}
+              dateError={overpaymentValidations.get(row.id)?.dateErrorKey ? t(overpaymentValidations.get(row.id)!.dateErrorKey!) : undefined}
+              amountError={overpaymentValidations.get(row.id)?.amount.errorKey ? t(overpaymentValidations.get(row.id)!.amount.errorKey!) : undefined}
               onDateChange={(rowId, date) => updateOverpaymentRow(rowId, 'date', date)}
               onAmountChange={(rowId, amount) => updateOverpaymentRow(rowId, 'amount', amount)}
               onRemove={removeOverpaymentRow}
@@ -245,19 +286,17 @@ export default function CompleteCurrentDealScreen() {
         <Button
           label={t('mortgage.completeDeal')}
           onPress={() => {
-            if (!isValidIsoDate(completedAt)) {
+            if (completedAtErrorKey || !completionAmounts.closingBalance.isValid || !completionAmounts.feesAdded.isValid) {
               Alert.alert(t('mortgage.invalidDealTitle'), t('mortgage.invalidCompletionDetails'));
+              return;
+            }
+            if (hasInvalidOverpayment) {
+              Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventAmount'));
               return;
             }
 
             const now = new Date().toISOString();
             const validOverpayments: MortgageEvent[] = overpayments
-              .filter(row =>
-                isValidIsoDate(row.date) &&
-                row.date >= currentDeal.startDate &&
-                row.date <= completedAt &&
-                Number(row.amount) > 0
-              )
               .map(row => ({
                 id: createLocalId('ev'),
                 createdAt: now,
@@ -265,7 +304,7 @@ export default function CompleteCurrentDealScreen() {
                 dealId: currentDeal.id,
                 type: 'lumpOverpayment' as const,
                 date: row.date,
-                amount: Number(row.amount),
+                amount: overpaymentValidations.get(row.id)!.amount.numeric,
               }));
 
             const updatedLoan = {
@@ -277,8 +316,8 @@ export default function CompleteCurrentDealScreen() {
                   status: 'completed' as const,
                   completion: {
                     completedAt,
-                    closingBalance: Number(closingBalance) || 0,
-                    feesAdded: Number(feesAdded) || 0,
+                    closingBalance: completionAmounts.closingBalance.numeric,
+                    feesAdded: completionAmounts.feesAdded.numeric,
                     notes: notes.trim() || undefined,
                   },
                   updatedAt: now,
@@ -288,6 +327,7 @@ export default function CompleteCurrentDealScreen() {
             savedLoansStorage.update(recalculateLaterDealOpeningBalances(updatedLoan, currentDeal.id));
             router.back();
           }}
+          disabled={!canComplete}
           style={styles.action}
         />
         <Button
@@ -318,7 +358,8 @@ const styles = StyleSheet.create({
   overpaymentDateInput: { flex: 3 },
   iosDateSurface: { justifyContent: 'center' },
   dateText: { color: colours.textPrimary },
-  overpaymentAmountInput: { flex: 2 },
+  overpaymentAmountGroup: { flex: 2 },
+  overpaymentAmountInput: {},
   overpaymentRemove: {
     width: 36,
     height: 36,

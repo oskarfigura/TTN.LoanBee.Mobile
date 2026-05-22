@@ -11,7 +11,7 @@ import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDial
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import {
@@ -31,11 +31,11 @@ import {
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
+import { validateCompletionOverpaymentRow } from '@/mortgage/validation';
 import {
   formatFriendlyDate,
   formatFriendlyDateRange,
   formatIsoDate,
-  isValidIsoDate,
   parseDateLabelValue,
 } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
@@ -47,6 +47,8 @@ type OverpaymentEntryRowProps = {
   currencySymbol: string;
   minimumDate?: Date;
   maximumDate?: Date;
+  dateError?: string;
+  amountError?: string;
   onDateChange: (id: string, date: string) => void;
   onAmountChange: (id: string, amount: string) => void;
   onRemove: (id: string) => void;
@@ -57,6 +59,8 @@ const OverpaymentEntryRow = ({
   currencySymbol,
   minimumDate,
   maximumDate,
+  dateError,
+  amountError,
   onDateChange,
   onAmountChange,
   onRemove,
@@ -98,16 +102,20 @@ const OverpaymentEntryRow = ({
             </InputSurface>
           ) : null}
         </>
+        <FieldError message={dateError} />
       </View>
-      <InputSurface style={styles.overpaymentAmountInput}>
-        <InputAffix>{currencySymbol}</InputAffix>
-        <AppTextInput
-          value={row.amount}
-          onChangeText={amount => onAmountChange(row.id, amount)}
-          keyboardType="decimal-pad"
-          placeholder="5000"
-        />
-      </InputSurface>
+      <View style={styles.overpaymentAmountGroup}>
+        <InputSurface style={styles.overpaymentAmountInput} error={Boolean(amountError)}>
+          <InputAffix>{currencySymbol}</InputAffix>
+          <AppTextInput
+            value={row.amount}
+            onChangeText={amount => onAmountChange(row.id, amount)}
+            keyboardType="decimal-pad"
+            placeholder="5000"
+          />
+        </InputSurface>
+        <FieldError message={amountError} />
+      </View>
       <TouchableOpacity style={styles.overpaymentRemove} onPress={() => onRemove(row.id)} activeOpacity={0.84}>
         <AppText style={styles.overpaymentRemoveText}>×</AppText>
       </TouchableOpacity>
@@ -138,6 +146,13 @@ const CompletedDealDetailView = ({
   const currencySymbol = CURRENCIES.find(c => c.code === initialLoan.currency)?.symbol ?? '£';
   const minimumDate = parseDateLabelValue(deal.startDate) ?? undefined;
   const maximumDate = parseDateLabelValue(deal.completion?.completedAt ?? deal.endDate) ?? undefined;
+  const overpaymentValidations = useMemo(() => (
+    new Map(overpayments.map(row => [
+      row.id,
+      validateCompletionOverpaymentRow(row, deal, deal.completion?.completedAt ?? deal.endDate),
+    ]))
+  ), [deal, overpayments]);
+  const hasInvalidOverpayment = [...overpaymentValidations.values()].some(validation => !validation.isValid);
 
   const addRow = () =>
     setOverpayments(prev => [...prev, { id: createLocalId('op'), date: deal.startDate, amount: '' }]);
@@ -149,9 +164,10 @@ const CompletedDealDetailView = ({
     setOverpayments(prev => prev.filter(r => r.id !== rowId));
 
   const saveOverpayments = () => {
+    if (hasInvalidOverpayment) return;
+
     const now = new Date().toISOString();
     const validOps: MortgageEvent[] = overpayments
-      .filter(row => isValidIsoDate(row.date) && Number(row.amount) > 0)
       .map(row => ({
         id: createLocalId('ev'),
         createdAt: now,
@@ -159,7 +175,7 @@ const CompletedDealDetailView = ({
         dealId: deal.id,
         type: 'lumpOverpayment' as const,
         date: row.date,
-        amount: Number(row.amount),
+        amount: overpaymentValidations.get(row.id)!.amount.numeric,
       }));
     const updatedLoan: SavedLoan = {
       ...currentLoan,
@@ -213,6 +229,8 @@ const CompletedDealDetailView = ({
               currencySymbol={currencySymbol}
               minimumDate={minimumDate}
               maximumDate={maximumDate}
+              dateError={overpaymentValidations.get(row.id)?.dateErrorKey ? t(overpaymentValidations.get(row.id)!.dateErrorKey!) : undefined}
+              amountError={overpaymentValidations.get(row.id)?.amount.errorKey ? t(overpaymentValidations.get(row.id)!.amount.errorKey!) : undefined}
               onDateChange={(rowId, date) => updateRow(rowId, 'date', date)}
               onAmountChange={(rowId, amount) => updateRow(rowId, 'amount', amount)}
               onRemove={removeRow}
@@ -227,6 +245,7 @@ const CompletedDealDetailView = ({
           <Button
             label={t('common.save')}
             onPress={saveOverpayments}
+            disabled={hasInvalidOverpayment}
             style={styles.saveOverpaymentButton}
           />
         </View>
@@ -452,7 +471,8 @@ const styles = StyleSheet.create({
   overpaymentDateInput: { flex: 3 },
   iosDateSurface: { justifyContent: 'center' },
   dateText: { color: colours.textPrimary },
-  overpaymentAmountInput: { flex: 2 },
+  overpaymentAmountGroup: { flex: 2 },
+  overpaymentAmountInput: {},
   overpaymentRemove: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   overpaymentRemoveText: { color: colours.error, fontSize: 22 },
   addOverpaymentButton: { marginTop: spacing.xs },

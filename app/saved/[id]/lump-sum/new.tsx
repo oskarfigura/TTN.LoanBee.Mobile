@@ -14,12 +14,13 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { AppTextInput, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { CURRENCIES } from '@/currency/currencies';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { validateMoneyText } from '@/utils/formValidation';
 
 const oneYearFromNow = (): string => {
   const d = new Date();
@@ -62,11 +63,10 @@ export default function NewLoanLumpSumScreen() {
     d.setMonth(d.getMonth() + loan.resultSnapshot.totalTermInMonths - 1);
     return d;
   })();
+  const amountValidation = validateMoneyText(amount);
 
   const handleSave = () => {
-    const numericAmount = parseFloat(amount) || 0;
-
-    if (numericAmount <= 0) {
+    if (!amountValidation.isValid) {
       Alert.alert(t('mortgage.invalidEventTitle'), t('mortgage.invalidEventAmount'));
       return;
     }
@@ -82,7 +82,7 @@ export default function NewLoanLumpSumScreen() {
       updatedAt: now,
       type: 'lumpOverpayment',
       date,
-      amount: numericAmount,
+      amount: amountValidation.numeric,
       note: note.trim() || undefined,
     };
 
@@ -116,7 +116,7 @@ export default function NewLoanLumpSumScreen() {
 
         <View style={styles.field}>
           <FieldLabel>{t('recalculate.lumpSumLabel')}</FieldLabel>
-          <InputSurface>
+          <InputSurface error={Boolean(amountValidation.errorKey)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={amount}
@@ -126,6 +126,7 @@ export default function NewLoanLumpSumScreen() {
               autoFocus
             />
           </InputSurface>
+          <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
         </View>
 
         <View style={styles.field}>
@@ -152,7 +153,7 @@ export default function NewLoanLumpSumScreen() {
           </InputSurface>
         </View>
 
-        <Button label={t('mortgage.saveEvent')} onPress={handleSave} style={styles.saveBtn} />
+        <Button label={t('mortgage.saveEvent')} onPress={handleSave} disabled={!amountValidation.isValid} style={styles.saveBtn} />
         <Button label={t('save.cancel')} onPress={() => router.back()} variant="ghost" style={styles.cancelBtn} />
       </ScrollView>
     </SafeAreaView>

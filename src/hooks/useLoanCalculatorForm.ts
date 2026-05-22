@@ -25,10 +25,10 @@ const schema = z.object({
     .max(100, { message: 'Term cannot be longer than 100 years' })
     .int({ message: 'Term in years must be a non-negative integer' }),
   termInMonths: z.coerce
-    .number({ message: 'Term in months must be between 0 and 12' })
-    .min(0, { message: 'Term in months must be between 0 and 12' })
-    .max(12, { message: 'Term in months must be between 0 and 12' })
-    .int({ message: 'Term in months must be between 0 and 12' }),
+    .number({ message: 'Term in months must be between 0 and 11' })
+    .min(0, { message: 'Term in months must be between 0 and 11' })
+    .max(11, { message: 'Term in months must be between 0 and 11' })
+    .int({ message: 'Term in months must be between 0 and 11' }),
   downPayment: z.coerce
     .number({ message: 'Down payment must be greater than or equal to 0' })
     .min(0, { message: 'Down payment must be greater than or equal to 0' }),

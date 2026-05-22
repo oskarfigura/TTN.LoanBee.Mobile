@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
 import { Button } from '@/components/ui/Button';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
 import { getDealOverpaymentImpact } from '@/mortgage/tracker';
@@ -15,6 +15,7 @@ import {
   OverpaymentSheetActions,
   OverpaymentSheetModal,
 } from '@/components/loans/OverpaymentSheetPrimitives';
+import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
@@ -72,7 +73,10 @@ export const DealLumpSumSheet = ({
   const handleAmountChange = (text: string) => {
     setAmount(text);
     if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current);
-    amountDebounceRef.current = setTimeout(() => setDebouncedAmount(parseFloat(text) || 0), 400);
+    amountDebounceRef.current = setTimeout(() => {
+      const parsed = validateMoneyText(text, { required: false });
+      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
+    }, 400);
   };
 
   const handleDateChange = (nextDate: string) => {
@@ -97,8 +101,8 @@ export const DealLumpSumSheet = ({
     return result.hasOverpayments ? result : null;
   }, [deal, loanEvents, event, debouncedAmount, debouncedDate]);
 
-  const parsedAmount = parseFloat(amount) || 0;
-  const canSave = parsedAmount > 0;
+  const amountValidation = validateMoneyText(amount);
+  const canSave = amountValidation.isValid;
 
   const handleDelete = () => {
     if (!event) return;
@@ -136,7 +140,7 @@ export const DealLumpSumSheet = ({
           primaryAction={(
             <Button
               label={t('overpayments.save')}
-              onPress={() => onSave(date, parsedAmount)}
+              onPress={() => onSave(date, amountValidation.numeric)}
               disabled={!canSave}
             />
           )}
@@ -154,7 +158,7 @@ export const DealLumpSumSheet = ({
       />
 
       <OverpaymentFieldGroup label={t('overpayments.lumpSumAmount')}>
-        <InputSurface>
+        <InputSurface error={Boolean(amountValidation.errorKey)}>
           <AppTextInput
             value={amount}
             onChangeText={handleAmountChange}
@@ -163,6 +167,7 @@ export const DealLumpSumSheet = ({
             onFocus={() => datePickerRef.current?.closePicker()}
           />
         </InputSurface>
+        <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
       {impact && impact.interestSaved > 0 ? (

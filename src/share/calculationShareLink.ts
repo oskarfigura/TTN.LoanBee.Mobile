@@ -9,7 +9,7 @@ const LIMITS = {
   loanAmount: { min: 0.01, max: 1000000000 },
   interest: { min: 0.01, max: 100 },
   termInYears: { min: 0, max: 100, integer: true },
-  termInMonths: { min: 0, max: 12, integer: true },
+  termInMonths: { min: 0, max: 11, integer: true },
   downPaymentPercent: { min: 0, max: 100 },
   downPaymentCash: { min: 0, max: 1000000000 },
   desiredMonthlyPayment: { min: 0.01, max: 10000000 },

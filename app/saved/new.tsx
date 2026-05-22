@@ -28,6 +28,7 @@ import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { createLocalId } from '@/utils/id';
 import { colours, layout, radii, spacing } from '@/theme';
+import { validateCurrentDealDurationText } from '@/mortgage/validation';
 import { useStoreReview } from '@/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -71,14 +72,6 @@ const splitMonths = (totalMonths: number) => ({
 });
 
 const getDefaultDealDuration = (totalMonths: number) => splitMonths(Math.min(Math.max(totalMonths, 1), 60));
-
-const getDealDurationErrorKey = (durationInMonths: number, mortgageTermInMonths: number) => {
-  if (durationInMonths <= 0 || durationInMonths > mortgageTermInMonths) {
-    return 'save.invalidCurrentDealDuration';
-  }
-
-  return undefined;
-};
 
 export default function SaveNewLoanScreen() {
   const { t } = useTranslation();
@@ -126,10 +119,19 @@ export default function SaveNewLoanScreen() {
   const [currentDealMonths, setCurrentDealMonths] = useState(String(defaultDealDuration.months));
   const [repaymentType, setRepaymentType] = useState<MortgageRepaymentType>('repayment');
 
-  const currentDealDurationInMonths = (Number(currentDealYears) || 0) * 12 + (Number(currentDealMonths) || 0);
-  const currentDealDurationErrorKey = category === 'mortgage' && currentDealEnabled
-    ? getDealDurationErrorKey(currentDealDurationInMonths, mortgageTermInMonths)
+  const currentDealDurationValidation = validateCurrentDealDurationText(
+    currentDealYears,
+    currentDealMonths,
+    mortgageTermInMonths,
+  );
+  const currentDealDurationErrorKey = category === 'mortgage' && currentDealEnabled && !currentDealDurationValidation.isValid
+    ? (
+      currentDealDurationValidation.years.errorKey
+      || currentDealDurationValidation.months.errorKey
+      || currentDealDurationValidation.errorKey
+    )
     : undefined;
+  const currentDealDurationInMonths = currentDealDurationValidation.totalMonths;
 
   const handleSave = () => {
     if (!nickname.trim()) return;

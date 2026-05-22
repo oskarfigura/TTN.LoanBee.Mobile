@@ -257,7 +257,11 @@
   "forms": {
     "required": "Wymagane",
     "requiredPositive": "Wprowadź wartość większą od zera",
-    "invalidNumber": "Wprowadź prawidłową liczbę"
+    "requiredNonNegative": "Wprowadź wartość równą zero lub większą",
+    "invalidNumber": "Wprowadź prawidłową liczbę",
+    "invalidInteger": "Wprowadź liczbę całkowitą równą zero lub większą",
+    "monthRange": "Wprowadź liczbę miesięcy od 0 do 11",
+    "durationTooLong": "Wprowadź okres nie dłuższy niż całkowity okres hipoteki"
   },
   "navigation": {
     "openMenu": "Otwórz menu",

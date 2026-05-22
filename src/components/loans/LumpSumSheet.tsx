@@ -8,7 +8,7 @@ import { CurrencyCode } from '@/currency/currencies';
 import { formatIsoDate } from '@/utils/date';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
 import {
   OverpaymentFieldGroup,
   OverpaymentImpactCard,
@@ -16,6 +16,7 @@ import {
   OverpaymentSheetModal,
   formatOverpaymentDuration,
 } from '@/components/loans/OverpaymentSheetPrimitives';
+import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
@@ -56,7 +57,7 @@ export const LumpSumSheet = ({
 
   const amountDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedAmount, setDebouncedAmount] = useState(parseFloat(amount) || 0);
+  const [debouncedAmount, setDebouncedAmount] = useState(event?.amount ?? 0);
   const [debouncedDate, setDebouncedDate] = useState(date);
 
   useEffect(() => {
@@ -73,7 +74,8 @@ export const LumpSumSheet = ({
     setAmount(text);
     if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current);
     amountDebounceRef.current = setTimeout(() => {
-      setDebouncedAmount(parseFloat(text) || 0);
+      const parsed = validateMoneyText(text, { required: false });
+      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
     }, 400);
   };
 
@@ -85,7 +87,7 @@ export const LumpSumSheet = ({
     }, 200);
   };
 
-  const parsedAmount = parseFloat(amount) || 0;
+  const amountValidation = validateMoneyText(amount);
 
   const impact = useMemo(() => {
     if (debouncedAmount <= 0) return null;
@@ -96,7 +98,7 @@ export const LumpSumSheet = ({
 
   const yrs = t('results.years');
   const mo = t('results.months');
-  const canSave = parsedAmount > 0;
+  const canSave = amountValidation.isValid;
 
   const handleDelete = () => {
     if (!event) return;
@@ -138,7 +140,7 @@ export const LumpSumSheet = ({
           primaryAction={(
             <Button
               label={t('overpayments.save')}
-              onPress={() => onSave(date, parsedAmount)}
+              onPress={() => onSave(date, amountValidation.numeric)}
               disabled={!canSave}
             />
           )}
@@ -156,7 +158,7 @@ export const LumpSumSheet = ({
       />
 
       <OverpaymentFieldGroup label={t('overpayments.lumpSumAmount')}>
-        <InputSurface>
+        <InputSurface error={Boolean(amountValidation.errorKey)}>
           <AppTextInput
             value={amount}
             onChangeText={handleAmountChange}
@@ -165,6 +167,7 @@ export const LumpSumSheet = ({
             onFocus={() => datePickerRef.current?.closePicker()}
           />
         </InputSurface>
+        <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
       {impact && impact.interestSaved > 0 ? (

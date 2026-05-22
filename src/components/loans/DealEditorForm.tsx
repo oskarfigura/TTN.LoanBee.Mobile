@@ -22,6 +22,11 @@ import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
 import { colours, elevation, radii, spacing } from '@/theme';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import {
+  NumericValidation,
+  validateDurationText,
+  validateMoneyText,
+} from '@/utils/formValidation';
 
 interface Props {
   currency: CurrencyCode;
@@ -40,36 +45,6 @@ interface Props {
 }
 
 const numberText = (value: number) => (Number.isFinite(value) ? String(value) : '0');
-
-type AmountValidation = { numeric: number; errorKey?: string; isEmpty: boolean };
-
-const validateAmount = (
-  raw: string,
-  options: { allowZero?: boolean; required?: boolean; integer?: boolean } = {},
-): AmountValidation => {
-  const trimmed = raw.trim();
-  if (trimmed === '') {
-    return {
-      numeric: 0,
-      isEmpty: true,
-      errorKey: options.required ? 'forms.required' : undefined,
-    };
-  }
-  const numeric = Number(trimmed);
-  if (!Number.isFinite(numeric)) {
-    return { numeric: 0, isEmpty: false, errorKey: 'forms.invalidNumber' };
-  }
-  if (options.integer && !Number.isInteger(numeric)) {
-    return { numeric, isEmpty: false, errorKey: 'forms.invalidNumber' };
-  }
-  if (numeric < 0) {
-    return { numeric, isEmpty: false, errorKey: 'forms.requiredPositive' };
-  }
-  if (!options.allowZero && numeric <= 0) {
-    return { numeric, isEmpty: false, errorKey: 'forms.requiredPositive' };
-  }
-  return { numeric, isEmpty: false };
-};
 
 const monthsBetweenDates = (startDate: string, endDate: string): number => {
   const start = parseDateLabelValue(startDate);
@@ -107,7 +82,7 @@ export const DealEditorForm = ({
   showSectionTabs = true,
 }: Props) => {
   const { t } = useTranslation();
-  const fieldError = (field: AmountValidation) =>
+  const fieldError = (field: NumericValidation) =>
     !field.isEmpty && field.errorKey ? t(field.errorKey) : undefined;
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
 
@@ -150,35 +125,28 @@ export const DealEditorForm = ({
   const effectiveStartDate = fixedStartDate ?? startDate;
 
   const validation = useMemo(() => {
-    const openingBalanceField = validateAmount(openingBalance, { required: isInitialDeal });
-    const additionalBorrowingField = validateAmount(additionalBorrowing, { allowZero: true });
-    const interestRateField = validateAmount(interestRate, { required: true });
-    const dealDurationYearsField = validateAmount(dealDurationYears, { allowZero: true, integer: true });
-    const dealDurationMonthsField = validateAmount(dealDurationMonths, { allowZero: true, integer: true });
-    const totalTermYearsField = validateAmount(totalTermYears, { allowZero: true, integer: true });
-    const totalTermMonthsField = validateAmount(totalTermMonths, { allowZero: true, integer: true });
-    const closingBalanceField = validateAmount(closingBalance, { allowZero: true });
-    const feesAddedField = validateAmount(feesAdded, { allowZero: true });
-
-    const dealDurationMonthsTotal = (dealDurationYearsField.numeric * 12) + dealDurationMonthsField.numeric;
-    const dealDurationCombinedError = dealDurationMonthsTotal <= 0 ? 'forms.requiredPositive' : undefined;
-    const totalTermMonthsTotal = (totalTermYearsField.numeric * 12) + totalTermMonthsField.numeric;
-    const totalTermCombinedError = canEditMortgageTerm && totalTermMonthsTotal <= 0
-      ? 'forms.requiredPositive'
-      : undefined;
+    const openingBalanceField = validateMoneyText(openingBalance, { required: isInitialDeal });
+    const additionalBorrowingField = validateMoneyText(additionalBorrowing, { allowZero: true });
+    const interestRateField = validateMoneyText(interestRate);
+    const dealDuration = validateDurationText(dealDurationYears, dealDurationMonths);
+    const totalTerm = validateDurationText(totalTermYears, totalTermMonths);
+    const closingBalanceField = validateMoneyText(closingBalance, { allowZero: true });
+    const feesAddedField = validateMoneyText(feesAdded, { allowZero: true });
 
     return {
       openingBalanceField,
       additionalBorrowingField,
       interestRateField,
-      dealDurationYearsField,
-      dealDurationMonthsField,
-      totalTermYearsField,
-      totalTermMonthsField,
+      dealDurationYearsField: dealDuration.years,
+      dealDurationMonthsField: dealDuration.months,
+      totalTermYearsField: totalTerm.years,
+      totalTermMonthsField: totalTerm.months,
       closingBalanceField,
       feesAddedField,
-      dealDurationCombinedError,
-      totalTermCombinedError,
+      dealDurationMonthsTotal: dealDuration.totalMonths,
+      totalTermMonthsTotal: totalTerm.totalMonths,
+      dealDurationCombinedError: dealDuration.errorKey,
+      totalTermCombinedError: canEditMortgageTerm ? totalTerm.errorKey : undefined,
     };
   }, [
     additionalBorrowing,
@@ -196,7 +164,7 @@ export const DealEditorForm = ({
 
   const dealDurationInMonths = Math.max(
     1,
-    (validation.dealDurationYearsField.numeric * 12) + validation.dealDurationMonthsField.numeric,
+    validation.dealDurationMonthsTotal,
   );
 
   // Keep endDate in sync when duration inputs change
@@ -220,7 +188,7 @@ export const DealEditorForm = ({
     ? Math.max(0, validation.openingBalanceField.numeric)
     : Math.max(0, projectedPreviousBalance + additionalBorrowingValue);
   const effectiveTotalMortgageTermInMonths = canEditMortgageTerm
-    ? Math.max(1, (validation.totalTermYearsField.numeric * 12) + validation.totalTermMonthsField.numeric)
+    ? Math.max(1, validation.totalTermMonthsTotal)
     : mortgageTermInMonths;
   const remainingTermInMonths = Math.max(
     effectiveTotalMortgageTermInMonths - monthsBetweenDates(mortgageStartDate, effectiveStartDate),
@@ -469,7 +437,13 @@ export const DealEditorForm = ({
             </InputSurface>
           </View>
         </View>
-        <FieldError message={validation.dealDurationCombinedError ? t(validation.dealDurationCombinedError) : undefined} />
+        <FieldError
+          message={
+            fieldError(validation.dealDurationYearsField)
+            || fieldError(validation.dealDurationMonthsField)
+            || (validation.dealDurationCombinedError ? t(validation.dealDurationCombinedError) : undefined)
+          }
+        />
         <FieldHint>{t('mortgage.dealDurationHint')}</FieldHint>
       </View>
 
@@ -512,7 +486,13 @@ export const DealEditorForm = ({
               </InputSurface>
             </View>
           </View>
-          <FieldError message={validation.totalTermCombinedError ? t(validation.totalTermCombinedError) : undefined} />
+          <FieldError
+            message={
+              fieldError(validation.totalTermYearsField)
+              || fieldError(validation.totalTermMonthsField)
+              || (validation.totalTermCombinedError ? t(validation.totalTermCombinedError) : undefined)
+            }
+          />
           <FieldHint>{t('mortgage.totalMortgageTermHint')}</FieldHint>
         </View>
       )}

@@ -5,7 +5,7 @@ import { LoanFormSnapshot } from '@/types/SavedLoan';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
 import { Button } from '@/components/ui/Button';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
 import {
   OverpaymentFieldGroup,
   OverpaymentImpactCard,
@@ -13,6 +13,7 @@ import {
   OverpaymentSheetModal,
   formatOverpaymentDuration,
 } from '@/components/loans/OverpaymentSheetPrimitives';
+import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
@@ -51,11 +52,13 @@ export const MonthlyOverpaymentSheet = ({
     setValue(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setDebouncedAmount(parseFloat(text) || 0);
+      const parsed = validateMoneyText(text, { required: false });
+      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
     }, 400);
   };
 
-  const amount = parseFloat(value) || 0;
+  const amountValidation = validateMoneyText(value);
+  const amount = amountValidation.numeric;
 
   const impact = useMemo(() => {
     if (debouncedAmount <= 0) return null;
@@ -65,7 +68,7 @@ export const MonthlyOverpaymentSheet = ({
   const yrs = t('results.years');
   const mo = t('results.months');
   const isUnchanged = amount === current;
-  const canSave = amount > 0 && !isUnchanged;
+  const canSave = amountValidation.isValid && !isUnchanged;
   const canRemove = current > 0;
 
   return (
@@ -99,7 +102,7 @@ export const MonthlyOverpaymentSheet = ({
       )}
     >
       <OverpaymentFieldGroup label={t('overpayments.monthlyAmountLabel')}>
-        <InputSurface>
+        <InputSurface error={Boolean(amountValidation.errorKey)}>
           <AppTextInput
             value={value}
             onChangeText={handleChange}
@@ -108,6 +111,7 @@ export const MonthlyOverpaymentSheet = ({
             autoFocus={visible}
           />
         </InputSurface>
+        <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
       {impact && impact.interestSaved > 0 ? (

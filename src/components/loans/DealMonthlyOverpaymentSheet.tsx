@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { AppTextInput, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { getDealOverpaymentImpact } from '@/mortgage/tracker';
@@ -12,6 +12,7 @@ import {
   OverpaymentSheetActions,
   OverpaymentSheetModal,
 } from '@/components/loans/OverpaymentSheetPrimitives';
+import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
@@ -48,10 +49,14 @@ export const DealMonthlyOverpaymentSheet = ({
   const handleChange = (text: string) => {
     setValue(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedAmount(parseFloat(text) || 0), 400);
+    debounceRef.current = setTimeout(() => {
+      const parsed = validateMoneyText(text, { required: false });
+      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
+    }, 400);
   };
 
-  const amount = parseFloat(value) || 0;
+  const amountValidation = validateMoneyText(value);
+  const amount = amountValidation.numeric;
 
   const impact = useMemo(() => {
     if (debouncedAmount <= 0) return null;
@@ -61,7 +66,7 @@ export const DealMonthlyOverpaymentSheet = ({
   }, [deal, loanEvents, debouncedAmount]);
 
   const isUnchanged = amount === current;
-  const canSave = amount > 0 && !isUnchanged;
+  const canSave = amountValidation.isValid && !isUnchanged;
   const canRemove = current > 0;
 
   return (
@@ -95,7 +100,7 @@ export const DealMonthlyOverpaymentSheet = ({
       )}
     >
       <OverpaymentFieldGroup label={t('overpayments.monthlyAmountLabel')}>
-        <InputSurface>
+        <InputSurface error={Boolean(amountValidation.errorKey)}>
           <InputAffix>{currencySymbol}</InputAffix>
           <AppTextInput
             value={value}
@@ -105,6 +110,7 @@ export const DealMonthlyOverpaymentSheet = ({
             autoFocus={visible}
           />
         </InputSurface>
+        <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
       {impact && impact.interestSaved > 0 ? (
