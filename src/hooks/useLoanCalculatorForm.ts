@@ -12,8 +12,8 @@ import { getLocales } from 'expo-localization';
 import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
 
 // Mirrors LIMITS in src/share/calculationShareLink.ts. Keep in sync.
-const MAX_LOAN_AMOUNT = 1_000_000_000;
-const MAX_MONTHLY_PAYMENT = 10_000_000;
+const MAX_LOAN_AMOUNT = 100_000_000;
+const MAX_MONTHLY_PAYMENT = 1_000_000;
 
 const schema = z.object({
   loanAmount: z.coerce

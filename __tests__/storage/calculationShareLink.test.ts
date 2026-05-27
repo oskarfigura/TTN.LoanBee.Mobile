@@ -91,6 +91,56 @@ describe('calculationShareLink', () => {
     expect(values.currency).toBe('GBP');
   });
 
+  it('rejects loan amounts over the 100M cap (falls back to default)', () => {
+    const values = getShareableCalculationValuesFromParams(new URLSearchParams({
+      amount: '500000000',
+      interest: '3',
+      years: '10',
+      months: '0',
+      downPayment: '0',
+      downPaymentType: 'percent',
+      startDate: '2026-01-01',
+      mode: 'term',
+      currency: 'GBP',
+    }));
+    // 500M is above the 100M cap, so parseNumberParam discards it and falls
+    // back to defaultShareValues.loanAmount.
+    expect(values.loanAmount).toBe(300000);
+  });
+
+  it('rejects monthly payments over the 1M cap (falls back to default)', () => {
+    const values = getShareableCalculationValuesFromParams(new URLSearchParams({
+      amount: '300000',
+      interest: '3',
+      years: '0',
+      months: '0',
+      downPayment: '0',
+      downPaymentType: 'percent',
+      startDate: '2026-01-01',
+      mode: 'payment',
+      payment: '5000000',
+      currency: 'GBP',
+    }));
+    // 5M is above the 1M payment cap → falls back to defaultShareValues.desiredMonthlyPayment (0),
+    // then normaliseShareableCalculationValues bumps it to the calculated minimum.
+    expect(values.desiredMonthlyPayment).toBeLessThanOrEqual(1_000_000);
+  });
+
+  it('accepts loan amounts at the 100M cap', () => {
+    const values = getShareableCalculationValuesFromParams(new URLSearchParams({
+      amount: '100000000',
+      interest: '3',
+      years: '10',
+      months: '0',
+      downPayment: '0',
+      downPaymentType: 'percent',
+      startDate: '2026-01-01',
+      mode: 'term',
+      currency: 'GBP',
+    }));
+    expect(values.loanAmount).toBe(100_000_000);
+  });
+
   it('falls back for invalid values without producing unsafe payment inputs', () => {
     const values = getShareableCalculationValuesFromParams(new URLSearchParams({
       amount: 'nope',

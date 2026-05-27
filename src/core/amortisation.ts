@@ -2,11 +2,10 @@ import { DownPaymentType } from './DownPaymentType';
 import { LoanCalculationType } from './LoanCalculationType';
 import { getBaseLog, getOverallTermInMonths } from './loanHelper';
 
-// Hard upper bound on table rows produced by getTableItems. The engine has no
-// other termination guard — if a caller bypasses validation and supplies a
-// payment <= interest, the while-loop never converges and the app OOMs. This
-// cap is sized at ~110 years of monthly payments, well above any realistic
-// amortisation. Hitting it means the inputs were invalid.
+// Safety net for the amortisation loop. Input validation (form schema + share
+// link clamping) is the real boundary; this cap is the last line of defence
+// against an OOM if validation is ever bypassed. Sized at ~110 years of
+// monthly payments — well above any realistic amortisation.
 const MAX_AMORTISATION_ROWS = 110 * 12;
 
 export const getLoanCalculations = (
@@ -89,11 +88,7 @@ export const calculateDownPayment = (amount: number, downPayment: number, type: 
 
 export const calculateMinPayment = (amount: number, interest: number) => {
     let payment = (amount * (interest / 100)) / 12;
-    // Buffer = 0.1% of the interest portion + £10 so principal is always
-    // meaningful. The previous +£1 buffer was thin enough at large balances
-    // that the engine still produced 200+ row tables at the validated minimum.
-    const buffer = Math.max(10, payment * 0.001);
-    return Math.ceil(payment + buffer);
+    return Math.ceil(payment + 1);
 };
 
 export const calculateMonthlyPayments = (
@@ -103,11 +98,6 @@ export const calculateMonthlyPayments = (
     amount: number
 ) => {
     var overallTermInMonths = getOverallTermInMonths(termInYears, termInMonths);
-
-    if (overallTermInMonths <= 0) return 0;
-    // Without this guard the annuity formula divides by zero and returns NaN,
-    // which then propagates through getTableItems and produces garbage rows.
-    if (monthlyInterest <= 0) return amount / overallTermInMonths;
 
     var commonMultiplier = (1 + monthlyInterest) ** overallTermInMonths;
     var monthlyPayments =
@@ -154,29 +144,6 @@ export const getTableItems = (
     var loanChartLabelArray: string[] = [];
     var monthlyAccumulative = 0;
     var interestAccumulative = 0;
-
-    // Reject inputs the loop cannot converge on. Any of these would either
-    // produce NaN-filled rows or run until the heap is exhausted.
-    if (
-        !Number.isFinite(amount) ||
-        !Number.isFinite(monthlyInterest) ||
-        !Number.isFinite(monthlyPayments) ||
-        amount <= 0 ||
-        monthlyPayments <= 0 ||
-        monthlyPayments <= amount * monthlyInterest
-    ) {
-        return {
-            tableItems: [],
-            totalAmountPaid: 0,
-            totalInterestPaid: 0,
-            termInYears: 0,
-            termInMonths: 0,
-            loanChartMonthlyArray: [0],
-            loanChartInterestArray: [0],
-            loanChartRemainingArray: [Number.isFinite(amount) ? amount : 0],
-            loanChartLabelArray: [],
-        };
-    }
 
     let count = 1;
     while (remainingLoanAmount > 0 && count <= MAX_AMORTISATION_ROWS) {

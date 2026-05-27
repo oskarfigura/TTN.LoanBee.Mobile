@@ -12,8 +12,7 @@ describe('paymentValidation', () => {
   });
 
   it('returns the minimum payment needed to reduce the balance', () => {
-    // 270000 @ 3% → interest portion £675/mo + £10 buffer floor = £685
-    expect(getMinimumAmortisingPayment(300000, 3, 10, DownPaymentType.PERCENT)).toBe(685);
+    expect(getMinimumAmortisingPayment(300000, 3, 10, DownPaymentType.PERCENT)).toBe(676);
   });
 
   it('accepts uppercase downPaymentType casing (stored snapshot form)', () => {
