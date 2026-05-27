@@ -4,6 +4,8 @@ import {
   MortgageEvent,
 } from '@/types/SavedLoan';
 import { calculateMonthlyPayments } from '@/core/amortisation';
+import { getEffectiveLoanAmount } from '@/utils/paymentValidation';
+import { monthsBetween as sharedMonthsBetween } from '@/utils/date';
 
 export interface DealProjection {
   dealId: string;
@@ -46,7 +48,14 @@ const toMoney = (value: number): number => +Math.max(0, value).toFixed(2);
 
 const parseDate = (dateString: string): Date => {
   const date = new Date(`${dateString}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? new Date(0) : date;
+  if (Number.isNaN(date.getTime())) {
+    // Don't silently fall back to 1970 — that would produce ~660-year
+    // projections. Surface the bad date in the log so it's traceable.
+    // eslint-disable-next-line no-console
+    console.warn('[mortgage.tracker] invalid date encountered, using today:', dateString);
+    return new Date();
+  }
+  return date;
 };
 
 const monthKey = (dateString: string): string => dateString.slice(0, 7);
@@ -72,11 +81,9 @@ const minIsoDate = (dates: string[]): string => (
   dates.sort((a, b) => parseDate(a).getTime() - parseDate(b).getTime())[0]
 );
 
-const monthsBetween = (startDate: string, endDate: string): number => {
-  const start = monthStart(startDate);
-  const end = monthStart(endDate);
-  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
-};
+const monthsBetween = (startDate: string, endDate: string): number => (
+  sharedMonthsBetween(startDate, endDate)
+);
 
 const addDaysIso = (dateString: string, days: number): string => {
   const date = parseDate(dateString);
@@ -242,14 +249,9 @@ export const canDeleteDeal = (loan: LoanGroup, dealId: string): boolean => {
   return deals[deals.length - 1]?.id === dealId;
 };
 
-const getEffectiveOpeningBalance = (loan: LoanGroup): number => {
-  const form = loan.formSnapshot;
-  const downPayment = form.downPaymentType === 'PERCENT'
-    ? (form.downPayment / 100) * form.loanAmount
-    : form.downPayment;
-
-  return Math.max(0, form.loanAmount - downPayment);
-};
+const getEffectiveOpeningBalance = (loan: LoanGroup): number => (
+  getEffectiveLoanAmount(loan.formSnapshot.loanAmount, loan.formSnapshot.downPayment, loan.formSnapshot.downPaymentType)
+);
 
 export const buildCurrentStateProjectionDeal = (loan: LoanGroup): LoanDeal => {
   const totalMonths = getOverallTermInMonths(loan);

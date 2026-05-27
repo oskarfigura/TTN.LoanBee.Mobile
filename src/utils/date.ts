@@ -110,7 +110,16 @@ export const formatFriendlyDateRange = (
   return `${start} - ${end}`;
 };
 
-export const monthsBetween = (startDate: string, now: Date): number => {
-  const start = new Date(startDate);
-  return Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
+// Whole months between two dates. ISO strings are parsed via
+// parseDateLabelValue (local midnight) so the result does not flip across
+// timezone boundaries — `new Date('2024-01-01')` parses as UTC midnight and
+// would give the wrong month in negative-offset timezones.
+export const monthsBetween = (
+  startDate: string | Date,
+  endDate: string | Date,
+): number => {
+  const start = typeof startDate === 'string' ? parseDateLabelValue(startDate) : startDate;
+  const end = typeof endDate === 'string' ? parseDateLabelValue(endDate) : endDate;
+  if (!start || !end) return 0;
+  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
 };

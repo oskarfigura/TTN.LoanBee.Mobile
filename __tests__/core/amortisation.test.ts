@@ -38,15 +38,24 @@ describe('calculateDownPayment', () => {
 
 describe('calculateMinPayment', () => {
   it('calculates minimum payment for standard inputs', () => {
-    expect(calculateMinPayment(100000, 3)).toBe(251);
+    // 100000 @ 3% → interest portion £250/mo; buffer floor is £10
+    expect(calculateMinPayment(100000, 3)).toBe(260);
   });
 
-  it('returns 1 when interest is 0 (just the +1 guard)', () => {
-    expect(calculateMinPayment(100000, 0)).toBe(1);
+  it('returns the £10 floor when interest is 0', () => {
+    expect(calculateMinPayment(100000, 0)).toBe(10);
   });
 
   it('rounds up fractional payments', () => {
-    expect(calculateMinPayment(100000, 1)).toBe(85);
+    // 100000 @ 1% → £83.33/mo + £10 buffer = £93.33 → 94
+    expect(calculateMinPayment(100000, 1)).toBe(94);
+  });
+
+  it('scales the buffer at large balances so principal is always meaningful', () => {
+    // 1B @ 100% → interest ≈ 8.33M/mo; 0.1% buffer ≈ £8333
+    const interestPortion = Math.ceil((1_000_000_000 * 1) / 12);
+    const result = calculateMinPayment(1_000_000_000, 100);
+    expect(result - interestPortion).toBeGreaterThanOrEqual(8000);
   });
 });
 
@@ -71,9 +80,13 @@ describe('calculateMonthlyPayments', () => {
     expect(result).toBeGreaterThan(result24);
   });
 
-  it('produces NaN for 0% interest (known limitation)', () => {
+  it('returns principal / months for 0% interest (zero-interest guard)', () => {
     const result = calculateMonthlyPayments(0, 10, 0, 270000);
-    expect(isNaN(result)).toBe(true);
+    expect(result).toBeCloseTo(270000 / 120, 5);
+  });
+
+  it('returns 0 when term is 0 (defensive guard)', () => {
+    expect(calculateMonthlyPayments(0.0025, 0, 0, 270000)).toBe(0);
   });
 });
 
@@ -211,5 +224,32 @@ describe('getLoanCalculations', () => {
       LoanCalculationType.PAYMENT, 10, DownPaymentType.PERCENT, 0, '2024-01-01'
     );
     expect(result.monthlyPayments).toBe(3000);
+  });
+});
+
+// ─── termination guards ──────────────────────────────────────────────────────
+
+describe('getTableItems termination guards', () => {
+  it('returns empty schedule when payment is less than interest (no infinite loop)', () => {
+    // 100000 @ 12%/yr → monthlyInterest 1% → interest portion = £1000. Pay £500.
+    // Without the guard this would never terminate.
+    const result = getTableItems(100000, 0.01, 500, 0);
+    expect(result.tableItems).toEqual([]);
+    expect(result.totalInterestPaid).toBe(0);
+  });
+
+  it('returns empty schedule when payment exactly equals interest', () => {
+    const result = getTableItems(100000, 0.01, 1000, 0);
+    expect(result.tableItems).toEqual([]);
+  });
+
+  it('returns empty schedule when monthlyPayments is NaN', () => {
+    const result = getTableItems(100000, 0.0025, Number.NaN, 0);
+    expect(result.tableItems).toEqual([]);
+  });
+
+  it('returns empty schedule when amount is 0', () => {
+    const result = getTableItems(0, 0.0025, 1000, 0);
+    expect(result.tableItems).toEqual([]);
   });
 });

@@ -11,10 +11,15 @@ import { languageToCurrency } from '@/currency/defaults';
 import { getLocales } from 'expo-localization';
 import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
 
+// Mirrors LIMITS in src/share/calculationShareLink.ts. Keep in sync.
+const MAX_LOAN_AMOUNT = 1_000_000_000;
+const MAX_MONTHLY_PAYMENT = 10_000_000;
+
 const schema = z.object({
   loanAmount: z.coerce
     .number({ message: 'errors.loanAmount' })
-    .min(1, { message: 'errors.loanAmount' }),
+    .min(1, { message: 'errors.loanAmount' })
+    .max(MAX_LOAN_AMOUNT, { message: 'errors.loanAmountMax' }),
   interest: z.coerce
     .number({ message: 'errors.interest' })
     .positive({ message: 'errors.interest' })
@@ -36,10 +41,12 @@ const schema = z.object({
   desiredMonthlyPayment: z.coerce
     .number({ message: 'errors.desiredPaymentNonNegative' })
     .min(0, { message: 'errors.desiredPaymentNonNegative' })
+    .max(MAX_MONTHLY_PAYMENT, { message: 'errors.desiredPaymentMax' })
     .optional(),
   additionalMonthlyPayment: z.coerce
     .number({ message: 'errors.additionalPaymentNonNegative' })
-    .min(0, { message: 'errors.additionalPaymentNonNegative' }),
+    .min(0, { message: 'errors.additionalPaymentNonNegative' })
+    .max(MAX_MONTHLY_PAYMENT, { message: 'errors.additionalPaymentMax' }),
   startDate: z.string().min(1, { message: 'errors.startDate' }),
   calculationType: z.enum(['term', 'payment']),
   currency: z.string(),

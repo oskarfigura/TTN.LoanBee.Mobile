@@ -1,16 +1,21 @@
 import { calculateMinPayment } from '@/core/amortisation';
 import { DownPaymentType } from '@/core/DownPaymentType';
 
+// Accepts both stored ('PERCENT'/'CASH') and form ('percent'/'cash') casings so
+// callers do not need to remember which boundary they are at.
+export const isPercentDownPayment = (downPaymentType: DownPaymentType | string): boolean => (
+  String(downPaymentType).toLowerCase() === DownPaymentType.PERCENT
+);
+
 export const getEffectiveLoanAmount = (
   loanAmount: number,
   downPayment: number,
   downPaymentType: DownPaymentType | string,
 ) => {
-  if (downPaymentType === DownPaymentType.PERCENT) {
-    return loanAmount - ((downPayment / 100) * loanAmount);
-  }
-
-  return loanAmount - downPayment;
+  const reduction = isPercentDownPayment(downPaymentType)
+    ? (downPayment / 100) * loanAmount
+    : downPayment;
+  return Math.max(0, loanAmount - reduction);
 };
 
 export const getMinimumAmortisingPayment = (

@@ -258,6 +258,7 @@
   },
   "errors": {
     "loanAmount": "Kwota kredytu musi być większa niż 0",
+    "loanAmountMax": "Kwota kredytu nie może przekraczać 1 000 000 000",
     "interest": "Oprocentowanie musi być większe niż 0",
     "interestMax": "Oprocentowanie musi być mniejsze lub równe 100",
     "termYearInvalid": "Liczba lat musi być nieujemną liczbą całkowitą",
@@ -271,8 +272,10 @@
     "desiredPaymentRequired": "Żądana rata musi być większa niż 0",
     "desiredPaymentExceeds": "Żądana rata nie może przekraczać salda kredytu",
     "desiredPaymentMinimum": "Żądana rata musi wynosić co najmniej {{amount}}, aby saldo malało",
+    "desiredPaymentMax": "Żądana rata nie może przekraczać 10 000 000",
     "additionalPaymentNonNegative": "Dodatkowa płatność musi być równa zero lub większa",
     "additionalPaymentExceeds": "Dodatkowa płatność nie może przekraczać salda kredytu",
+    "additionalPaymentMax": "Dodatkowa płatność nie może przekraczać 10 000 000",
     "startDate": "Wprowadź prawidłową datę"
   },
   "ads": {
