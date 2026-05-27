@@ -164,6 +164,7 @@ const buildProjection = (
 
   const openingBalance = deals[0].openingBalance;
   const asOfMonth = monthStart(dateToIso(asOf)).getTime();
+  const asOfIso = dateToIso(asOf);
   const points: MortgageProjectionPoint[] = [];
   const loanChartMonthlyArray: number[] = [0];
   const loanChartInterestArray: number[] = [0];
@@ -197,7 +198,10 @@ const buildProjection = (
       const cursor = addMonths(monthStart(deal.startDate), month);
       const cursorIso = dateToIso(cursor);
       const key = monthKey(cursorIso);
-      const eventsInMonth = dealEvents.filter(event => monthKey(event.date) === key);
+      const eventsInMonth = dealEvents.filter(event => (
+        monthKey(event.date) === key
+        && (cursor.getTime() > asOfMonth || event.date <= asOfIso)
+      ));
       const checkpoints = eventsInMonth
         .filter(event => event.type === 'balanceCheckpoint' && typeof event.balance === 'number');
       const checkpoint = checkpoints[checkpoints.length - 1];

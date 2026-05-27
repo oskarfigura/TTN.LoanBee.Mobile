@@ -23,6 +23,10 @@ import {
   withMortgageTermInMonths,
 } from '../../src/mortgage/tracker';
 import { buildMortgageProjection } from '../../src/mortgage/projection';
+import {
+  buildBalanceCheckpointReconciliation,
+  getBalanceSourceMetadata,
+} from '../../src/mortgage/reconciliation';
 import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary } from '../../src/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '../../src/results/loanResultRoute';
@@ -285,6 +289,154 @@ describe('mortgage tracker', () => {
 
     expect(actual.balance).toBe(withoutFutureLump.balance);
     expect(actual.totalPaid).toBe(withoutFutureLump.totalPaid);
+  });
+
+  it('does not use a future same-month checkpoint for the current projected balance', () => {
+    const baseLoan = makeMortgage();
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'future-checkpoint',
+          createdAt: '2026-09-30T00:00:00.000Z',
+          updatedAt: '2026-09-30T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'balanceCheckpoint',
+          date: '2026-09-30',
+          balance: 100000,
+        },
+      ],
+    });
+    const asOf = new Date('2026-09-01T00:00:00');
+
+    const actual = buildMortgageProjection(loan, asOf);
+    const withoutFutureCheckpoint = buildMortgageProjection(baseLoan, asOf);
+
+    expect(actual.currentBalance).toBe(withoutFutureCheckpoint.currentBalance);
+    expect(getBalanceSourceMetadata(loan.deals[0], loan.events, asOf).kind).toBe('projected');
+  });
+
+  it('rebases the current projected balance from a past same-month checkpoint', () => {
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'past-checkpoint',
+          createdAt: '2026-09-01T00:00:00.000Z',
+          updatedAt: '2026-09-01T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'balanceCheckpoint',
+          date: '2026-09-01',
+          balance: 210000,
+        },
+      ],
+    });
+    const asOf = new Date('2026-09-15T00:00:00');
+
+    const projection = buildMortgageProjection(loan, asOf);
+    const source = getBalanceSourceMetadata(loan.deals[0], loan.events, asOf);
+
+    expect(projection.currentBalance).toBeLessThan(211000);
+    expect(projection.currentBalance).toBeGreaterThan(208000);
+    expect(source.kind).toBe('bankRecent');
+    expect(source.checkpoint?.id).toBe('past-checkpoint');
+  });
+
+  it('stores frozen checkpoint variance without counting it as overpayment savings', () => {
+    const loan = makeMortgage({
+      deals: [{ ...makeMortgage().deals[0], regularOverpayment: 0 }],
+      formSnapshot: { ...makeMortgage().formSnapshot, additionalMonthlyPayment: null },
+    });
+    const projected = buildBalanceCheckpointReconciliation({
+      deal: loan.deals[0],
+      events: loan.events,
+      checkpointDate: '2026-09-01',
+      bankBalance: projectDeal(loan.deals[0], loan.events, new Date('2026-09-01T00:00:00'), true).balance,
+    });
+    const reconciliation = buildBalanceCheckpointReconciliation({
+      deal: loan.deals[0],
+      events: loan.events,
+      checkpointDate: '2026-09-01',
+      bankBalance: 240000,
+    });
+    const lowerReconciliation = buildBalanceCheckpointReconciliation({
+      deal: loan.deals[0],
+      events: loan.events,
+      checkpointDate: '2026-09-01',
+      bankBalance: 200000,
+    });
+    const checkpoint = {
+      id: 'checkpoint',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      updatedAt: '2026-09-01T00:00:00.000Z',
+      dealId: 'deal-current',
+      type: 'balanceCheckpoint' as const,
+      date: '2026-09-01',
+      balance: 240000,
+      varianceReason: 'unknown' as const,
+      ...reconciliation,
+    };
+    const updated = { ...loan, events: [checkpoint] };
+    const withLaterEvent = upsertMortgageEvent(updated, {
+      id: 'later-overpay',
+      createdAt: '2026-10-01T00:00:00.000Z',
+      updatedAt: '2026-10-01T00:00:00.000Z',
+      dealId: 'deal-current',
+      type: 'lumpOverpayment',
+      date: '2026-10-01',
+      amount: 1000,
+    });
+    const projection = buildMortgageProjection(updated, new Date('2026-10-01T00:00:00'));
+
+    expect(projected.reconciliationVariance).toBe(0);
+    expect(checkpoint.reconciliationVariance).toBeCloseTo(240000 - checkpoint.projectedBalanceAtCheckpoint, 2);
+    expect(checkpoint.reconciliationVariance).toBeGreaterThan(0);
+    expect(lowerReconciliation.reconciliationVariance).toBeLessThan(0);
+    expect(withLaterEvent.events.find(event => event.id === 'checkpoint')?.reconciliationVariance).toBe(checkpoint.reconciliationVariance);
+    expect(projection.overpaymentSavingsEstimate).toBe(0);
+  });
+
+  it('classifies bank checkpoint source freshness by age', () => {
+    const checkpoint = {
+      id: 'checkpoint',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      updatedAt: '2026-09-01T00:00:00.000Z',
+      dealId: 'deal-current',
+      type: 'balanceCheckpoint' as const,
+      date: '2026-09-01',
+      balance: 230000,
+      projectedBalanceAtCheckpoint: 231000,
+      reconciliationVariance: -1000,
+    };
+    const loan = makeMortgage({ events: [checkpoint] });
+
+    expect(getBalanceSourceMetadata(loan.deals[0], loan.events, new Date('2026-09-01T00:00:00')).kind).toBe('bankToday');
+    expect(getBalanceSourceMetadata(loan.deals[0], loan.events, new Date('2026-09-20T00:00:00')).kind).toBe('bankRecent');
+    expect(getBalanceSourceMetadata(loan.deals[0], loan.events, new Date('2026-11-15T00:00:00')).kind).toBe('bankOlder');
+    expect(getBalanceSourceMetadata(loan.deals[0], loan.events, new Date('2026-12-15T00:00:00')).kind).toBe('bankStale');
+  });
+
+  [
+    ['2026-10-02', 'bankRecent'],
+    ['2026-10-03', 'bankOlder'],
+    ['2026-11-30', 'bankOlder'],
+    ['2026-12-01', 'bankStale'],
+  ].forEach(([asOf, expectedKind]) => {
+    it(`classifies checkpoint freshness boundary ${asOf} as ${expectedKind}`, () => {
+      const loan = makeMortgage({
+        events: [
+          {
+            id: 'checkpoint',
+            createdAt: '2026-09-01T00:00:00.000Z',
+            updatedAt: '2026-09-01T00:00:00.000Z',
+            dealId: 'deal-current',
+            type: 'balanceCheckpoint',
+            date: '2026-09-01',
+            balance: 230000,
+          },
+        ],
+      });
+
+      expect(getBalanceSourceMetadata(loan.deals[0], loan.events, new Date(`${asOf}T00:00:00`)).kind).toBe(expectedKind);
+    });
   });
 
   it('keeps current balance anchored to the current deal before future deals begin', () => {
