@@ -76,7 +76,13 @@ export interface MortgageEvent {
   note?: string;
 }
 
+// Current schema version. Bump whenever the LoanGroup shape changes in a way
+// that requires a migration step in src/storage/savedLoans.ts. Loans persisted
+// without this field are treated as v1 and run through migrateLegacySavedLoan.
+export const LOAN_GROUP_SCHEMA_VERSION = 2 as const;
+
 export interface LoanGroup {
+  schemaVersion?: typeof LOAN_GROUP_SCHEMA_VERSION;
   id: string;
   createdAt: string;
   updatedAt: string;

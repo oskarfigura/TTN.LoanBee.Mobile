@@ -71,7 +71,7 @@ describe('calculateMonthlyPayments', () => {
     expect(result).toBeGreaterThan(result24);
   });
 
-  it('produces NaN for 0% interest (known limitation)', () => {
+  it('produces NaN for 0% interest (known limitation; validation rejects 0% upstream)', () => {
     const result = calculateMonthlyPayments(0, 10, 0, 270000);
     expect(isNaN(result)).toBe(true);
   });
@@ -211,5 +211,37 @@ describe('getLoanCalculations', () => {
       LoanCalculationType.PAYMENT, 10, DownPaymentType.PERCENT, 0, '2024-01-01'
     );
     expect(result.monthlyPayments).toBe(3000);
+  });
+});
+
+// ─── safety cap ──────────────────────────────────────────────────────────────
+// Input validation (form schema + share-link clamping) is the real boundary.
+// These tests assert the in-engine cap stops a non-convergent loop, so a
+// validation bypass cannot OOM the app.
+
+describe('getTableItems safety cap', () => {
+  const MAX_ROWS = 110 * 12;
+
+  it('terminates at the cap when payment is less than interest', () => {
+    // 100000 @ 12%/yr → monthlyInterest 1% → interest portion = £1000. Pay £500.
+    // Without the cap this loop never converges.
+    const result = getTableItems(100000, 0.01, 500, 0);
+    expect(result.tableItems.length).toBeLessThanOrEqual(MAX_ROWS);
+  });
+
+  it('terminates at the cap when payment exactly equals interest', () => {
+    const result = getTableItems(100000, 0.01, 1000, 0);
+    expect(result.tableItems.length).toBeLessThanOrEqual(MAX_ROWS);
+  });
+
+  it('terminates at the cap for worst-case validated inputs (100M @ 100% at min payment)', () => {
+    // At the schema maximums (loan 100M, interest 100%) the validated minimum
+    // payment is barely above interest, so principal pays down trivially slowly.
+    // The cap is what stops this from being a multi-second/OOM operation.
+    const amount = 100_000_000;
+    const monthlyInterest = 100 / 100 / 12;
+    const minPayment = Math.ceil(amount * monthlyInterest + 1);
+    const result = getTableItems(amount, monthlyInterest, minPayment, 0);
+    expect(result.tableItems.length).toBeLessThanOrEqual(MAX_ROWS);
   });
 });

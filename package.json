@@ -30,15 +30,14 @@
         "modulePathIgnorePatterns": [
           "<rootDir>/.worktrees/"
         ],
-        "preset": "ts-jest",
         "testEnvironment": "node",
         "moduleNameMapper": {
           "^@/(.*)$": "<rootDir>/src/$1"
         },
-        "globals": {
-          "ts-jest": {
-            "isolatedModules": true
-          }
+        "transform": {
+          "^.+\\.tsx?$": [
+            "ts-jest"
+          ]
         }
       },
       {
@@ -49,16 +48,15 @@
         "modulePathIgnorePatterns": [
           "<rootDir>/.worktrees/"
         ],
-        "preset": "ts-jest",
         "testEnvironment": "node",
         "moduleNameMapper": {
           "^@/(.*)$": "<rootDir>/src/$1",
           "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
         },
-        "globals": {
-          "ts-jest": {
-            "isolatedModules": true
-          }
+        "transform": {
+          "^.+\\.tsx?$": [
+            "ts-jest"
+          ]
         }
       },
       {
@@ -69,15 +67,14 @@
         "modulePathIgnorePatterns": [
           "<rootDir>/.worktrees/"
         ],
-        "preset": "ts-jest",
         "testEnvironment": "node",
         "moduleNameMapper": {
           "^@/(.*)$": "<rootDir>/src/$1"
         },
-        "globals": {
-          "ts-jest": {
-            "isolatedModules": true
-          }
+        "transform": {
+          "^.+\\.tsx?$": [
+            "ts-jest"
+          ]
         }
       },
       {
@@ -88,15 +85,14 @@
         "modulePathIgnorePatterns": [
           "<rootDir>/.worktrees/"
         ],
-        "preset": "ts-jest",
         "testEnvironment": "node",
         "moduleNameMapper": {
           "^@/(.*)$": "<rootDir>/src/$1"
         },
-        "globals": {
-          "ts-jest": {
-            "isolatedModules": true
-          }
+        "transform": {
+          "^.+\\.tsx?$": [
+            "ts-jest"
+          ]
         }
       },
       {
@@ -107,19 +103,20 @@
         "modulePathIgnorePatterns": [
           "<rootDir>/.worktrees/"
         ],
-        "preset": "ts-jest",
         "testEnvironment": "node",
         "moduleNameMapper": {
           "^@/(.*)$": "<rootDir>/src/$1",
           "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
         },
-        "globals": {
-          "ts-jest": {
-            "isolatedModules": true,
-            "tsconfig": {
-              "jsx": "react"
+        "transform": {
+          "^.+\\.tsx?$": [
+            "ts-jest",
+            {
+              "tsconfig": {
+                "jsx": "react"
+              }
             }
-          }
+          ]
         }
       }
     ]

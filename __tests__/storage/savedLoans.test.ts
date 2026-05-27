@@ -1,8 +1,18 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
-import { savedLoansStorage } from '../../src/storage/savedLoans';
-import { LegacySavedLoan, MortgageEvent, SavedLoan } from '../../src/types/SavedLoan';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import {
+  onSavedLoanStorageError,
+  SavedLoanStorageError,
+  savedLoansStorage,
+} from '../../src/storage/savedLoans';
+import {
+  LegacySavedLoan,
+  LOAN_GROUP_SCHEMA_VERSION,
+  MortgageEvent,
+  SavedLoan,
+} from '../../src/types/SavedLoan';
 import { storage } from '../../src/storage/mmkv';
 import { STORAGE_KEYS } from '../../src/storage/keys';
+import { InvalidMortgageEventError } from '../../src/mortgage/events';
 
 const makeLoan = (overrides: Partial<SavedLoan> = {}): SavedLoan => ({
   id: 'test-id-1',
@@ -190,5 +200,45 @@ describe('savedLoansStorage', () => {
     storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([withoutMortgageTerm]));
 
     expect(savedLoansStorage.getAll()[0].mortgageTermInMonths).toBe(120);
+  });
+
+  it('stamps schemaVersion on add() so future migrations have a discriminator', () => {
+    savedLoansStorage.add(makeLoan());
+    const raw = storage.getString(STORAGE_KEYS.SAVED_LOANS) ?? '';
+    const parsed = JSON.parse(raw);
+    expect(parsed[0].schemaVersion).toBe(LOAN_GROUP_SCHEMA_VERSION);
+  });
+
+  it('backfills schemaVersion on loans persisted without one', () => {
+    const loan = makeLoan();
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([loan]));
+    savedLoansStorage.getAll();
+    const raw = storage.getString(STORAGE_KEYS.SAVED_LOANS) ?? '';
+    expect(JSON.parse(raw)[0].schemaVersion).toBe(LOAN_GROUP_SCHEMA_VERSION);
+  });
+
+  it('reports corruption via onSavedLoanStorageError instead of silently wiping', () => {
+    const listener = jest.fn();
+    const unsubscribe = onSavedLoanStorageError(listener);
+    const consoleErr = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    storage.set(STORAGE_KEYS.SAVED_LOANS, '{not valid json');
+
+    const result = savedLoansStorage.getAll();
+    expect(result).toEqual([]);
+    expect(listener).toHaveBeenCalled();
+    const reported = listener.mock.calls[0][0] as SavedLoanStorageError;
+    expect(reported).toBeInstanceOf(SavedLoanStorageError);
+
+    unsubscribe();
+    consoleErr.mockRestore();
+  });
+
+  it('addEvent rejects events with malformed dates', () => {
+    savedLoansStorage.add(makeLoan());
+    const badEvent = makeEvent({ date: 'nonsense' });
+    expect(() => savedLoansStorage.addEvent('test-id-1', badEvent))
+      .toThrow(InvalidMortgageEventError);
+    expect(savedLoansStorage.getById('test-id-1')?.events).toEqual([]);
   });
 });

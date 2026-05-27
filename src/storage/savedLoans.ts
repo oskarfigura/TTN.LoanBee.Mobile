@@ -1,20 +1,57 @@
 import { storage } from './mmkv';
 import { STORAGE_KEYS } from './keys';
+import { upsertMortgageEvent } from '@/mortgage/events';
 import { generateDefaultDealName } from '@/mortgage/tracker';
 import {
   LegacySavedLoan,
+  LOAN_GROUP_SCHEMA_VERSION,
   LoanDeal,
   LoanGroup,
   MortgageEvent,
   SavedLoan,
 } from '@/types/SavedLoan';
+import { getEffectiveLoanAmount } from '@/utils/paymentValidation';
 
-const parseJsonArray = <T,>(raw?: string): T[] => {
+export class SavedLoanStorageError extends Error {
+  constructor(message: string, readonly cause?: unknown) {
+    super(message);
+    this.name = 'SavedLoanStorageError';
+  }
+}
+
+type StorageErrorListener = (error: SavedLoanStorageError) => void;
+const errorListeners: StorageErrorListener[] = [];
+
+export const onSavedLoanStorageError = (listener: StorageErrorListener): (() => void) => {
+  errorListeners.push(listener);
+  return () => {
+    const idx = errorListeners.indexOf(listener);
+    if (idx >= 0) errorListeners.splice(idx, 1);
+  };
+};
+
+const reportStorageError = (error: SavedLoanStorageError): void => {
+  // eslint-disable-next-line no-console
+  console.error('[savedLoansStorage]', error.message, error.cause ?? '');
+  errorListeners.forEach(listener => {
+    try { listener(error); } catch { /* swallow — listener errors must not break storage */ }
+  });
+};
+
+const parseJsonArray = <T,>(raw?: string, source = 'SAVED_LOANS'): T[] => {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed as T[] : [];
-  } catch {
+    if (Array.isArray(parsed)) return parsed as T[];
+    reportStorageError(new SavedLoanStorageError(
+      `Stored ${source} payload is not an array; treating as empty`,
+    ));
+    return [];
+  } catch (cause) {
+    reportStorageError(new SavedLoanStorageError(
+      `Failed to parse stored ${source} payload; treating as empty`,
+      cause,
+    ));
     return [];
   }
 };
@@ -26,14 +63,9 @@ const addMonths = (dateString: string, months: number): string => {
   return date.toISOString().split('T')[0];
 };
 
-const getEffectiveOpeningBalance = (loan: LegacySavedLoan): number => {
-  const form = loan.formSnapshot;
-  const downPayment = form.downPaymentType === 'PERCENT'
-    ? (form.downPayment / 100) * form.loanAmount
-    : form.downPayment;
-
-  return Math.max(0, form.loanAmount - downPayment);
-};
+const getEffectiveOpeningBalance = (loan: LegacySavedLoan): number => (
+  getEffectiveLoanAmount(loan.formSnapshot.loanAmount, loan.formSnapshot.downPayment, loan.formSnapshot.downPaymentType)
+);
 
 const buildMigratedDeal = (loan: LegacySavedLoan): LoanDeal => {
   const now = loan.updatedAt || loan.createdAt || new Date().toISOString();
@@ -73,6 +105,7 @@ const getMortgageTermInMonths = (loan: Pick<LoanGroup, 'formSnapshot' | 'resultS
 
 export const migrateLegacySavedLoan = (loan: LegacySavedLoan): LoanGroup => ({
   ...loan,
+  schemaVersion: LOAN_GROUP_SCHEMA_VERSION,
   status: 'tracked',
   pinnedToDashboard: false,
   mortgageTermInMonths: getMortgageTermInMonths(loan),
@@ -87,22 +120,36 @@ const isLoanGroup = (loan: Partial<LoanGroup>): loan is LoanGroup => (
   && Array.isArray(loan.events)
 );
 
-const normaliseLoanGroup = (loan: LoanGroup): LoanGroup => (
-  loan.mortgageTermInMonths
-    ? loan
-    : {
-      ...loan,
-      mortgageTermInMonths: getMortgageTermInMonths(loan),
-    }
-);
+const normaliseLoanGroup = (loan: LoanGroup): LoanGroup => {
+  const needsTerm = !loan.mortgageTermInMonths;
+  const needsVersion = loan.schemaVersion !== LOAN_GROUP_SCHEMA_VERSION;
+  if (!needsTerm && !needsVersion) return loan;
+
+  return {
+    ...loan,
+    mortgageTermInMonths: needsTerm ? getMortgageTermInMonths(loan) : loan.mortgageTermInMonths,
+    schemaVersion: LOAN_GROUP_SCHEMA_VERSION,
+  };
+};
 
 const saveAll = (loans: LoanGroup[]): void => {
-  storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(loans));
+  try {
+    const stamped = loans.map(loan => (
+      loan.schemaVersion === LOAN_GROUP_SCHEMA_VERSION
+        ? loan
+        : { ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION }
+    ));
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(stamped));
+  } catch (cause) {
+    const error = new SavedLoanStorageError('Failed to persist saved loans', cause);
+    reportStorageError(error);
+    throw error;
+  }
 };
 
 const loadAll = (): LoanGroup[] => {
   const currentRaw = storage.getString(STORAGE_KEYS.SAVED_LOANS);
-  const current = parseJsonArray<Partial<LoanGroup>>(currentRaw);
+  const current = parseJsonArray<Partial<LoanGroup>>(currentRaw, 'SAVED_LOANS');
   if (currentRaw !== undefined) {
     const normalised = current.map(loan => (
       isLoanGroup(loan)
@@ -110,17 +157,23 @@ const loadAll = (): LoanGroup[] => {
         : migrateLegacySavedLoan(loan as LegacySavedLoan)
     ));
     if (normalised.some((loan, index) => loan !== current[index])) {
-      saveAll(normalised);
+      try { saveAll(normalised); }
+      catch { /* the in-memory result is still usable; the throw was already reported */ }
     }
     return normalised;
   }
 
-  const legacy = parseJsonArray<LegacySavedLoan>(storage.getString(STORAGE_KEYS.SAVED_LOANS_LEGACY));
+  const legacy = parseJsonArray<LegacySavedLoan>(
+    storage.getString(STORAGE_KEYS.SAVED_LOANS_LEGACY),
+    'SAVED_LOANS_LEGACY',
+  );
   if (legacy.length === 0) return [];
 
   const migrated = legacy.map(migrateLegacySavedLoan);
-  saveAll(migrated);
-  storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);
+  try {
+    saveAll(migrated);
+    storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);
+  } catch { /* migration failed to persist; return in-memory copy this session */ }
   return migrated;
 };
 
@@ -135,7 +188,7 @@ export const savedLoansStorage = {
 
   add(loan: SavedLoan): void {
     const loans = loadAll();
-    loans.unshift(loan);
+    loans.unshift({ ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION });
     saveAll(loans);
   },
 
@@ -143,7 +196,7 @@ export const savedLoansStorage = {
     const loans = loadAll();
     const idx = loans.findIndex(l => l.id === loan.id);
     if (idx !== -1) {
-      loans[idx] = { ...loan, updatedAt: new Date().toISOString() };
+      loans[idx] = { ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION, updatedAt: new Date().toISOString() };
       saveAll(loans);
     }
   },
@@ -183,8 +236,7 @@ export const savedLoansStorage = {
     const idx = loans.findIndex(l => l.id === loanId);
     if (idx === -1) return;
     loans[idx] = {
-      ...loans[idx],
-      events: [...loans[idx].events, event],
+      ...upsertMortgageEvent(loans[idx], event),
       updatedAt: new Date().toISOString(),
     };
     saveAll(loans);
@@ -195,8 +247,7 @@ export const savedLoansStorage = {
     const idx = loans.findIndex(l => l.id === loanId);
     if (idx === -1) return;
     loans[idx] = {
-      ...loans[idx],
-      events: loans[idx].events.map(e => (e.id === event.id ? event : e)),
+      ...upsertMortgageEvent(loans[idx], event),
       updatedAt: new Date().toISOString(),
     };
     saveAll(loans);

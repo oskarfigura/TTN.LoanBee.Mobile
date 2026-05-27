@@ -2,6 +2,12 @@ import { DownPaymentType } from './DownPaymentType';
 import { LoanCalculationType } from './LoanCalculationType';
 import { getBaseLog, getOverallTermInMonths } from './loanHelper';
 
+// Safety net for the amortisation loop. Input validation (form schema + share
+// link clamping) is the real boundary; this cap is the last line of defence
+// against an OOM if validation is ever bypassed. Sized at ~110 years of
+// monthly payments — well above any realistic amortisation.
+const MAX_AMORTISATION_ROWS = 110 * 12;
+
 export const getLoanCalculations = (
     initialAmount: number,
     interest: number,
@@ -140,7 +146,7 @@ export const getTableItems = (
     var interestAccumulative = 0;
 
     let count = 1;
-    while (remainingLoanAmount > 0) {
+    while (remainingLoanAmount > 0 && count <= MAX_AMORTISATION_ROWS) {
         var itemNo = count;
         let interestPayment = remainingLoanAmount * monthlyInterest;
         var principal = monthlyPayments - interestPayment;

@@ -1,6 +1,7 @@
 import { CurrencyCode } from '@/currency/currencies';
 import { generateDefaultDealName } from '@/mortgage/tracker';
 import { LoanDeal, LoanFormSnapshot, LoanGroup, LoanResultSnapshot } from '@/types/SavedLoan';
+import { getEffectiveLoanAmount as computeEffectiveLoanAmount } from '@/utils/paymentValidation';
 
 type RawFormValues = {
   loanAmount: number;
@@ -37,13 +38,9 @@ const addMonths = (dateString: string, months: number): string => {
   return date.toISOString().split('T')[0];
 };
 
-export const getEffectiveLoanAmount = (form: Pick<LoanFormSnapshot, 'loanAmount' | 'downPayment' | 'downPaymentType'>): number => {
-  const downPayment = form.downPaymentType === 'PERCENT'
-    ? (form.downPayment / 100) * form.loanAmount
-    : form.downPayment;
-
-  return Math.max(0, form.loanAmount - downPayment);
-};
+export const getEffectiveLoanAmount = (form: Pick<LoanFormSnapshot, 'loanAmount' | 'downPayment' | 'downPaymentType'>): number => (
+  computeEffectiveLoanAmount(form.loanAmount, form.downPayment, form.downPaymentType)
+);
 
 export const normaliseFormSnapshot = (
   formValues: RawFormValues,

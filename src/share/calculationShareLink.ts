@@ -5,15 +5,17 @@ import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/pay
 
 const WEB_CALCULATOR_URL = 'https://www.loanamortisationcalculator.com/';
 
+// Mirrors MAX_LOAN_AMOUNT / MAX_MONTHLY_PAYMENT in src/hooks/useLoanCalculatorForm.ts.
+// Keep in sync.
 const LIMITS = {
-  loanAmount: { min: 0.01, max: 1000000000 },
+  loanAmount: { min: 0.01, max: 100000000 },
   interest: { min: 0.01, max: 100 },
   termInYears: { min: 0, max: 100, integer: true },
   termInMonths: { min: 0, max: 11, integer: true },
   downPaymentPercent: { min: 0, max: 100 },
-  downPaymentCash: { min: 0, max: 1000000000 },
-  desiredMonthlyPayment: { min: 0.01, max: 10000000 },
-  additionalMonthlyPayment: { min: 0, max: 10000000 },
+  downPaymentCash: { min: 0, max: 100000000 },
+  desiredMonthlyPayment: { min: 0.01, max: 1000000 },
+  additionalMonthlyPayment: { min: 0, max: 1000000 },
 } as const;
 
 const DECIMAL_NUMBER_PATTERN = /^-?(?:\d+\.?\d*|\.\d+)$/;

@@ -6,6 +6,7 @@ import {
   getPublishedDeals,
 } from '@/mortgage/tracker';
 import { LoanDeal, LoanGroup, MortgageEvent } from '@/types/SavedLoan';
+import { monthsBetween as sharedMonthsBetween } from '@/utils/date';
 
 export interface MortgageProjectionPoint {
   itemNo: number;
@@ -75,7 +76,12 @@ const toMoney = (value: number): number => +Math.max(0, value).toFixed(2);
 
 const parseDate = (dateString: string): Date => {
   const date = new Date(`${dateString}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? new Date(0) : date;
+  if (Number.isNaN(date.getTime())) {
+    // eslint-disable-next-line no-console
+    console.warn('[mortgage.projection] invalid date encountered, using today:', dateString);
+    return new Date();
+  }
+  return date;
 };
 
 const monthStart = (dateString: string): Date => {
@@ -101,11 +107,9 @@ const addMonthsIso = (dateString: string, months: number): string => (
   dateToIso(addMonths(monthStart(dateString), months))
 );
 
-const monthsBetween = (startDate: string, endDate: string): number => {
-  const start = monthStart(startDate);
-  const end = monthStart(endDate);
-  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
-};
+const monthsBetween = (startDate: string, endDate: string): number => (
+  sharedMonthsBetween(startDate, endDate)
+);
 
 const getDealEvents = (events: MortgageEvent[], dealId: string): MortgageEvent[] => (
   events
