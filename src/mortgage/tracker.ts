@@ -414,6 +414,10 @@ export const getDraftDeals = (loan: LoanGroup): LoanDeal[] => (
   orderDeals(loan.deals.filter(deal => deal.status === 'draft'))
 );
 
+export const getDraftDealsNewestFirst = (loan: LoanGroup): LoanDeal[] => (
+  getDraftDeals(loan).reverse()
+);
+
 export const getCurrentDeal = (loan: LoanGroup, asOf = new Date()): LoanDeal | undefined => {
   const today = dateToIso(asOf);
   return getPublishedDeals(loan).find(deal => (

@@ -9,6 +9,7 @@ import {
   formatDealDuration,
   generateDefaultDealName,
   getDealOverpaymentImpact,
+  getDraftDealsNewestFirst,
   getMortgageTermInMonths,
   getMortgageTrackerSummary,
   getNextDealStartDate,
@@ -557,6 +558,40 @@ describe('mortgage tracker', () => {
     });
 
     expect(canActivateDeal(loan, 'second-draft')).toBe(false);
+  });
+
+  it('orders draft deals newest first for timeline display', () => {
+    const previous = {
+      ...makeMortgage().deals[0],
+      status: 'completed' as const,
+      completion: {
+        completedAt: '2031-06-01',
+        closingBalance: 210000,
+        feesAdded: 0,
+      },
+    };
+    const earlierDraft = {
+      ...previous,
+      id: 'earlier-draft',
+      status: 'draft' as const,
+      startDate: '2031-06-02',
+      endDate: '2036-06-02',
+      completion: undefined,
+    };
+    const laterDraft = {
+      ...earlierDraft,
+      id: 'later-draft',
+      startDate: '2036-06-03',
+      endDate: '2041-06-03',
+    };
+    const loan = makeMortgage({
+      deals: [previous, earlierDraft, laterDraft],
+    });
+
+    expect(getDraftDealsNewestFirst(loan).map(deal => deal.id)).toEqual([
+      'later-draft',
+      'earlier-draft',
+    ]);
   });
 
   it('recalculates later deal opening balances from the previous closing balance', () => {

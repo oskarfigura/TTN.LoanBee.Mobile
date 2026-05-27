@@ -17,7 +17,7 @@ import {
   formatDealDuration,
   getCurrentDeal,
   getDealOverpaymentImpact,
-  getDraftDeals,
+  getDraftDealsNewestFirst,
   getPublishedDeals,
   getTimelineWarnings,
   projectDeal,
@@ -242,7 +242,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
   const asOf = useMemo(() => new Date(), [loan]);
   const timeline = useMemo(() => {
     const publishedDeals = getPublishedDeals(loan);
-    const drafts = getDraftDeals(loan);
+    const drafts = getDraftDealsNewestFirst(loan);
 
     return {
       drafts,
@@ -304,6 +304,39 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
       {hasDeals ? (
       <View style={styles.timelineShell}>
         <View style={styles.rail} />
+
+        {timeline.drafts.map(deal => (
+          <View key={deal.id} style={styles.timelineItem}>
+            <View style={styles.nodeMuted} />
+            <Card style={styles.futureCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardTitleGroup}>
+                  <Text style={styles.kicker}>{t('mortgage.future')}</Text>
+                  <Text style={styles.futureTitle} numberOfLines={2}>{deal.name}</Text>
+                </View>
+                <StatusBadge label={t('mortgage.inactive')} />
+              </View>
+              <Text style={styles.meta}>
+                {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
+              </Text>
+              <Text style={styles.meta}>{formatDealDuration(deal, i18n.language)}</Text>
+              <Text style={styles.draftHelp}>{t('mortgage.draftPreviewBody')}</Text>
+              <View style={styles.futureActions}>
+                <TimelineAction
+                  label={canEditDeal(loan, deal.id) ? t('mortgage.editDraftDeal') : t('saved.view')}
+                  onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
+                />
+                {canDeleteDeal(loan, deal.id) ? (
+                  <TimelineAction
+                    label={t('mortgage.deleteDraft')}
+                    onPress={() => deleteDeal(deal)}
+                    variant="danger"
+                  />
+                ) : null}
+              </View>
+            </Card>
+          </View>
+        ))}
 
         {timeline.current && (
           <View style={styles.timelineItem}>
@@ -414,39 +447,6 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
             <Text style={styles.startText}>{t('mortgage.noActiveDealYet')}</Text>
           </View>
         ) : null}
-
-        {timeline.drafts.map(deal => (
-          <View key={deal.id} style={styles.timelineItem}>
-            <View style={styles.nodeMuted} />
-            <Card style={styles.futureCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardTitleGroup}>
-                  <Text style={styles.kicker}>{t('mortgage.future')}</Text>
-                  <Text style={styles.futureTitle} numberOfLines={2}>{deal.name}</Text>
-                </View>
-                <StatusBadge label={t('mortgage.inactive')} />
-              </View>
-              <Text style={styles.meta}>
-                {t('mortgage.startsOn', { date: formatFriendlyDate(deal.startDate, i18n.language) })}
-              </Text>
-              <Text style={styles.meta}>{formatDealDuration(deal, i18n.language)}</Text>
-              <Text style={styles.draftHelp}>{t('mortgage.draftPreviewBody')}</Text>
-              <View style={styles.futureActions}>
-                <TimelineAction
-                  label={canEditDeal(loan, deal.id) ? t('mortgage.editDraftDeal') : t('saved.view')}
-                  onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}`)}
-                />
-                {canDeleteDeal(loan, deal.id) ? (
-                  <TimelineAction
-                    label={t('mortgage.deleteDraft')}
-                    onPress={() => deleteDeal(deal)}
-                    variant="danger"
-                  />
-                ) : null}
-              </View>
-            </Card>
-          </View>
-        ))}
       </View>
       ) : null}
     </View>

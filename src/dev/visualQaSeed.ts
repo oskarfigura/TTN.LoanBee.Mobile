@@ -59,7 +59,7 @@ const makeEvent = (
   id: string,
   type: MortgageEvent['type'],
   date: string,
-  fields: Partial<Pick<MortgageEvent, 'dealId' | 'amount' | 'balance' | 'note'>> = {},
+  fields: Partial<Omit<MortgageEvent, 'id' | 'createdAt' | 'updatedAt' | 'type' | 'date'>> = {},
 ): MortgageEvent => ({
   id,
   createdAt: now,
@@ -135,6 +135,53 @@ const makeDeal = (
   remainingTermInMonths: loan.formSnapshot.termInMonths,
   source: loan.category === 'mortgage' ? 'userDeal' : undefined,
   ...overrides,
+});
+
+const makeBankCheckMortgage = ({
+  id,
+  nickname,
+  checkpointDate,
+  balance,
+  projectedBalanceAtCheckpoint,
+  reconciliationVariance,
+  varianceReason,
+}: {
+  id: string;
+  nickname: string;
+  checkpointDate: string;
+  balance: number;
+  projectedBalanceAtCheckpoint: number;
+  reconciliationVariance: number;
+  varianceReason?: MortgageEvent['varianceReason'];
+}) => makeLoan({
+  id,
+  nickname,
+  lender: 'Lloyds',
+  category: 'mortgage',
+  currency: 'GBP',
+  form: {
+    loanAmount: 260000,
+    interest: 4.4,
+    termInYears: 25,
+    termInMonths: 0,
+    downPayment: 0,
+    downPaymentType: DownPaymentType.CASH,
+    additionalMonthlyPayment: 0,
+    startDate: '2025-01-01',
+    calculationType: LoanCalculationType.TERM,
+  },
+  events: [
+    makeEvent(`${id}-checkpoint`, 'balanceCheckpoint', checkpointDate, {
+      dealId: `${id}-deal-current`,
+      balance,
+      projectedBalanceAtCheckpoint,
+      reconciliationVariance,
+      varianceReason,
+      note: varianceReason
+        ? `Visual QA reconciliation reason: ${varianceReason}`
+        : 'Visual QA matched checkpoint',
+    }),
+  ],
 });
 
 export const buildVisualQaLoans = (): LoanGroup[] => [
@@ -233,11 +280,49 @@ export const buildVisualQaLoans = (): LoanGroup[] => [
         dealId: 'visual-qa-remortgage-active',
         note: 'Missed payment fixture',
       }),
-      makeEvent('visual-qa-remortgage-checkpoint', 'balanceCheckpoint', '2026-06-01', {
+      makeEvent('visual-qa-remortgage-checkpoint', 'balanceCheckpoint', '2026-05-15', {
         dealId: 'visual-qa-remortgage-active',
         balance: 251800,
+        projectedBalanceAtCheckpoint: 252600,
+        reconciliationVariance: -800,
+        varianceReason: 'lenderTiming',
       }),
     ],
+  }),
+  makeBankCheckMortgage({
+    id: 'visual-qa-bank-higher',
+    nickname: 'QA Bank Higher Check-in',
+    checkpointDate: '2026-05-01',
+    balance: 252500,
+    projectedBalanceAtCheckpoint: 250000,
+    reconciliationVariance: 2500,
+    varianceReason: 'missedPayment',
+  }),
+  makeBankCheckMortgage({
+    id: 'visual-qa-bank-lower',
+    nickname: 'QA Bank Lower Check-in',
+    checkpointDate: '2026-05-01',
+    balance: 247500,
+    projectedBalanceAtCheckpoint: 250000,
+    reconciliationVariance: -2500,
+    varianceReason: 'unloggedOverpayment',
+  }),
+  makeBankCheckMortgage({
+    id: 'visual-qa-bank-matched',
+    nickname: 'QA Bank Matched Check-in',
+    checkpointDate: '2026-05-01',
+    balance: 250000,
+    projectedBalanceAtCheckpoint: 250000,
+    reconciliationVariance: 0,
+  }),
+  makeBankCheckMortgage({
+    id: 'visual-qa-bank-stale',
+    nickname: 'QA Stale Bank Check-in',
+    checkpointDate: '2026-02-01',
+    balance: 254000,
+    projectedBalanceAtCheckpoint: 252500,
+    reconciliationVariance: 1500,
+    varianceReason: 'lenderTiming',
   }),
   makeLoan({
     id: 'visual-qa-pln-overpayment',
