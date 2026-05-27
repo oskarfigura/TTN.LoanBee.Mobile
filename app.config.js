@@ -1,3 +1,32 @@
+import { withGradleProperties } from '@expo/config-plugins';
+
+const androidSizeGradleProperties = {
+  'android.enableMinifyInReleaseBuilds': 'true',
+  'android.enableShrinkResourcesInReleaseBuilds': 'true',
+  'expo.gif.enabled': 'false',
+};
+
+const withAndroidSizeGradleProperties = config => withGradleProperties(config, gradleConfig => {
+  Object.entries(androidSizeGradleProperties).forEach(([key, value]) => {
+    const existingProperty = gradleConfig.modResults.find(
+      item => item.type === 'property' && item.key === key,
+    );
+
+    if (existingProperty) {
+      existingProperty.value = value;
+      return;
+    }
+
+    gradleConfig.modResults.push({
+      type: 'property',
+      key,
+      value,
+    });
+  });
+
+  return gradleConfig;
+});
+
 export default () => ({
   expo: {
     name: 'LoanBee',
@@ -37,6 +66,7 @@ export default () => ({
       favicon: './assets/favicon.png',
     },
     plugins: [
+      withAndroidSizeGradleProperties,
       'expo-router',
       'expo-font',
       'expo-localization',
