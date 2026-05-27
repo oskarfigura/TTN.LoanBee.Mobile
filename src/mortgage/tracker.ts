@@ -477,13 +477,23 @@ export const projectDeal = (
   if (includeOverpayments) {
     const partialMonthCursor = addMonths(monthStart(deal.startDate), monthsToProject);
     const partialKey = `${partialMonthCursor.getFullYear()}-${String(partialMonthCursor.getMonth() + 1).padStart(2, '0')}`;
-    dealEvents
+    const partialMonthEvents = dealEvents.filter(e => (
+      monthKey(e.date) === partialKey
+      && e.date >= deal.startDate
+      && e.date <= asOfIso
+    ));
+    const checkpoints = partialMonthEvents
+      .filter(e => e.type === 'balanceCheckpoint' && typeof e.balance === 'number');
+    const checkpoint = checkpoints[checkpoints.length - 1];
+
+    if (checkpoint?.balance !== undefined) {
+      balance = checkpoint.balance;
+    }
+
+    partialMonthEvents
       .filter(e => (
         e.type === 'lumpOverpayment'
         && typeof e.amount === 'number'
-        && monthKey(e.date) === partialKey
-        && e.date >= deal.startDate
-        && e.date <= asOfIso
       ))
       .forEach(e => {
         const amount = e.amount ?? 0;
@@ -756,7 +766,11 @@ export const getMortgageTrackerSummary = (
     currentDeal,
     nextDraftDeal: getSingleDraftDeal(loan),
     recentEvents: loan.events
-      .filter(event => event.dealId != null && publishedDealIds.has(event.dealId))
+      .filter(event => (
+        event.dealId != null
+        && publishedDealIds.has(event.dealId)
+        && event.date <= todayIso
+      ))
       .sort((a, b) => parseDate(b.date).getTime() - parseDate(a.date).getTime()),
   };
 };

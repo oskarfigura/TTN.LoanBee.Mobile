@@ -11,6 +11,14 @@ export type MortgageEventType =
   | 'paymentHoliday'
   | 'balanceCheckpoint'
   | 'note';
+export type MortgageVarianceReason =
+  | 'missedPayment'
+  | 'paymentHoliday'
+  | 'unloggedOverpayment'
+  | 'feeAdded'
+  | 'rateOrPaymentChanged'
+  | 'lenderTiming'
+  | 'unknown';
 
 export interface LoanFormSnapshot {
   loanAmount: number;
@@ -73,6 +81,9 @@ export interface MortgageEvent {
   date: string;
   amount?: number;
   balance?: number;
+  projectedBalanceAtCheckpoint?: number;
+  reconciliationVariance?: number;
+  varianceReason?: MortgageVarianceReason;
   note?: string;
 }
 

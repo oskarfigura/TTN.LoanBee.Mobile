@@ -7,18 +7,24 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import {
   AppTextInput,
   FieldError,
+  FieldHint,
   FieldLabel,
   InputAffix,
   InputSurface,
   PillSelector,
 } from '@/components/ui/FormPrimitives';
-import { CURRENCIES } from '@/currency/currencies';
+import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
+import { formatCurrency } from '@/currency/format';
+import {
+  buildBalanceCheckpointReconciliation,
+  getReconciliationMessage,
+} from '@/mortgage/reconciliation';
 import { projectDeal } from '@/mortgage/tracker';
-import { LoanDeal, MortgageEvent, MortgageEventType } from '@/types/SavedLoan';
+import { LoanDeal, MortgageEvent, MortgageEventType, MortgageVarianceReason } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
 import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { validateMoneyText } from '@/utils/formValidation';
-import { colours, spacing } from '@/theme';
+import { colours, radii, spacing } from '@/theme';
 
 export const mortgageEventTypes: MortgageEventType[] = [
   'balanceCheckpoint',
@@ -35,8 +41,28 @@ export const mortgageEventLabelKey = (type: MortgageEventType) => {
   return 'mortgage.eventNote';
 };
 
+const varianceReasons: MortgageVarianceReason[] = [
+  'missedPayment',
+  'paymentHoliday',
+  'unloggedOverpayment',
+  'feeAdded',
+  'rateOrPaymentChanged',
+  'lenderTiming',
+  'unknown',
+];
+
+const varianceReasonLabelKey = (reason: MortgageVarianceReason) => {
+  if (reason === 'missedPayment') return 'mortgage.varianceReasonMissedPayment';
+  if (reason === 'paymentHoliday') return 'mortgage.varianceReasonPaymentHoliday';
+  if (reason === 'unloggedOverpayment') return 'mortgage.varianceReasonUnloggedOverpayment';
+  if (reason === 'feeAdded') return 'mortgage.varianceReasonFeeAdded';
+  if (reason === 'rateOrPaymentChanged') return 'mortgage.varianceReasonRateOrPaymentChanged';
+  if (reason === 'lenderTiming') return 'mortgage.varianceReasonLenderTiming';
+  return 'mortgage.varianceReasonUnknown';
+};
+
 interface Props {
-  currency: string;
+  currency: CurrencyCode;
   currentDeal: LoanDeal;
   events: MortgageEvent[];
   initialType?: MortgageEventType;
@@ -60,6 +86,7 @@ export const MortgageEventForm = ({
   ), [events, initialEvent]);
   const projected = useMemo(() => projectDeal(currentDeal, projectionEvents), [currentDeal, projectionEvents]);
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
+  const todayIso = formatIsoDate(new Date());
   const [eventType, setEventType] = useState<MortgageEventType>(
     initialEvent?.type ?? initialType ?? 'missedPayment',
   );
@@ -68,12 +95,16 @@ export const MortgageEventForm = ({
   const [balance, setBalance] = useState(
     initialEvent?.balance !== undefined ? String(initialEvent.balance) : String(projected.balance),
   );
+  const [varianceReason, setVarianceReason] = useState<MortgageVarianceReason>(
+    initialEvent?.varianceReason ?? 'unknown',
+  );
   const [note, setNote] = useState(initialEvent?.note ?? '');
 
   const needsAmount = eventType === 'lumpOverpayment';
   const needsBalance = eventType === 'balanceCheckpoint';
   const minEventDate = parseDateLabelValue(currentDeal.startDate) ?? undefined;
-  const maxEventDate = parseDateLabelValue(currentDeal.endDate) ?? undefined;
+  const maximumDateString = needsBalance && todayIso < currentDeal.endDate ? todayIso : currentDeal.endDate;
+  const maxEventDate = parseDateLabelValue(maximumDateString) ?? undefined;
   const baseAmountValidation = validateMoneyText(amount);
   const amountValidation = needsAmount && baseAmountValidation.isValid && baseAmountValidation.numeric > projected.balance
     ? { ...baseAmountValidation, errorKey: 'mortgage.overpaymentTooLarge', isValid: false }
@@ -81,9 +112,18 @@ export const MortgageEventForm = ({
   const balanceValidation = validateMoneyText(balance);
   const dateErrorKey = !isValidIsoDate(date)
     ? 'mortgage.invalidEventDate'
-    : date < currentDeal.startDate || date > currentDeal.endDate
+    : date < currentDeal.startDate || date > maximumDateString
       ? 'mortgage.eventOutsideDealDates'
       : undefined;
+  const checkpointReconciliation = needsBalance && balanceValidation.isValid && !dateErrorKey
+    ? buildBalanceCheckpointReconciliation({
+      deal: currentDeal,
+      events,
+      checkpointDate: date,
+      bankBalance: balanceValidation.numeric,
+      editingEventId: initialEvent?.id,
+    })
+    : undefined;
   const amountError = needsAmount && amountValidation.errorKey ? t(amountValidation.errorKey) : undefined;
   const balanceError = needsBalance && balanceValidation.errorKey ? t(balanceValidation.errorKey) : undefined;
   const canSave = (
@@ -129,6 +169,11 @@ export const MortgageEventForm = ({
       date,
       amount: needsAmount ? amountValidation.numeric : undefined,
       balance: needsBalance ? balanceValidation.numeric : undefined,
+      projectedBalanceAtCheckpoint: needsBalance ? checkpointReconciliation?.projectedBalanceAtCheckpoint : undefined,
+      reconciliationVariance: needsBalance ? checkpointReconciliation?.reconciliationVariance : undefined,
+      varianceReason: needsBalance && Math.abs(checkpointReconciliation?.reconciliationVariance ?? 0) >= 1
+        ? varianceReason
+        : undefined,
       note: note.trim() || undefined,
     });
   };
@@ -186,6 +231,30 @@ export const MortgageEventForm = ({
             />
           </InputSurface>
           <FieldError message={balanceError} />
+          {checkpointReconciliation ? (
+            <View style={styles.reconciliationPreview}>
+              <AppText variant="labelMd">
+                {t('mortgage.appEstimateOnDate', {
+                  amount: formatCurrency(checkpointReconciliation.projectedBalanceAtCheckpoint, currency),
+                })}
+              </AppText>
+              <AppText variant="bodySm" tone="muted" style={styles.reconciliationPreviewText}>
+                {getReconciliationMessage(checkpointReconciliation.reconciliationVariance, currency, t)}
+              </AppText>
+            </View>
+          ) : null}
+          {checkpointReconciliation && Math.abs(checkpointReconciliation.reconciliationVariance) >= 1 ? (
+            <View style={styles.field}>
+              <FieldLabel>{t('mortgage.varianceReasonPrompt')}</FieldLabel>
+              <PillSelector
+                value={varianceReason}
+                onChange={setVarianceReason}
+                options={varianceReasons.map(reason => ({ value: reason, label: t(varianceReasonLabelKey(reason)) }))}
+                wrap
+              />
+              <FieldHint>{t('mortgage.varianceReasonHelp')}</FieldHint>
+            </View>
+          ) : null}
         </View>
       )}
 
@@ -229,6 +298,17 @@ export const MortgageEventForm = ({
 
 const styles = StyleSheet.create({
   field: { marginTop: spacing.md },
+  reconciliationPreview: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colours.border,
+    borderRadius: radii.input,
+    backgroundColor: colours.surface,
+    padding: spacing.sm,
+  },
+  reconciliationPreviewText: {
+    marginTop: spacing.xxxs,
+  },
   noteInput: {
     minHeight: 88,
     textAlignVertical: 'top',

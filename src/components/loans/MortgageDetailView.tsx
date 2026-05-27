@@ -44,6 +44,11 @@ import {
   MortgageProjectionDealSegment,
 } from '@/mortgage/projection';
 import {
+  BalanceSourceMetadata,
+  getBalanceSourceMetadata,
+  getReconciliationMessage,
+} from '@/mortgage/reconciliation';
+import {
   CURRENT_STATE_PROJECTION_DEAL_ID,
   formatDealDuration,
   getCurrentDeal,
@@ -248,6 +253,7 @@ export const MortgageDetailView = ({
             draftDeal={draftDeal}
             publishedDeals={publishedDeals}
             projection={projection}
+            asOf={asOf}
             onTogglePinned={onTogglePinned}
             onAddDeal={() => router.push(`/saved/${loan.id}/deals/new`)}
             onEditDraft={() => {
@@ -442,25 +448,20 @@ const getRemainingTermValues = (monthsRemaining: number) => ({
 const formatRate = (value: number) => `${Number.isFinite(value) ? value : 0}%`;
 
 const getBalanceSource = (
-  loan: SavedLoan,
-  currentDeal: LoanDeal | undefined,
+  metadata: BalanceSourceMetadata,
   locale: string,
   t: ReturnType<typeof useTranslation>['t'],
 ) => {
-  if (!currentDeal) {
-    return t('mortgage.sourceCurrentStateProjection');
+  if (metadata.kind === 'estimate') return t('mortgage.sourceCurrentStateProjection');
+  if (metadata.kind === 'completed' && metadata.completedAt) {
+    return t('mortgage.sourceCompletedDeal', { date: formatFriendlyDate(metadata.completedAt, locale) });
   }
-
-  const latestCheckpoint = [...loan.events]
-    .filter(event => event.type === 'balanceCheckpoint' && event.dealId === currentDeal.id)
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
-
-  if (latestCheckpoint) {
-    return t('mortgage.sourceBankCheckpoint', { date: formatFriendlyDate(latestCheckpoint.date, locale) });
-  }
-
-  if (currentDeal?.status === 'completed' && currentDeal.completion) {
-    return t('mortgage.sourceCompletedDeal', { date: formatFriendlyDate(currentDeal.completion.completedAt, locale) });
+  if (metadata.checkpoint) {
+    const date = formatFriendlyDate(metadata.checkpoint.date, locale);
+    if (metadata.kind === 'bankToday') return t('mortgage.sourceBankCheckedToday');
+    if (metadata.kind === 'bankRecent') return t('mortgage.sourceProjectedFromBankCheckpoint', { date });
+    if (metadata.kind === 'bankOlder') return t('mortgage.sourceProjectedFromOlderBankCheckpoint', { date });
+    if (metadata.kind === 'bankStale') return t('mortgage.sourceProjectedFromStaleBankCheckpoint', { date });
   }
 
   return t('mortgage.sourceProjectedFromCurrentDeal');
@@ -488,6 +489,7 @@ const MortgageSummaryPanel = ({
   draftDeal,
   publishedDeals,
   projection,
+  asOf,
   onTogglePinned,
   onAddDeal,
   onEditDraft,
@@ -501,6 +503,7 @@ const MortgageSummaryPanel = ({
   draftDeal?: LoanDeal;
   publishedDeals: LoanDeal[];
   projection: MortgageProjection;
+  asOf: Date;
   onTogglePinned: () => void;
   onAddDeal: () => void;
   onEditDraft: () => void;
@@ -533,7 +536,7 @@ const MortgageSummaryPanel = ({
 
       <DashboardProgressGauge progress={dashboardProgress} />
       <MortgageSummaryMetrics summary={summary} progress={dashboardProgress} />
-      <CurrentDealSummaryPanel loan={loan} currentDeal={currentDeal} />
+      <CurrentDealSummaryPanel loan={loan} currentDeal={currentDeal} asOf={asOf} />
       <CompactTimelineSummary
         loan={loan}
         currentDeal={currentDeal}
@@ -604,12 +607,20 @@ const SummaryFact = ({
 const CurrentDealSummaryPanel = ({
   loan,
   currentDeal,
+  asOf,
 }: {
   loan: SavedLoan;
   currentDeal?: LoanDeal;
+  asOf: Date;
 }) => {
   const { t, i18n } = useTranslation();
-  const balanceSource = getBalanceSource(loan, currentDeal, i18n.language, t);
+  const balanceSourceMetadata = getBalanceSourceMetadata(currentDeal, loan.events, asOf);
+  const balanceSource = getBalanceSource(balanceSourceMetadata, i18n.language, t);
+  const reconciliationMessage = getReconciliationMessage(
+    balanceSourceMetadata.checkpoint?.reconciliationVariance,
+    loan.currency,
+    t,
+  );
   const dealImpact = useMemo(
     () => currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined,
     [currentDeal, loan.events],
@@ -640,6 +651,12 @@ const CurrentDealSummaryPanel = ({
             {balanceSource}
           </Text>
         </View>
+        {reconciliationMessage ? (
+          <ReconciliationSummary
+            message={reconciliationMessage}
+            hasVariance={Math.abs(balanceSourceMetadata.checkpoint?.reconciliationVariance ?? 0) >= 1}
+          />
+        ) : null}
       </View>
     );
   }
@@ -676,6 +693,31 @@ const CurrentDealSummaryPanel = ({
           {balanceSource}
         </Text>
       </View>
+      {reconciliationMessage ? (
+        <ReconciliationSummary
+          message={reconciliationMessage}
+          hasVariance={Math.abs(balanceSourceMetadata.checkpoint?.reconciliationVariance ?? 0) >= 1}
+        />
+      ) : null}
+    </View>
+  );
+};
+
+const ReconciliationSummary = ({
+  message,
+  hasVariance,
+}: {
+  message: string;
+  hasVariance: boolean;
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.reconciliationBox}>
+      <Text style={styles.reconciliationText}>{message}</Text>
+      {hasVariance ? (
+        <Text style={styles.reconciliationHelp}>{t('mortgage.reconciliationSavingsCaution')}</Text>
+      ) : null}
     </View>
   );
 };
@@ -1400,6 +1442,26 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colours.primary,
     textAlign: 'right',
+  },
+  reconciliationBox: {
+    marginTop: spacing.sm,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.surface,
+    padding: spacing.sm,
+  },
+  reconciliationText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.textPrimary,
+  },
+  reconciliationHelp: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 17,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   summaryTimelineAction: {
     minHeight: 40,
