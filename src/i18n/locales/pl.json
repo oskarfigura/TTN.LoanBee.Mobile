@@ -101,9 +101,6 @@
     "createNewCalculation": "Utwórz Nowe Obliczenie",
     "intro": "Zapisuj obliczenia, utrzymuj przejrzysty widok portfela i przypinaj pozycje, które mają być widoczne w panelu Start.",
     "searchPlaceholder": "Szukaj zapisanych kredytów",
-    "sortRecent": "Ostatnie",
-    "sortName": "Nazwa",
-    "sortPinned": "Przypięte",
     "noMatches": "Brak zapisanych kredytów pasujących do wyszukiwania.",
     "category": {
       "mortgage": "Hipoteka",

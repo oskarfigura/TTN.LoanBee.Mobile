@@ -101,9 +101,6 @@
     "createNewCalculation": "Create New Calculation",
     "intro": "Save calculations, keep a clean portfolio view, and pin the items that belong on your home dashboard.",
     "searchPlaceholder": "Search saved loans",
-    "sortRecent": "Recent",
-    "sortName": "Name",
-    "sortPinned": "Pinned",
     "noMatches": "No saved loans match your search.",
     "category": {
       "mortgage": "Mortgage",
