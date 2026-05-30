@@ -147,8 +147,25 @@ const saveAll = (loans: LoanGroup[]): void => {
   }
 };
 
+// Parsing + normalising the stored payload on every read is expensive and runs on
+// each tab focus. Cache the result keyed by the raw stored string: any write (which
+// changes the string, including direct storage.set in tests) invalidates the cache.
+let cachedRaw: string | undefined;
+let cachedLoans: LoanGroup[] | null = null;
+
 const loadAll = (): LoanGroup[] => {
   const currentRaw = storage.getString(STORAGE_KEYS.SAVED_LOANS);
+  if (cachedLoans !== null && currentRaw === cachedRaw) {
+    return cachedLoans;
+  }
+  const result = computeLoadAll(currentRaw);
+  // Re-read: the migration path below may have re-persisted under a new raw string.
+  cachedRaw = storage.getString(STORAGE_KEYS.SAVED_LOANS);
+  cachedLoans = result;
+  return result;
+};
+
+const computeLoadAll = (currentRaw: string | undefined): LoanGroup[] => {
   const current = parseJsonArray<Partial<LoanGroup>>(currentRaw, 'SAVED_LOANS');
   if (currentRaw !== undefined) {
     const normalised = current.map(loan => (
@@ -225,6 +242,8 @@ export const savedLoansStorage = {
   clear(): void {
     storage.remove(STORAGE_KEYS.SAVED_LOANS);
     storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);
+    cachedRaw = undefined;
+    cachedLoans = null;
   },
 
   getMaxDashboardOrder(): number {

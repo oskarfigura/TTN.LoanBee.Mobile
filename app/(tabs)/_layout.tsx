@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookmarkIcon } from '@/components/ui/Icons/BookmarkIcon/BookmarkIcon';
 import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
 import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
@@ -28,6 +29,7 @@ const TabIcon = ({ name, color }: { name: TabIconName; color: string }) => {
 
 export default function TabLayout() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenListeners={({ navigation, route }) => ({
@@ -65,9 +67,12 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colours.surfaceRaised,
           borderTopColor: colours.borderSoft,
-          height: 72,
+          // Add the device bottom inset so the bar clears the Android system
+          // navigation (e.g. Samsung S21 gesture/button bar) and the iOS home
+          // indicator instead of sitting underneath them.
+          height: 64 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 6,
+          paddingBottom: 6 + insets.bottom,
           ...elevation.nav,
         },
         tabBarLabelStyle: {

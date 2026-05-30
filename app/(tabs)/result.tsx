@@ -87,6 +87,7 @@ export default function ResultScreen() {
       ? (formValues as Record<string, unknown>).additionalMonthlyPayment as number
       : 0;
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const shareIcon = useMemo(() => <ShareIcon color={colours.primary} />, []);
 
   useEffect(() => {
     if (isSavedMode || !result || recordedReviewActionRef.current) return;
@@ -215,7 +216,9 @@ export default function ResultScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    // No 'bottom' edge: this screen sits above the tab bar, which already clears
+    // the device bottom inset. Adding it here pushes a gap between the ad and the bar.
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('results.title')}
         variant="detail"
@@ -246,7 +249,7 @@ export default function ResultScreen() {
         savedLoan={savedLoan ?? undefined}
         onShare={handleShare}
         shareLabel={t('share.short')}
-        shareIcon={<ShareIcon color={colours.primary} />}
+        shareIcon={shareIcon}
         tabStyle="underline"
         showFinancialDisclaimer
         ownsScroll
@@ -258,7 +261,7 @@ export default function ResultScreen() {
             additionalMonthlyPayment={additionalMonthlyPayment}
             onShare={handleShare}
             shareLabel={t('share.short')}
-            shareIcon={<ShareIcon color={colours.primary} />}
+            shareIcon={shareIcon}
           />
         ) : undefined}
       />

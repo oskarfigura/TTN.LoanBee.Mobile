@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -93,14 +93,14 @@ const DashboardMetricPanel = ({
   );
 };
 
-const LoanDashboardCard = ({
+const LoanDashboardCard = React.memo(({
   loan,
   width,
   onOpenDetails,
 }: {
   loan: SavedLoan;
   width: number;
-  onOpenDetails: () => void;
+  onOpenDetails: (loanId: string) => void;
 }) => {
   const { t, i18n } = useTranslation();
   const { progress, dashboardMetrics, dealLender } = useMemo(() => {
@@ -125,7 +125,7 @@ const LoanDashboardCard = ({
     <View style={[styles.slide, { width }]}>
       <TouchableOpacity
         activeOpacity={0.97}
-        onPress={onOpenDetails}
+        onPress={() => onOpenDetails(loan.id)}
         style={styles.cardPressable}
       >
         <View style={styles.summaryCard}>
@@ -151,7 +151,8 @@ const LoanDashboardCard = ({
       </TouchableOpacity>
     </View>
   );
-};
+});
+LoanDashboardCard.displayName = 'LoanDashboardCard';
 
 export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
   const { t } = useTranslation();
@@ -162,9 +163,9 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
   const slideWidth = width;
   const bottomInset = Math.max(insets.bottom - spacing.md, 0);
 
-  const openLoanDetails = (loanId: string) => {
+  const openLoanDetails = useCallback((loanId: string) => {
     router.push(`/saved/${loanId}`);
-  };
+  }, [router]);
 
   const navigateFromDashboardMenu = (href: '/saved' | '/settings' | '/about') => {
     router.push({
@@ -210,7 +211,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
               key={loan.id}
               loan={loan}
               width={slideWidth}
-              onOpenDetails={() => openLoanDetails(loan.id)}
+              onOpenDetails={openLoanDetails}
             />
           ))}
         </ScrollView>

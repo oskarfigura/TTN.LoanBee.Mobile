@@ -23,7 +23,7 @@ export const BannerAd = () => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 0,
   },
   label: {
     ...fontFaces.body.regular,
