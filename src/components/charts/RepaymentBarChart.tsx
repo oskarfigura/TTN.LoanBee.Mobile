@@ -12,39 +12,63 @@ interface Props {
   interestArray: number[];
   currency: CurrencyCode;
   height?: number;
+  // Optional cumulative lump-overpayment series, parallel to monthlyArray. When
+  // provided, lump overpayments are drawn as their own stack segment so a one-off
+  // overpayment reads as an overpayment rather than an unexplained principal spike.
+  lumpArray?: number[];
 }
 
 const SAMPLE_STEP = 12;
 
-export const RepaymentBarChart = ({ monthlyArray, interestArray, currency, height = 196 }: Props) => {
+type StackSegment = {
+  value: number;
+  color: string;
+  borderBottomLeftRadius?: number;
+  borderBottomRightRadius?: number;
+  borderTopLeftRadius?: number;
+  borderTopRightRadius?: number;
+};
+
+export const RepaymentBarChart = ({ monthlyArray, interestArray, currency, height = 196, lumpArray }: Props) => {
   const { t } = useTranslation();
   const [containerWidth, setContainerWidth] = useState(0);
   const width = getProjectionChartWidth(containerWidth);
   const shouldScroll = containerWidth > 0 && width + 66 > containerWidth;
 
   const yearlyData = [];
+  let anyLump = false;
   for (let i = SAMPLE_STEP; i < monthlyArray.length; i += SAMPLE_STEP) {
     const totalPaid = monthlyArray[i] - monthlyArray[i - SAMPLE_STEP];
     const interestPaid = interestArray[i] - interestArray[i - SAMPLE_STEP];
-    const principalPaid = totalPaid - interestPaid;
+    const lumpPaid = lumpArray ? Math.max(0, lumpArray[i] - lumpArray[i - SAMPLE_STEP]) : 0;
+    // Lump overpayments are part of totalPaid; pull them out so the principal segment
+    // reflects scheduled repayment only.
+    const principalPaid = Math.max(0, totalPaid - interestPaid - lumpPaid);
+    const hasLump = lumpPaid > 0.005;
+    if (hasLump) anyLump = true;
     const year = Math.ceil(i / SAMPLE_STEP);
-    yearlyData.push({
-      stacks: [
-        {
-          value: principalPaid,
-          color: colours.primary,
-          borderBottomLeftRadius: 5,
-          borderBottomRightRadius: 5,
-        },
-        {
-          value: interestPaid,
-          color: colours.accent,
-          borderTopLeftRadius: 5,
-          borderTopRightRadius: 5,
-        },
-      ],
-      label: `Y${year}`,
-    });
+    const stacks: StackSegment[] = [
+      {
+        value: principalPaid,
+        color: colours.primary,
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
+      },
+      {
+        value: interestPaid,
+        color: colours.accent,
+        ...(hasLump ? {} : { borderTopLeftRadius: 5, borderTopRightRadius: 5 }),
+      },
+    ];
+    if (hasLump) {
+      stacks.push({
+        value: lumpPaid,
+        color: colours.teal,
+        borderTopLeftRadius: 5,
+        borderTopRightRadius: 5,
+      });
+    }
+    yearlyData.push({ stacks, label: `Y${year}` });
   }
 
   if (yearlyData.length === 0) return null;
@@ -95,6 +119,12 @@ export const RepaymentBarChart = ({ monthlyArray, interestArray, currency, heigh
           <View style={[styles.legendDot, { backgroundColor: colours.accent }]} />
           <Text style={styles.legendText}>{t('results.interest')}</Text>
         </View>
+        {anyLump ? (
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colours.teal }]} />
+            <Text style={styles.legendText}>{t('results.overpayment')}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );

@@ -1023,6 +1023,36 @@ describe('mortgage tracker', () => {
     expect(projection.loanChartRemainingArray).not.toContain(999999);
   });
 
+  it('accumulates lump overpayments into loanChartLumpArray for the repayment chart', () => {
+    const baseline = buildMortgageProjection(makeMortgage(), new Date('2026-10-01T00:00:00'));
+    // No lump events: the lump series stays flat at zero but parallel to the others.
+    expect(baseline.loanChartLumpArray.length).toBe(baseline.loanChartMonthlyArray.length);
+    expect(baseline.loanChartLumpArray.every(value => value === 0)).toBe(true);
+
+    const loan = makeMortgage({
+      events: [
+        {
+          id: 'lump-1',
+          createdAt: '2027-06-01T00:00:00.000Z',
+          updatedAt: '2027-06-01T00:00:00.000Z',
+          dealId: 'deal-current',
+          type: 'lumpOverpayment',
+          date: '2027-06-01',
+          amount: 10000,
+        },
+      ],
+    });
+    const projection = buildMortgageProjection(loan, new Date('2027-07-01T00:00:00'));
+
+    expect(projection.loanChartLumpArray.length).toBe(projection.loanChartMonthlyArray.length);
+    // Cumulative and non-decreasing.
+    for (let i = 1; i < projection.loanChartLumpArray.length; i += 1) {
+      expect(projection.loanChartLumpArray[i]).toBeGreaterThanOrEqual(projection.loanChartLumpArray[i - 1]);
+    }
+    // The 10k lump is captured in the cumulative series.
+    expect(projection.loanChartLumpArray[projection.loanChartLumpArray.length - 1]).toBeGreaterThanOrEqual(10000);
+  });
+
   it('removes later deals and their events when correcting a completed deal', () => {
     const completed = {
       ...makeMortgage().deals[0],

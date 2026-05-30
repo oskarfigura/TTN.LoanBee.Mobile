@@ -178,6 +178,7 @@ export const MortgageDetailView = ({
           <RepaymentBarChart
             monthlyArray={projection.loanChartMonthlyArray}
             interestArray={projection.loanChartInterestArray}
+            lumpArray={projection.loanChartLumpArray}
             currency={loan.currency}
             height={320}
           />
@@ -298,6 +299,7 @@ export const MortgageDetailView = ({
               <RepaymentBarChart
                 monthlyArray={projection.loanChartMonthlyArray}
                 interestArray={projection.loanChartInterestArray}
+                lumpArray={projection.loanChartLumpArray}
                 currency={loan.currency}
               />
               <DealSegmentStrip segments={projection.dealSegments} />

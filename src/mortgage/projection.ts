@@ -56,6 +56,10 @@ export interface MortgageProjection {
   loanChartMonthlyArray: number[];
   loanChartInterestArray: number[];
   loanChartRemainingArray: number[];
+  // Cumulative lump overpayments applied, parallel to the other chart arrays. Lets the
+  // repayment chart break overpayments out of the principal so a single year's lump
+  // doesn't read as a mystery spike.
+  loanChartLumpArray: number[];
   loanChartLabelArray: string[];
   openingBalance: number;
   currentBalance: number;
@@ -137,6 +141,7 @@ const buildEmptyProjection = (loan: LoanGroup): MortgageProjection => {
     loanChartMonthlyArray: [0],
     loanChartInterestArray: [0],
     loanChartRemainingArray: [openingBalance],
+    loanChartLumpArray: [0],
     loanChartLabelArray: [],
     openingBalance,
     currentBalance: openingBalance,
@@ -169,10 +174,12 @@ const buildProjection = (
   const loanChartMonthlyArray: number[] = [0];
   const loanChartInterestArray: number[] = [0];
   const loanChartRemainingArray: number[] = [openingBalance];
+  const loanChartLumpArray: number[] = [0];
   const loanChartLabelArray: string[] = [];
 
   let runningPaid = 0;
   let runningInterest = 0;
+  let runningLump = 0;
   let currentBalance = openingBalance;
   let currentBalanceCaptured = false;
   let closingBalance = openingBalance;
@@ -246,9 +253,11 @@ const buildProjection = (
       points.push(point);
       runningPaid = toMoney(runningPaid + totalPayment);
       runningInterest = toMoney(runningInterest + interest);
+      runningLump = toMoney(runningLump + point.lumpOverpayment);
       loanChartMonthlyArray.push(runningPaid);
       loanChartInterestArray.push(runningInterest);
       loanChartRemainingArray.push(closing);
+      loanChartLumpArray.push(runningLump);
       loanChartLabelArray.push(String(point.itemNo));
       projectedEndDate = cursorIso;
 
@@ -300,6 +309,7 @@ const buildProjection = (
         loanChartMonthlyArray.push(runningPaid);
         loanChartInterestArray.push(runningInterest);
         loanChartRemainingArray.push(bankClosingBalance);
+        loanChartLumpArray.push(runningLump);
         loanChartLabelArray.push(String(points.length));
       }
 
@@ -359,6 +369,7 @@ const buildProjection = (
     loanChartMonthlyArray,
     loanChartInterestArray,
     loanChartRemainingArray,
+    loanChartLumpArray,
     loanChartLabelArray,
     openingBalance: toMoney(openingBalance),
     currentBalance: toMoney(currentBalance),

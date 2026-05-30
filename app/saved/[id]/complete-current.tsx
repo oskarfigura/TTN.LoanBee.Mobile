@@ -7,10 +7,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldHint, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
+import { formatCurrency } from '@/currency/format';
 import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
 import {
   validateCompletionAmounts,
@@ -123,10 +124,21 @@ export default function CompleteCurrentDealScreen() {
   const [completedAt, setCompletedAt] = useState(defaultCompletedAt);
   const [closingBalance, setClosingBalance] = useState(() => String(getExpectedClosingBalance(defaultCompletedAt)));
   const [closingBalanceEdited, setClosingBalanceEdited] = useState(false);
-  const [feesAdded, setFeesAdded] = useState('0');
+  const [feesOverride, setFeesOverride] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [overpayments, setOverpayments] = useState<OverpaymentRow[]>([]);
   const minimumCompletionDate = currentDeal ? parseDateLabelValue(currentDeal.startDate) ?? undefined : undefined;
+
+  // The lender only confirms a balance; derive the fees from the gap to our prediction so
+  // the user never has to do the subtraction. They can still override the figure.
+  const predictedClosingBalance = getExpectedClosingBalance(completedAt);
+  const closingBalanceNumeric = Number.parseFloat(closingBalance);
+  const autoFees = Number.isFinite(closingBalanceNumeric)
+    ? Math.max(0, Math.round((closingBalanceNumeric - predictedClosingBalance) * 100) / 100)
+    : 0;
+  const feesAutoApplied = feesOverride === null;
+  const feesAdded = feesAutoApplied ? String(autoFees) : feesOverride;
+
   const completionAmounts = validateCompletionAmounts(closingBalance, feesAdded);
   const completedAtErrorKey: string | undefined = currentDeal
     ? (
@@ -172,6 +184,9 @@ export default function CompleteCurrentDealScreen() {
     setClosingBalanceEdited(true);
     setClosingBalance(value);
   };
+
+  const handleFeesChange = (value: string) => setFeesOverride(value);
+  const resetFeesAuto = () => setFeesOverride(null);
 
   if (!loan || !currentDeal) {
     return (
@@ -230,20 +245,36 @@ export default function CompleteCurrentDealScreen() {
             />
           </InputSurface>
           <FieldError message={completionAmounts.closingBalance.errorKey ? t(completionAmounts.closingBalance.errorKey) : undefined} />
+          <FieldHint>{t('mortgage.closingBankBalanceHint')}</FieldHint>
+        </View>
+
+        <View style={styles.predictedRow}>
+          <AppText variant="bodySm" tone="muted">{t('mortgage.predictedBalanceLabel')}</AppText>
+          <AppText variant="bodySm" style={styles.predictedValue}>
+            {formatCurrency(predictedClosingBalance, loan.currency)}
+          </AppText>
         </View>
 
         <View style={styles.field}>
-          <FieldLabel>{t('mortgage.feesAdded')}</FieldLabel>
+          <View style={styles.feesLabelRow}>
+            <FieldLabel>{t('mortgage.feesAdded')}</FieldLabel>
+            {!feesAutoApplied ? (
+              <TouchableOpacity onPress={resetFeesAuto} activeOpacity={0.7}>
+                <AppText variant="bodySm" style={styles.resetLink}>{t('mortgage.feesResetAuto')}</AppText>
+              </TouchableOpacity>
+            ) : null}
+          </View>
           <InputSurface error={Boolean(completionAmounts.feesAdded.errorKey)}>
             <InputAffix>{currencySymbol}</InputAffix>
             <AppTextInput
               value={feesAdded}
-              onChangeText={setFeesAdded}
+              onChangeText={handleFeesChange}
               keyboardType="decimal-pad"
               placeholder="0"
             />
           </InputSurface>
           <FieldError message={completionAmounts.feesAdded.errorKey ? t(completionAmounts.feesAdded.errorKey) : undefined} />
+          <FieldHint>{t('mortgage.feesAutoHint')}</FieldHint>
         </View>
 
         <View style={styles.field}>
@@ -349,6 +380,23 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: spacing.md },
   field: { marginTop: spacing.md },
+  predictedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 12,
+    backgroundColor: colours.surface,
+  },
+  predictedValue: { color: colours.textPrimary },
+  feesLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  resetLink: { color: colours.primary },
   overpaymentRow: {
     flexDirection: 'row',
     alignItems: 'center',
