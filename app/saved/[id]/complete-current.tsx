@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +7,7 @@ import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { AppTextInput, FieldError, FieldHint, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { CURRENCIES } from '@/currency/currencies';
@@ -20,91 +20,8 @@ import {
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
-import { formatFriendlyDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
-
-type OverpaymentRow = { id: string; date: string; amount: string };
-
-type OverpaymentEntryRowProps = {
-  row: OverpaymentRow;
-  currencySymbol: string;
-  minimumDate?: Date;
-  maximumDate?: Date;
-  dateError?: string;
-  amountError?: string;
-  onDateChange: (id: string, date: string) => void;
-  onAmountChange: (id: string, amount: string) => void;
-  onRemove: (id: string) => void;
-};
-
-const OverpaymentEntryRow = ({
-  row,
-  currencySymbol,
-  minimumDate,
-  maximumDate,
-  dateError,
-  amountError,
-  onDateChange,
-  onAmountChange,
-  onRemove,
-}: OverpaymentEntryRowProps) => {
-  const { i18n } = useTranslation();
-  const [pickerVisible, setPickerVisible] = useState(false);
-  const pickerValue = parseDateLabelValue(row.date) ?? new Date();
-
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    if (Platform.OS !== 'ios') setPickerVisible(false);
-    if (event.type === 'dismissed' || !selectedDate) return;
-    onDateChange(row.id, formatIsoDate(selectedDate));
-  };
-
-  return (
-    <View style={styles.overpaymentRow}>
-      <View style={styles.overpaymentDateInput}>
-        <>
-          <TouchableOpacity onPress={() => setPickerVisible(current => !current)} activeOpacity={0.84}>
-            <InputSurface>
-              <AppTextInput
-                value={formatFriendlyDate(row.date, i18n.language)}
-                editable={false}
-                placeholder=""
-                style={styles.dateText}
-              />
-            </InputSurface>
-          </TouchableOpacity>
-          {pickerVisible ? (
-            <InputSurface style={Platform.OS === 'ios' ? styles.iosDateSurface : undefined}>
-              <DateTimePicker
-                value={pickerValue}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                minimumDate={minimumDate}
-                maximumDate={maximumDate}
-                onChange={handleDateChange}
-              />
-            </InputSurface>
-          ) : null}
-        </>
-        <FieldError message={dateError} />
-      </View>
-      <View style={styles.overpaymentAmountGroup}>
-        <InputSurface style={styles.overpaymentAmountInput} error={Boolean(amountError)}>
-          <InputAffix>{currencySymbol}</InputAffix>
-          <AppTextInput
-            value={row.amount}
-            onChangeText={amount => onAmountChange(row.id, amount)}
-            keyboardType="decimal-pad"
-            placeholder="5000"
-          />
-        </InputSurface>
-        <FieldError message={amountError} />
-      </View>
-      <TouchableOpacity style={styles.overpaymentRemove} onPress={() => onRemove(row.id)} activeOpacity={0.84}>
-        <AppText style={styles.overpaymentRemoveText}>×</AppText>
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 export default function CompleteCurrentDealScreen() {
   const { t } = useTranslation();
@@ -398,27 +315,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   resetLink: { color: colours.primary },
-  overpaymentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  overpaymentDateInput: { flex: 3 },
-  iosDateSurface: { justifyContent: 'center' },
-  dateText: { color: colours.textPrimary },
-  overpaymentAmountGroup: { flex: 2 },
-  overpaymentAmountInput: {},
-  overpaymentRemove: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  overpaymentRemoveText: {
-    color: colours.error,
-    fontSize: 22,
-  },
   addOverpaymentButton: { marginTop: spacing.xs },
   noteInput: {
     minHeight: 88,

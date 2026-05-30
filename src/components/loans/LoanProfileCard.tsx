@@ -19,7 +19,11 @@ interface Props {
 
 export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const { t, i18n } = useTranslation();
-  const { displayDetails, result, summary } = useMemo(() => {
+  const isDraft = loan.status === 'draft';
+  // Draft loans built via the guided journey hold partial data, so skip the
+  // insight computation (which assumes a complete loan) and render a resume card.
+  const insight = useMemo(() => {
+    if (isDraft) return null;
     const result = getResultForSavedLoan(loan);
     const asOf = new Date();
     return {
@@ -27,8 +31,39 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
       result,
       summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
     };
-  }, [i18n.language, loan]);
+  }, [i18n.language, loan, isDraft]);
   const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
+
+  if (isDraft || !insight) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">
+        <Card padding={0} style={styles.card}>
+          <View style={[styles.inner, styles.draftInner]}>
+            <View style={styles.identity}>
+              <View style={styles.iconTile}>
+                <CategoryIcon color={colours.primary} size={18} />
+              </View>
+              <View style={styles.titleBlock}>
+                <AppText variant="title3" tone="default" numberOfLines={1}>
+                  {loan.nickname.trim() || t('journey.draftUntitled')}
+                </AppText>
+                <View style={styles.draftBadge}>
+                  <AppText variant="labelSm" tone="accent" numberOfLines={1}>
+                    {t('journey.draftBadge')}
+                  </AppText>
+                </View>
+              </View>
+            </View>
+            <View style={styles.detailsCue}>
+              <ChevronRightIcon color={colours.primary} size={18} />
+            </View>
+          </View>
+        </Card>
+      </TouchableOpacity>
+    );
+  }
+
+  const { displayDetails, result, summary } = insight;
   const currentBalance = summary.progress?.metrics.find(metric => metric.labelKey === 'mortgage.currentBalance');
   const monthlyPayment = summary.metrics.find(metric => metric.labelKey === 'results.monthlyPayment');
   const interestRate = summary.metrics.find(metric => metric.labelKey === 'calculator.interestRate');
@@ -135,6 +170,21 @@ const styles = StyleSheet.create({
   inner: {
     padding: spacing.sm,
     gap: spacing.sm,
+  },
+  draftInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  draftBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.chip,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.surfaceAccent,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxxs,
+    marginTop: spacing.xxs,
   },
   header: {
     flexDirection: 'row',

@@ -677,5 +677,114 @@
     "saved": "Zapisane",
     "about": "O Aplikacji",
     "settings": "Ustawienia"
+  },
+  "journey": {
+    "title": "Śledź istniejący kredyt hipoteczny",
+    "cta": "Śledź istniejący kredyt hipoteczny",
+    "draftBadge": "Wersja robocza · dokończ",
+    "draftUntitled": "Kredyt bez nazwy",
+    "saveExit": "Zapisz i wyjdź",
+    "progressLabel": "Krok {{current}} z {{total}}",
+    "continue": "Dalej",
+    "continueOrSkip": "Dalej",
+    "back": "Wstecz",
+    "publish": "Opublikuj kredyt",
+    "saveDraft": "Zapisz wersję roboczą i wyjdź",
+    "sectionIntro": "Wprowadzenie",
+    "sectionLoan": "Twój kredyt",
+    "sectionDeal": "Oferta {{number}}",
+    "sectionReview": "Podsumowanie",
+    "introTitle": "Odtwórzmy historię Twojego kredytu",
+    "introBody": "Odpowiedz na kilka prostych pytań o każdą ofertę, jaką miałeś. Obliczymy salda, odsetki i koszt kredytu. Możesz zapisać i wrócić w dowolnej chwili.",
+    "introCta": "Zaczynamy",
+    "recalc": {
+      "title": "Zaktualizowano kolejne oferty",
+      "help": "Zmiana tej oferty zaktualizowała saldo początkowe kolejnych ofert. Sprawdź i potwierdź.",
+      "cancel": "Anuluj",
+      "confirm": "Potwierdź zmiany"
+    },
+    "review": {
+      "title": "Sprawdź swój kredyt",
+      "helper": "Oto podsumowanie historii Twojego kredytu. Opublikuj, aby zacząć śledzenie, lub zapisz wersję roboczą, aby dokończyć później.",
+      "totalCost": "Zapłacono do tej pory",
+      "totalInterest": "Zapłacone odsetki",
+      "currentBalance": "Bieżące saldo",
+      "savings": "Zaoszczędzono na nadpłatach",
+      "deals": "Liczba ofert: {{count}}"
+    },
+    "q": {
+      "loan": {
+        "currency": {
+          "title": "W jakiej walucie jest ten kredyt?",
+          "helper": "Wszystkie kwoty pokażemy w tej walucie."
+        },
+        "nickname": {
+          "title": "Jak nazwiemy ten kredyt?",
+          "helper": "Nazwa ułatwiająca rozpoznanie na liście.",
+          "placeholder": "np. Dom rodzinny"
+        },
+        "lender": {
+          "title": "Kto jest Twoim kredytodawcą?",
+          "helper": "Opcjonalnie — przydatne, jeśli masz więcej niż jeden kredyt.",
+          "placeholder": "np. Halifax"
+        },
+        "openingBalance": {
+          "title": "Ile pierwotnie pożyczyłeś?",
+          "helper": "Kwota, którą byłeś winien na początku kredytu. To Twoje saldo początkowe."
+        },
+        "startDate": {
+          "title": "Kiedy zaczął się kredyt?",
+          "helper": "Data rozpoczęcia Twojej pierwszej oferty.",
+          "fieldLabel": "Data rozpoczęcia kredytu"
+        },
+        "totalTerm": {
+          "title": "Jaki jest całkowity okres kredytu?",
+          "helper": "Na ile lat zaplanowany był cały kredyt, np. 25 lat. Używamy tego do obliczenia rat."
+        }
+      },
+      "deal": {
+        "rate": {
+          "title": "Jakie było oprocentowanie tej oferty?",
+          "helper": "Stałe oprocentowanie naliczane przez bank. Służy do obliczenia zapłaconych odsetek."
+        },
+        "duration": {
+          "title": "Jak długo trwała ta oferta?",
+          "helper": "Długość okresu o stałym oprocentowaniu, zanim refinansowałeś lub oferta się zakończyła."
+        },
+        "repaymentType": {
+          "title": "Jaki to był typ oferty?",
+          "helper": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki."
+        },
+        "regularOverpayment": {
+          "title": "Czy co miesiąc nadpłacałeś stałą kwotę?",
+          "helper": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste."
+        },
+        "lumpOverpayments": {
+          "title": "Czy były jednorazowe nadpłaty w tej ofercie?",
+          "helper": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
+          "add": "Dodaj nadpłatę"
+        },
+        "missedPayments": {
+          "title": "Czy były nieopłacone raty w tej ofercie?",
+          "helper": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
+          "add": "Dodaj nieopłaconą ratę",
+          "rowLabel": "Nieopłacona rata {{number}}"
+        },
+        "outcome": {
+          "title": "Czy to nadal Twoja bieżąca oferta?",
+          "helper": "Wybierz „Nadal trwa”, jeśli to oferta, na której jesteś dziś, lub „Zakończyła się”, jeśli przeszedłeś na inną.",
+          "ongoing": "Nadal trwa",
+          "ended": "Zakończyła się"
+        },
+        "closingBalance": {
+          "title": "Jakie było saldo, gdy ta oferta się zakończyła?",
+          "helper": "Kwota, którą byłeś winien po zakończeniu oferty — sprawdź wyciąg. Oszacowaliśmy ją za Ciebie."
+        },
+        "fees": {
+          "title": "Czy do salda doliczono opłaty?",
+          "helper": "Opcjonalnie. Opłaty za produkt lub przygotowanie doliczone do kredytu po zakończeniu oferty."
+        }
+      }
+    }
   }
 }

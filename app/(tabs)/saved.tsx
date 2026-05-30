@@ -13,13 +13,24 @@ import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { storage } from '@/storage/mmkv';
+import { STORAGE_KEYS } from '@/storage/keys';
+import { CurrencyCode } from '@/currency/currencies';
+import { createMortgageHistoryDraft } from '@/mortgage/journey/reducers';
 
 export default function SavedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ fromDashboard?: string }>();
-  const { loans, togglePinned, refresh } = useSavedLoans();
+  const { loans, add, togglePinned, refresh } = useSavedLoans();
   const openedFromDashboard = params.fromDashboard === '1';
+
+  const startMortgageHistory = () => {
+    const currency = (storage.getString(STORAGE_KEYS.USER_CURRENCY) as CurrencyCode) ?? 'GBP';
+    const draft = createMortgageHistoryDraft(currency);
+    add(draft);
+    router.push({ pathname: '/saved/[id]/journey', params: { id: draft.id } });
+  };
   const [query, setQuery] = useState('');
   const visibleLoans = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase();
@@ -64,15 +75,23 @@ export default function SavedScreen() {
             <AppText variant="bodyLg" tone="muted" style={styles.intro}>
               {t('saved.intro')}
             </AppText>
-            <Button
-              label={t('saved.createNewCalculation')}
-              onPress={() => router.push({
-                pathname: '/' as never,
-                params: { calculator: '1' },
-              })}
-              variant="secondary"
-              style={styles.headerButton}
-            />
+            <View style={styles.headerButtons}>
+              <Button
+                label={t('saved.createNewCalculation')}
+                onPress={() => router.push({
+                  pathname: '/' as never,
+                  params: { calculator: '1' },
+                })}
+                variant="secondary"
+                style={styles.headerButton}
+              />
+              <Button
+                label={t('journey.cta')}
+                onPress={startMortgageHistory}
+                variant="secondary"
+                style={styles.headerButton}
+              />
+            </View>
             {loans.length > 0 ? (
               <View style={styles.controls}>
                 <InputSurface>
@@ -92,7 +111,9 @@ export default function SavedScreen() {
         renderItem={({ item }) => (
           <LoanProfileCard
             loan={item}
-            onPress={() => router.push(`/saved/${item.id}`)}
+            onPress={() => router.push(
+              item.status === 'draft' ? `/saved/${item.id}/journey` : `/saved/${item.id}`,
+            )}
             onTogglePinned={() => togglePinned(item.id)}
           />
         )}
@@ -113,8 +134,14 @@ const styles = StyleSheet.create({
   intro: {
     marginBottom: spacing.md,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
   headerButton: {
-    alignSelf: 'flex-start',
+    flexGrow: 1,
+    flexBasis: '45%',
   },
   controls: {
     gap: spacing.sm,
