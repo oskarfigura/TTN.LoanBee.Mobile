@@ -21,6 +21,7 @@ import {
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
@@ -96,7 +97,10 @@ export const JourneyStepDrawer = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step.id]);
 
-  const moneyValidation = validateMoneyText(text, { required: !step.optional });
+  // Only the original borrowed amount must be strictly positive; a deal can end
+  // at a zero balance (paid off) and overpayments/fees can be zero.
+  const allowZeroMoney = step.kind !== 'loan.openingBalance';
+  const moneyValidation = validateMoneyText(text, { required: !step.optional, allowZero: allowZeroMoney });
   const percentValidation = validateMoneyText(text);
   const durationValidation = validateDurationText(years, months);
 
@@ -337,9 +341,7 @@ export const JourneyStepDrawer = ({
         <AppText variant="bodySm" tone="muted">
           {t('journey.progressLabel', { current: stepIndex + 1, total: stepTotal })}
         </AppText>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${((stepIndex + 1) / Math.max(stepTotal, 1)) * 100}%` }]} />
-        </View>
+        <ProgressBar progress={(stepIndex + 1) / Math.max(stepTotal, 1)} />
       </View>
 
       <KeyboardAvoidingView
@@ -438,17 +440,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   eyebrow: { textTransform: 'uppercase' },
-  progressTrack: {
-    height: 6,
-    borderRadius: radii.full,
-    backgroundColor: colours.surfaceStrong,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: radii.full,
-    backgroundColor: colours.teal,
-  },
   sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     maxHeight: '88%',
