@@ -93,7 +93,7 @@ export const OverpaymentEntryRow = ({
 const styles = StyleSheet.create({
   overpaymentRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.xs,
     marginTop: spacing.xs,
   },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   overpaymentAmountInput: {},
   overpaymentRemove: {
     width: 36,
-    height: 36,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
