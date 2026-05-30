@@ -192,6 +192,22 @@ describe('savedLoansStorage', () => {
     expect(migrated[0].deals[0].openingBalance).toBe(270000);
   });
 
+  it('picks up legacy loans written after an initial empty read (cache invariant)', () => {
+    // Prime the read cache with the empty result first...
+    expect(savedLoansStorage.getAll()).toEqual([]);
+
+    const legacyLoan = makeLoan() as unknown as LegacySavedLoan;
+    const { status, pinnedToDashboard, deals, events, ...v1Loan } = legacyLoan as LegacySavedLoan & SavedLoan;
+    void status;
+    void pinnedToDashboard;
+    void deals;
+    void events;
+    storage.set(STORAGE_KEYS.SAVED_LOANS_LEGACY, JSON.stringify([v1Loan]));
+
+    // ...then ensure the cache does not mask the newly available legacy payload.
+    expect(savedLoansStorage.getAll()).toHaveLength(1);
+  });
+
   it('backfills mortgage term on existing loan groups', () => {
     const loan = makeLoan();
     const { mortgageTermInMonths, ...withoutMortgageTerm } = loan;
