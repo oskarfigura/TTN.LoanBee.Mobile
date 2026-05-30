@@ -84,7 +84,8 @@ export const firstUnansweredStep = (loan: LoanGroup): JourneyStep => {
   const latest = deals[deals.length - 1];
 
   if (!latest) {
-    return findStep(loan, 'loan.currency') ?? steps[0];
+    // Fresh draft (or basics part-done but no deal yet): begin at the welcome intro.
+    return steps[0];
   }
 
   if (latest.status === 'active') {
