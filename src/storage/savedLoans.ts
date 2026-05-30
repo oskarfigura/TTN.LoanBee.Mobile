@@ -141,6 +141,11 @@ const saveAll = (loans: LoanGroup[]): void => {
     ));
     storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(stamped));
   } catch (cause) {
+    // A failed write may follow an in-place mutation of the cached array (add/
+    // update/togglePinned/*Event all mutate loadAll()'s result). Drop the cache so
+    // the next read re-derives from what is actually persisted, not the lost write.
+    cachedRaw = undefined;
+    cachedLoans = null;
     const error = new SavedLoanStorageError('Failed to persist saved loans', cause);
     reportStorageError(error);
     throw error;
@@ -155,7 +160,10 @@ let cachedLoans: LoanGroup[] | null = null;
 
 const loadAll = (): LoanGroup[] => {
   const currentRaw = storage.getString(STORAGE_KEYS.SAVED_LOANS);
-  if (cachedLoans !== null && currentRaw === cachedRaw) {
+  // Only serve from cache when a payload is actually stored. When SAVED_LOANS is
+  // absent the read is cheap (and may need to fall through to the legacy-migration
+  // path), so caching the empty result could mask legacy data appearing afterwards.
+  if (currentRaw !== undefined && cachedLoans !== null && currentRaw === cachedRaw) {
     return cachedLoans;
   }
   const result = computeLoadAll(currentRaw);

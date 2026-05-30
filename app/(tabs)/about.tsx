@@ -27,7 +27,8 @@ export default function AboutScreen() {
   const openedFromDashboard = params.fromDashboard === '1';
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('tabs.about')}
         variant="top-level"
