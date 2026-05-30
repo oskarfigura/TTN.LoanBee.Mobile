@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -57,7 +58,8 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
+      <KeyboardProvider>
+        <SafeAreaProvider>
         <I18nextProvider i18n={i18n}>
           <AdProvider>
             <Stack screenOptions={{ headerShown: false }}>
@@ -95,7 +97,8 @@ export default function RootLayout() {
             </Stack>
           </AdProvider>
         </I18nextProvider>
-      </SafeAreaProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

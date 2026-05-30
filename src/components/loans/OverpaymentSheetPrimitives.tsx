@@ -1,15 +1,16 @@
 import React from 'react';
 import {
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
+  ScrollView,
   StyleProp,
   StyleSheet,
   View,
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
 import { FieldLabel } from '@/components/ui/FormPrimitives';
@@ -41,17 +42,16 @@ export const OverpaymentSheetModal = ({
   maxHeightRatio,
 }: OverpaymentSheetModalProps) => {
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.scrim} onPress={onClose}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.kav}
-        >
+        <KeyboardAvoidingView behavior="padding" style={styles.kav}>
           <Pressable
             style={[
               styles.sheet,
+              { paddingBottom: Math.max(insets.bottom, spacing['3xl']) },
               maxHeightRatio ? { maxHeight: height * maxHeightRatio } : null,
             ]}
           >
@@ -59,9 +59,15 @@ export const OverpaymentSheetModal = ({
             <AppText variant="title2" style={styles.heading}>
               {title}
             </AppText>
-            <View style={styles.content}>
+            <ScrollView
+              style={styles.scroll}
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
               {children}
-            </View>
+            </ScrollView>
             {footer ? <View style={styles.footer}>{footer}</View> : null}
           </Pressable>
         </KeyboardAvoidingView>
@@ -127,6 +133,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   kav: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
   sheet: {
@@ -134,7 +141,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radii.card,
     borderTopRightRadius: radii.card,
     padding: spacing.xl,
-    paddingBottom: spacing['3xl'],
+  },
+  scroll: {
+    flexGrow: 0,
+    flexShrink: 1,
   },
   handle: {
     width: 40,
