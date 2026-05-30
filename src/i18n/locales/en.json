@@ -109,7 +109,11 @@
   },
   "save": {
     "title": "Save Loan",
+    "titleMortgage": "Save Mortgage",
+    "titleLoan": "Save Loan",
     "subtitle": "Save this result as the mortgage or loan position you want to track from now.",
+    "subtitleMortgage": "Save this result as the mortgage you want to track from now.",
+    "subtitleLoan": "Save this result as the loan you want to track from now.",
     "nickname": "Nickname",
     "nicknamePlaceholder": "e.g. My First Mortgage",
     "lender": "Lender",

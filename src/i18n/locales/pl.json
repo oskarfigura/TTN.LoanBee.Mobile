@@ -109,7 +109,11 @@
   },
   "save": {
     "title": "Zapisz Kredyt",
+    "titleMortgage": "Zapisz Hipotekę",
+    "titleLoan": "Zapisz Kredyt",
     "subtitle": "Zapisz ten wynik jako hipotekę lub kredyt, który chcesz śledzić od teraz.",
+    "subtitleMortgage": "Zapisz ten wynik jako hipotekę, którą chcesz śledzić od teraz.",
+    "subtitleLoan": "Zapisz ten wynik jako kredyt, który chcesz śledzić od teraz.",
     "nickname": "Nazwa",
     "nicknamePlaceholder": "np. Moja Pierwsza Hipoteka",
     "lender": "Kredytodawca",
