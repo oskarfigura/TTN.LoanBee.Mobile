@@ -100,14 +100,17 @@ export default function CalculatorScreen() {
 
   if (pinnedLoans.length > 0 && !showCalculator) {
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
+      // No 'bottom' edge: tab screens sit above the tab bar, which already clears the
+      // device bottom inset. Adding it here double-counts and opens a gap above the bar.
+      <SafeAreaView style={styles.safe} edges={[]}>
         <MortgageDashboard loans={pinnedLoans} onNewCalculation={() => setShowCalculator(true)} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('calculator.title')}
         variant="top-level"

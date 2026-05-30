@@ -39,7 +39,8 @@ export default function SavedScreen() {
   useFocusEffect(refresh);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('saved.title')}
         variant="top-level"
