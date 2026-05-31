@@ -104,6 +104,18 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      // The card is an accessible group, so the nested pin button isn't reachable
+      // on its own. Expose the toggle as a rotor action so screen-reader users can
+      // still pin/unpin without a focusable inner control.
+      accessibilityActions={[{
+        name: 'togglePin',
+        label: loan.pinnedToDashboard ? t('mortgage.unpinHint') : t('mortgage.pinToDashboard'),
+      }]}
+      onAccessibilityAction={event => {
+        if (event.nativeEvent.actionName === 'togglePin') {
+          onTogglePinned();
+        }
+      }}
     >
       <Card padding={0} style={styles.card}>
         <View style={styles.inner}>
