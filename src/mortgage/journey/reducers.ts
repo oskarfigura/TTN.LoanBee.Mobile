@@ -299,9 +299,10 @@ export const applyStep = (loan: LoanGroup, step: JourneyStep, answer: JourneyAns
       const target = loan.deals.find(deal => deal.id === dealId);
       if (!target) return loan;
 
-      if (answer.value === 'ongoing') {
-        // Terminal: this is the user's current deal. Drop any later deals/events
-        // and the placeholder completion that an earlier "ended" answer created.
+      if (answer.value === 'ongoing' || answer.value === 'paidOff') {
+        // Both outcomes are terminal: the current ongoing deal, or the deal that
+        // paid the mortgage off in full. Either way drop any later deals/events a
+        // previous "ended" answer created.
         const laterIds = new Set(getLaterDealIds(loan, dealId));
         const pruned: LoanGroup = {
           ...loan,
@@ -309,19 +310,33 @@ export const applyStep = (loan: LoanGroup, step: JourneyStep, answer: JourneyAns
           events: loan.events.filter(event => !laterIds.has(event.dealId ?? '')),
           updatedAt: now(),
         };
-        return mapDeal(pruned, dealId, deal => ({ ...deal, status: 'active', completion: undefined }));
+        if (answer.value === 'ongoing') {
+          return mapDeal(pruned, dealId, deal => ({ ...deal, status: 'active', completion: undefined }));
+        }
+        // Paid off: a completed, terminal deal with a zero closing balance and no
+        // successor. The journey skips the closing-balance/fees questions and
+        // goes straight to review.
+        return mapDeal(pruned, dealId, deal => ({
+          ...deal,
+          status: 'completed',
+          completion: { completedAt: deal.endDate, closingBalance: 0, feesAdded: 0, terminal: true },
+        }));
       }
 
       // Ended: mark completed with a placeholder completion (the closing balance and
       // fees steps refine it next) and seed the successor deal if none exists yet.
+      // A terminal completion left over from a previous "paid off" answer is
+      // discarded so the closing balance is re-estimated rather than stuck at zero.
       const completed = mapDeal(loan, dealId, deal => ({
         ...deal,
         status: 'completed',
-        completion: deal.completion ?? {
-          completedAt: deal.endDate,
-          closingBalance: projectedClosingBalance(loan, deal),
-          feesAdded: 0,
-        },
+        completion: deal.completion && !deal.completion.terminal
+          ? deal.completion
+          : {
+            completedAt: deal.endDate,
+            closingBalance: projectedClosingBalance(loan, deal),
+            feesAdded: 0,
+          },
       }));
       const seeded = getLaterDeals(completed, dealId).length === 0
         ? { ...completed, deals: [...completed.deals, buildNextDealDraft(completed, createLocalId('deal'))], updatedAt: now() }

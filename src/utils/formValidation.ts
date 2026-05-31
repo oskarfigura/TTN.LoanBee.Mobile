@@ -41,9 +41,9 @@ export const parseStrictDecimal = (raw: string): NumericValidation => {
 
 export const validateMoneyText = (
   raw: string,
-  options: { allowZero?: boolean; required?: boolean } = {},
+  options: { allowZero?: boolean; required?: boolean; max?: number; maxErrorKey?: string } = {},
 ): NumericValidation => {
-  const { allowZero = false, required = true } = options;
+  const { allowZero = false, required = true, max, maxErrorKey = 'forms.invalidNumber' } = options;
   const trimmed = raw.trim();
   if (trimmed === '') {
     return required ? invalid('forms.required', 0, true) : valid(0, true);
@@ -54,6 +54,7 @@ export const validateMoneyText = (
 
   if (parsed.numeric < 0) return invalid('forms.requiredNonNegative', parsed.numeric);
   if (!allowZero && parsed.numeric <= 0) return invalid('forms.requiredPositive', parsed.numeric);
+  if (max !== undefined && parsed.numeric > max) return invalid(maxErrorKey, parsed.numeric);
 
   return parsed;
 };

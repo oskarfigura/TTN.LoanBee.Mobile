@@ -98,9 +98,9 @@ describe('mortgage journey steps', () => {
     const steps = buildJourneySteps(loan);
     expect(steps.map(s => s.id)).toEqual([
       'intro',
-      'loan.currency',
       'loan.nickname',
       'loan.lender',
+      'loan.currency',
       'loan.openingBalance',
       'loan.startDate',
       'loan.totalTerm',
@@ -230,5 +230,46 @@ describe('current-only mortgage', () => {
     expect(deals).toHaveLength(1);
     expect(deals[0].status).toBe('active');
     expect(deals[0].completion).toBeUndefined();
+  });
+});
+
+// Drives the loan basics + first deal's attribute steps and stops on the outcome gate.
+const driveToFirstOutcome = (): { loan: LoanGroup; outcome: JourneyStep } => {
+  let loan = driveToFirstDeal();
+  let step: JourneyStep | undefined = findStep(loan, `deal:${getChronologicalDeals(loan)[0].id}:rate`);
+
+  for (let guard = 0; step && guard < 20; guard += 1) {
+    if (step.kind === 'deal.outcome') return { loan, outcome: step };
+    loan = applyStep(loan, step, provideAnswer(loan, step));
+    step = getNextStep(loan, step.id);
+  }
+
+  throw new Error('never reached the outcome gate');
+};
+
+describe('paid-off outcome', () => {
+  it('marks the deal terminal, seeds no successor, and skips closing questions', () => {
+    const { loan, outcome } = driveToFirstOutcome();
+    const next = applyStep(loan, outcome, { type: 'gate', value: 'paidOff' });
+    const deals = getChronologicalDeals(next);
+
+    expect(deals).toHaveLength(1);
+    expect(deals[0].status).toBe('completed');
+    expect(deals[0].completion?.terminal).toBe(true);
+    expect(deals[0].completion?.closingBalance).toBe(0);
+
+    const stepIds = buildJourneySteps(next).map(s => s.id);
+    expect(stepIds).not.toContain(`deal:${deals[0].id}:closingBalance`);
+    expect(findStep(next, 'review')).toBeDefined();
+  });
+
+  it('switching paid off back to ended re-estimates the closing balance and seeds a successor', () => {
+    const { loan, outcome } = driveToFirstOutcome();
+    const paidOff = applyStep(loan, outcome, { type: 'gate', value: 'paidOff' });
+    expect(paidOff.deals[0].completion?.terminal).toBe(true);
+
+    const ended = applyStep(paidOff, outcome, { type: 'gate', value: 'ended' });
+    expect(ended.deals[0].completion?.terminal).toBeFalsy();
+    expect(ended.deals.length).toBeGreaterThan(1);
   });
 });

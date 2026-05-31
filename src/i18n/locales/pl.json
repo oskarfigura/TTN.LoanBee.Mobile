@@ -687,7 +687,15 @@
     "draftBadge": "Wersja robocza · dokończ",
     "draftUntitled": "Kredyt bez nazwy",
     "saveExit": "Zapisz i wyjdź",
+    "discard": "Odrzuć",
     "progressLabel": "Krok {{current}} z {{total}}",
+    "phaseLabel": "Część {{current}} z {{total}} · {{phase}}",
+    "discardConfirm": {
+      "title": "Odrzucić ten kredyt?",
+      "message": "Spowoduje to usunięcie rozpoczętej konfiguracji. Tej operacji nie można cofnąć.",
+      "cancel": "Kontynuuj edycję",
+      "confirm": "Odrzuć"
+    },
     "continue": "Dalej",
     "continueOrSkip": "Dalej",
     "back": "Wstecz",
@@ -701,6 +709,7 @@
     "introBody": "Odpowiedz na kilka prostych pytań o swoją bieżącą ofertę — i o wcześniejsze oferty, jeśli chcesz pełny obraz. Obliczymy salda, odsetki i koszt kredytu. Możesz zapisać i wrócić w dowolnej chwili.",
     "introCta": "Zaczynamy",
     "coach": {
+      "dealSavingsLabel": "Zaoszczędzono na tej ofercie do tej pory",
       "summary": {
         "borrowed": "Pożyczono",
         "currentDeal": "Bieżąca oferta",
@@ -814,9 +823,10 @@
         },
         "outcome": {
           "title": "Czy nadal jesteś na tej ofercie?",
-          "helper": "Wybierz „Bieżąca” dla oferty, na której jesteś teraz, lub „Zakończyła się” dla wcześniejszej oferty, z której już przeszedłeś.",
+          "helper": "Wybierz „Bieżąca” dla oferty, na której jesteś teraz, „Zakończyła się” dla wcześniejszej oferty, z której już przeszedłeś, lub „Spłacony” jeśli ta oferta w całości spłaciła kredyt.",
           "ongoing": "Bieżąca",
-          "ended": "Zakończyła się"
+          "ended": "Zakończyła się",
+          "paidOff": "Spłacony"
         },
         "closingBalance": {
           "title": "Jakie było saldo, gdy ta oferta się zakończyła?",

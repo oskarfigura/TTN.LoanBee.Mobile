@@ -28,6 +28,7 @@ import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { buildMortgageProjection } from '@/mortgage/projection';
 import { getChronologicalDeals } from '@/mortgage/tracker';
+import { getJourneyPhase } from '@/mortgage/journey/steps';
 import { readStepInitial } from '@/mortgage/journey/stepValues';
 import { JourneyAnswer, JourneyStep } from '@/mortgage/journey/types';
 import { LoanGroup } from '@/types/SavedLoan';
@@ -39,13 +40,12 @@ import { validateDurationText, validateMoneyText } from '@/utils/formValidation'
 interface Props {
   step: JourneyStep;
   loan: LoanGroup;
-  stepIndex: number;
-  stepTotal: number;
   onBack?: () => void;
   onContinue: (answer: JourneyAnswer) => void;
   onPublish: () => void;
   onSaveDraft: () => void;
   onExit: () => void;
+  onDiscard: () => void;
   onJumpToReview?: () => void;
 }
 
@@ -55,18 +55,18 @@ const numberText = (value?: number): string =>
 export const JourneyStepDrawer = ({
   step,
   loan,
-  stepIndex,
-  stepTotal,
   onBack,
   onContinue,
   onPublish,
   onSaveDraft,
   onExit,
+  onDiscard,
   onJumpToReview,
 }: Props) => {
   const { t } = useTranslation();
   const currencySymbol = CURRENCIES.find(c => c.code === loan.currency)?.symbol ?? '£';
   const dealNumber = (step.dealIndex ?? 0) + 1;
+  const phase = getJourneyPhase(loan, step.id);
 
   const [text, setText] = useState('');
   const [years, setYears] = useState('');
@@ -102,7 +102,7 @@ export const JourneyStepDrawer = ({
   // at a zero balance (paid off) and overpayments/fees can be zero.
   const allowZeroMoney = step.kind !== 'loan.openingBalance';
   const moneyValidation = validateMoneyText(text, { required: !step.optional, allowZero: allowZeroMoney });
-  const percentValidation = validateMoneyText(text);
+  const percentValidation = validateMoneyText(text, { max: 100, maxErrorKey: 'validation.interestMax' });
   const durationValidation = validateDurationText(years, months);
 
   const isValid = useMemo(() => {
@@ -124,7 +124,7 @@ export const JourneyStepDrawer = ({
       case 'choice':
         return choice.length > 0;
       case 'gate':
-        return choice === 'ongoing' || choice === 'ended';
+        return choice === 'ongoing' || choice === 'ended' || choice === 'paidOff';
       case 'overpaymentList':
       case 'missedList':
         return true;
@@ -150,7 +150,10 @@ export const JourneyStepDrawer = ({
       case 'choice':
         return { type: 'choice', value: choice };
       case 'gate':
-        return { type: 'gate', value: choice === 'ended' ? 'ended' : 'ongoing' };
+        return {
+          type: 'gate',
+          value: choice === 'ended' ? 'ended' : choice === 'paidOff' ? 'paidOff' : 'ongoing',
+        };
       case 'overpaymentList':
         return {
           type: 'overpayments',
@@ -276,6 +279,7 @@ export const JourneyStepDrawer = ({
             options={[
               { label: t('journey.q.deal.outcome.ongoing'), value: 'ongoing' },
               { label: t('journey.q.deal.outcome.ended'), value: 'ended' },
+              { label: t('journey.q.deal.outcome.paidOff'), value: 'paidOff' },
             ]}
           />
         );
@@ -344,12 +348,15 @@ export const JourneyStepDrawer = ({
             <TouchableOpacity onPress={onExit} hitSlop={8} activeOpacity={0.7}>
               <AppText variant="labelMd" tone="muted">{t('journey.saveExit')}</AppText>
             </TouchableOpacity>
+            <TouchableOpacity onPress={onDiscard} hitSlop={8} activeOpacity={0.7}>
+              <AppText variant="labelMd" style={styles.discardAction}>{t('journey.discard')}</AppText>
+            </TouchableOpacity>
           </View>
         </View>
         <AppText variant="bodySm" tone="muted">
-          {t('journey.progressLabel', { current: stepIndex + 1, total: stepTotal })}
+          {t('journey.phaseLabel', { current: phase.index + 1, total: phase.total, phase: sectionLabel })}
         </AppText>
-        <ProgressBar progress={(stepIndex + 1) / Math.max(stepTotal, 1)} />
+        <ProgressBar progress={phase.fraction} />
       </View>
 
       <KeyboardAvoidingView
@@ -449,6 +456,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   eyebrow: { textTransform: 'uppercase' },
+  discardAction: { color: colours.error },
   sheetWrap: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     maxHeight: '88%',

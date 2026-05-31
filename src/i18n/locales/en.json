@@ -687,7 +687,15 @@
     "draftBadge": "Draft · resume setup",
     "draftUntitled": "Untitled mortgage",
     "saveExit": "Save & exit",
+    "discard": "Discard",
     "progressLabel": "Step {{current}} of {{total}}",
+    "phaseLabel": "Part {{current}} of {{total}} · {{phase}}",
+    "discardConfirm": {
+      "title": "Discard this mortgage?",
+      "message": "This deletes the setup you've started. This can't be undone.",
+      "cancel": "Keep editing",
+      "confirm": "Discard"
+    },
     "continue": "Continue",
     "continueOrSkip": "Continue",
     "back": "Back",
@@ -701,6 +709,7 @@
     "introBody": "Answer a few simple questions about your current deal — and any past deals, if you want the full picture. We'll work out the balances, interest and what it's cost you. You can save and come back anytime.",
     "introCta": "Get started",
     "coach": {
+      "dealSavingsLabel": "Saved on this deal so far",
       "summary": {
         "borrowed": "Borrowed",
         "currentDeal": "Current deal",
@@ -814,9 +823,10 @@
         },
         "outcome": {
           "title": "Are you still on this deal?",
-          "helper": "Pick 'Current' for the deal you're on now, or 'It ended' for a past deal you've since moved on from.",
+          "helper": "Pick 'Current' for the deal you're on now, 'It ended' for a past deal you moved on from, or 'Paid off' if this deal cleared the mortgage in full.",
           "ongoing": "Current",
-          "ended": "It ended"
+          "ended": "It ended",
+          "paidOff": "Paid off"
         },
         "closingBalance": {
           "title": "What was the balance when this deal ended?",

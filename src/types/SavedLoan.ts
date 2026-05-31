@@ -49,6 +49,8 @@ export interface LoanDealCompletion {
   closingBalance: number;
   feesAdded: number;
   notes?: string;
+  /** True when the deal was the final one — the mortgage was paid off in full. */
+  terminal?: boolean;
 }
 
 export interface LoanDeal {

@@ -12,7 +12,7 @@ export interface StepInitial {
   months?: number;
   date?: string;
   choice?: string;
-  gate?: 'ongoing' | 'ended';
+  gate?: 'ongoing' | 'ended' | 'paidOff';
   overpayments?: Array<{ date: string; amount: number }>;
   missed?: string[];
 }
@@ -55,7 +55,11 @@ export const readStepInitial = (loan: LoanGroup, step: JourneyStep): StepInitial
           .map(event => event.date),
       };
     case 'deal.outcome':
-      return { gate: deal?.status === 'completed' ? 'ended' : deal?.status === 'active' ? 'ongoing' : undefined };
+      return {
+        gate: deal?.status === 'completed'
+          ? (deal.completion?.terminal ? 'paidOff' : 'ended')
+          : deal?.status === 'active' ? 'ongoing' : undefined,
+      };
     case 'deal.closingBalance':
       return { number: deal?.completion?.closingBalance };
     case 'deal.fees':

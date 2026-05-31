@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,6 @@ import {
   firstUnansweredStep,
   getNextStep,
   getPrevStep,
-  getStepProgress,
 } from '@/mortgage/journey/steps';
 import { applyStep, publishJourneyLoan } from '@/mortgage/journey/reducers';
 import { summariseDealChainChanges } from '@/mortgage/journey/chainDiff';
@@ -35,6 +34,16 @@ interface PendingEdit {
   nextStepId: string;
   changes: DealChange[];
 }
+
+// A draft the user opened but never put anything into. Leaving these behind
+// strands an "Untitled mortgage" in the saved list with no way to remove it
+// (drafts reopen the journey, which is the only screen without a delete action),
+// so they are cleaned up automatically on exit.
+const isPristineDraft = (loan: LoanGroup): boolean =>
+  loan.status === 'draft'
+  && loan.nickname.trim().length === 0
+  && loan.formSnapshot.loanAmount === 0
+  && loan.deals.length === 0;
 
 export default function MortgageJourneyScreen() {
   const { t } = useTranslation();
@@ -57,9 +66,35 @@ export default function MortgageJourneyScreen() {
     setJourneyCursor(id, nextStepId);
   }, [id]);
 
+  const removeDraft = useCallback(() => {
+    savedLoansStorage.remove(id);
+    clearJourneyCursor(id);
+  }, [id]);
+
   const exitToSaved = useCallback(() => {
+    if (loan && isPristineDraft(loan)) {
+      removeDraft();
+    }
     router.replace('/saved');
-  }, [router]);
+  }, [loan, removeDraft, router]);
+
+  const handleDiscard = useCallback(() => {
+    Alert.alert(
+      t('journey.discardConfirm.title'),
+      t('journey.discardConfirm.message'),
+      [
+        { text: t('journey.discardConfirm.cancel'), style: 'cancel' },
+        {
+          text: t('journey.discardConfirm.confirm'),
+          style: 'destructive',
+          onPress: () => {
+            removeDraft();
+            router.replace('/saved');
+          },
+        },
+      ],
+    );
+  }, [removeDraft, router, t]);
 
   const handleContinue = useCallback((answer: JourneyAnswer) => {
     if (!loan) return;
@@ -122,7 +157,6 @@ export default function MortgageJourneyScreen() {
   }
 
   const step = findStep(loan, currentStepId) ?? firstUnansweredStep(loan);
-  const { index, total } = getStepProgress(loan, step.id);
   const canGoBack = Boolean(getPrevStep(loan, step.id));
   const reviewAvailable = buildJourneySteps(loan).some(s => s.id === 'review');
   const jumpToReview = () => {
@@ -135,13 +169,12 @@ export default function MortgageJourneyScreen() {
       <JourneyStepDrawer
         step={step}
         loan={loan}
-        stepIndex={index}
-        stepTotal={total}
         onBack={canGoBack ? handleBack : undefined}
         onContinue={handleContinue}
         onPublish={handlePublish}
         onSaveDraft={exitToSaved}
         onExit={exitToSaved}
+        onDiscard={handleDiscard}
         onJumpToReview={reviewAvailable && step.id !== 'review' ? jumpToReview : undefined}
       />
 

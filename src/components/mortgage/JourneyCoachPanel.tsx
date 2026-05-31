@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { formatCurrency } from '@/currency/format';
 import { buildMortgageProjection } from '@/mortgage/projection';
-import { getChronologicalDeals, getCurrentDeal } from '@/mortgage/tracker';
+import { getChronologicalDeals, getCurrentDeal, getDealOverpaymentImpact } from '@/mortgage/tracker';
 import { JourneyStep } from '@/mortgage/journey/types';
 import { LoanGroup } from '@/types/SavedLoan';
 import { colours, layout, radii, spacing } from '@/theme';
@@ -24,12 +24,29 @@ export const JourneyCoachPanel = ({ step, loan }: Props) => {
   const tip = t(`journey.coach.${step.kind}`, { defaultValue: '' });
   const showSummary = step.group === 'deal' && getChronologicalDeals(loan).length > 0;
 
+  // On the overpayment steps, show the interest this deal's overpayments have
+  // already saved — the most motivating moment to put a number in front of the
+  // user is right where they enter it.
+  const isOverpaymentStep = step.kind === 'deal.regularOverpayment' || step.kind === 'deal.lumpOverpayments';
+  const dealForStep = step.dealId ? loan.deals.find(d => d.id === step.dealId) : undefined;
+  const dealSavings = isOverpaymentStep && dealForStep
+    ? getDealOverpaymentImpact(dealForStep, loan.events).interestSaved
+    : 0;
+
   return (
     <View style={styles.container} pointerEvents="none">
       {tip ? (
         <View style={styles.tipCard}>
           <AppText style={styles.tipIcon}>💡</AppText>
           <AppText variant="bodySm" tone="muted" style={styles.tipText}>{tip}</AppText>
+        </View>
+      ) : null}
+      {dealSavings > 0 ? (
+        <View style={styles.savingsCard}>
+          <AppText variant="bodySm" tone="muted">{t('journey.coach.dealSavingsLabel')}</AppText>
+          <AppText variant="bodyMd" style={styles.savingsValue}>
+            {formatCurrency(dealSavings, loan.currency)}
+          </AppText>
         </View>
       ) : null}
       {showSummary ? <MortgageSoFar loan={loan} /> : null}
@@ -86,6 +103,18 @@ const styles = StyleSheet.create({
   },
   tipIcon: { fontSize: 16, lineHeight: 20 },
   tipText: { flex: 1 },
+  savingsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colours.successSurface,
+    borderWidth: 1,
+    borderColor: colours.successBorder,
+    borderRadius: radii.card,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  savingsValue: { color: colours.success },
   summaryCard: {
     backgroundColor: colours.surfaceAccent,
     borderRadius: radii.card,

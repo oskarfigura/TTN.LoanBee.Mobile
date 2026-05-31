@@ -60,7 +60,7 @@ export type JourneyAnswer =
   | { type: 'duration'; months: number }
   | { type: 'date'; date: string }
   | { type: 'choice'; value: string }
-  | { type: 'gate'; value: 'ongoing' | 'ended' }
+  | { type: 'gate'; value: 'ongoing' | 'ended' | 'paidOff' }
   | { type: 'overpayments'; rows: Array<{ date: string; amount: number }> }
   | { type: 'missed'; dates: string[] };
 
