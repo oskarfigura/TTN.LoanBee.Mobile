@@ -19,6 +19,10 @@ import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
 import { fontFaces, fontSizes } from '@/theme';
 import { recordReviewAppOpen } from '@/review';
+import { installGlobalCrashHandler } from '@/diagnostics/crashLog';
+
+// Install as early as possible so uncaught JS errors during startup are captured.
+installGlobalCrashHandler();
 
 // Expo Router wraps this root route in a React error boundary when a component
 // named `ErrorBoundary` is exported here, catching render errors anywhere in the

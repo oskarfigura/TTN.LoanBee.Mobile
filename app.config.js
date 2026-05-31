@@ -27,6 +27,39 @@ const withAndroidSizeGradleProperties = config => withGradleProperties(config, g
   return gradleConfig;
 });
 
+// AdMob unit IDs flow in via env vars (see src/ads/adUnits.ts). When unset the app
+// falls back to Google's *test* unit IDs — fine for dev/preview, but shipping them to
+// production is an AdMob policy violation and earns zero revenue. Fail the production
+// build loudly rather than silently shipping test ads.
+const PRODUCTION_AD_ENV_KEYS = [
+  'ADMOB_ANDROID_ID',
+  'ADMOB_IOS_ID',
+  'ADMOB_BANNER_ANDROID_ID',
+  'ADMOB_BANNER_IOS_ID',
+  'ADMOB_INTERSTITIAL_ANDROID_ID',
+  'ADMOB_INTERSTITIAL_IOS_ID',
+];
+
+const assertProductionAdUnitsConfigured = () => {
+  if (process.env.APP_ENV !== 'production') return;
+  // Only enforce inside the real EAS build environment (EAS_BUILD=true), where the EAS
+  // Environment Variables / Secrets are injected into process.env. eas-cli also evaluates
+  // this config locally (for fingerprinting) where those values are not yet resolved —
+  // throwing there would abort the build before it ever reaches the Expo vars.
+  if (!process.env.EAS_BUILD) return;
+  const missing = PRODUCTION_AD_ENV_KEYS.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Production build aborted: missing AdMob env vars [${missing.join(', ')}]. ` +
+        'Set them as EAS Environment Variables/Secrets so the build does not ship Google test ad units.',
+    );
+  }
+};
+
+// Runs when Expo loads this config (import time). Kept at module scope so the
+// `export default` object below stays untouched.
+assertProductionAdUnitsConfigured();
+
 export default () => ({
   expo: {
     name: 'LoanBee',
@@ -88,6 +121,17 @@ export default () => ({
       ],
       '@react-native-community/datetimepicker',
       'expo-web-browser',
+      // Native iOS App Tracking Transparency prompt. AdProvider calls
+      // requestTrackingPermissionsAsync before initialising ads so AdMob/UMP can read
+      // the IDFA when allowed. The config writes NSUserTrackingUsageDescription, so the
+      // ATT flow is self-contained regardless of the AdMob plugin's own description.
+      [
+        'expo-tracking-transparency',
+        {
+          userTrackingPermission:
+            'This identifier will be used to deliver personalised ads to you.',
+        },
+      ],
       [
         'react-native-google-mobile-ads',
         {

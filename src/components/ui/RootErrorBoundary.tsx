@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import type { ErrorBoundaryProps } from 'expo-router';
 import i18n from '@/i18n';
 import { colours, spacing } from '@/theme';
+import { recordCrash } from '@/diagnostics/crashLog';
 import { AppText } from './AppText';
 import { Button } from './Button';
 
@@ -11,7 +12,12 @@ import { Button } from './Button';
 // provider-independent: plain View (no safe-area context), the i18n singleton
 // directly (not the react-i18next hook), and defaultValue fallbacks so a missing
 // translation can never make the recovery screen itself throw.
-export function ErrorBoundary({ retry }: ErrorBoundaryProps) {
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  // Persist the render error for on-device inspection (no third-party logging).
+  React.useEffect(() => {
+    recordCrash(error, 'render');
+  }, [error]);
+
   return (
     <View style={styles.container}>
       <AppText variant="title1" style={styles.title}>

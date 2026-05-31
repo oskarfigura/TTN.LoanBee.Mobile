@@ -3,6 +3,9 @@ import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-nat
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as WebBrowser from 'expo-web-browser';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+import { File, Paths } from 'expo-file-system';
 import Constants from 'expo-constants';
 import { useLocale } from '@/hooks/useLocale';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
@@ -12,6 +15,12 @@ import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { savedLoansStorage } from '@/storage/savedLoans';
+import {
+  buildSavedLoansBackup,
+  DataTransferError,
+  parseSavedLoansBackup,
+} from '@/storage/dataTransfer';
+import { clearLastCrash, getLastCrash } from '@/diagnostics/crashLog';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -28,6 +37,7 @@ export default function SettingsScreen() {
   const version = Constants.expoConfig?.version ?? '1.0.0';
   const openedFromDashboard = params.fromDashboard === '1';
   const [devActionCount, setDevActionCount] = useState(0);
+  const [isTransferringData, setIsTransferringData] = useState(false);
 
   const loadVisualQaData = async () => {
     if (!__DEV__) return;
@@ -63,6 +73,104 @@ export default function SettingsScreen() {
     savedLoansStorage.clear();
     setDevActionCount(count => count + 1);
     Alert.alert(t('settings.devDataClearedTitle'), t('settings.devDataClearedMessage'));
+  };
+
+  const handleExportData = async () => {
+    if (isTransferringData) return;
+    if (savedLoansStorage.getAll().length === 0) {
+      Alert.alert(t('settings.dataExportEmptyTitle'), t('settings.dataExportEmptyMessage'));
+      return;
+    }
+    setIsTransferringData(true);
+    try {
+      const json = buildSavedLoansBackup();
+      const fileName = `loanbee-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const file = new File(Paths.cache, fileName);
+      file.create({ intermediates: true, overwrite: true });
+      file.write(json);
+
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert(t('settings.dataExportErrorTitle'), t('settings.dataExportErrorMessage'));
+        return;
+      }
+      await Sharing.shareAsync(file.uri, {
+        mimeType: 'application/json',
+        UTI: 'public.json',
+        dialogTitle: t('settings.dataExport'),
+      });
+    } catch {
+      Alert.alert(t('settings.dataExportErrorTitle'), t('settings.dataExportErrorMessage'));
+    } finally {
+      setIsTransferringData(false);
+    }
+  };
+
+  const applyImport = (raw: string) => {
+    let loans;
+    try {
+      loans = parseSavedLoansBackup(raw);
+    } catch (error) {
+      const code = error instanceof DataTransferError ? error.code : 'invalidShape';
+      Alert.alert(t('settings.dataImportErrorTitle'), t(`settings.dataImportError_${code}`));
+      return;
+    }
+    Alert.alert(
+      t('settings.dataImportConfirmTitle'),
+      t('settings.dataImportConfirmMessage', { count: loans.length }),
+      [
+        { text: t('common.close'), style: 'cancel' },
+        {
+          text: t('settings.dataImportConfirm'),
+          style: 'destructive',
+          onPress: () => {
+            savedLoansStorage.importAll(loans);
+            setDevActionCount(count => count + 1);
+            Alert.alert(
+              t('settings.dataImportSuccessTitle'),
+              t('settings.dataImportSuccessMessage', { count: loans.length }),
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  const handleImportData = async () => {
+    if (isTransferringData) return;
+    setIsTransferringData(true);
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const raw = await new File(result.assets[0].uri).text();
+      applyImport(raw);
+    } catch {
+      Alert.alert(t('settings.dataImportErrorTitle'), t('settings.dataImportError_invalidShape'));
+    } finally {
+      setIsTransferringData(false);
+    }
+  };
+
+  const viewLastCrash = () => {
+    const crash = getLastCrash();
+    if (!crash) {
+      Alert.alert(t('settings.devCrashTitle'), t('settings.devCrashNone'));
+      return;
+    }
+    const detail = `${crash.timestamp}\n[${crash.context}${crash.fatal ? ', fatal' : ''}]\n\n${crash.message}`;
+    Alert.alert(t('settings.devCrashTitle'), detail, [
+      {
+        text: t('settings.devCrashClear'),
+        style: 'destructive',
+        onPress: () => {
+          clearLastCrash();
+          setDevActionCount(count => count + 1);
+        },
+      },
+      { text: t('common.close') },
+    ]);
   };
 
   return (
@@ -116,6 +224,32 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </Card>
 
+        <Card style={styles.section} padding={layout.cardPadding}>
+          <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>
+            {t('settings.dataTitle')}
+          </AppText>
+          <AppText variant="bodySm" tone="muted" style={styles.devHelp}>
+            {t('settings.dataHelp')}
+          </AppText>
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={handleExportData}
+            disabled={isTransferringData}
+          >
+            <AppText variant="bodyMd" tone="accent">{t('settings.dataExport')}</AppText>
+            <AppText variant="title2" tone="muted">›</AppText>
+          </TouchableOpacity>
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.linkRow}
+            onPress={handleImportData}
+            disabled={isTransferringData}
+          >
+            <AppText variant="bodyMd" tone="accent">{t('settings.dataImport')}</AppText>
+            <AppText variant="title2" tone="muted">›</AppText>
+          </TouchableOpacity>
+        </Card>
+
         {__DEV__ ? (
           <Card style={styles.section} variant="accent" padding={layout.cardPadding}>
             <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>
@@ -137,6 +271,14 @@ export default function SettingsScreen() {
               onPress={clearSavedLoans}
             >
               <AppText variant="bodyMd" tone="accent">{t('settings.devDataClear')}</AppText>
+              <AppText variant="title2" tone="muted">›</AppText>
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.linkRow}
+              onPress={viewLastCrash}
+            >
+              <AppText variant="bodyMd" tone="accent">{t('settings.devCrashView')}</AppText>
               <AppText variant="title2" tone="muted">›</AppText>
             </TouchableOpacity>
             {devActionCount > 0 ? (
