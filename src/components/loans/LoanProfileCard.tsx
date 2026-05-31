@@ -35,8 +35,14 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
 
   if (isDraft || !insight) {
+    const draftLabel = `${loan.nickname.trim() || t('journey.draftUntitled')}. ${t('saved.draftA11y')}`;
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={draftLabel}
+      >
         <Card padding={0} style={styles.card}>
           <View style={[styles.inner, styles.draftInner]}>
             <View style={styles.identity}>
@@ -73,10 +79,44 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const supportingMetrics = [monthlyPayment, interestRate, payoffDate]
     .filter((metric): metric is LoanInsightMetric => Boolean(metric))
     .slice(0, 3);
+  // Overpayment savings are already gated on "is the user overpaying" inside the
+  // summary builder: loans expose a formatted `savingsAmount`, mortgages surface an
+  // `estimatedSavings` metric. Either presence means we should show the badge.
+  const overpaymentSavings = summary.progress?.savingsAmount
+    ?? summary.progress?.metrics.find(metric => metric.labelKey === 'mortgage.estimatedSavings')?.value;
   const startedDate = formatFriendlyDate(loan.formSnapshot.startDate, i18n.language);
+  // Without this the card (an accessible group) reads every child string as one
+  // run-on announcement. Build a concise spoken summary of the key facts instead.
+  const accessibilityLabel = [
+    loan.nickname,
+    t(`saved.category.${loan.category}`),
+    `${t(primaryMetric.labelKey)}: ${primaryMetric.value}`,
+    summary.progress
+      ? t('saved.balancePaidWithPercent', { percent: Math.round((summary.progress.value ?? 0) * 100) })
+      : undefined,
+    overpaymentSavings ? t('saved.savedInterestBadge', { amount: overpaymentSavings }) : undefined,
+    loan.pinnedToDashboard ? t('saved.pinnedA11y') : undefined,
+  ].filter(Boolean).join('. ');
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      // The card is an accessible group, so the nested pin button isn't reachable
+      // on its own. Expose the toggle as a rotor action so screen-reader users can
+      // still pin/unpin without a focusable inner control.
+      accessibilityActions={[{
+        name: 'togglePin',
+        label: loan.pinnedToDashboard ? t('mortgage.unpinHint') : t('mortgage.pinToDashboard'),
+      }]}
+      onAccessibilityAction={event => {
+        if (event.nativeEvent.actionName === 'togglePin') {
+          onTogglePinned();
+        }
+      }}
+    >
       <Card padding={0} style={styles.card}>
         <View style={styles.inner}>
           <View style={styles.header}>
@@ -126,9 +166,6 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
                 {primaryMetric.value}
               </AppText>
             </View>
-            <View style={styles.detailsCue}>
-              <ChevronRightIcon color={colours.primary} size={18} />
-            </View>
           </View>
 
           {summary.progress ? (
@@ -152,9 +189,13 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
             <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.footerMeta}>
               {t('saved.startedOn', { date: startedDate })}
             </AppText>
-            <AppText variant="helper" tone="accent" numberOfLines={1}>
-              {t('saved.view')}
-            </AppText>
+            {overpaymentSavings ? (
+              <View style={styles.savingsBadge}>
+                <AppText variant="labelSm" tone="success" numberOfLines={1} adjustsFontSizeToFit>
+                  {t('saved.savedInterestBadge', { amount: overpaymentSavings })}
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </View>
       </Card>
@@ -299,5 +340,14 @@ const styles = StyleSheet.create({
   footerMeta: {
     flex: 1,
     minWidth: 0,
+  },
+  savingsBadge: {
+    flexShrink: 1,
+    borderRadius: radii.chip,
+    borderWidth: 1,
+    borderColor: colours.successBorder,
+    backgroundColor: colours.successSurface,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xxxs,
   },
 });

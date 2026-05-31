@@ -43,6 +43,11 @@ export default function SavedScreen() {
       : loans;
 
     return [...filtered].sort((a, b) => {
+      // Pinned loans float to the top so the list order matches the prominence the
+      // pin implies; within each group fall back to most-recently-updated first.
+      if (a.pinnedToDashboard !== b.pinnedToDashboard) {
+        return a.pinnedToDashboard ? -1 : 1;
+      }
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
     });
   }, [loans, query, t]);
