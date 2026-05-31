@@ -89,15 +89,21 @@ export default function SettingsScreen() {
       file.create({ intermediates: true, overwrite: true });
       file.write(json);
 
-      if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert(t('settings.dataExportErrorTitle'), t('settings.dataExportErrorMessage'));
-        return;
+      try {
+        if (!(await Sharing.isAvailableAsync())) {
+          Alert.alert(t('settings.dataExportErrorTitle'), t('settings.dataExportErrorMessage'));
+          return;
+        }
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'application/json',
+          UTI: 'public.json',
+          dialogTitle: t('settings.dataExport'),
+        });
+      } finally {
+        // The backup lives in the OS-managed cache; remove it once shared so copies
+        // of the user's loan data don't linger on disk.
+        try { file.delete(); } catch { /* best-effort cleanup */ }
       }
-      await Sharing.shareAsync(file.uri, {
-        mimeType: 'application/json',
-        UTI: 'public.json',
-        dialogTitle: t('settings.dataExport'),
-      });
     } catch {
       Alert.alert(t('settings.dataExportErrorTitle'), t('settings.dataExportErrorMessage'));
     } finally {
@@ -123,11 +129,10 @@ export default function SettingsScreen() {
           text: t('settings.dataImportConfirm'),
           style: 'destructive',
           onPress: () => {
-            savedLoansStorage.importAll(loans);
-            setDevActionCount(count => count + 1);
+            const imported = savedLoansStorage.importAll(loans);
             Alert.alert(
               t('settings.dataImportSuccessTitle'),
-              t('settings.dataImportSuccessMessage', { count: loans.length }),
+              t('settings.dataImportSuccessMessage', { count: imported.length }),
             );
           },
         },
