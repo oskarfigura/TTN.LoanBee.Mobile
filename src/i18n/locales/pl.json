@@ -93,6 +93,8 @@
     "overpaymentSavings": "Oszczędności z Nadpłat",
     "savedInInterest": "zaoszczędzono odsetek dzięki nadpłatom",
     "savedInterestBadge": "Zaoszczędzono {{amount}} odsetek",
+    "pinnedA11y": "Przypięto do panelu",
+    "draftA11y": "Wersja robocza, dotknij, aby dokończyć konfigurację",
     "loanProgress": "Postęp Spłaty",
     "startedOn": "Rozpoczęto {{date}}",
     "balancePaidWithPercent": "Spłacone saldo {{percent}}%",

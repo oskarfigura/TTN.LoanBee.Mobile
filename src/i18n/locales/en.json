@@ -93,6 +93,8 @@
     "overpaymentSavings": "Overpayment Savings",
     "savedInInterest": "saved in interest by overpaying",
     "savedInterestBadge": "Saved {{amount}} interest",
+    "pinnedA11y": "Pinned to dashboard",
+    "draftA11y": "Draft, tap to resume setup",
     "loanProgress": "Loan Progress",
     "startedOn": "Started {{date}}",
     "balancePaidWithPercent": "Balance paid {{percent}}%",

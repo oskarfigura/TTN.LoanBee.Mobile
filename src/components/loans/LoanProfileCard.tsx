@@ -35,8 +35,14 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
 
   if (isDraft || !insight) {
+    const draftLabel = `${loan.nickname.trim() || t('journey.draftUntitled')}. ${t('saved.draftA11y')}`;
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={draftLabel}
+      >
         <Card padding={0} style={styles.card}>
           <View style={[styles.inner, styles.draftInner]}>
             <View style={styles.identity}>
@@ -79,9 +85,26 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const overpaymentSavings = summary.progress?.savingsAmount
     ?? summary.progress?.metrics.find(metric => metric.labelKey === 'mortgage.estimatedSavings')?.value;
   const startedDate = formatFriendlyDate(loan.formSnapshot.startDate, i18n.language);
+  // Without this the card (an accessible group) reads every child string as one
+  // run-on announcement. Build a concise spoken summary of the key facts instead.
+  const accessibilityLabel = [
+    loan.nickname,
+    t(`saved.category.${loan.category}`),
+    `${t(primaryMetric.labelKey)}: ${primaryMetric.value}`,
+    summary.progress
+      ? t('saved.balancePaidWithPercent', { percent: Math.round((summary.progress.value ?? 0) * 100) })
+      : undefined,
+    overpaymentSavings ? t('saved.savedInterestBadge', { amount: overpaymentSavings }) : undefined,
+    loan.pinnedToDashboard ? t('saved.pinnedA11y') : undefined,
+  ].filter(Boolean).join('. ');
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} accessibilityRole="button">
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
       <Card padding={0} style={styles.card}>
         <View style={styles.inner}>
           <View style={styles.header}>
