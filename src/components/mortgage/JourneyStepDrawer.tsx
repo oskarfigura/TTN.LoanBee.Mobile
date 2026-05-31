@@ -23,6 +23,7 @@ import {
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
+import { JourneyCoachPanel } from '@/components/mortgage/JourneyCoachPanel';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { buildMortgageProjection } from '@/mortgage/projection';
@@ -164,16 +165,23 @@ export const JourneyStepDrawer = ({
     }
   };
 
+  // Deal questions read in present tense for the current/in-progress deal and
+  // past tense once the deal is marked completed. A freshly seeded deal is a
+  // draft, so a current mortgage stays present throughout. i18next falls back to
+  // the base key when a `_present`/`_past` variant isn't defined.
+  const dealStatus = step.dealId ? loan.deals.find(d => d.id === step.dealId)?.status : undefined;
+  const tense = dealStatus === 'completed' ? 'past' : 'present';
+
   const title = step.kind === 'intro'
     ? t('journey.introTitle')
     : step.kind === 'review'
       ? t('journey.review.title')
-      : t(`journey.q.${step.kind}.title`, { number: dealNumber });
+      : t(`journey.q.${step.kind}.title`, { number: dealNumber, context: tense });
   const helper = step.kind === 'intro'
     ? t('journey.introBody')
     : step.kind === 'review'
       ? t('journey.review.helper')
-      : t(`journey.q.${step.kind}.helper`, { number: dealNumber });
+      : t(`journey.q.${step.kind}.helper`, { number: dealNumber, context: tense });
 
   const sectionLabel = step.group === 'loan'
     ? t('journey.sectionLoan')
@@ -348,6 +356,7 @@ export const JourneyStepDrawer = ({
         style={styles.sheetWrap}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        <JourneyCoachPanel step={step} loan={loan} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
           <ScrollView

@@ -19,6 +19,7 @@ import {
 } from '@/mortgage/journey/steps';
 import { applyStep, publishJourneyLoan } from '@/mortgage/journey/reducers';
 import { summariseDealChainChanges } from '@/mortgage/journey/chainDiff';
+import { getChronologicalDeals, getLaterDealIds } from '@/mortgage/tracker';
 import {
   clearJourneyCursor,
   getJourneyCursor,
@@ -66,7 +67,13 @@ export default function MortgageJourneyScreen() {
     if (!step) return;
 
     const nextLoan = applyStep(loan, step, answer);
-    const changes = summariseDealChainChanges(loan, nextLoan);
+    // Only deals after the one being edited (the step's deal, or the first deal
+    // for loan-level edits) count as a downstream cascade. Without this, editing
+    // the first/only deal — which recomputes its own payment — would surface a
+    // spurious "later deals updated" confirmation.
+    const anchorId = step.dealId ?? getChronologicalDeals(nextLoan)[0]?.id;
+    const laterIds = anchorId ? new Set(getLaterDealIds(nextLoan, anchorId)) : undefined;
+    const changes = summariseDealChainChanges(loan, nextLoan, laterIds);
     const next = getNextStep(nextLoan, currentStepId);
     const nextStepId = next ? next.id : currentStepId;
 

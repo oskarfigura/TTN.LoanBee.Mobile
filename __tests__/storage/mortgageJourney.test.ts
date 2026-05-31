@@ -13,7 +13,7 @@ import {
 import { summariseDealChainChanges } from '../../src/mortgage/journey/chainDiff';
 import { JourneyAnswer, JourneyStep } from '../../src/mortgage/journey/types';
 import { buildMortgageProjection } from '../../src/mortgage/projection';
-import { getChronologicalDeals } from '../../src/mortgage/tracker';
+import { getChronologicalDeals, getLaterDealIds } from '../../src/mortgage/tracker';
 import { LoanGroup } from '../../src/types/SavedLoan';
 
 // Per-deal scripted answers: index 0 is an ended deal with overpayments + a
@@ -46,6 +46,37 @@ const provideAnswer = (loan: LoanGroup, step: JourneyStep): JourneyAnswer => {
     case 'deal.fees': return { type: 'number', value: 0 };
     default: return { type: 'none' };
   }
+};
+
+// Stops once the loan basics are in and the first deal has been seeded.
+const driveToFirstDeal = (): LoanGroup => {
+  let loan = createMortgageHistoryDraft('GBP');
+  const order = ['loan.currency', 'loan.nickname', 'loan.lender', 'loan.openingBalance', 'loan.startDate', 'loan.totalTerm'];
+  order.forEach(id => {
+    const step = findStep(loan, id)!;
+    loan = applyStep(loan, step, provideAnswer(loan, step));
+  });
+  return loan;
+};
+
+// Drives a single current (never-ended) mortgage to the review step, recording
+// whether any completion question was ever presented along the way.
+const driveCurrentOnly = (): { loan: LoanGroup; sawCompletionStep: boolean } => {
+  let loan = createMortgageHistoryDraft('GBP');
+  let step: JourneyStep | undefined = buildJourneySteps(loan)[0];
+  let sawCompletionStep = false;
+
+  for (let guard = 0; step && guard < 200; guard += 1) {
+    if (step.kind === 'deal.closingBalance' || step.kind === 'deal.fees') sawCompletionStep = true;
+    const answer: JourneyAnswer = step.kind === 'deal.outcome'
+      ? { type: 'gate', value: 'ongoing' }
+      : provideAnswer(loan, step);
+    loan = applyStep(loan, step, answer);
+    if (step.kind === 'review') break;
+    step = getNextStep(loan, step.id);
+  }
+
+  return { loan, sawCompletionStep };
 };
 
 const driveJourney = (): LoanGroup => {
@@ -157,5 +188,47 @@ describe('waterfall edit review', () => {
     const changes = summariseDealChainChanges(before, after);
 
     expect(changes.some(change => change.dealId === deals[1].id)).toBe(false);
+  });
+
+  it('reports no later-deal changes when the first/only deal is edited', () => {
+    // Reproduces the spurious "Later deals updated" prompt: editing the only
+    // deal recomputes its own payment, so the unfiltered diff is non-empty…
+    const before = driveToFirstDeal();
+    const firstDeal = getChronologicalDeals(before)[0];
+    const rateStep = findStep(before, `deal:${firstDeal.id}:rate`)!;
+
+    const after = applyStep(before, rateStep, { type: 'number', value: 3.5 });
+    expect(summariseDealChainChanges(before, after).length).toBeGreaterThan(0);
+
+    // …but scoping to deals after the edited one (as the screen now does) yields
+    // nothing, so no confirmation dialog fires.
+    const laterIds = new Set(getLaterDealIds(after, firstDeal.id));
+    expect(laterIds.size).toBe(0);
+    expect(summariseDealChainChanges(before, after, laterIds)).toEqual([]);
+  });
+
+  it('still surfaces a genuine later-deal cascade through the later-id filter', () => {
+    const before = driveJourney();
+    const deals = getChronologicalDeals(before);
+    const closingStep = findStep(before, `deal:${deals[0].id}:closingBalance`)!;
+    const newClosing = deals[0].completion!.closingBalance - 10000;
+
+    const after = applyStep(before, closingStep, { type: 'number', value: newClosing });
+    const laterIds = new Set(getLaterDealIds(after, deals[0].id));
+    const changes = summariseDealChainChanges(before, after, laterIds);
+
+    expect(changes.some(change => change.dealId === deals[1].id)).toBe(true);
+  });
+});
+
+describe('current-only mortgage', () => {
+  it('never presents closing/fees and ends as a single active deal', () => {
+    const { loan, sawCompletionStep } = driveCurrentOnly();
+    const deals = getChronologicalDeals(loan);
+
+    expect(sawCompletionStep).toBe(false);
+    expect(deals).toHaveLength(1);
+    expect(deals[0].status).toBe('active');
+    expect(deals[0].completion).toBeUndefined();
   });
 });

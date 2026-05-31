@@ -26,6 +26,11 @@ export const buildJourneySteps = (loan: LoanGroup): JourneyStep[] => {
 
   deals.forEach((deal, index) => {
     const base = { dealId: deal.id, dealIndex: index, group: 'deal' as const };
+    // The outcome gate sits after every attribute and activity question so the
+    // closing-balance estimate (frozen when a deal is marked "ended") already
+    // reflects the overpayments/missed payments entered above. Only an "ended"
+    // deal goes on to closing balance + fees, so someone tracking just their
+    // current mortgage never sees completion questions.
     steps.push(
       { ...base, id: dealStepId(deal.id, 'rate'), kind: 'deal.rate', inputType: 'percent' },
       { ...base, id: dealStepId(deal.id, 'duration'), kind: 'deal.duration', inputType: 'duration' },

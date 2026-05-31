@@ -694,9 +694,36 @@
     "sectionLoan": "Twój kredyt",
     "sectionDeal": "Oferta {{number}}",
     "sectionReview": "Podsumowanie",
-    "introTitle": "Odtwórzmy historię Twojego kredytu",
-    "introBody": "Odpowiedz na kilka prostych pytań o każdą ofertę, jaką miałeś. Obliczymy salda, odsetki i koszt kredytu. Możesz zapisać i wrócić w dowolnej chwili.",
+    "introTitle": "Skonfigurujmy Twój kredyt",
+    "introBody": "Odpowiedz na kilka prostych pytań o swoją bieżącą ofertę — i o wcześniejsze oferty, jeśli chcesz pełny obraz. Obliczymy salda, odsetki i koszt kredytu. Możesz zapisać i wrócić w dowolnej chwili.",
     "introCta": "Zaczynamy",
+    "coach": {
+      "summary": {
+        "borrowed": "Pożyczono",
+        "currentDeal": "Bieżąca oferta",
+        "balanceNow": "Saldo teraz",
+        "interestSoFar": "Odsetki do tej pory"
+      },
+      "loan": {
+        "currency": "Wybierz walutę kredytu — w niej pokażemy wszystkie kwoty.",
+        "nickname": "Nazwa, która ułatwi rozpoznanie tego kredytu na liście.",
+        "lender": "Opcjonalnie — przydatne, jeśli śledzisz więcej niż jeden kredyt.",
+        "openingBalance": "Znajdziesz to w pierwotnej umowie kredytu lub na pierwszym wyciągu.",
+        "startDate": "Data rozpoczęcia Twojej pierwszej oferty — jest w umowie kredytu.",
+        "totalTerm": "Na ile lat zaplanowany był cały kredyt, np. 25 lat."
+      },
+      "deal": {
+        "rate": "Stałe lub zmienne oprocentowanie tej oferty — sprawdź dokumenty oferty.",
+        "duration": "Jak długo trwa to oprocentowanie, np. 2- lub 5-letni okres stały.",
+        "repaymentType": "Kapitałowo-odsetkowa spłaca saldo; tylko odsetki pokrywa same odsetki.",
+        "outcome": "Śledzisz bieżący kredyt? Wybierz Bieżąca — pominiemy pytania o zakończenie.",
+        "regularOverpayment": "Tylko jeśli co miesiąc płacisz extra ponad zwykłą ratę.",
+        "lumpOverpayments": "Dodaj jednorazowe kwoty, które spłaciłeś — każda obniża odsetki.",
+        "missedPayments": "Dodaj miesiące, w których rata została pominięta lub zawieszona, jeśli się zdarzyły.",
+        "closingBalance": "Saldo pokazane przez bank na zakończenie oferty — z wyciągu.",
+        "fees": "Opłata za produkt lub przygotowanie doliczona do salda po zakończeniu oferty."
+      }
+    },
     "recalc": {
       "title": "Zaktualizowano kolejne oferty",
       "help": "Zmiana tej oferty zaktualizowała saldo początkowe kolejnych ofert. Sprawdź i potwierdź.",
@@ -744,36 +771,48 @@
       },
       "deal": {
         "rate": {
-          "title": "Jakie było oprocentowanie tej oferty?",
-          "helper": "Stałe oprocentowanie naliczane przez bank. Służy do obliczenia zapłaconych odsetek."
+          "title_present": "Jakie jest oprocentowanie tej oferty?",
+          "title_past": "Jakie było oprocentowanie tej oferty?",
+          "helper_present": "Stałe lub zmienne oprocentowanie naliczane przez bank. Służy do obliczenia odsetek.",
+          "helper_past": "Stałe oprocentowanie naliczane przez bank. Służy do obliczenia zapłaconych odsetek."
         },
         "duration": {
-          "title": "Jak długo trwała ta oferta?",
-          "helper": "Długość okresu o stałym oprocentowaniu, zanim refinansowałeś lub oferta się zakończyła."
+          "title_present": "Jak długo trwa ta oferta?",
+          "title_past": "Jak długo trwała ta oferta?",
+          "helper_present": "Długość okresu o stałym oprocentowaniu, zanim się zakończy lub zrefinansujesz.",
+          "helper_past": "Długość okresu o stałym oprocentowaniu, zanim refinansowałeś lub oferta się zakończyła."
         },
         "repaymentType": {
-          "title": "Jaki to był typ oferty?",
-          "helper": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki."
+          "title_present": "Jaki to jest typ oferty?",
+          "title_past": "Jaki to był typ oferty?",
+          "helper_present": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki.",
+          "helper_past": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki."
         },
         "regularOverpayment": {
-          "title": "Czy co miesiąc nadpłacałeś stałą kwotę?",
-          "helper": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste."
+          "title_present": "Czy co miesiąc nadpłacasz stałą kwotę?",
+          "title_past": "Czy co miesiąc nadpłacałeś stałą kwotę?",
+          "helper_present": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste.",
+          "helper_past": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste."
         },
         "lumpOverpayments": {
-          "title": "Czy były jednorazowe nadpłaty w tej ofercie?",
-          "helper": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
+          "title_present": "Czy są jednorazowe nadpłaty w tej ofercie?",
+          "title_past": "Czy były jednorazowe nadpłaty w tej ofercie?",
+          "helper_present": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
+          "helper_past": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
           "add": "Dodaj nadpłatę"
         },
         "missedPayments": {
-          "title": "Czy były nieopłacone raty w tej ofercie?",
-          "helper": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
+          "title_present": "Czy są nieopłacone raty w tej ofercie?",
+          "title_past": "Czy były nieopłacone raty w tej ofercie?",
+          "helper_present": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
+          "helper_past": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
           "add": "Dodaj nieopłaconą ratę",
           "rowLabel": "Nieopłacona rata {{number}}"
         },
         "outcome": {
-          "title": "Czy to nadal Twoja bieżąca oferta?",
-          "helper": "Wybierz „Nadal trwa”, jeśli to oferta, na której jesteś dziś, lub „Zakończyła się”, jeśli przeszedłeś na inną.",
-          "ongoing": "Nadal trwa",
+          "title": "Czy nadal jesteś na tej ofercie?",
+          "helper": "Wybierz „Bieżąca” dla oferty, na której jesteś teraz, lub „Zakończyła się” dla wcześniejszej oferty, z której już przeszedłeś.",
+          "ongoing": "Bieżąca",
           "ended": "Zakończyła się"
         },
         "closingBalance": {
