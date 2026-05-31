@@ -255,6 +255,18 @@ export const savedLoansStorage = {
     cachedLoans = null;
   },
 
+  // Replaces all saved loans with an imported set (used by data import). The raw
+  // records are persisted and then re-read through loadAll(), which runs the same
+  // validation/normalisation/migration as any other load — so an older export is
+  // upgraded to the current schema automatically. Returns the normalised result.
+  importAll(loans: unknown[]): LoanGroup[] {
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(loans));
+    storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);
+    cachedRaw = undefined;
+    cachedLoans = null;
+    return loadAll();
+  },
+
   getMaxDashboardOrder(): number {
     return loadAll().reduce((max, loan) => Math.max(max, loan.dashboardOrder ?? 0), 0);
   },
