@@ -16,6 +16,8 @@ import { Card } from '@/components/ui/Card';
 import { FieldLabel } from '@/components/ui/FormPrimitives';
 import { colours, radii, spacing } from '@/theme';
 
+export type ImpactRow = { label: string; value: string };
+
 export const formatOverpaymentDuration = (totalMonths: number, yearsLabel: string, monthsLabel: string): string => {
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
@@ -96,7 +98,7 @@ export const OverpaymentImpactCard = ({
   rows,
 }: {
   title: string;
-  rows: Array<{ label: string; value: string }>;
+  rows: ImpactRow[];
 }) => (
   <Card style={styles.impactCard}>
     <AppText variant="labelSm" tone="muted">

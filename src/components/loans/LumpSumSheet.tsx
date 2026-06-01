@@ -1,31 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { computeLoanOverpayments } from '@/loans/loanOverpaymentCalc';
-import { LoanFormSnapshot, MortgageEvent } from '@/types/SavedLoan';
-import { formatCurrency } from '@/currency/format';
-import { CurrencyCode } from '@/currency/currencies';
+import { MortgageEvent } from '@/types/SavedLoan';
 import { formatIsoDate } from '@/utils/date';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Button } from '@/components/ui/Button';
 import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
 import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
 import {
+  ImpactRow,
   OverpaymentFieldGroup,
   OverpaymentImpactCard,
   OverpaymentSheetActions,
   OverpaymentSheetModal,
-  formatOverpaymentDuration,
 } from '@/components/loans/OverpaymentSheetPrimitives';
 import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
   event: MortgageEvent | null;
-  form: LoanFormSnapshot;
-  monthlyOverpayment: number;
   minDate: Date;
   maxDate: Date;
-  currency: CurrencyCode;
+  placeholder?: string;
+  /** Returns the impact rows for a debounced amount/date, or null to hide the card. */
+  computeImpactRows: (amount: number, date: string) => ImpactRow[] | null;
   onSave: (date: string, amount: number) => void;
   onDelete: (eventId: string) => void;
   onClose: () => void;
@@ -39,11 +37,10 @@ const defaultDate = (minDate: Date): string => {
 export const LumpSumSheet = ({
   visible,
   event,
-  form,
-  monthlyOverpayment,
   minDate,
   maxDate,
-  currency,
+  placeholder = '0.00',
+  computeImpactRows,
   onSave,
   onDelete,
   onClose,
@@ -51,54 +48,30 @@ export const LumpSumSheet = ({
   const { t } = useTranslation();
   const isEditing = event !== null;
   const datePickerRef = useRef<DatePickerFieldHandle>(null);
+  const minDateRef = useRef(minDate);
+  minDateRef.current = minDate;
 
   const [date, setDate] = useState(() => event?.date ?? defaultDate(minDate));
   const [amount, setAmount] = useState(event?.amount ? String(event.amount) : '');
-
-  const amountDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dateDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedAmount, setDebouncedAmount] = useState(event?.amount ?? 0);
-  const [debouncedDate, setDebouncedDate] = useState(date);
+  const debouncedDate = useDebouncedValue(date, 200);
+  const debouncedText = useDebouncedValue(amount, 400);
 
   useEffect(() => {
     if (visible) {
-      setDate(event?.date ?? defaultDate(minDate));
+      setDate(event?.date ?? defaultDate(minDateRef.current));
       setAmount(event?.amount ? String(event.amount) : '');
-      const initAmount = event?.amount ?? 0;
-      setDebouncedAmount(initAmount);
-      setDebouncedDate(event?.date ?? defaultDate(minDate));
     }
-  }, [visible, event, minDate]);
-
-  const handleAmountChange = (text: string) => {
-    setAmount(text);
-    if (amountDebounceRef.current) clearTimeout(amountDebounceRef.current);
-    amountDebounceRef.current = setTimeout(() => {
-      const parsed = validateMoneyText(text, { required: false });
-      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
-    }, 400);
-  };
-
-  const handleDateChange = (value: string) => {
-    setDate(value);
-    if (dateDebounceRef.current) clearTimeout(dateDebounceRef.current);
-    dateDebounceRef.current = setTimeout(() => {
-      setDebouncedDate(value);
-    }, 200);
-  };
+  }, [visible, event]);
 
   const amountValidation = validateMoneyText(amount);
-
-  const impact = useMemo(() => {
-    if (debouncedAmount <= 0) return null;
-    return computeLoanOverpayments(form, monthlyOverpayment, [
-      { date: debouncedDate, amount: debouncedAmount },
-    ]);
-  }, [form, monthlyOverpayment, debouncedAmount, debouncedDate]);
-
-  const yrs = t('results.years');
-  const mo = t('results.months');
   const canSave = amountValidation.isValid;
+
+  const rows = useMemo(() => {
+    const parsed = validateMoneyText(debouncedText, { required: false });
+    const debouncedAmount = parsed.isValid ? parsed.numeric : 0;
+    if (debouncedAmount <= 0) return null;
+    return computeImpactRows(debouncedAmount, debouncedDate);
+  }, [debouncedText, debouncedDate, computeImpactRows]);
 
   const handleDelete = () => {
     if (!event) return;
@@ -151,7 +124,7 @@ export const LumpSumSheet = ({
         ref={datePickerRef}
         label={t('overpayments.lumpSumDate')}
         value={date}
-        onChange={handleDateChange}
+        onChange={setDate}
         hint=""
         minimumDate={minDate}
         maximumDate={maxDate}
@@ -161,8 +134,8 @@ export const LumpSumSheet = ({
         <InputSurface error={Boolean(amountValidation.errorKey)}>
           <AppTextInput
             value={amount}
-            onChangeText={handleAmountChange}
-            placeholder="0.00"
+            onChangeText={setAmount}
+            placeholder={placeholder}
             keyboardType="decimal-pad"
             onFocus={() => datePickerRef.current?.closePicker()}
           />
@@ -170,20 +143,8 @@ export const LumpSumSheet = ({
         <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
-      {impact && impact.interestSaved > 0 ? (
-        <OverpaymentImpactCard
-          title={t('overpayments.lumpSumImpact')}
-          rows={[
-            {
-              label: t('overpayments.interestSaved'),
-              value: formatCurrency(impact.interestSaved, currency),
-            },
-            ...(impact.monthsSaved > 0 ? [{
-              label: t('overpayments.timeSaved'),
-              value: formatOverpaymentDuration(impact.monthsSaved, yrs, mo),
-            }] : []),
-          ]}
-        />
+      {rows && rows.length > 0 ? (
+        <OverpaymentImpactCard title={t('overpayments.lumpSumImpact')} rows={rows} />
       ) : null}
     </OverpaymentSheetModal>
   );

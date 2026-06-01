@@ -18,7 +18,7 @@ import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
-import { CurrencyCode } from '@/currency/currencies';
+import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import { upsertMortgageEvent, removeMortgageEvent } from '@/mortgage/events';
 import { buildDealBalanceArrays, getDealOverpaymentImpact, normaliseDealChain } from '@/mortgage/tracker';
@@ -31,8 +31,9 @@ import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/Chevron
 import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
 import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
 import { PlusIcon } from '@/components/ui/Icons/PlusIcon/PlusIcon';
-import { DealMonthlyOverpaymentSheet } from '@/components/loans/DealMonthlyOverpaymentSheet';
-import { DealLumpSumSheet } from '@/components/loans/DealLumpSumSheet';
+import { MonthlyOverpaymentSheet } from '@/components/loans/MonthlyOverpaymentSheet';
+import { LumpSumSheet } from '@/components/loans/LumpSumSheet';
+import { ImpactRow } from '@/components/loans/OverpaymentSheetPrimitives';
 
 const FullscreenIcon = () => (
   <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -135,6 +136,40 @@ export default function DealOverpaymentsScreen() {
     setEditingEvent(null);
     refresh();
   }, [loan, refresh]);
+
+  const buildDealSavingsRows = useCallback((result: { interestSaved: number; extraPrincipalRepaid: number }): ImpactRow[] | null => {
+    if (result.interestSaved <= 0) return null;
+    const savingsRows: ImpactRow[] = [
+      { label: t('mortgage.dealInterestSavedLabel'), value: formatCurrency(result.interestSaved, currency) },
+    ];
+    if (result.extraPrincipalRepaid > 0) {
+      savingsRows.push({ label: t('mortgage.dealExtraRepaidLabel'), value: formatCurrency(result.extraPrincipalRepaid, currency) });
+    }
+    return savingsRows;
+  }, [currency, t]);
+
+  const computeMonthlyImpactRows = useCallback((amount: number): ImpactRow[] | null => {
+    if (!deal || !loan) return null;
+    const tempDeal: LoanDeal = { ...deal, regularOverpayment: amount };
+    const result = getDealOverpaymentImpact(tempDeal, loan.events);
+    return result.hasOverpayments ? buildDealSavingsRows(result) : null;
+  }, [deal, loan, buildDealSavingsRows]);
+
+  const computeLumpSumImpactRows = useCallback((amount: number, date: string): ImpactRow[] | null => {
+    if (!deal || !loan) return null;
+    const tempEvent: MortgageEvent = {
+      id: editingEvent?.id ?? 'preview',
+      createdAt: '',
+      updatedAt: '',
+      dealId: deal.id,
+      type: 'lumpOverpayment',
+      date,
+      amount,
+    };
+    const tempEvents = [...loan.events.filter(item => item.id !== editingEvent?.id), tempEvent];
+    const result = getDealOverpaymentImpact(deal, tempEvents);
+    return result.hasOverpayments ? buildDealSavingsRows(result) : null;
+  }, [deal, loan, editingEvent, buildDealSavingsRows]);
 
   const openAddLumpSum = () => {
     setEditingEvent(null);
@@ -300,24 +335,25 @@ export default function DealOverpaymentsScreen() {
 
       </ScrollView>
 
-      <DealMonthlyOverpaymentSheet
+      <MonthlyOverpaymentSheet
         visible={monthlySheetVisible}
         current={deal.regularOverpayment}
-        currency={currency}
-        deal={deal}
-        loanEvents={loan.events}
+        title={t('mortgage.dealMonthlyOverpayment')}
+        currencySymbol={CURRENCIES.find(c => c.code === currency)?.symbol ?? '£'}
+        placeholder="150"
+        computeImpactRows={computeMonthlyImpactRows}
         onSave={saveMonthlyOverpayment}
+        onRemove={() => saveMonthlyOverpayment(0)}
         onClose={() => setMonthlySheetVisible(false)}
       />
 
-      <DealLumpSumSheet
+      <LumpSumSheet
         visible={lumpSumSheetVisible}
         event={editingEvent}
-        currency={currency}
         minDate={dealMinDate}
         maxDate={dealMaxDate}
-        deal={deal}
-        loanEvents={loan.events}
+        placeholder="5000"
+        computeImpactRows={computeLumpSumImpactRows}
         onSave={saveLumpSum}
         onDelete={deleteLumpSum}
         onClose={() => {

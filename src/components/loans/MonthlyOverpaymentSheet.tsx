@@ -1,26 +1,26 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
-import { LoanFormSnapshot } from '@/types/SavedLoan';
-import { formatCurrency } from '@/currency/format';
-import { CurrencyCode } from '@/currency/currencies';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { Button } from '@/components/ui/Button';
-import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
 import {
+  ImpactRow,
   OverpaymentFieldGroup,
   OverpaymentImpactCard,
   OverpaymentSheetActions,
   OverpaymentSheetModal,
-  formatOverpaymentDuration,
 } from '@/components/loans/OverpaymentSheetPrimitives';
 import { validateMoneyText } from '@/utils/formValidation';
 
 interface Props {
   visible: boolean;
   current: number;
-  form: LoanFormSnapshot;
-  existingLumpSums: LumpSumEntry[];
-  currency: CurrencyCode;
+  title: string;
+  /** Optional currency symbol rendered as a leading affix on the input. */
+  currencySymbol?: string;
+  placeholder?: string;
+  /** Returns the impact rows for a debounced amount, or null to hide the card. */
+  computeImpactRows: (amount: number) => ImpactRow[] | null;
   onSave: (amount: number) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -29,44 +29,34 @@ interface Props {
 export const MonthlyOverpaymentSheet = ({
   visible,
   current,
-  form,
-  existingLumpSums,
-  currency,
+  title,
+  currencySymbol,
+  placeholder = '0.00',
+  computeImpactRows,
   onSave,
   onRemove,
   onClose,
 }: Props) => {
   const { t } = useTranslation();
   const [value, setValue] = useState(current > 0 ? String(current) : '');
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedAmount, setDebouncedAmount] = useState(current);
+  const debouncedText = useDebouncedValue(value, 400);
 
   useEffect(() => {
     if (visible) {
       setValue(current > 0 ? String(current) : '');
-      setDebouncedAmount(current);
     }
   }, [visible, current]);
-
-  const handleChange = (text: string) => {
-    setValue(text);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      const parsed = validateMoneyText(text, { required: false });
-      setDebouncedAmount(parsed.isValid ? parsed.numeric : 0);
-    }, 400);
-  };
 
   const amountValidation = validateMoneyText(value);
   const amount = amountValidation.numeric;
 
-  const impact = useMemo(() => {
+  const rows = useMemo(() => {
+    const parsed = validateMoneyText(debouncedText, { required: false });
+    const debouncedAmount = parsed.isValid ? parsed.numeric : 0;
     if (debouncedAmount <= 0) return null;
-    return computeLoanOverpayments(form, debouncedAmount, existingLumpSums);
-  }, [form, debouncedAmount, existingLumpSums]);
+    return computeImpactRows(debouncedAmount);
+  }, [debouncedText, computeImpactRows]);
 
-  const yrs = t('results.years');
-  const mo = t('results.months');
   const isUnchanged = amount === current;
   const canSave = amountValidation.isValid && !isUnchanged;
   const canRemove = current > 0;
@@ -74,7 +64,7 @@ export const MonthlyOverpaymentSheet = ({
   return (
     <OverpaymentSheetModal
       visible={visible}
-      title={t('overpayments.monthlySection')}
+      title={title}
       onClose={onClose}
       footer={(
         <OverpaymentSheetActions
@@ -103,10 +93,11 @@ export const MonthlyOverpaymentSheet = ({
     >
       <OverpaymentFieldGroup label={t('overpayments.monthlyAmountLabel')}>
         <InputSurface error={Boolean(amountValidation.errorKey)}>
+          {currencySymbol ? <InputAffix>{currencySymbol}</InputAffix> : null}
           <AppTextInput
             value={value}
-            onChangeText={handleChange}
-            placeholder="0.00"
+            onChangeText={setValue}
+            placeholder={placeholder}
             keyboardType="decimal-pad"
             autoFocus={visible}
           />
@@ -114,20 +105,8 @@ export const MonthlyOverpaymentSheet = ({
         <FieldError message={amountValidation.errorKey ? t(amountValidation.errorKey) : undefined} />
       </OverpaymentFieldGroup>
 
-      {impact && impact.interestSaved > 0 ? (
-        <OverpaymentImpactCard
-          title={t('overpayments.monthlySavings')}
-          rows={[
-            {
-              label: t('overpayments.interestSaved'),
-              value: formatCurrency(impact.interestSaved, currency),
-            },
-            ...(impact.monthsSaved > 0 ? [{
-              label: t('overpayments.timeSaved'),
-              value: formatOverpaymentDuration(impact.monthsSaved, yrs, mo),
-            }] : []),
-          ]}
-        />
+      {rows && rows.length > 0 ? (
+        <OverpaymentImpactCard title={t('overpayments.monthlySavings')} rows={rows} />
       ) : null}
     </OverpaymentSheetModal>
   );

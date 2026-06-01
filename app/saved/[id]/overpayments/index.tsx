@@ -13,7 +13,7 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { formatCurrency } from '@/currency/format';
 import { buildResultSnapshot } from '@/loans/loanGroupFactory';
 import { buildScenarioRemainingArray, computeLoanOverpayments, LumpSumEntry } from '@/loans/loanOverpaymentCalc';
-import { formatOverpaymentDuration } from '@/components/loans/OverpaymentSheetPrimitives';
+import { formatOverpaymentDuration, ImpactRow } from '@/components/loans/OverpaymentSheetPrimitives';
 import { MortgageEvent } from '@/types/SavedLoan';
 import { formatFriendlyDate, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
@@ -236,6 +236,27 @@ export default function OverpaymentsScreen() {
   const yrs = t('results.years');
   const mo = t('results.months');
 
+  const buildSavingsRows = useCallback((result: { interestSaved: number; monthsSaved: number }): ImpactRow[] | null => {
+    if (result.interestSaved <= 0) return null;
+    const savingsRows: ImpactRow[] = [
+      { label: t('overpayments.interestSaved'), value: formatCurrency(result.interestSaved, currency) },
+    ];
+    if (result.monthsSaved > 0) {
+      savingsRows.push({ label: t('overpayments.timeSaved'), value: formatOverpaymentDuration(result.monthsSaved, yrs, mo) });
+    }
+    return savingsRows;
+  }, [currency, t, yrs, mo]);
+
+  const computeMonthlyImpactRows = useCallback((amount: number): ImpactRow[] | null => {
+    if (!form) return null;
+    return buildSavingsRows(computeLoanOverpayments(form, amount, lumpSumEntries));
+  }, [form, lumpSumEntries, buildSavingsRows]);
+
+  const computeLumpSumImpactRows = useCallback((amount: number, date: string): ImpactRow[] | null => {
+    if (!form) return null;
+    return buildSavingsRows(computeLoanOverpayments(form, monthlyOverpayment, [{ date, amount }]));
+  }, [form, monthlyOverpayment, buildSavingsRows]);
+
   if (!loan || !form) {
     return (
       <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -388,9 +409,8 @@ export default function OverpaymentsScreen() {
       <MonthlyOverpaymentSheet
         visible={monthlySheetVisible}
         current={monthlyOverpayment}
-        form={form}
-        existingLumpSums={lumpSumEntries}
-        currency={currency}
+        title={t('overpayments.monthlySection')}
+        computeImpactRows={computeMonthlyImpactRows}
         onSave={handleSaveMonthly}
         onRemove={handleRemoveMonthly}
         onClose={() => setMonthlySheetVisible(false)}
@@ -399,11 +419,9 @@ export default function OverpaymentsScreen() {
       <LumpSumSheet
         visible={lumpSumSheetVisible}
         event={editingEvent}
-        form={form}
-        monthlyOverpayment={monthlyOverpayment}
         minDate={loanMinDate}
         maxDate={loanMaxDate}
-        currency={currency}
+        computeImpactRows={computeLumpSumImpactRows}
         onSave={handleSaveLumpSum}
         onDelete={handleDeleteLumpSum}
         onClose={() => {
