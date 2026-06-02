@@ -322,7 +322,8 @@
     "invalidNumber": "Enter a valid number",
     "invalidInteger": "Enter a whole number of zero or more",
     "monthRange": "Enter months from 0 to 11",
-    "durationTooLong": "Enter a duration no longer than the total mortgage term"
+    "durationTooLong": "Enter a duration no longer than the total mortgage term",
+    "interestMax": "Enter a rate of 100% or less"
   },
   "navigation": {
     "openMenu": "Open menu",
@@ -710,162 +711,37 @@
     "about": "About",
     "settings": "Settings"
   },
-  "journey": {
-    "title": "Track an existing mortgage",
-    "cta": "Track an existing mortgage",
-    "draftBadge": "Draft · resume setup",
-    "draftUntitled": "Untitled mortgage",
-    "saveExit": "Save & exit",
-    "discard": "Discard",
-    "progressLabel": "Step {{current}} of {{total}}",
-    "phaseLabel": "Part {{current}} of {{total}} · {{phase}}",
-    "discardConfirm": {
-      "title": "Discard this mortgage?",
-      "message": "This deletes the setup you've started. This can't be undone.",
-      "cancel": "Keep editing",
-      "confirm": "Discard"
-    },
-    "continue": "Continue",
-    "continueOrSkip": "Continue",
-    "back": "Back",
-    "publish": "Publish mortgage",
-    "saveDraft": "Save draft & exit",
-    "sectionIntro": "Getting started",
-    "sectionLoan": "Your mortgage",
-    "sectionDeal": "Deal {{number}}",
-    "sectionReview": "Review",
-    "introTitle": "Let's set up your mortgage",
-    "introBody": "Answer a few simple questions about your current deal — and any past deals, if you want the full picture. We'll work out the balances, interest and what it's cost you. You can save and come back anytime.",
-    "introCta": "Get started",
-    "coach": {
-      "dealSavingsLabel": "Saved on this deal so far",
-      "summary": {
-        "borrowed": "Borrowed",
-        "currentDeal": "Current deal",
-        "balanceNow": "Balance now",
-        "interestSoFar": "Interest so far"
-      },
-      "loan": {
-        "currency": "Pick the currency your mortgage is in — every amount is shown in it.",
-        "nickname": "Just a friendly name so you can spot this mortgage in your saved list.",
-        "lender": "Optional — useful if you're tracking more than one mortgage.",
-        "openingBalance": "Find this on your original mortgage offer or your first statement.",
-        "startDate": "The date your very first deal began — your offer letter has it.",
-        "totalTerm": "The full length the mortgage was set to run, e.g. 25 years."
-      },
-      "deal": {
-        "rate": "Your fixed or tracker rate for this deal — check your deal paperwork.",
-        "duration": "How long this rate runs, e.g. a 2- or 5-year fix.",
-        "repaymentType": "Repayment chips away at the balance; interest-only just covers interest.",
-        "outcome": "Tracking your current mortgage? Choose Current — we'll skip the closing questions.",
-        "regularOverpayment": "Only if you pay extra every month on top of the normal payment.",
-        "lumpOverpayments": "Add any one-off chunks you paid off — each one lowers the interest.",
-        "missedPayments": "Add any months a payment was missed or paused, if it happened.",
-        "closingBalance": "The balance your lender showed when this deal ended — from your statement.",
-        "fees": "Any product or arrangement fee rolled into the balance when the deal ended."
-      }
-    },
-    "recalc": {
-      "title": "Later deals updated",
-      "help": "Changing this deal updated the opening balance of the deals that follow. Review and confirm.",
-      "cancel": "Cancel",
-      "confirm": "Confirm changes"
-    },
-    "review": {
-      "title": "Review your mortgage",
-      "helper": "Here's how your mortgage history adds up. Publish to start tracking it, or save as a draft to finish later.",
-      "totalCost": "Total paid so far",
-      "totalInterest": "Interest paid",
-      "currentBalance": "Current balance",
-      "savings": "Saved by overpaying",
-      "deals": "{{count}} deal(s)"
-    },
-    "q": {
-      "loan": {
-        "currency": {
-          "title": "Which currency is this mortgage in?",
-          "helper": "We'll show all amounts in this currency."
-        },
-        "nickname": {
-          "title": "What should we call this mortgage?",
-          "helper": "A name to recognise it in your saved list.",
-          "placeholder": "e.g. Family home"
-        },
-        "lender": {
-          "title": "Who's your lender?",
-          "helper": "Optional — handy if you have more than one mortgage.",
-          "placeholder": "e.g. Halifax"
-        },
-        "openingBalance": {
-          "title": "How much did you originally borrow?",
-          "helper": "The amount you owed when the mortgage started. We use this as your starting balance."
-        },
-        "startDate": {
-          "title": "When did the mortgage start?",
-          "helper": "The date your very first deal began.",
-          "fieldLabel": "Mortgage start date"
-        },
-        "totalTerm": {
-          "title": "What's the total mortgage term?",
-          "helper": "How long the whole mortgage was set to run, e.g. 25 years. We use it to work out your payments."
-        }
-      },
-      "deal": {
-        "rate": {
-          "title_present": "What's the interest rate on this deal?",
-          "title_past": "What was the interest rate on this deal?",
-          "helper_present": "The fixed or tracker rate your lender charges. Used to work out your interest.",
-          "helper_past": "The fixed rate your lender charged. Used to work out the interest you paid."
-        },
-        "duration": {
-          "title_present": "How long is this deal?",
-          "title_past": "How long was this deal?",
-          "helper_present": "The length of this fixed-rate period before it ends or you remortgage.",
-          "helper_past": "The length of this fixed-rate period before you remortgaged or it ended."
-        },
-        "repaymentType": {
-          "title_present": "What type of deal is it?",
-          "title_past": "What type of deal was it?",
-          "helper_present": "Repayment pays off the balance over time; interest-only pays just the interest.",
-          "helper_past": "Repayment pays off the balance over time; interest-only pays just the interest."
-        },
-        "regularOverpayment": {
-          "title_present": "Do you overpay a set amount each month?",
-          "title_past": "Did you overpay a set amount each month?",
-          "helper_present": "Optional. Enter your regular monthly overpayment, or leave blank if none.",
-          "helper_past": "Optional. Enter your regular monthly overpayment, or leave blank if none."
-        },
-        "lumpOverpayments": {
-          "title_present": "Any one-off overpayments on this deal?",
-          "title_past": "Any one-off overpayments during this deal?",
-          "helper_present": "Optional. Add lump sums you've paid off the balance, with the date of each.",
-          "helper_past": "Optional. Add lump sums you paid off the balance, with the date of each.",
-          "add": "Add an overpayment"
-        },
-        "missedPayments": {
-          "title_present": "Any missed payments on this deal?",
-          "title_past": "Any missed payments during this deal?",
-          "helper_present": "Optional. Add any months where a payment was missed or paused.",
-          "helper_past": "Optional. Add any months where a payment was missed or paused.",
-          "add": "Add a missed payment",
-          "rowLabel": "Missed payment {{number}}"
-        },
-        "outcome": {
-          "title": "Are you still on this deal?",
-          "helper": "Pick 'Current' for the deal you're on now, 'It ended' for a past deal you moved on from, or 'Paid off' if this deal cleared the mortgage in full.",
-          "ongoing": "Current",
-          "ended": "It ended",
-          "paidOff": "Paid off"
-        },
-        "closingBalance": {
-          "title": "What was the balance when this deal ended?",
-          "helper": "The amount you still owed when this deal finished — check your statement. We've estimated it for you."
-        },
-        "fees": {
-          "title": "Were any fees added to the balance?",
-          "helper": "Optional. Product or arrangement fees added to your mortgage when this deal ended."
-        }
-      }
-    }
+  "track": {
+    "title": "Track your mortgage",
+    "subtitle": "Set it up from where you are today.",
+    "cta": "Track a mortgage",
+    "save": "Start tracking",
+    "sectionToday": "Your mortgage today",
+    "todayHelp": "Enter where your mortgage stands now — grab your latest statement and you're set in a minute.",
+    "nickname": "Nickname",
+    "nicknamePlaceholder": "e.g. Family home",
+    "lender": "Lender",
+    "currency": "Currency",
+    "currentBalance": "Current balance",
+    "currentBalanceHint": "What you owe right now — check your latest statement or banking app.",
+    "rate": "Interest rate",
+    "repaymentType": "Repayment type",
+    "remainingTerm": "Time left to pay off",
+    "remainingTermHint": "Roughly how long until the mortgage is fully repaid.",
+    "sectionDeal": "Current deal",
+    "dealHelp": "Are you on a fixed or intro rate that ends on a set date?",
+    "dealFixed": "Fixed/intro deal",
+    "dealNone": "No set end",
+    "dealEndDate": "Deal ends",
+    "dealEndDateHint": "We'll remind you before it's time to remortgage.",
+    "sectionOverpayments": "Overpayments already made",
+    "overpaymentsHelp": "Optional — adds to your savings story.",
+    "regularOverpayment": "Regular overpayment",
+    "perMonth": "/mo",
+    "lumpOverpayments": "One-off overpayments",
+    "addLumpOverpayment": "Add an overpayment",
+    "summaryTitle": "Your mortgage at a glance",
+    "summaryMonthly": "Monthly payment",
+    "summaryPayoff": "Paid off by"
   }
 }

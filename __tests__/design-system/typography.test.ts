@@ -26,7 +26,9 @@ const walk = (directory: string): string[] => fs.readdirSync(directory, { withFi
   return [absolutePath];
 });
 
-const relativePath = (absolutePath: string) => path.relative(repoRoot, absolutePath);
+// Normalise to forward slashes so the allow-list (declared with `/`) matches on
+// Windows, where path.relative yields backslash-separated paths.
+const relativePath = (absolutePath: string) => path.relative(repoRoot, absolutePath).split(path.sep).join('/');
 
 describe('typography system', () => {
   it('consolidates body and heading roles onto the same loaded Manrope faces', () => {

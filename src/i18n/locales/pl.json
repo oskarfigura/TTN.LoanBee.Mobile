@@ -322,7 +322,8 @@
     "invalidNumber": "Wprowadź prawidłową liczbę",
     "invalidInteger": "Wprowadź liczbę całkowitą równą zero lub większą",
     "monthRange": "Wprowadź liczbę miesięcy od 0 do 11",
-    "durationTooLong": "Wprowadź okres nie dłuższy niż całkowity okres hipoteki"
+    "durationTooLong": "Wprowadź okres nie dłuższy niż całkowity okres hipoteki",
+    "interestMax": "Wpisz oprocentowanie nie większe niż 100%"
   },
   "navigation": {
     "openMenu": "Otwórz menu",
@@ -710,162 +711,37 @@
     "about": "O Aplikacji",
     "settings": "Ustawienia"
   },
-  "journey": {
-    "title": "Śledź istniejący kredyt hipoteczny",
-    "cta": "Śledź istniejący kredyt hipoteczny",
-    "draftBadge": "Wersja robocza · dokończ",
-    "draftUntitled": "Kredyt bez nazwy",
-    "saveExit": "Zapisz i wyjdź",
-    "discard": "Odrzuć",
-    "progressLabel": "Krok {{current}} z {{total}}",
-    "phaseLabel": "Część {{current}} z {{total}} · {{phase}}",
-    "discardConfirm": {
-      "title": "Odrzucić ten kredyt?",
-      "message": "Spowoduje to usunięcie rozpoczętej konfiguracji. Tej operacji nie można cofnąć.",
-      "cancel": "Kontynuuj edycję",
-      "confirm": "Odrzuć"
-    },
-    "continue": "Dalej",
-    "continueOrSkip": "Dalej",
-    "back": "Wstecz",
-    "publish": "Opublikuj kredyt",
-    "saveDraft": "Zapisz wersję roboczą i wyjdź",
-    "sectionIntro": "Wprowadzenie",
-    "sectionLoan": "Twój kredyt",
-    "sectionDeal": "Oferta {{number}}",
-    "sectionReview": "Podsumowanie",
-    "introTitle": "Skonfigurujmy Twój kredyt",
-    "introBody": "Odpowiedz na kilka prostych pytań o swoją bieżącą ofertę — i o wcześniejsze oferty, jeśli chcesz pełny obraz. Obliczymy salda, odsetki i koszt kredytu. Możesz zapisać i wrócić w dowolnej chwili.",
-    "introCta": "Zaczynamy",
-    "coach": {
-      "dealSavingsLabel": "Zaoszczędzono na tej ofercie do tej pory",
-      "summary": {
-        "borrowed": "Pożyczono",
-        "currentDeal": "Bieżąca oferta",
-        "balanceNow": "Saldo teraz",
-        "interestSoFar": "Odsetki do tej pory"
-      },
-      "loan": {
-        "currency": "Wybierz walutę kredytu — w niej pokażemy wszystkie kwoty.",
-        "nickname": "Nazwa, która ułatwi rozpoznanie tego kredytu na liście.",
-        "lender": "Opcjonalnie — przydatne, jeśli śledzisz więcej niż jeden kredyt.",
-        "openingBalance": "Znajdziesz to w pierwotnej umowie kredytu lub na pierwszym wyciągu.",
-        "startDate": "Data rozpoczęcia Twojej pierwszej oferty — jest w umowie kredytu.",
-        "totalTerm": "Na ile lat zaplanowany był cały kredyt, np. 25 lat."
-      },
-      "deal": {
-        "rate": "Stałe lub zmienne oprocentowanie tej oferty — sprawdź dokumenty oferty.",
-        "duration": "Jak długo trwa to oprocentowanie, np. 2- lub 5-letni okres stały.",
-        "repaymentType": "Kapitałowo-odsetkowa spłaca saldo; tylko odsetki pokrywa same odsetki.",
-        "outcome": "Śledzisz bieżący kredyt? Wybierz Bieżąca — pominiemy pytania o zakończenie.",
-        "regularOverpayment": "Tylko jeśli co miesiąc płacisz extra ponad zwykłą ratę.",
-        "lumpOverpayments": "Dodaj jednorazowe kwoty, które spłaciłeś — każda obniża odsetki.",
-        "missedPayments": "Dodaj miesiące, w których rata została pominięta lub zawieszona, jeśli się zdarzyły.",
-        "closingBalance": "Saldo pokazane przez bank na zakończenie oferty — z wyciągu.",
-        "fees": "Opłata za produkt lub przygotowanie doliczona do salda po zakończeniu oferty."
-      }
-    },
-    "recalc": {
-      "title": "Zaktualizowano kolejne oferty",
-      "help": "Zmiana tej oferty zaktualizowała saldo początkowe kolejnych ofert. Sprawdź i potwierdź.",
-      "cancel": "Anuluj",
-      "confirm": "Potwierdź zmiany"
-    },
-    "review": {
-      "title": "Sprawdź swój kredyt",
-      "helper": "Oto podsumowanie historii Twojego kredytu. Opublikuj, aby zacząć śledzenie, lub zapisz wersję roboczą, aby dokończyć później.",
-      "totalCost": "Zapłacono do tej pory",
-      "totalInterest": "Zapłacone odsetki",
-      "currentBalance": "Bieżące saldo",
-      "savings": "Zaoszczędzono na nadpłatach",
-      "deals": "Liczba ofert: {{count}}"
-    },
-    "q": {
-      "loan": {
-        "currency": {
-          "title": "W jakiej walucie jest ten kredyt?",
-          "helper": "Wszystkie kwoty pokażemy w tej walucie."
-        },
-        "nickname": {
-          "title": "Jak nazwiemy ten kredyt?",
-          "helper": "Nazwa ułatwiająca rozpoznanie na liście.",
-          "placeholder": "np. Dom rodzinny"
-        },
-        "lender": {
-          "title": "Kto jest Twoim kredytodawcą?",
-          "helper": "Opcjonalnie — przydatne, jeśli masz więcej niż jeden kredyt.",
-          "placeholder": "np. Halifax"
-        },
-        "openingBalance": {
-          "title": "Ile pierwotnie pożyczyłeś?",
-          "helper": "Kwota, którą byłeś winien na początku kredytu. To Twoje saldo początkowe."
-        },
-        "startDate": {
-          "title": "Kiedy zaczął się kredyt?",
-          "helper": "Data rozpoczęcia Twojej pierwszej oferty.",
-          "fieldLabel": "Data rozpoczęcia kredytu"
-        },
-        "totalTerm": {
-          "title": "Jaki jest całkowity okres kredytu?",
-          "helper": "Na ile lat zaplanowany był cały kredyt, np. 25 lat. Używamy tego do obliczenia rat."
-        }
-      },
-      "deal": {
-        "rate": {
-          "title_present": "Jakie jest oprocentowanie tej oferty?",
-          "title_past": "Jakie było oprocentowanie tej oferty?",
-          "helper_present": "Stałe lub zmienne oprocentowanie naliczane przez bank. Służy do obliczenia odsetek.",
-          "helper_past": "Stałe oprocentowanie naliczane przez bank. Służy do obliczenia zapłaconych odsetek."
-        },
-        "duration": {
-          "title_present": "Jak długo trwa ta oferta?",
-          "title_past": "Jak długo trwała ta oferta?",
-          "helper_present": "Długość okresu o stałym oprocentowaniu, zanim się zakończy lub zrefinansujesz.",
-          "helper_past": "Długość okresu o stałym oprocentowaniu, zanim refinansowałeś lub oferta się zakończyła."
-        },
-        "repaymentType": {
-          "title_present": "Jaki to jest typ oferty?",
-          "title_past": "Jaki to był typ oferty?",
-          "helper_present": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki.",
-          "helper_past": "Kapitałowo-odsetkowa spłaca saldo w czasie; tylko odsetki spłaca same odsetki."
-        },
-        "regularOverpayment": {
-          "title_present": "Czy co miesiąc nadpłacasz stałą kwotę?",
-          "title_past": "Czy co miesiąc nadpłacałeś stałą kwotę?",
-          "helper_present": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste.",
-          "helper_past": "Opcjonalnie. Podaj regularną miesięczną nadpłatę lub zostaw puste."
-        },
-        "lumpOverpayments": {
-          "title_present": "Czy są jednorazowe nadpłaty w tej ofercie?",
-          "title_past": "Czy były jednorazowe nadpłaty w tej ofercie?",
-          "helper_present": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
-          "helper_past": "Opcjonalnie. Dodaj jednorazowe kwoty wpłacone na poczet salda wraz z datą.",
-          "add": "Dodaj nadpłatę"
-        },
-        "missedPayments": {
-          "title_present": "Czy są nieopłacone raty w tej ofercie?",
-          "title_past": "Czy były nieopłacone raty w tej ofercie?",
-          "helper_present": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
-          "helper_past": "Opcjonalnie. Dodaj miesiące, w których rata została pominięta lub zawieszona.",
-          "add": "Dodaj nieopłaconą ratę",
-          "rowLabel": "Nieopłacona rata {{number}}"
-        },
-        "outcome": {
-          "title": "Czy nadal jesteś na tej ofercie?",
-          "helper": "Wybierz „Bieżąca” dla oferty, na której jesteś teraz, „Zakończyła się” dla wcześniejszej oferty, z której już przeszedłeś, lub „Spłacony” jeśli ta oferta w całości spłaciła kredyt.",
-          "ongoing": "Bieżąca",
-          "ended": "Zakończyła się",
-          "paidOff": "Spłacony"
-        },
-        "closingBalance": {
-          "title": "Jakie było saldo, gdy ta oferta się zakończyła?",
-          "helper": "Kwota, którą byłeś winien po zakończeniu oferty — sprawdź wyciąg. Oszacowaliśmy ją za Ciebie."
-        },
-        "fees": {
-          "title": "Czy do salda doliczono opłaty?",
-          "helper": "Opcjonalnie. Opłaty za produkt lub przygotowanie doliczone do kredytu po zakończeniu oferty."
-        }
-      }
-    }
+  "track": {
+    "title": "Śledź swój kredyt hipoteczny",
+    "subtitle": "Skonfiguruj go na podstawie dzisiejszej sytuacji.",
+    "cta": "Śledź kredyt hipoteczny",
+    "save": "Rozpocznij śledzenie",
+    "sectionToday": "Twój kredyt dzisiaj",
+    "todayHelp": "Wpisz, jak wygląda Twój kredyt teraz — weź ostatni wyciąg, a skończysz w minutę.",
+    "nickname": "Nazwa",
+    "nicknamePlaceholder": "np. Dom rodzinny",
+    "lender": "Kredytodawca",
+    "currency": "Waluta",
+    "currentBalance": "Aktualne saldo",
+    "currentBalanceHint": "Ile jesteś teraz winien — sprawdź ostatni wyciąg lub aplikację bankową.",
+    "rate": "Oprocentowanie",
+    "repaymentType": "Rodzaj spłaty",
+    "remainingTerm": "Pozostały czas spłaty",
+    "remainingTermHint": "Mniej więcej ile zostało do całkowitej spłaty kredytu.",
+    "sectionDeal": "Bieżąca oferta",
+    "dealHelp": "Czy masz stałą lub promocyjną stopę, która kończy się w określonym dniu?",
+    "dealFixed": "Stała/promocyjna",
+    "dealNone": "Bez końca",
+    "dealEndDate": "Oferta kończy się",
+    "dealEndDateHint": "Przypomnimy Ci, zanim nadejdzie czas na refinansowanie.",
+    "sectionOverpayments": "Już dokonane nadpłaty",
+    "overpaymentsHelp": "Opcjonalnie — wzbogaca historię oszczędności.",
+    "regularOverpayment": "Regularna nadpłata",
+    "perMonth": "/mies.",
+    "lumpOverpayments": "Jednorazowe nadpłaty",
+    "addLumpOverpayment": "Dodaj nadpłatę",
+    "summaryTitle": "Twój kredyt w skrócie",
+    "summaryMonthly": "Miesięczna rata",
+    "summaryPayoff": "Spłacony do"
   }
 }

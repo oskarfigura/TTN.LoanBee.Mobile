@@ -76,7 +76,12 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen name="saved/[id]" />
-              <Stack.Screen name="saved/[id]/journey" />
+              <Stack.Screen
+                name="saved/track"
+                options={{
+                  presentation: 'modal',
+                }}
+              />
               <Stack.Screen name="saved/[id]/edit" />
               <Stack.Screen name="saved/[id]/overpayments/index" />
               <Stack.Screen

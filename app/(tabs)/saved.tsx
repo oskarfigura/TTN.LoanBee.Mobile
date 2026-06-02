@@ -13,23 +13,16 @@ import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { storage } from '@/storage/mmkv';
-import { STORAGE_KEYS } from '@/storage/keys';
-import { CurrencyCode } from '@/currency/currencies';
-import { createMortgageHistoryDraft } from '@/mortgage/journey/reducers';
 
 export default function SavedScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ fromDashboard?: string }>();
-  const { loans, add, togglePinned, refresh } = useSavedLoans();
+  const { loans, togglePinned, refresh } = useSavedLoans();
   const openedFromDashboard = params.fromDashboard === '1';
 
   const startMortgageHistory = () => {
-    const currency = (storage.getString(STORAGE_KEYS.USER_CURRENCY) as CurrencyCode) ?? 'GBP';
-    const draft = createMortgageHistoryDraft(currency);
-    add(draft);
-    router.push({ pathname: '/saved/[id]/journey', params: { id: draft.id } });
+    router.push('/saved/track');
   };
   const [query, setQuery] = useState('');
   const visibleLoans = useMemo(() => {
@@ -91,7 +84,7 @@ export default function SavedScreen() {
                 style={styles.headerButton}
               />
               <Button
-                label={t('journey.cta')}
+                label={t('track.cta')}
                 onPress={startMortgageHistory}
                 variant="secondary"
                 style={styles.headerButton}
@@ -117,7 +110,7 @@ export default function SavedScreen() {
           <LoanProfileCard
             loan={item}
             onPress={() => router.push(
-              item.status === 'draft' ? `/saved/${item.id}/journey` : `/saved/${item.id}`,
+              item.status === 'draft' ? `/saved/track?id=${item.id}` : `/saved/${item.id}`,
             )}
             onTogglePinned={() => togglePinned(item.id)}
           />
