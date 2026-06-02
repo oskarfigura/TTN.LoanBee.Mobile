@@ -734,14 +734,16 @@
     "dealNone": "No set end",
     "dealEndDate": "Deal ends",
     "dealEndDateHint": "We'll remind you before it's time to remortgage.",
-    "sectionOverpayments": "Overpayments already made",
-    "overpaymentsHelp": "Optional — adds to your savings story.",
+    "sectionOverpayments": "Overpayments",
+    "overpaymentsHelp": "Optional — see how overpaying speeds up your payoff.",
     "regularOverpayment": "Regular overpayment",
     "perMonth": "/mo",
     "lumpOverpayments": "One-off overpayments",
     "addLumpOverpayment": "Add an overpayment",
     "summaryTitle": "Your mortgage at a glance",
     "summaryMonthly": "Monthly payment",
-    "summaryPayoff": "Paid off by"
+    "summaryPayoff": "Paid off by",
+    "draftUntitled": "Untitled mortgage",
+    "draftBadge": "Draft · resume setup"
   }
 }

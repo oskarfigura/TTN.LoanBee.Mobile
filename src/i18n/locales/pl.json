@@ -734,14 +734,16 @@
     "dealNone": "Bez końca",
     "dealEndDate": "Oferta kończy się",
     "dealEndDateHint": "Przypomnimy Ci, zanim nadejdzie czas na refinansowanie.",
-    "sectionOverpayments": "Już dokonane nadpłaty",
-    "overpaymentsHelp": "Opcjonalnie — wzbogaca historię oszczędności.",
+    "sectionOverpayments": "Nadpłaty",
+    "overpaymentsHelp": "Opcjonalnie — zobacz, jak nadpłaty przyspieszają spłatę.",
     "regularOverpayment": "Regularna nadpłata",
     "perMonth": "/mies.",
     "lumpOverpayments": "Jednorazowe nadpłaty",
     "addLumpOverpayment": "Dodaj nadpłatę",
     "summaryTitle": "Twój kredyt w skrócie",
     "summaryMonthly": "Miesięczna rata",
-    "summaryPayoff": "Spłacony do"
+    "summaryPayoff": "Spłacony do",
+    "draftUntitled": "Kredyt bez nazwy",
+    "draftBadge": "Wersja robocza · dokończ konfigurację"
   }
 }

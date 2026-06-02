@@ -35,7 +35,7 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
   const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
 
   if (isDraft || !insight) {
-    const draftLabel = `${loan.nickname.trim() || t('journey.draftUntitled')}. ${t('saved.draftA11y')}`;
+    const draftLabel = `${loan.nickname.trim() || t('track.draftUntitled')}. ${t('saved.draftA11y')}`;
     return (
       <TouchableOpacity
         onPress={onPress}
@@ -51,11 +51,11 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
               </View>
               <View style={styles.titleBlock}>
                 <AppText variant="title3" tone="default" numberOfLines={1}>
-                  {loan.nickname.trim() || t('journey.draftUntitled')}
+                  {loan.nickname.trim() || t('track.draftUntitled')}
                 </AppText>
                 <View style={styles.draftBadge}>
                   <AppText variant="labelSm" tone="accent" numberOfLines={1}>
-                    {t('journey.draftBadge')}
+                    {t('track.draftBadge')}
                   </AppText>
                 </View>
               </View>

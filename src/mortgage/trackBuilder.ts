@@ -11,7 +11,7 @@ import {
 import { buildMortgageProjection } from '@/mortgage/projection';
 import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage/tracker';
 import { createLocalId } from '@/utils/id';
-import { formatIsoDate, isValidIsoDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
+import { addMonthsToIsoDate, formatIsoDate, isValidIsoDate, monthsBetween } from '@/utils/date';
 
 // A single lump overpayment the user has already made on the current deal.
 export interface TrackOverpaymentInput {
@@ -54,13 +54,6 @@ const splitMonths = (totalMonths: number) => ({
   months: totalMonths % 12,
 });
 
-const addMonthsIso = (dateString: string, totalMonths: number): string => {
-  const date = parseDateLabelValue(dateString);
-  if (!date) return dateString;
-  date.setMonth(date.getMonth() + totalMonths);
-  return formatIsoDate(date);
-};
-
 // The fixed-deal period: from the anchor date to the deal-end date if the user
 // gave one (and it's after the start), otherwise the deal simply runs to payoff.
 const resolveDealDurationMonths = (
@@ -97,7 +90,7 @@ export const buildTrackedMortgageFromForm = (
     values.dealEndDate,
   );
   const dealDuration = splitMonths(dealDurationMonths);
-  const endDate = addMonthsIso(startDate, dealDurationMonths);
+  const endDate = addMonthsToIsoDate(startDate, dealDurationMonths);
   const monthlyPayment = calculateDealMonthlyPayment(
     values.currentBalance,
     values.interestRate,

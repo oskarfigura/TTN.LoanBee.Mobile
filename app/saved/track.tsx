@@ -33,20 +33,13 @@ import {
 import { calculateDealMonthlyPayment } from '@/mortgage/tracker';
 import { MortgageRepaymentType } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
-import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { addMonthsToIsoDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { validateDurationText, validateMoneyText } from '@/utils/formValidation';
 import { useStoreReview } from '@/review';
 import { colours, layout, radii, spacing } from '@/theme';
 
 const numberText = (value?: number): string =>
   value === undefined || !Number.isFinite(value) || value <= 0 ? '' : String(value);
-
-const addMonthsIso = (dateString: string, months: number): string => {
-  const date = parseDateLabelValue(dateString);
-  if (!date) return dateString;
-  date.setMonth(date.getMonth() + months);
-  return formatIsoDate(date);
-};
 
 export default function TrackMortgageScreen() {
   const { t, i18n } = useTranslation();
@@ -78,7 +71,7 @@ export default function TrackMortgageScreen() {
   const [hasDealEnd, setHasDealEnd] = useState(
     Boolean(existingDeal && existingDeal.endDate && existingDeal.endDate > today),
   );
-  const [dealEndDate, setDealEndDate] = useState(existingDeal?.endDate ?? addMonthsIso(today, 24));
+  const [dealEndDate, setDealEndDate] = useState(existingDeal?.endDate ?? addMonthsToIsoDate(today, 24));
 
   const [enrichmentOpen, setEnrichmentOpen] = useState(false);
   const [regularOverpayment, setRegularOverpayment] = useState(
@@ -116,7 +109,7 @@ export default function TrackMortgageScreen() {
     );
     return {
       monthly,
-      payoffDate: addMonthsIso(today, durationValidation.totalMonths),
+      payoffDate: addMonthsToIsoDate(today, durationValidation.totalMonths),
     };
   }, [balanceValidation, rateValidation, durationValidation, repaymentType, today]);
 

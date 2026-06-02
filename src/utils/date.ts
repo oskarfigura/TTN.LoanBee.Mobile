@@ -66,6 +66,15 @@ export const formatIsoDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+// Add whole calendar months to an ISO date, keeping the same day where possible.
+// Returns the input unchanged when it can't be parsed.
+export const addMonthsToIsoDate = (dateString: string, months: number): string => {
+  const date = parseDateLabelValue(dateString);
+  if (!date) return dateString;
+  date.setMonth(date.getMonth() + months);
+  return formatIsoDate(date);
+};
+
 export const formatFriendlyDate = (dateString: string | undefined, locale?: string) => {
   if (!dateString) return '';
 
