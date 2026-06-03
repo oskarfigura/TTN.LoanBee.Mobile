@@ -1,3 +1,8 @@
+// Icon registry. This barrel intentionally re-exports every icon, including ones
+// not currently referenced by any screen. They are kept on purpose as a ready
+// palette for future features — do NOT treat unreferenced icons here as dead
+// code to be pruned. Screens import icons directly from their deep paths
+// (e.g. "@/components/ui/Icons/SaveIcon/SaveIcon"); this barrel is the catalogue.
 export { AddDocumentIcon } from "./AddDocumentIcon/AddDocumentIcon";
 export { AlertTriangleIcon } from "./AlertTriangleIcon/AlertTriangleIcon";
 export { ArrowLeftIcon } from "./ArrowLeftIcon/ArrowLeftIcon";
