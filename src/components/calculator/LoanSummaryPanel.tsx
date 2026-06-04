@@ -189,6 +189,16 @@ export const LoanSummaryPanel = ({
               </Text>
             </View>
           ) : null}
+          {!isDraft && onTryOverpayments ? (
+            <TouchableOpacity
+              onPress={onTryOverpayments}
+              activeOpacity={0.84}
+              style={styles.savingsManageRow}
+              accessibilityRole="button"
+            >
+              <Text style={styles.savingsManageText}>{t('overpayments.manage')} →</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : isDraft ? null : (
         <View style={styles.nudgeCard}>
@@ -385,6 +395,17 @@ const styles = StyleSheet.create({
   savingsRowValue: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
+    color: colours.secondary,
+  },
+  savingsManageRow: {
+    borderTopWidth: 1,
+    borderTopColor: colours.successBorder,
+    paddingTop: spacing.xs,
+    marginTop: spacing.xxs,
+  },
+  savingsManageText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.xs,
     color: colours.secondary,
   },
   nudgeCard: {

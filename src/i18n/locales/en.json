@@ -708,6 +708,7 @@
   },
   "overpayments": {
     "title": "Overpayments",
+    "manage": "Manage overpayments",
     "noImpact": "Add an overpayment below to see how much you could save.",
     "interestSaved": "Interest saved",
     "timeSaved": "Time saved",

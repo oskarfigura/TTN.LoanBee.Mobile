@@ -20,7 +20,6 @@ import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getCurrentDeal } from '@/mortgage/tracker';
-import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
 import { EditIcon as UiEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
 import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
@@ -159,11 +158,6 @@ export default function LoanDetailScreen() {
         <Text style={styles.quickActionsHelper}>{t('loan.quickActionsHelp')}</Text>
       </View>
       <View style={styles.loanQuickActionsRow}>
-        <QuickActionTile
-          label={t('overpayments.title')}
-          icon={<CoinsStackedIcon size={21} color={colours.primary} strokeWidth={1.9} />}
-          onPress={() => router.push(`/saved/${id}/overpayments`)}
-        />
         <QuickActionTile
           label={t('share.short')}
           icon={<ShareIcon size={21} color={colours.primary} strokeWidth={1.9} />}

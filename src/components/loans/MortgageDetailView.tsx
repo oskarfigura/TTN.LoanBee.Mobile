@@ -258,6 +258,7 @@ export const MortgageDetailView = ({
             projection={projection}
             asOf={asOf}
             isFutureStart={isFutureStart}
+            overpaymentDeal={overpaymentDeal}
             onTogglePinned={onTogglePinned}
             onAddDeal={() => router.push(`/saved/${loan.id}/deals/new`)}
             onEditDraft={() => {
@@ -265,10 +266,6 @@ export const MortgageDetailView = ({
             }}
             onOpenTimeline={() => switchTab('timeline')}
           />
-
-          {overpaymentDeal ? (
-            <DealOverpaymentsCard loan={loan} deal={overpaymentDeal} />
-          ) : null}
 
           <MortgageQuickActionsRow
             hasActiveDeal={!!activeDeal}
@@ -496,6 +493,7 @@ const MortgageSummaryPanel = ({
   projection,
   asOf,
   isFutureStart,
+  overpaymentDeal,
   onTogglePinned,
   onAddDeal,
   onEditDraft,
@@ -511,6 +509,7 @@ const MortgageSummaryPanel = ({
   projection: MortgageProjection;
   asOf: Date;
   isFutureStart: boolean;
+  overpaymentDeal?: LoanDeal;
   onTogglePinned: () => void;
   onAddDeal: () => void;
   onEditDraft: () => void;
@@ -547,7 +546,7 @@ const MortgageSummaryPanel = ({
         <>
           <DashboardProgressGauge progress={dashboardProgress} />
           <MortgageSummaryMetrics summary={summary} progress={dashboardProgress} />
-          <CurrentDealSavingsCard loan={loan} currentDeal={currentDeal} />
+          <CurrentDealSavingsCard loan={loan} currentDeal={overpaymentDeal} />
         </>
       )}
       <CurrentDealSummaryPanel loan={loan} currentDeal={currentDeal} asOf={asOf} />
@@ -654,36 +653,68 @@ const CurrentDealSavingsCard = ({
   currentDeal?: LoanDeal;
 }) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const impact = useMemo(
     () => (currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined),
     [currentDeal, loan.events],
   );
+  const destination = currentDeal ? `/saved/${loan.id}/deals/${currentDeal.id}/overpayments` as const : undefined;
 
-  if (!impact?.hasOverpayments) return null;
+  if (!currentDeal || !destination) return null;
+
+  if (impact?.hasOverpayments) {
+    return (
+      <Card style={[styles.soonerCardActive, styles.summarySavingsCard]}>
+        <View style={styles.soonerCardHeader}>
+          <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
+          <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
+            {t('mortgage.dealOverpaymentsSummary')}
+          </AppText>
+        </View>
+        <View style={styles.soonerSavingsRow}>
+          <View style={styles.soonerMetric}>
+            <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
+            <AppText variant="labelMd" style={{ color: colours.secondary }}>
+              {formatCurrency(impact.interestSaved, loan.currency)}
+            </AppText>
+          </View>
+          <View style={styles.soonerMetric}>
+            <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
+            <AppText variant="labelMd" style={{ color: colours.secondary }}>
+              {formatCurrency(impact.extraPrincipalRepaid, loan.currency)}
+            </AppText>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.soonerManageRow}
+          onPress={() => router.push(destination)}
+          activeOpacity={0.84}
+          accessibilityRole="button"
+        >
+          <AppText variant="labelMd" style={{ color: colours.secondary, flex: 1 }}>{t('mortgage.manageDealOverpayments')}</AppText>
+          <ChevronRightIcon size={14} color={colours.secondary} />
+        </TouchableOpacity>
+      </Card>
+    );
+  }
+
+  if (currentDeal.status === 'completed') return null;
 
   return (
-    <Card style={[styles.soonerCardActive, styles.summarySavingsCard]}>
-      <View style={styles.soonerCardHeader}>
-        <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
-        <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
-          {t('mortgage.dealOverpaymentsSummary')}
-        </AppText>
-      </View>
-      <View style={styles.soonerSavingsRow}>
-        <View style={styles.soonerMetric}>
-          <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
-          <AppText variant="labelMd" style={{ color: colours.secondary }}>
-            {formatCurrency(impact.interestSaved, loan.currency)}
-          </AppText>
-        </View>
-        <View style={styles.soonerMetric}>
-          <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
-          <AppText variant="labelMd" style={{ color: colours.secondary }}>
-            {formatCurrency(impact.extraPrincipalRepaid, loan.currency)}
-          </AppText>
+    <View style={[styles.soonerNudgeCard, styles.summarySavingsCard]}>
+      <View style={styles.soonerNudgeInner}>
+        <CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.8} />
+        <View style={styles.soonerNudgeCopy}>
+          <AppText variant="labelMd">{t('mortgage.couldPaySoonerTitle')}</AppText>
+          <AppText variant="bodySm" tone="muted">{t('mortgage.couldPaySoonerBody')}</AppText>
         </View>
       </View>
-    </Card>
+      <Button
+        label={t('mortgage.setUpDealOverpayment')}
+        onPress={() => router.push(destination)}
+        variant="secondary"
+      />
+    </View>
   );
 };
 
@@ -941,80 +972,6 @@ const ContextMetric = ({
     <Text style={styles.contextMetricValue} numberOfLines={2} adjustsFontSizeToFit>{value}</Text>
   </View>
 );
-
-const DealOverpaymentsCard = ({
-  loan,
-  deal,
-}: {
-  loan: SavedLoan;
-  deal: LoanDeal;
-}) => {
-  const { t } = useTranslation();
-  const router = useRouter();
-
-  const hasRegular = deal.regularOverpayment > 0;
-  const hasLumps = loan.events.some(
-    e => e.type === 'lumpOverpayment' && e.dealId === deal.id,
-  );
-  const hasOverpayments = hasRegular || hasLumps;
-
-  const impact = useMemo(
-    () => hasOverpayments ? getDealOverpaymentImpact(deal, loan.events) : null,
-    [deal, hasOverpayments, loan.events],
-  );
-
-  const destination = `/saved/${loan.id}/deals/${deal.id}/overpayments` as const;
-
-  if (hasOverpayments && impact) {
-    return (
-      <Card style={styles.soonerCardActive}>
-        <View style={styles.soonerCardHeader}>
-          <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
-          <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
-            {t('mortgage.dealOverpaymentsSummary')}
-          </AppText>
-        </View>
-        <View style={styles.soonerSavingsRow}>
-          <View style={styles.soonerMetric}>
-            <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
-            <AppText variant="labelMd" style={{ color: colours.secondary }}>{formatCurrency(impact.interestSaved, loan.currency)}</AppText>
-          </View>
-          <View style={styles.soonerMetric}>
-            <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
-            <AppText variant="labelMd" style={{ color: colours.secondary }}>{formatCurrency(impact.extraPrincipalRepaid, loan.currency)}</AppText>
-          </View>
-        </View>
-        <TouchableOpacity
-          style={styles.soonerManageRow}
-          onPress={() => router.push(destination)}
-          activeOpacity={0.84}
-        >
-          <AppText variant="labelMd" style={{ color: colours.secondary, flex: 1 }}>{t('mortgage.manageDealOverpayments')}</AppText>
-          <ChevronRightIcon size={14} color={colours.secondary} />
-        </TouchableOpacity>
-      </Card>
-    );
-  }
-
-  if (deal.status === 'completed') return null;
-
-  return (
-    <View style={styles.soonerNudgeCard}>
-      <View style={styles.soonerNudgeInner}>
-        <CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.8} />
-        <View style={styles.soonerNudgeCopy}>
-          <AppText variant="labelMd">{t('mortgage.couldPaySoonerTitle')}</AppText>
-          <AppText variant="bodySm" tone="muted">{t('mortgage.couldPaySoonerBody')}</AppText>
-        </View>
-      </View>
-      <Button
-        label={t('mortgage.setUpDealOverpayment')}
-        onPress={() => router.push(destination)}
-        variant="secondary"
-      />
-    </View>
-  );
-};
 
 const MortgageQuickActionsRow = ({
   hasActiveDeal,

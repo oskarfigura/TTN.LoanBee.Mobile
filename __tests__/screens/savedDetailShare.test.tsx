@@ -1,6 +1,8 @@
 import React from 'react';
 import { act, create, ReactTestInstance, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { SavedLoan } from '../../src/types/SavedLoan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -262,6 +264,23 @@ afterEach(() => {
 });
 
 describe('Saved detail sharing', () => {
+  it('keeps loan overpayment management on the top summary instead of a duplicate quick action tile', async () => {
+    mockLoan = buildSavedLoan('loan');
+    const renderer = await renderDetail();
+    const quickActionLabels = renderer.root
+      .findAll(node => String(node.type) === 'QuickActionTile')
+      .map(node => node.props.label);
+    const summaryPanel = renderer.root.find(node => String(node.type) === 'LoanSummaryPanel');
+
+    expect(quickActionLabels).not.toContain('overpayments.title');
+
+    await act(async () => {
+      summaryPanel.props.onTryOverpayments();
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/saved/loan-1/overpayments');
+  });
+
   it('shares a saved loan with the loan category from the quick action', async () => {
     mockLoan = buildSavedLoan('loan');
     const renderer = await renderDetail();
@@ -303,5 +322,14 @@ describe('Saved detail sharing', () => {
       currency: 'GBP',
       category: 'mortgage',
     }));
+  });
+
+  it('keeps mortgage overpayment savings consolidated into the summary card', () => {
+    const source = readFileSync(join(process.cwd(), 'src/components/loans/MortgageDetailView.tsx'), 'utf8');
+
+    expect(source).not.toContain('<DealOverpaymentsCard');
+    expect(source).not.toContain('const DealOverpaymentsCard');
+    expect(source).toContain('mortgage.manageDealOverpayments');
+    expect(source).toContain('mortgage.setUpDealOverpayment');
   });
 });

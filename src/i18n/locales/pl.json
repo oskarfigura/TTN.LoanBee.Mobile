@@ -708,6 +708,7 @@
   },
   "overpayments": {
     "title": "Nadpłaty",
+    "manage": "Zarządzaj nadpłatami",
     "noImpact": "Dodaj nadpłatę poniżej, aby zobaczyć ile możesz zaoszczędzić.",
     "interestSaved": "Oszczędzone odsetki",
     "timeSaved": "Zaoszczędzony czas",
