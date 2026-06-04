@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookmarkIcon } from '@/components/ui/Icons/BookmarkIcon/BookmarkIcon';
 import { HomeIcon } from '@/components/ui/Icons/HomeIcon/HomeIcon';
+import { PlusCircleIcon } from '@/components/ui/Icons/PlusCircleIcon/PlusCircleIcon';
 import { SettingsIcon } from '@/components/ui/Icons/SettingsIcon/SettingsIcon';
 import { colours, elevation, fontFaces, fontSizes, radii } from '@/theme';
 import { confirmResultLeave, hasResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 
-type TabIconName = 'home' | 'saved' | 'settings';
+type TabIconName = 'home' | 'calculate' | 'saved' | 'settings';
 
 const TabIcon = ({ name, color }: { name: TabIconName; color: string }) => {
   if (name === 'home') {
@@ -17,6 +18,10 @@ const TabIcon = ({ name, color }: { name: TabIconName; color: string }) => {
 
   if (name === 'saved') {
     return <BookmarkIcon color={color} size={24} strokeWidth={1.9} />;
+  }
+
+  if (name === 'calculate') {
+    return <PlusCircleIcon color={color} size={24} strokeWidth={1.9} />;
   }
 
   return <SettingsIcon color={color} size={24} strokeWidth={1.9} />;
@@ -37,6 +42,11 @@ export default function TabLayout() {
               return;
             }
 
+            if (route.name === 'calculate') {
+              navigation.navigate('calculate', { calculator: String(Date.now()) });
+              return;
+            }
+
             navigation.navigate(route.name);
           };
 
@@ -46,7 +56,7 @@ export default function TabLayout() {
             return;
           }
 
-          if (route.name === 'index') {
+          if (route.name === 'index' || route.name === 'calculate') {
             event.preventDefault();
             navigateToTab();
           }
@@ -87,6 +97,13 @@ export default function TabLayout() {
         options={{
           title: t('tabs.home'),
           tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="calculate"
+        options={{
+          title: t('tabs.calculator'),
+          tabBarIcon: ({ color }) => <TabIcon name="calculate" color={color} />,
         }}
       />
       <Tabs.Screen

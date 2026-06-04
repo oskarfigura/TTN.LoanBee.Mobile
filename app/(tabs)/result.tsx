@@ -12,7 +12,7 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { BannerAd } from '@/ads/BannerAd';
-import { colours, layout } from '@/theme';
+import { colours } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SavedLoan } from '@/types/SavedLoan';
@@ -31,6 +31,7 @@ import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
 import { EditIcon } from '@/components/loans/LoanIcons';
 import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
 import { buildDraftLoanPreview, RawFormValues } from '@/loans/loanGroupFactory';
+import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
 import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 
 type ResultParams = {
@@ -226,7 +227,14 @@ export default function ResultScreen() {
           >
             <EditIcon color={colours.primary} />
           </HeaderIconButton>
-        ) : undefined}
+        ) : (
+          <HeaderIconButton
+            onPress={openSave}
+            accessibilityLabel={t('common.save')}
+          >
+            <SaveIcon color={colours.primary} size={20} />
+          </HeaderIconButton>
+        )}
         showBottomBorder={false}
         backgroundColor={colours.background}
       />
@@ -254,9 +262,7 @@ export default function ResultScreen() {
         ) : undefined}
       />
 
-      <View style={styles.adFooter}>
-        <BannerAd />
-      </View>
+      <BannerAd />
       <UnsavedResultModal
         visible={showUnsavedModal}
         onKeepEditing={keepEditing}
@@ -271,11 +277,4 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: 16 },
-  adFooter: {
-    backgroundColor: colours.white,
-    borderTopWidth: 1,
-    borderTopColor: colours.surface,
-    paddingHorizontal: layout.screenPadding,
-    paddingTop: 2,
-  },
 });

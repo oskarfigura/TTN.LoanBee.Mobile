@@ -14,6 +14,9 @@ import { Card } from '@/components/ui/Card';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
+import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
+import { RouteIcon } from '@/components/ui/Icons/RouteIcon/RouteIcon';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import {
   buildSavedLoansBackup,
@@ -21,13 +24,48 @@ import {
   parseSavedLoansBackup,
 } from '@/storage/dataTransfer';
 import { clearLastCrash, getLastCrash } from '@/diagnostics/crashLog';
-import { colours, layout, spacing } from '@/theme';
+import { colours, layout, radii, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'pl', label: 'Polski' },
 ];
+
+const SettingsCallout = ({
+  title,
+  body,
+  icon,
+  tone,
+  onPress,
+}: {
+  title: string;
+  body: string;
+  icon: React.ReactNode;
+  tone: 'guide' | 'about';
+  onPress: () => void;
+}) => (
+  <TouchableOpacity
+    style={styles.callout}
+    onPress={onPress}
+    activeOpacity={0.84}
+    accessibilityRole="button"
+  >
+    <View style={[
+      styles.calloutIconTile,
+      tone === 'guide' ? styles.calloutIconTileGuide : styles.calloutIconTileAbout,
+    ]}>
+      {icon}
+    </View>
+    <View style={styles.calloutCopy}>
+      <AppText variant="labelMd">{title}</AppText>
+      <AppText variant="bodySm" tone="muted">{body}</AppText>
+    </View>
+    <View style={styles.calloutChevron}>
+      <ChevronRightIcon size={16} color={colours.textSecondary} strokeWidth={2} />
+    </View>
+  </TouchableOpacity>
+);
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -203,23 +241,25 @@ export default function SettingsScreen() {
           <CurrencyPicker value={currency} onChange={setCurrency} />
         </Card>
 
-        <Card style={styles.section} padding={layout.cardPadding}>
-          <TouchableOpacity
-            style={styles.linkRow}
+        <View style={styles.learningPanel}>
+          <SettingsCallout
+            title={t('guide.settingsEntry')}
+            body={t('settings.howItWorksBody')}
+            tone="guide"
+            icon={<RouteIcon size={20} color={colours.primary} strokeWidth={2} />}
             onPress={() => router.push('/guide')}
-          >
-            <AppText variant="bodyMd" tone="accent">{t('guide.settingsEntry')}</AppText>
-            <AppText variant="title2" tone="muted">›</AppText>
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity
-            style={styles.linkRow}
+          />
+          <View style={styles.calloutDivider} />
+          <SettingsCallout
+            title={t('settings.about')}
+            body={t('settings.aboutBody')}
+            tone="about"
+            icon={<InfoCircleIcon size={20} color={colours.tealDeep} strokeWidth={2} />}
             onPress={() => router.push('/about')}
-          >
-            <AppText variant="bodyMd" tone="accent">{t('settings.about')}</AppText>
-            <AppText variant="title2" tone="muted">›</AppText>
-          </TouchableOpacity>
-          <View style={styles.divider} />
+          />
+        </View>
+
+        <Card style={styles.section} padding={layout.cardPadding}>
           <TouchableOpacity
             style={styles.linkRow}
             onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
@@ -237,7 +277,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </Card>
 
-        <Card style={styles.section} padding={layout.cardPadding}>
+        <Card style={[styles.section, styles.utilitySection]} padding={layout.cardPadding}>
           <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>
             {t('settings.dataTitle')}
           </AppText>
@@ -320,9 +360,63 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
   section: { marginBottom: spacing.md },
+  utilitySection: {
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 0,
+  },
   sectionLabel: {
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
+  },
+  learningPanel: {
+    marginBottom: spacing.md,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.surfaceRaised,
+    overflow: 'hidden',
+  },
+  callout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: layout.cardPadding,
+    paddingVertical: spacing.md,
+  },
+  calloutIconTile: {
+    width: 42,
+    height: 42,
+    borderRadius: radii.status,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  calloutIconTileGuide: {
+    borderColor: colours.primaryMuted,
+    backgroundColor: colours.surfaceMuted,
+  },
+  calloutIconTileAbout: {
+    borderColor: colours.secondarySoft,
+    backgroundColor: colours.successSurface,
+  },
+  calloutCopy: {
+    flex: 1,
+    gap: spacing.xxxs,
+  },
+  calloutChevron: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceMuted,
+  },
+  calloutDivider: {
+    height: 1,
+    marginLeft: layout.cardPadding + 42 + spacing.md,
+    backgroundColor: colours.border,
   },
   linkRow: {
     flexDirection: 'row',

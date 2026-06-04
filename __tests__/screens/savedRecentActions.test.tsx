@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, create, ReactTestRenderer } from 'react-test-renderer';
+import { act, create, ReactTestInstance, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -39,7 +39,11 @@ jest.mock('react-native', () => {
         'FlatList',
         props,
         ListHeaderComponent,
-        data.length === 0 ? ListEmptyComponent : data.map(item => renderItem({ item })),
+        data.length === 0
+          ? ListEmptyComponent
+          : data.map((item, index) => (
+            React.createElement(React.Fragment, { key: (item as { id?: string }).id ?? index }, renderItem({ item }))
+          )),
         ListFooterComponent,
       )
     ),
@@ -146,6 +150,14 @@ jest.mock('../../src/components/ui/Icons/SearchIcon/SearchIcon', () => ({
   SearchIcon: (props: Record<string, unknown>) => React.createElement('SearchIcon', props),
 }));
 
+jest.mock('../../src/components/ui/Icons/CheckIcon/CheckIcon', () => ({
+  CheckIcon: (props: Record<string, unknown>) => React.createElement('CheckIcon', props),
+}));
+
+jest.mock('../../src/components/ui/Icons/TrashIcon/TrashIcon', () => ({
+  TrashIcon: (props: Record<string, unknown>) => React.createElement('TrashIcon', props),
+}));
+
 const renderRecent = async (): Promise<ReactTestRenderer> => {
   const RecentScreen = (await import('../../app/saved/recent')).default;
   let renderer: ReactTestRenderer | undefined;
@@ -161,36 +173,50 @@ const getButton = (renderer: ReactTestRenderer, label: string) => (
   renderer.root.findAll(node => String(node.type) === 'Button').find(node => node.props.label === label)!
 );
 
-beforeEach(() => {
-  mockRecentItems = [{
-    id: 'recent-1',
-    category: undefined,
+const textContent = (node: ReactTestInstance | string | number | null | undefined): string => {
+  if (node === null || node === undefined) return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  return node.children.map(child => textContent(child as ReactTestInstance | string | number)).join('');
+};
+
+const getRecentCardPressables = (renderer: ReactTestRenderer) => (
+  renderer.root.findAll(node => (
+    String(node.type) === 'TouchableOpacity' && typeof node.props.onLongPress === 'function'
+  ))
+);
+
+const buildRecentItem = (id: string, createdAt = '2026-06-04T09:00:00.000Z') => ({
+  id,
+  category: undefined,
+  currency: 'GBP',
+  createdAt,
+  updatedAt: createdAt,
+  sourceLabel: 'test',
+  formValues: {
+    loanAmount: 200000,
+    interest: 5,
+    termInYears: 20,
+    termInMonths: 0,
+    downPayment: 0,
+    downPaymentType: 'CASH',
+    desiredMonthlyPayment: null,
+    additionalMonthlyPayment: 0,
+    startDate: '2026-06-04',
+    calculationType: 'PAYMENT',
     currency: 'GBP',
-    createdAt: '2026-06-04T09:00:00.000Z',
-    updatedAt: '2026-06-04T09:00:00.000Z',
-    sourceLabel: 'test',
-    formValues: {
-      loanAmount: 200000,
-      interest: 5,
-      termInYears: 20,
-      termInMonths: 0,
-      downPayment: 0,
-      downPaymentType: 'CASH',
-      desiredMonthlyPayment: null,
-      additionalMonthlyPayment: 0,
-      startDate: '2026-06-04',
-      calculationType: 'PAYMENT',
-      currency: 'GBP',
-    },
-    resultSnapshot: {
-      monthlyPayments: 1200,
-      totalAmountPaid: 245000,
-      totalInterestPaid: 45000,
-      termInYears: 20,
-      termInMonths: 0,
-      totalTermInMonths: 240,
-    },
-  }];
+  },
+  resultSnapshot: {
+    monthlyPayments: 1200,
+    totalAmountPaid: 245000,
+    totalInterestPaid: 45000,
+    termInYears: 20,
+    termInMonths: 0,
+    totalTermInMonths: 240,
+  },
+});
+
+beforeEach(() => {
+  mockRecentItems = [buildRecentItem('recent-1')];
   mockLoans = [];
   jest.spyOn(console, 'error').mockImplementation((message?: unknown, ...args: unknown[]) => {
     if (typeof message === 'string' && message.includes('react-test-renderer is deprecated')) {
@@ -206,11 +232,12 @@ afterEach(() => {
 });
 
 describe('Recent calculations page', () => {
-  it('reopens, tracks, and deletes recent calculations', async () => {
+  it('opens by tapping the card, tracks, and deletes individual recent calculations', async () => {
     const renderer = await renderRecent();
+    const [card] = getRecentCardPressables(renderer);
 
     await act(async () => {
-      getButton(renderer, 'recent.reopen').props.onPress();
+      card.props.onPress();
     });
 
     expect(mockRouter.push).toHaveBeenCalledWith({
@@ -231,10 +258,39 @@ describe('Recent calculations page', () => {
     });
 
     await act(async () => {
-      getButton(renderer, 'common.delete').props.onPress();
+      renderer.root.find(node => (
+        String(node.type) === 'TouchableOpacity' && node.props.accessibilityLabel === 'common.delete'
+      )).props.onPress();
     });
 
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
+    expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'recent.track')).toHaveLength(0);
     expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'recent.reopen')).toHaveLength(0);
+  });
+
+  it('selects cards by long press and bulk deletes selected calculations', async () => {
+    mockRecentItems = [
+      buildRecentItem('recent-1', '2026-06-04T09:00:00.000Z'),
+      buildRecentItem('recent-2', '2026-06-05T09:00:00.000Z'),
+    ];
+    const renderer = await renderRecent();
+
+    await act(async () => {
+      getRecentCardPressables(renderer)[0].props.onLongPress();
+    });
+
+    expect(textContent(renderer.root)).toContain('recent.selectedCount');
+
+    await act(async () => {
+      getRecentCardPressables(renderer)[1].props.onPress();
+    });
+
+    await act(async () => {
+      getButton(renderer, 'recent.deleteSelected').props.onPress();
+    });
+
+    expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
+    expect(mockRemoveRecent).toHaveBeenCalledWith('recent-2');
+    expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'recent.deleteSelected')).toHaveLength(0);
   });
 });

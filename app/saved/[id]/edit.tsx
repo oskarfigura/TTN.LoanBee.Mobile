@@ -97,10 +97,7 @@ export default function EditLoanScreen() {
           </AppText>
           <Button
             label={t('saved.createNewCalculation')}
-            onPress={() => router.push({
-              pathname: '/' as never,
-              params: { calculator: '1' },
-            })}
+            onPress={() => router.push('/calculate')}
             variant="secondary"
             style={styles.stackAction}
           />

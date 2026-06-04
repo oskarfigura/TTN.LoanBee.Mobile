@@ -23,6 +23,7 @@ const getSingleParam = (value?: string | string[]) => (
 );
 
 export const InterstitialGate = () => {
+  const ad = interstitialAd;
   const segments = useSegments();
   const params = useGlobalSearchParams<ResultRouteParams>();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -45,8 +46,8 @@ export const InterstitialGate = () => {
     }
 
     isLoadingRef.current = true;
-    interstitialAd.load();
-  }, []);
+    ad.load();
+  }, [ad]);
 
   const showPendingInterstitial = useCallback(() => {
     const pendingDraftId = pendingDraftIdRef.current;
@@ -55,19 +56,19 @@ export const InterstitialGate = () => {
     }
 
     try {
-      interstitialAd.show();
+      ad.show();
       markInterstitialShown();
       pendingDraftIdRef.current = null;
       updateLoaded(false);
     } catch {
       ensureLoaded();
     }
-  }, [ensureLoaded, isResultRoute, mode, updateLoaded]);
+  }, [ad, ensureLoaded, isResultRoute, mode, updateLoaded]);
 
   useEffect(() => {
     let isMounted = true;
 
-    const unsubscribeLoaded = interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+    const unsubscribeLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
       isLoadingRef.current = false;
       if (!isMounted) {
         return;
@@ -76,13 +77,13 @@ export const InterstitialGate = () => {
       updateLoaded(true);
     });
 
-    const unsubscribeClosed = interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+    const unsubscribeClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
       updateLoaded(false);
       isLoadingRef.current = false;
       ensureLoaded();
     });
 
-    const unsubscribeError = interstitialAd.addAdEventListener(AdEventType.ERROR, () => {
+    const unsubscribeError = ad.addAdEventListener(AdEventType.ERROR, () => {
       isLoadingRef.current = false;
       updateLoaded(false);
     });
@@ -99,7 +100,7 @@ export const InterstitialGate = () => {
       unsubscribeClosed();
       unsubscribeError();
     };
-  }, [ensureLoaded, updateLoaded]);
+  }, [ad, ensureLoaded, updateLoaded]);
 
   useEffect(() => {
     if (!isResultRoute || mode === 'saved') {

@@ -14,7 +14,7 @@ import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { MenuIcon } from '@/components/ui/Icons/MenuIcon/MenuIcon';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
-type DashboardRoute = '/saved' | '/settings' | '/about';
+type DashboardRoute = '/saved' | '/settings';
 
 interface Props {
   onNewCalculation: () => void;
@@ -123,7 +123,6 @@ export const DashboardHeader = ({ onNewCalculation, onNavigate }: Props) => {
             </AppText>
             <DashboardMenuItem label={t('tabs.saved')} onPress={() => selectRoute('/saved')} />
             <DashboardMenuItem label={t('tabs.settings')} onPress={() => selectRoute('/settings')} />
-            <DashboardMenuItem label={t('tabs.about')} onPress={() => selectRoute('/about')} />
           </Pressable>
         </Pressable>
       </Modal>

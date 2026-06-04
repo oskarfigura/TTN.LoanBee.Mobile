@@ -90,11 +90,11 @@
     "exportErrorMessage": "Spróbuj ponownie wyeksportować harmonogram spłat."
   },
   "saved": {
-    "title": "Śledzone",
+    "title": "Zapisane",
     "loanDetail": "Szczegóły Kredytu",
     "editLoan": "Zarządzaj zapisanym kredytem",
-    "empty": "Nic jeszcze nie jest śledzone",
-    "emptySubtitle": "Rozpocznij prowadzoną kalkulację albo zapisz scenariusz, aby zobaczyć śledzone zobowiązania tutaj",
+    "empty": "Nic jeszcze nie zapisano",
+    "emptySubtitle": "Śledź zobowiązanie albo zapisz scenariusz, aby zobaczyć go tutaj.",
     "delete": "Usuń",
     "edit": "Edytuj",
     "view": "Podgląd",
@@ -114,9 +114,9 @@
     "notFound": "Nie znaleziono kredytu",
     "viewFullCalculation": "Zobacz pełne obliczenie",
     "createNewCalculation": "Utwórz Nowe Obliczenie",
-    "intro": "Śledzone kredyty i hipoteki są tutaj, a przypięte pozycje są na górze.",
-    "searchPlaceholder": "Szukaj śledzonych pozycji",
-    "noMatches": "Brak śledzonych pozycji pasujących do wyszukiwania.",
+    "intro": "Śledzone kredyty, hipoteki i ostatnie obliczenia są tutaj, a przypięte pozycje są na górze.",
+    "searchPlaceholder": "Szukaj zapisanych pozycji",
+    "noMatches": "Brak zapisanych pozycji pasujących do wyszukiwania.",
     "category": {
       "mortgage": "Hipoteka",
       "loan": "Kredyt"
@@ -130,7 +130,9 @@
     "emptySubtitle": "Wykonaj obliczenie hipoteki lub kredytu, a pojawi się tutaj.",
     "created": "Obliczono {{date}}",
     "reopen": "Otwórz",
-    "track": "Śledź"
+    "track": "Śledź",
+    "selectedCount": "Zaznaczono: {{count}}",
+    "deleteSelected": "Usuń zaznaczone"
   },
   "save": {
     "title": "Zapisz Kredyt",
@@ -245,6 +247,8 @@
     "termsAndConditions": "Regulamin",
     "privacyPolicy": "Polityka Prywatności",
     "about": "O LoanBee",
+    "howItWorksBody": "Zobacz krótki przewodnik po planowaniu, śledzeniu i nadpłatach.",
+    "aboutBody": "Zobacz wzór, zastrzeżenie i szczegóły aplikacji.",
     "devDataTitle": "Dane Visual QA",
     "devDataHelp": "Tylko w trybie deweloperskim. Zastępuje zapisane kredyty stałymi danymi do zrzutów ekranu i ręcznych testów.",
     "devDataLoad": "Wczytaj zapisane kredyty Visual QA",
@@ -738,7 +742,7 @@
   "tabs": {
     "home": "Start",
     "calculator": "Oblicz",
-    "saved": "Śledzone",
+    "saved": "Zapisane",
     "about": "O Aplikacji",
     "settings": "Ustawienia"
   },

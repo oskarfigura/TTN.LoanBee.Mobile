@@ -167,7 +167,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
     router.push(`/saved/${loanId}`);
   }, [router]);
 
-  const navigateFromDashboardMenu = (href: '/saved' | '/settings' | '/about') => {
+  const navigateFromDashboardMenu = (href: '/saved' | '/settings') => {
     router.push({
       pathname: href as never,
       params: { fromDashboard: '1' },

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
 import { ClockIcon } from '@/components/ui/Icons/ClockIcon/ClockIcon';
+import { recentCalculationsStorage } from '@/storage/recentCalculations';
 import { colours, layout, radii, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,6 +26,7 @@ export default function SavedScreen() {
   const openedFromDashboard = params.fromDashboard === '1';
 
   const [query, setQuery] = useState('');
+  const [hasRecent, setHasRecent] = useState(() => recentCalculationsStorage.getAll().length > 0);
   const visibleLoans = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase();
     const filtered = normalisedQuery
@@ -47,6 +49,7 @@ export default function SavedScreen() {
 
   const refreshScreen = useCallback(() => {
     refresh();
+    setHasRecent(recentCalculationsStorage.getAll().length > 0);
   }, [refresh]);
 
   useFocusEffect(refreshScreen);
@@ -57,7 +60,7 @@ export default function SavedScreen() {
 
   // Recent calculations live on their own page now; surface a link at the bottom
   // of the list (and a clock action in the header) rather than the full list here.
-  const recentFooter = (
+  const recentFooter = hasRecent ? (
     <TouchableOpacity
       style={styles.recentLink}
       onPress={openRecentCalculations}
@@ -72,7 +75,7 @@ export default function SavedScreen() {
       </View>
       <ChevronRightIcon size={18} color={colours.textSecondary} />
     </TouchableOpacity>
-  );
+  ) : null;
 
   return (
     // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
@@ -83,11 +86,11 @@ export default function SavedScreen() {
         leftAction={openedFromDashboard ? (
           <HeaderBackAction onPress={() => router.replace('/')} />
         ) : undefined}
-        rightAction={(
+        rightAction={hasRecent ? (
           <HeaderIconButton onPress={openRecentCalculations} accessibilityLabel={t('recent.title')}>
             <ClockIcon size={22} color={colours.primary} strokeWidth={1.9} />
           </HeaderIconButton>
-        )}
+        ) : undefined}
       />
       <FlatList
         data={visibleLoans}
@@ -108,10 +111,7 @@ export default function SavedScreen() {
             <View style={styles.headerButtons}>
               <Button
                 label={t('saved.createNewCalculation')}
-                onPress={() => router.push({
-                  pathname: '/' as never,
-                  params: { calculator: '1' },
-                })}
+                onPress={() => router.push('/calculate')}
                 variant="secondary"
                 style={styles.headerButton}
               />

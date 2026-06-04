@@ -9,10 +9,12 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
+import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 import { formatCurrency } from '@/currency/format';
 import { buildRecentResultParams, getResultForFormValues } from '@/results/loanResultRoute';
 import { RecentCalculation, recentCalculationsStorage } from '@/storage/recentCalculations';
-import { colours, layout, spacing } from '@/theme';
+import { colours, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate } from '@/utils/date';
 
 const RecentCalculationCard = ({
@@ -20,18 +22,40 @@ const RecentCalculationCard = ({
   onOpen,
   onTrack,
   onDelete,
+  onLongPress,
+  onToggleSelected,
+  selected,
+  selectionMode,
 }: {
   item: RecentCalculation;
   onOpen: () => void;
   onTrack: () => void;
   onDelete: () => void;
+  onLongPress: () => void;
+  onToggleSelected: () => void;
+  selected: boolean;
+  selectionMode: boolean;
 }) => {
   const { t, i18n } = useTranslation();
   const result = useMemo(() => getResultForFormValues(item.formValues), [item.formValues]);
+  const handlePress = selectionMode ? onToggleSelected : onOpen;
 
   return (
-    <Card style={styles.recentCard} padding={layout.cardPadding}>
-      <TouchableOpacity onPress={onOpen} activeOpacity={0.84}>
+    <Card
+      style={[styles.recentCard, selected && styles.recentCardSelected]}
+      padding={0}
+    >
+      <TouchableOpacity
+        onPress={handlePress}
+        onLongPress={onLongPress}
+        activeOpacity={0.84}
+        accessibilityRole="button"
+      >
+        {selectionMode ? (
+          <View style={[styles.selectionDot, selected && styles.selectionDotSelected]}>
+            {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+          </View>
+        ) : null}
         <View style={styles.recentCardHeader}>
           <View style={styles.recentCardCopy}>
             <AppText variant="labelSm" tone="muted" style={styles.kicker}>
@@ -52,11 +76,20 @@ const RecentCalculationCard = ({
           </View>
         </View>
       </TouchableOpacity>
-      <View style={styles.recentActions}>
-        <Button label={t('recent.reopen')} onPress={onOpen} variant="secondary" style={styles.recentAction} />
-        <Button label={t('recent.track')} onPress={onTrack} style={styles.recentAction} />
-        <Button label={t('common.delete')} onPress={onDelete} variant="ghost" style={styles.recentDeleteAction} />
-      </View>
+      {!selectionMode ? (
+        <View style={styles.recentActions}>
+          <Button label={t('recent.track')} onPress={onTrack} variant="icon-pill" style={styles.trackAction} />
+          <TouchableOpacity
+            style={styles.deleteAction}
+            onPress={onDelete}
+            activeOpacity={0.84}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.delete')}
+          >
+            <TrashIcon size={19} color={colours.error} strokeWidth={1.9} />
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </Card>
   );
 };
@@ -65,9 +98,18 @@ export default function RecentCalculationsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [recentItems, setRecentItems] = useState(() => recentCalculationsStorage.getAll());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const selectionMode = selectedIds.size > 0;
 
   const refresh = useCallback(() => {
-    setRecentItems(recentCalculationsStorage.getAll());
+    const nextItems = recentCalculationsStorage.getAll();
+    setRecentItems(nextItems);
+    setSelectedIds(current => {
+      if (current.size === 0) return current;
+      const validIds = new Set(nextItems.map(item => item.id));
+      const next = new Set([...current].filter(id => validIds.has(id)));
+      return next.size === current.size ? current : next;
+    });
   }, []);
 
   useFocusEffect(refresh);
@@ -83,7 +125,74 @@ export default function RecentCalculationsScreen() {
   const deleteRecent = useCallback((id: string) => {
     recentCalculationsStorage.remove(id);
     setRecentItems(recentCalculationsStorage.getAll());
+    setSelectedIds(current => {
+      if (!current.has(id)) return current;
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
   }, []);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds(current => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const startSelection = useCallback((id: string) => {
+    setSelectedIds(current => {
+      if (current.has(id)) return current;
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const deleteSelected = useCallback(() => {
+    selectedIds.forEach(id => recentCalculationsStorage.remove(id));
+    setSelectedIds(new Set());
+    setRecentItems(recentCalculationsStorage.getAll());
+  }, [selectedIds]);
+
+  const listHeader = recentItems.length > 0 ? (
+    <View style={styles.listHeader}>
+      <AppText variant="bodyLg" tone="muted" style={styles.intro}>
+        {t('recent.intro')}
+      </AppText>
+      {selectionMode ? (
+        <View style={styles.selectionBar}>
+          <AppText variant="labelMd">
+            {t('recent.selectedCount', { count: selectedIds.size })}
+          </AppText>
+          <View style={styles.selectionActions}>
+            <Button
+              label={t('common.cancel')}
+              onPress={clearSelection}
+              variant="ghost"
+              style={styles.selectionAction}
+            />
+            <Button
+              label={t('recent.deleteSelected')}
+              onPress={deleteSelected}
+              variant="destructive-ghost"
+              leftIcon={<TrashIcon size={17} color={colours.error} strokeWidth={1.9} />}
+              style={styles.selectionAction}
+            />
+          </View>
+        </View>
+      ) : null}
+    </View>
+  ) : null;
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -98,11 +207,7 @@ export default function RecentCalculationsScreen() {
         data={recentItems}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        ListHeaderComponent={recentItems.length > 0 ? (
-          <AppText variant="bodyLg" tone="muted" style={styles.intro}>
-            {t('recent.intro')}
-          </AppText>
-        ) : null}
+        ListHeaderComponent={listHeader}
         ListEmptyComponent={<EmptyState title={t('recent.empty')} subtitle={t('recent.emptySubtitle')} />}
         renderItem={({ item }) => (
           <RecentCalculationCard
@@ -110,6 +215,10 @@ export default function RecentCalculationsScreen() {
             onOpen={() => openRecent(item.id)}
             onTrack={() => trackRecent(item)}
             onDelete={() => deleteRecent(item.id)}
+            onLongPress={() => startSelection(item.id)}
+            onToggleSelected={() => toggleSelected(item.id)}
+            selected={selectedIds.has(item.id)}
+            selectionMode={selectionMode}
           />
         )}
       />
@@ -120,13 +229,84 @@ export default function RecentCalculationsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   list: { padding: layout.screenPadding, flexGrow: 1 },
-  intro: { marginBottom: spacing.md },
-  recentCard: { marginBottom: spacing.md },
-  recentCardHeader: { flexDirection: 'row', gap: spacing.md },
+  listHeader: { marginBottom: spacing.md, gap: spacing.sm },
+  intro: {},
+  selectionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingHorizontal: layout.cardPadding,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+    borderRadius: radii.card,
+    borderColor: colours.primaryMuted,
+    backgroundColor: colours.surfaceAccent,
+  },
+  selectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  selectionAction: {
+    minHeight: 38,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  recentCard: {
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  recentCardSelected: {
+    borderColor: colours.primary,
+    backgroundColor: colours.surfaceAccent,
+  },
+  recentCardHeader: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: layout.cardPadding,
+    paddingBottom: spacing.sm,
+  },
   recentCardCopy: { flex: 1, gap: spacing.xxs },
   kicker: { textTransform: 'uppercase' },
   recentMetric: { width: 128, alignItems: 'flex-end', gap: spacing.xxs },
-  recentActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.md },
-  recentAction: { flexGrow: 1, flexBasis: '40%' },
-  recentDeleteAction: { flexGrow: 1, flexBasis: '100%' },
+  selectionDot: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    zIndex: 1,
+    width: 24,
+    height: 24,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colours.borderStrong,
+    backgroundColor: colours.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectionDotSelected: {
+    borderColor: colours.primary,
+    backgroundColor: colours.primary,
+  },
+  recentActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: layout.cardPadding,
+    paddingTop: spacing.xs,
+    paddingBottom: layout.cardPadding,
+  },
+  trackAction: {
+    flex: 1,
+  },
+  deleteAction: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colours.errorSurface,
+    backgroundColor: colours.errorSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

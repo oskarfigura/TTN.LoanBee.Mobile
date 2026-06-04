@@ -167,10 +167,40 @@ afterEach(() => {
   mockParams = {};
   jest.restoreAllMocks();
   jest.clearAllMocks();
-  jest.resetModules();
 });
 
 describe('ResultScreen', () => {
+  it('shows a save action in the result header for unsaved calculations', async () => {
+    mockParams = {
+      mode: 'draft',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+    };
+    const renderer = await renderResultScreen();
+    const header = renderer.root.find(node => String(node.type) === 'ScreenHeader');
+    const rightAction = header.props.rightAction as React.ReactElement<{
+      accessibilityLabel: string;
+      onPress: () => void;
+    }>;
+
+    expect(rightAction.props.accessibilityLabel).toBe('common.save');
+
+    await act(async () => {
+      rightAction.props.onPress();
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/saved/new',
+      params: expect.objectContaining({
+        result: mockParams.result,
+        formValues: mockParams.formValues,
+        currency: 'GBP',
+        returnToResult: '1',
+      }),
+    });
+  });
+
   it('guards unsaved draft results and routes save-before-leaving to the save screen', async () => {
     mockParams = {
       mode: 'draft',

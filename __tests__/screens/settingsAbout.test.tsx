@@ -132,6 +132,18 @@ jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
+jest.mock('../../src/components/ui/Icons/ChevronRightIcon/ChevronRightIcon', () => ({
+  ChevronRightIcon: (props: Record<string, unknown>) => React.createElement('ChevronRightIcon', props),
+}));
+
+jest.mock('../../src/components/ui/Icons/InfoCircleIcon/InfoCircleIcon', () => ({
+  InfoCircleIcon: (props: Record<string, unknown>) => React.createElement('InfoCircleIcon', props),
+}));
+
+jest.mock('../../src/components/ui/Icons/RouteIcon/RouteIcon', () => ({
+  RouteIcon: (props: Record<string, unknown>) => React.createElement('RouteIcon', props),
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children, ...props }: { children?: React.ReactNode }) => (
     React.createElement('SafeAreaView', props, children)

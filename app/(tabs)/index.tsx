@@ -53,14 +53,19 @@ const JourneyOption = ({ title, body, meta, onPress }: JourneyOptionProps) => (
   </TouchableOpacity>
 );
 
-export default function CalculatorScreen() {
+interface BorrowingJourneyScreenProps {
+  mode?: 'home' | 'calculate';
+}
+
+export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreenProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ calculator?: string; dashboard?: string }>();
+  const isCalculateTab = mode === 'calculate';
   const form = useLoanCalculatorForm();
   const { loans, refresh } = useSavedLoans();
   const [journeyStep, setJourneyStep] = useState<JourneyStep>('intent');
-  const [showCalculator, setShowCalculator] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(isCalculateTab);
   const firstRunChecked = useRef(false);
 
   const pinnedLoans = useMemo(
@@ -89,17 +94,17 @@ export default function CalculatorScreen() {
   }, [router]);
 
   useEffect(() => {
-    if (params.calculator === '1') {
+    if (isCalculateTab || params.calculator) {
       setShowCalculator(true);
       setJourneyStep('intent');
     }
-  }, [params.calculator]);
+  }, [isCalculateTab, params.calculator]);
 
   useEffect(() => {
-    if (params.dashboard) {
+    if (!isCalculateTab && params.dashboard) {
       setShowCalculator(false);
     }
-  }, [params.dashboard]);
+  }, [isCalculateTab, params.dashboard]);
 
   useFocusEffect(
     useCallback(() => {
@@ -113,13 +118,17 @@ export default function CalculatorScreen() {
   );
 
   const openCalculator = useCallback(() => {
-    setShowCalculator(true);
-    setJourneyStep('intent');
-  }, []);
+    router.push('/calculate');
+  }, [router]);
 
   const returnToDashboard = useCallback(() => {
+    if (isCalculateTab) {
+      setJourneyStep('intent');
+      return;
+    }
+
     setShowCalculator(false);
-  }, []);
+  }, [isCalculateTab]);
 
   const handleJourneyBack = useCallback(() => {
     if (journeyStep === 'intent') {
@@ -158,12 +167,12 @@ export default function CalculatorScreen() {
     });
   };
 
-  const canGoBackInJourney = pinnedLoans.length > 0 || journeyStep !== 'intent';
+  const canGoBackInJourney = journeyStep !== 'intent' || (!isCalculateTab && pinnedLoans.length > 0);
   const journeyBackAction = canGoBackInJourney ? (
     <HeaderBackAction onPress={handleJourneyBack} />
   ) : undefined;
 
-  if (pinnedLoans.length > 0 && !showCalculator) {
+  if (!isCalculateTab && pinnedLoans.length > 0 && !showCalculator) {
     return (
       <SafeAreaView style={styles.safe} edges={[]}>
         <MortgageDashboard loans={pinnedLoans} onNewCalculation={openCalculator} />
@@ -230,6 +239,10 @@ export default function CalculatorScreen() {
       />
     </SafeAreaView>
   );
+}
+
+export default function HomeScreen() {
+  return <BorrowingJourneyScreen mode="home" />;
 }
 
 const styles = StyleSheet.create({

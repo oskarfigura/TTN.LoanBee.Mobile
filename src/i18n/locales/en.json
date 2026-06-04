@@ -90,11 +90,11 @@
     "exportErrorMessage": "Please try exporting the amortisation schedule again."
   },
   "saved": {
-    "title": "Tracked",
+    "title": "Saved",
     "loanDetail": "Loan Detail",
     "editLoan": "Manage saved loan",
-    "empty": "Nothing tracked yet",
-    "emptySubtitle": "Start a guided calculation or save a scenario to see tracked borrowing here",
+    "empty": "Nothing saved yet",
+    "emptySubtitle": "Track borrowing or save a scenario to see it here.",
     "delete": "Delete",
     "edit": "Edit",
     "view": "View",
@@ -114,9 +114,9 @@
     "notFound": "Loan not found",
     "viewFullCalculation": "View full calculation",
     "createNewCalculation": "Create New Calculation",
-    "intro": "Tracked loans and mortgages live here, with pinned items first.",
-    "searchPlaceholder": "Search tracked items",
-    "noMatches": "No tracked items match your search.",
+    "intro": "Tracked loans, mortgages, and recent calculations live here, with pinned items first.",
+    "searchPlaceholder": "Search saved items",
+    "noMatches": "No saved items match your search.",
     "category": {
       "mortgage": "Mortgage",
       "loan": "Loan"
@@ -130,7 +130,9 @@
     "emptySubtitle": "Run a mortgage or loan calculation and it will appear here.",
     "created": "Calculated {{date}}",
     "reopen": "Reopen",
-    "track": "Track"
+    "track": "Track",
+    "selectedCount": "{{count}} selected",
+    "deleteSelected": "Delete selected"
   },
   "save": {
     "title": "Save Loan",
@@ -245,6 +247,8 @@
     "termsAndConditions": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
     "about": "About LoanBee",
+    "howItWorksBody": "Take the quick tour of planning, tracking, and overpayments.",
+    "aboutBody": "See the formula, disclaimer, and app details.",
     "devDataTitle": "Visual QA Data",
     "devDataHelp": "Development only. Replaces saved loans with deterministic fixtures for emulator screenshots and manual checks.",
     "devDataLoad": "Load visual QA saved loans",
@@ -738,7 +742,7 @@
   "tabs": {
     "home": "Home",
     "calculator": "Calculate",
-    "saved": "Tracked",
+    "saved": "Saved",
     "about": "About",
     "settings": "Settings"
   },
