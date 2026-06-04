@@ -48,6 +48,16 @@ jest.mock('react-native', () => {
       )
     ),
     StyleSheet: { create: (styles: unknown) => styles },
+    Alert: {
+      alert: (
+        _title: string,
+        _message: string,
+        buttons?: Array<{ style?: string; onPress?: () => void }>,
+      ) => {
+        const confirm = buttons?.find(button => button.style === 'destructive');
+        confirm?.onPress?.();
+      },
+    },
     TouchableOpacity: ({ children, ...props }: { children?: React.ReactNode }) => (
       React.createElement('TouchableOpacity', props, children)
     ),
@@ -104,6 +114,11 @@ jest.mock('../../src/results/loanResultRoute', () => ({
   getResultForFormValues: () => ({
     monthlyPayments: 1200,
     totalInterestPaid: 45000,
+    amount: 200000,
+    interest: 5,
+    termInYears: 20,
+    termInMonths: 0,
+    tableItems: new Array(240).fill({}),
   }),
 }));
 
@@ -292,5 +307,32 @@ describe('Recent calculations page', () => {
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-2');
     expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'recent.deleteSelected')).toHaveLength(0);
+  });
+
+  it('selects every calculation with select all then bulk deletes them', async () => {
+    mockRecentItems = [
+      buildRecentItem('recent-1', '2026-06-04T09:00:00.000Z'),
+      buildRecentItem('recent-2', '2026-06-05T09:00:00.000Z'),
+    ];
+    const renderer = await renderRecent();
+
+    await act(async () => {
+      getRecentCardPressables(renderer)[0].props.onLongPress();
+    });
+
+    await act(async () => {
+      getButton(renderer, 'recent.selectAll').props.onPress();
+    });
+
+    expect(textContent(renderer.root)).toContain('recent.selectedCount');
+    // Once everything is selected the toggle flips to deselect.
+    expect(getButton(renderer, 'recent.deselectAll')).toBeTruthy();
+
+    await act(async () => {
+      getButton(renderer, 'recent.deleteSelected').props.onPress();
+    });
+
+    expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
+    expect(mockRemoveRecent).toHaveBeenCalledWith('recent-2');
   });
 });

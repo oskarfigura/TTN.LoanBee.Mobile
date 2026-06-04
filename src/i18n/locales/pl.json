@@ -132,7 +132,16 @@
     "reopen": "Otwórz",
     "track": "Śledź",
     "selectedCount": "Zaznaczono: {{count}}",
-    "deleteSelected": "Usuń zaznaczone"
+    "selectAll": "Zaznacz wszystko",
+    "deselectAll": "Odznacz wszystko",
+    "deleteSelected": "Usuń zaznaczone",
+    "deleteTitle": "Usunąć obliczenie?",
+    "deleteMessage": "To obliczenie zostanie usunięte z listy ostatnich.",
+    "deleteSelectedTitle": "Usunąć zaznaczone?",
+    "deleteSelectedMessage_one": "{{count}} obliczenie zostanie usunięte z listy ostatnich.",
+    "deleteSelectedMessage_few": "{{count}} obliczenia zostaną usunięte z listy ostatnich.",
+    "deleteSelectedMessage_many": "{{count}} obliczeń zostanie usuniętych z listy ostatnich.",
+    "deleteSelectedMessage_other": "{{count}} obliczeń zostanie usuniętych z listy ostatnich."
   },
   "save": {
     "title": "Zapisz Kredyt",
@@ -340,6 +349,7 @@
     "more": "Więcej",
     "viewAll": "Zobacz wszystko",
     "save": "Zapisz",
+    "cancel": "Anuluj",
     "delete": "Usuń"
   },
   "forms": {

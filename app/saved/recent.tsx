@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,21 @@ import { buildRecentResultParams, getResultForFormValues } from '@/results/loanR
 import { RecentCalculation, recentCalculationsStorage } from '@/storage/recentCalculations';
 import { colours, layout, radii, spacing } from '@/theme';
 import { formatFriendlyDate } from '@/utils/date';
+
+const formatTermDuration = (months: number, yearsLabel: string, monthsLabel: string): string => {
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+  if (years === 0) return `${remainingMonths} ${monthsLabel}`;
+  if (remainingMonths === 0) return `${years} ${yearsLabel}`;
+  return `${years} ${yearsLabel} ${remainingMonths} ${monthsLabel}`;
+};
+
+const RecentStat = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.stat}>
+    <AppText variant="helper" tone="muted" numberOfLines={1}>{label}</AppText>
+    <AppText variant="labelMd" numberOfLines={1} adjustsFontSizeToFit>{value}</AppText>
+  </View>
+);
 
 const RecentCalculationCard = ({
   item,
@@ -40,6 +55,12 @@ const RecentCalculationCard = ({
   const result = useMemo(() => getResultForFormValues(item.formValues), [item.formValues]);
   const handlePress = selectionMode ? onToggleSelected : onOpen;
 
+  const totalMonths = Math.max(
+    result.tableItems.length,
+    result.termInYears * 12 + result.termInMonths,
+  );
+  const termLabel = formatTermDuration(totalMonths, t('results.years'), t('results.months'));
+
   return (
     <Card
       style={[styles.recentCard, selected && styles.recentCardSelected]}
@@ -51,29 +72,47 @@ const RecentCalculationCard = ({
         activeOpacity={0.84}
         accessibilityRole="button"
       >
-        {selectionMode ? (
-          <View style={[styles.selectionDot, selected && styles.selectionDotSelected]}>
-            {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+        <View style={styles.recentCardInner}>
+          <View style={styles.recentCardMain}>
+            <View style={styles.recentCardHeader}>
+              <View style={styles.recentCardCopy}>
+                <AppText variant="labelSm" tone="muted" style={styles.kicker}>
+                  {item.category ? t(`saved.category.${item.category}`) : t('recent.calculation')}
+                </AppText>
+                <AppText variant="title3">
+                  {formatCurrency(result.monthlyPayments, item.currency)}
+                </AppText>
+                <AppText variant="bodySm" tone="muted">
+                  {`${t('results.monthlyPayment')} · ${t('recent.created', { date: formatFriendlyDate(item.createdAt.slice(0, 10), i18n.language) })}`}
+                </AppText>
+              </View>
+              <View style={styles.recentMetric}>
+                <AppText variant="helper" tone="muted">{t('results.totalInterest')}</AppText>
+                <AppText variant="labelMd" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
+                  {formatCurrency(result.totalInterestPaid, item.currency)}
+                </AppText>
+              </View>
+            </View>
+            <View style={styles.recentDetails}>
+              <RecentStat
+                label={t('calculator.loanAmount')}
+                value={formatCurrency(result.amount, item.currency)}
+              />
+              <RecentStat
+                label={t('calculator.interestRate')}
+                value={`${result.interest}%`}
+              />
+              <RecentStat
+                label={t('results.loanTerm')}
+                value={termLabel}
+              />
+            </View>
           </View>
-        ) : null}
-        <View style={styles.recentCardHeader}>
-          <View style={styles.recentCardCopy}>
-            <AppText variant="labelSm" tone="muted" style={styles.kicker}>
-              {item.category ? t(`saved.category.${item.category}`) : t('recent.calculation')}
-            </AppText>
-            <AppText variant="title3">
-              {formatCurrency(result.monthlyPayments, item.currency)}
-            </AppText>
-            <AppText variant="bodySm" tone="muted">
-              {t('recent.created', { date: formatFriendlyDate(item.createdAt.slice(0, 10), i18n.language) })}
-            </AppText>
-          </View>
-          <View style={styles.recentMetric}>
-            <AppText variant="helper" tone="muted">{t('results.totalInterest')}</AppText>
-            <AppText variant="labelMd" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
-              {formatCurrency(result.totalInterestPaid, item.currency)}
-            </AppText>
-          </View>
+          {selectionMode ? (
+            <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+              {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+            </View>
+          ) : null}
         </View>
       </TouchableOpacity>
       {!selectionMode ? (
@@ -100,6 +139,7 @@ export default function RecentCalculationsScreen() {
   const [recentItems, setRecentItems] = useState(() => recentCalculationsStorage.getAll());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const selectionMode = selectedIds.size > 0;
+  const allSelected = recentItems.length > 0 && selectedIds.size === recentItems.length;
 
   const refresh = useCallback(() => {
     const nextItems = recentCalculationsStorage.getAll();
@@ -122,16 +162,27 @@ export default function RecentCalculationsScreen() {
     router.push({ pathname: '/saved/new' as never, params: { recentId: item.id, currency: item.currency } });
   }, [router]);
 
-  const deleteRecent = useCallback((id: string) => {
-    recentCalculationsStorage.remove(id);
+  const removeIds = useCallback((ids: string[]) => {
+    ids.forEach(id => recentCalculationsStorage.remove(id));
     setRecentItems(recentCalculationsStorage.getAll());
     setSelectedIds(current => {
-      if (!current.has(id)) return current;
+      if (current.size === 0) return current;
       const next = new Set(current);
-      next.delete(id);
+      ids.forEach(id => next.delete(id));
       return next;
     });
   }, []);
+
+  const deleteRecent = useCallback((id: string) => {
+    Alert.alert(
+      t('recent.deleteTitle'),
+      t('recent.deleteMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => removeIds([id]) },
+      ],
+    );
+  }, [removeIds, t]);
 
   const toggleSelected = useCallback((id: string) => {
     setSelectedIds(current => {
@@ -158,11 +209,26 @@ export default function RecentCalculationsScreen() {
     setSelectedIds(new Set());
   }, []);
 
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(current => (
+      current.size === recentItems.length
+        ? new Set()
+        : new Set(recentItems.map(item => item.id))
+    ));
+  }, [recentItems]);
+
   const deleteSelected = useCallback(() => {
-    selectedIds.forEach(id => recentCalculationsStorage.remove(id));
-    setSelectedIds(new Set());
-    setRecentItems(recentCalculationsStorage.getAll());
-  }, [selectedIds]);
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    Alert.alert(
+      t('recent.deleteSelectedTitle'),
+      t('recent.deleteSelectedMessage', { count: ids.length }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => removeIds(ids) },
+      ],
+    );
+  }, [removeIds, selectedIds, t]);
 
   const listHeader = recentItems.length > 0 ? (
     <View style={styles.listHeader}>
@@ -171,9 +237,17 @@ export default function RecentCalculationsScreen() {
       </AppText>
       {selectionMode ? (
         <View style={styles.selectionBar}>
-          <AppText variant="labelMd">
-            {t('recent.selectedCount', { count: selectedIds.size })}
-          </AppText>
+          <View style={styles.selectionBarTop}>
+            <AppText variant="labelMd">
+              {t('recent.selectedCount', { count: selectedIds.size })}
+            </AppText>
+            <Button
+              label={allSelected ? t('recent.deselectAll') : t('recent.selectAll')}
+              onPress={toggleSelectAll}
+              variant="ghost"
+              style={styles.selectionAction}
+            />
+          </View>
           <View style={styles.selectionActions}>
             <Button
               label={t('common.cancel')}
@@ -232,9 +306,6 @@ const styles = StyleSheet.create({
   listHeader: { marginBottom: spacing.md, gap: spacing.sm },
   intro: {},
   selectionBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     gap: spacing.sm,
     paddingHorizontal: layout.cardPadding,
     paddingVertical: spacing.sm,
@@ -243,9 +314,16 @@ const styles = StyleSheet.create({
     borderColor: colours.primaryMuted,
     backgroundColor: colours.surfaceAccent,
   },
+  selectionBarTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
   selectionActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: spacing.xs,
   },
   selectionAction: {
@@ -261,22 +339,38 @@ const styles = StyleSheet.create({
     borderColor: colours.primary,
     backgroundColor: colours.surfaceAccent,
   },
-  recentCardHeader: {
+  recentCardInner: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
     padding: layout.cardPadding,
     paddingBottom: spacing.sm,
   },
+  recentCardMain: {
+    flex: 1,
+    gap: spacing.sm,
+  },
+  recentCardHeader: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
   recentCardCopy: { flex: 1, gap: spacing.xxs },
   kicker: { textTransform: 'uppercase' },
-  recentMetric: { width: 128, alignItems: 'flex-end', gap: spacing.xxs },
-  selectionDot: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    zIndex: 1,
-    width: 24,
-    height: 24,
+  recentMetric: { width: 116, alignItems: 'flex-end', gap: spacing.xxs },
+  recentDetails: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+  },
+  stat: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  checkbox: {
+    width: 26,
+    height: 26,
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colours.borderStrong,
@@ -284,7 +378,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selectionDotSelected: {
+  checkboxSelected: {
     borderColor: colours.primary,
     backgroundColor: colours.primary,
   },

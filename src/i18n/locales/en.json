@@ -132,7 +132,16 @@
     "reopen": "Reopen",
     "track": "Track",
     "selectedCount": "{{count}} selected",
-    "deleteSelected": "Delete selected"
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "deleteSelected": "Delete selected",
+    "deleteTitle": "Delete calculation?",
+    "deleteMessage": "This calculation will be removed from your recent list.",
+    "deleteSelectedTitle": "Delete selected?",
+    "deleteSelectedMessage_one": "{{count}} calculation will be removed from your recent list.",
+    "deleteSelectedMessage_few": "{{count}} calculations will be removed from your recent list.",
+    "deleteSelectedMessage_many": "{{count}} calculations will be removed from your recent list.",
+    "deleteSelectedMessage_other": "{{count}} calculations will be removed from your recent list."
   },
   "save": {
     "title": "Save Loan",
@@ -340,6 +349,7 @@
     "more": "More",
     "viewAll": "View all",
     "save": "Save",
+    "cancel": "Cancel",
     "delete": "Delete"
   },
   "forms": {
