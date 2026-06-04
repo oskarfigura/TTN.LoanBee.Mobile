@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
 import { ChevronRightIcon, LoanCategoryIcon, MortgageIcon, PinIcon } from '@/components/loans/LoanIcons';
+import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSummary';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
@@ -15,11 +16,30 @@ interface Props {
   loan: SavedLoan;
   onPress: () => void;
   onTogglePinned: () => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onLongPress?: () => void;
+  onToggleSelected?: () => void;
 }
 
-export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
+const SelectionCheckbox = ({ selected }: { selected: boolean }) => (
+  <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+    {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+  </View>
+);
+
+export const LoanProfileCard = ({
+  loan,
+  onPress,
+  onTogglePinned,
+  selectionMode = false,
+  selected = false,
+  onLongPress,
+  onToggleSelected,
+}: Props) => {
   const { t, i18n } = useTranslation();
   const isDraft = loan.status === 'draft';
+  const handlePress = selectionMode ? (onToggleSelected ?? onPress) : onPress;
   // Draft loans built via the guided journey hold partial data, so skip the
   // insight computation (which assumes a complete loan) and render a resume card.
   const insight = useMemo(() => {
@@ -38,12 +58,13 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
     const draftLabel = `${loan.nickname.trim() || t('track.draftUntitled')}. ${t('saved.draftA11y')}`;
     return (
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
+        onLongPress={onLongPress}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel={draftLabel}
       >
-        <Card padding={0} style={styles.card}>
+        <Card padding={0} style={[styles.card, selected && styles.cardSelected]}>
           <View style={[styles.inner, styles.draftInner]}>
             <View style={styles.identity}>
               <View style={styles.iconTile}>
@@ -60,9 +81,13 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
                 </View>
               </View>
             </View>
-            <View style={styles.detailsCue}>
-              <ChevronRightIcon color={colours.primary} size={18} />
-            </View>
+            {selectionMode ? (
+              <SelectionCheckbox selected={selected} />
+            ) : (
+              <View style={styles.detailsCue}>
+                <ChevronRightIcon color={colours.primary} size={18} />
+              </View>
+            )}
           </View>
         </Card>
       </TouchableOpacity>
@@ -100,7 +125,8 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
+      onLongPress={onLongPress}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -117,7 +143,7 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
         }
       }}
     >
-      <Card padding={0} style={styles.card}>
+      <Card padding={0} style={[styles.card, selected && styles.cardSelected]}>
         <View style={styles.inner}>
           <View style={styles.header}>
             <View style={styles.identity}>
@@ -142,19 +168,23 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
                 </View>
               </View>
             </View>
-            <TouchableOpacity
-              onPress={event => {
-                event.stopPropagation();
-                onTogglePinned();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={loan.pinnedToDashboard ? t('mortgage.unpinHint') : t('mortgage.pinToDashboard')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={[styles.pinButton, loan.pinnedToDashboard && styles.pinButtonActive]}
-              activeOpacity={0.84}
-            >
-              <PinIcon color={loan.pinnedToDashboard ? colours.secondary : colours.primary} size={16} />
-            </TouchableOpacity>
+            {selectionMode ? (
+              <SelectionCheckbox selected={selected} />
+            ) : (
+              <TouchableOpacity
+                onPress={event => {
+                  event.stopPropagation();
+                  onTogglePinned();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={loan.pinnedToDashboard ? t('mortgage.unpinHint') : t('mortgage.pinToDashboard')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.pinButton, loan.pinnedToDashboard && styles.pinButtonActive]}
+                activeOpacity={0.84}
+              >
+                <PinIcon color={loan.pinnedToDashboard ? colours.secondary : colours.primary} size={16} />
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.balanceBlock}>
@@ -207,6 +237,24 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.sm,
     overflow: 'hidden',
+  },
+  cardSelected: {
+    borderColor: colours.primary,
+    backgroundColor: colours.surfaceAccent,
+  },
+  checkbox: {
+    width: 26,
+    height: 26,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colours.borderStrong,
+    backgroundColor: colours.surfaceRaised,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    borderColor: colours.primary,
+    backgroundColor: colours.primary,
   },
   inner: {
     padding: spacing.sm,

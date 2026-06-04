@@ -117,6 +117,14 @@
     "intro": "Śledzone kredyty, hipoteki i ostatnie obliczenia są tutaj, a przypięte pozycje są na górze.",
     "searchPlaceholder": "Szukaj zapisanych pozycji",
     "noMatches": "Brak zapisanych pozycji pasujących do wyszukiwania.",
+    "selectedCount": "Zaznaczono: {{count}}",
+    "selectAll": "Zaznacz wszystko",
+    "deselectAll": "Odznacz wszystko",
+    "deleteSelectedTitle": "Usunąć zaznaczone?",
+    "deleteSelectedMessage_one": "{{count}} zapisana pozycja zostanie trwale usunięta wraz ze śledzoną historią.",
+    "deleteSelectedMessage_few": "{{count}} zapisane pozycje zostaną trwale usunięte wraz ze śledzoną historią.",
+    "deleteSelectedMessage_many": "{{count}} zapisanych pozycji zostanie trwale usuniętych wraz ze śledzoną historią.",
+    "deleteSelectedMessage_other": "{{count}} zapisanych pozycji zostanie trwale usuniętych wraz ze śledzoną historią.",
     "category": {
       "mortgage": "Hipoteka",
       "loan": "Kredyt"
