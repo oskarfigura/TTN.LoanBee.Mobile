@@ -107,7 +107,7 @@ Related behaviours:
 - Entry: Tracked tab, or post-save redirect
 - Files: `app/saved/[id].tsx`, `src/components/loans/MortgageDetailView.tsx`
 - Shared actions:
-  - share the original calculation URL
+  - share the original calculation URL with loan/mortgage-specific share copy
   - rename
   - delete
   - edit metadata

@@ -112,6 +112,7 @@ export default function LoanDetailScreen() {
       result,
       formValues: loan.formSnapshot,
       currency: loan.currency,
+      category: loan.category,
       t,
     });
   }, [loan, result, t]);

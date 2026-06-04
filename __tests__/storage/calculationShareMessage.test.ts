@@ -46,6 +46,7 @@ describe('calculation share message', () => {
     });
 
     expect(payload.title).toBe('share.title');
+    expect(payload.message).toContain('share.intro\n');
     expect(payload.url).toBe(
       'https://www.loanamortisationcalculator.com/?amount=250000&interest=4.5&downPayment=10&downPaymentType=percent&startDate=2026-01-01&mode=term&currency=GBP&years=20&months=0&extra=200',
     );
@@ -77,5 +78,55 @@ describe('calculation share message', () => {
 
     expect(payload.url).toContain('downPaymentType=cash');
     expect(payload.url).toContain('mode=term');
+  });
+
+  it('uses loan-specific share copy when sharing a saved loan', () => {
+    const payload = buildCalculationSharePayload({
+      result,
+      currency: 'GBP',
+      category: 'loan',
+      t,
+      formValues: {
+        loanAmount: 120000,
+        interest: 5,
+        termInYears: 10,
+        termInMonths: 0,
+        downPayment: 0,
+        downPaymentType: DownPaymentType.CASH,
+        desiredMonthlyPayment: 0,
+        additionalMonthlyPayment: 0,
+        startDate: '2026-06-01',
+        calculationType: LoanCalculationType.TERM,
+        currency: 'GBP',
+      },
+    });
+
+    expect(payload.title).toBe('share.titleLoan');
+    expect(payload.message.startsWith('share.introLoan\n')).toBe(true);
+  });
+
+  it('uses mortgage-specific share copy when sharing a saved mortgage', () => {
+    const payload = buildCalculationSharePayload({
+      result,
+      currency: 'GBP',
+      category: 'mortgage',
+      t,
+      formValues: {
+        loanAmount: 250000,
+        interest: 4.5,
+        termInYears: 20,
+        termInMonths: 0,
+        downPayment: 10,
+        downPaymentType: DownPaymentType.PERCENT,
+        desiredMonthlyPayment: 0,
+        additionalMonthlyPayment: 200,
+        startDate: '2026-01-01',
+        calculationType: LoanCalculationType.TERM,
+        currency: 'GBP',
+      },
+    });
+
+    expect(payload.title).toBe('share.titleMortgage');
+    expect(payload.message.startsWith('share.introMortgage\n')).toBe(true);
   });
 });

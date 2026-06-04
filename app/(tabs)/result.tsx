@@ -135,9 +135,10 @@ export default function ResultScreen() {
       result,
       formValues,
       currency,
+      category: savedLoan?.category ?? recentCalculation?.category,
       t,
     });
-  }, [currency, formValues, result, t]);
+  }, [currency, formValues, recentCalculation?.category, result, savedLoan?.category, t]);
 
   const handleBack = useCallback(() => {
     router.back();
