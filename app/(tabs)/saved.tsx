@@ -4,66 +4,18 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { LoanProfileCard } from '@/components/loans/LoanProfileCard';
+import { ChevronRightIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
-import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Button } from '@/components/ui/Button';
 import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
-import { formatCurrency } from '@/currency/format';
-import { buildRecentResultParams, getResultForFormValues } from '@/results/loanResultRoute';
-import { RecentCalculation, recentCalculationsStorage } from '@/storage/recentCalculations';
-import { colours, layout, spacing } from '@/theme';
-import { formatFriendlyDate } from '@/utils/date';
+import { ClockIcon } from '@/components/ui/Icons/ClockIcon/ClockIcon';
+import { colours, layout, radii, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const RecentCalculationCard = ({
-  item,
-  onOpen,
-  onTrack,
-  onDelete,
-}: {
-  item: RecentCalculation;
-  onOpen: () => void;
-  onTrack: () => void;
-  onDelete: () => void;
-}) => {
-  const { t, i18n } = useTranslation();
-  const result = useMemo(() => getResultForFormValues(item.formValues), [item.formValues]);
-
-  return (
-    <Card style={styles.recentCard} padding={layout.cardPadding}>
-      <TouchableOpacity onPress={onOpen} activeOpacity={0.84}>
-        <View style={styles.recentCardHeader}>
-          <View style={styles.recentCardCopy}>
-            <AppText variant="labelSm" tone="muted" style={styles.kicker}>
-              {item.category ? t(`saved.category.${item.category}`) : t('recent.calculation')}
-            </AppText>
-            <AppText variant="title3">
-              {formatCurrency(result.monthlyPayments, item.currency)}
-            </AppText>
-            <AppText variant="bodySm" tone="muted">
-              {t('recent.created', { date: formatFriendlyDate(item.createdAt.slice(0, 10), i18n.language) })}
-            </AppText>
-          </View>
-          <View style={styles.recentMetric}>
-            <AppText variant="helper" tone="muted">{t('results.totalInterest')}</AppText>
-            <AppText variant="labelMd" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
-              {formatCurrency(result.totalInterestPaid, item.currency)}
-            </AppText>
-          </View>
-        </View>
-      </TouchableOpacity>
-      <View style={styles.recentActions}>
-        <Button label={t('recent.reopen')} onPress={onOpen} variant="secondary" style={styles.recentAction} />
-        <Button label={t('recent.track')} onPress={onTrack} style={styles.recentAction} />
-        <Button label={t('common.delete')} onPress={onDelete} variant="ghost" style={styles.recentDeleteAction} />
-      </View>
-    </Card>
-  );
-};
 
 export default function SavedScreen() {
   const { t } = useTranslation();
@@ -73,7 +25,6 @@ export default function SavedScreen() {
   const openedFromDashboard = params.fromDashboard === '1';
 
   const [query, setQuery] = useState('');
-  const [recentItems, setRecentItems] = useState(() => recentCalculationsStorage.getAll());
   const visibleLoans = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase();
     const filtered = normalisedQuery
@@ -96,52 +47,32 @@ export default function SavedScreen() {
 
   const refreshScreen = useCallback(() => {
     refresh();
-    setRecentItems(recentCalculationsStorage.getAll());
   }, [refresh]);
 
   useFocusEffect(refreshScreen);
 
-  const openRecent = useCallback((id: string) => {
-    router.push({
-      pathname: '/result' as never,
-      params: buildRecentResultParams(id),
-    });
+  const openRecentCalculations = useCallback(() => {
+    router.push('/saved/recent');
   }, [router]);
 
-  const trackRecent = useCallback((item: RecentCalculation) => {
-    router.push({
-      pathname: '/saved/new' as never,
-      params: {
-        recentId: item.id,
-        currency: item.currency,
-      },
-    });
-  }, [router]);
-
-  const deleteRecent = useCallback((id: string) => {
-    recentCalculationsStorage.remove(id);
-    setRecentItems(recentCalculationsStorage.getAll());
-  }, []);
-
-  const recentFooter = recentItems.length > 0 ? (
-    <View style={styles.recentSection}>
-      <View style={styles.recentSectionHeader}>
-        <AppText variant="title2">{t('recent.title')}</AppText>
-        <AppText variant="bodySm" tone="muted">
-          {t('recent.intro')}
-        </AppText>
+  // Recent calculations live on their own page now; surface a link at the bottom
+  // of the list (and a clock action in the header) rather than the full list here.
+  const recentFooter = (
+    <TouchableOpacity
+      style={styles.recentLink}
+      onPress={openRecentCalculations}
+      activeOpacity={0.84}
+      accessibilityRole="button"
+      accessibilityLabel={t('recent.title')}
+    >
+      <ClockIcon size={20} color={colours.primary} strokeWidth={1.9} />
+      <View style={styles.recentLinkCopy}>
+        <AppText variant="labelMd">{t('recent.title')}</AppText>
+        <AppText variant="bodySm" tone="muted">{t('recent.intro')}</AppText>
       </View>
-      {recentItems.map(item => (
-        <RecentCalculationCard
-          key={item.id}
-          item={item}
-          onOpen={() => openRecent(item.id)}
-          onTrack={() => trackRecent(item)}
-          onDelete={() => deleteRecent(item.id)}
-        />
-      ))}
-    </View>
-  ) : null;
+      <ChevronRightIcon size={18} color={colours.textSecondary} />
+    </TouchableOpacity>
+  );
 
   return (
     // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
@@ -152,6 +83,11 @@ export default function SavedScreen() {
         leftAction={openedFromDashboard ? (
           <HeaderBackAction onPress={() => router.replace('/')} />
         ) : undefined}
+        rightAction={(
+          <HeaderIconButton onPress={openRecentCalculations} accessibilityLabel={t('recent.title')}>
+            <ClockIcon size={22} color={colours.primary} strokeWidth={1.9} />
+          </HeaderIconButton>
+        )}
       />
       <FlatList
         data={visibleLoans}
@@ -239,46 +175,19 @@ const styles = StyleSheet.create({
   searchInput: {
     marginLeft: spacing.xs,
   },
-  recentSection: {
+  recentLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.lg,
-    paddingBottom: spacing['3xl'],
+    padding: layout.cardPadding,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colours.border,
+    backgroundColor: colours.surface,
   },
-  recentSectionHeader: {
-    gap: spacing.xxs,
-    marginBottom: spacing.xs,
-  },
-  recentCard: {
-    marginBottom: spacing.md,
-  },
-  recentCardHeader: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  recentCardCopy: {
+  recentLinkCopy: {
     flex: 1,
-    gap: spacing.xxs,
-  },
-  kicker: {
-    textTransform: 'uppercase',
-  },
-  recentMetric: {
-    width: 128,
-    alignItems: 'flex-end',
-    gap: spacing.xxs,
-  },
-  recentActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-  },
-  recentAction: {
-    flexGrow: 1,
-    flexBasis: '40%',
-  },
-  recentDeleteAction: {
-    flexGrow: 1,
-    flexBasis: '100%',
+    gap: spacing.xxxs,
   },
 });

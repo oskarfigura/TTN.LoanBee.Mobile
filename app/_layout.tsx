@@ -77,6 +77,7 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen name="saved/[id]" />
+              <Stack.Screen name="saved/recent" />
               <Stack.Screen
                 name="saved/track"
                 options={{

@@ -146,12 +146,12 @@ jest.mock('../../src/components/ui/Icons/SearchIcon/SearchIcon', () => ({
   SearchIcon: (props: Record<string, unknown>) => React.createElement('SearchIcon', props),
 }));
 
-const renderSaved = async (): Promise<ReactTestRenderer> => {
-  const SavedScreen = (await import('../../app/(tabs)/saved')).default;
+const renderRecent = async (): Promise<ReactTestRenderer> => {
+  const RecentScreen = (await import('../../app/saved/recent')).default;
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
-    renderer = create(React.createElement(SavedScreen));
+    renderer = create(React.createElement(RecentScreen));
   });
 
   return renderer as ReactTestRenderer;
@@ -205,9 +205,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('Saved tab recent calculations', () => {
-  it('reopens, tracks, and deletes recent calculations from the visible Saved surface', async () => {
-    const renderer = await renderSaved();
+describe('Recent calculations page', () => {
+  it('reopens, tracks, and deletes recent calculations', async () => {
+    const renderer = await renderRecent();
 
     await act(async () => {
       getButton(renderer, 'recent.reopen').props.onPress();
