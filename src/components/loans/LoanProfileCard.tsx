@@ -168,14 +168,6 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
             </View>
           </View>
 
-          {overpaymentSavings ? (
-            <View style={styles.savingsBadge}>
-              <AppText variant="labelSm" tone="success" numberOfLines={1} adjustsFontSizeToFit>
-                {t('saved.savedInterestBadge', { amount: overpaymentSavings })}
-              </AppText>
-            </View>
-          ) : null}
-
           {summary.progress ? (
             <SavedLoanProgressBar loan={loan} result={result} summary={summary} />
           ) : null}
@@ -197,6 +189,13 @@ export const LoanProfileCard = ({ loan, onPress, onTogglePinned }: Props) => {
             <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.footerMeta}>
               {t('saved.startedOn', { date: startedDate })}
             </AppText>
+            {overpaymentSavings ? (
+              <View style={styles.savingsBadge}>
+                <AppText variant="labelSm" tone="success" numberOfLines={1} adjustsFontSizeToFit>
+                  {t('saved.savedInterestBadge', { amount: overpaymentSavings })}
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </View>
       </Card>
@@ -343,7 +342,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   savingsBadge: {
-    alignSelf: 'flex-start',
     flexShrink: 1,
     borderRadius: radii.chip,
     borderWidth: 1,
