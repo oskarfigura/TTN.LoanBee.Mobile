@@ -662,7 +662,7 @@ const CurrentDealSavingsCard = ({
   if (!impact?.hasOverpayments) return null;
 
   return (
-    <Card style={styles.soonerCardActive}>
+    <Card style={[styles.soonerCardActive, styles.summarySavingsCard]}>
       <View style={styles.soonerCardHeader}>
         <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
         <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
@@ -2069,6 +2069,12 @@ const styles = StyleSheet.create({
     backgroundColor: colours.successSurface,
     borderColor: colours.successBorder,
     gap: spacing.xs,
+  },
+  // In the summary panel the card is a sibling of the full-width raised panels,
+  // so drop the standalone insets and let the panel's gap own the spacing.
+  summarySavingsCard: {
+    marginHorizontal: 0,
+    marginBottom: 0,
   },
   soonerCardHeader: {
     flexDirection: 'row',
