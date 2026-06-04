@@ -68,7 +68,6 @@ export const buildCalculationSharePayload = ({
       t('share.totalCost', { amount: totalCost }),
       '',
       t('share.viewCalculation'),
-      shareUrl,
     ].join('\n'),
     url: shareUrl,
   };

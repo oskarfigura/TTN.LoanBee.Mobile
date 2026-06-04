@@ -53,7 +53,10 @@ describe('calculation share message', () => {
     expect(payload.message).toContain('share.monthlyPayment:£1,319.59');
     expect(payload.message).toContain('share.totalInterest:£91,678.42');
     expect(payload.message).toContain('share.totalCost:£316,678.42');
-    expect(payload.message.endsWith(payload.url)).toBe(true);
+    // The URL is kept out of the message body so callers can place it once per
+    // platform (separate `url` item on iOS, appended to the text on Android).
+    expect(payload.message).not.toContain(payload.url);
+    expect(payload.message.endsWith('share.viewCalculation')).toBe(true);
   });
 
   it('normalizes saved-loan snapshot enum casing before sharing', () => {
