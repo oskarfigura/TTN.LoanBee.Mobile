@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -71,7 +71,14 @@ export const LoanCalculationView = ({
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [fullscreenPreview, setFullscreenPreview] = useState<FullscreenPreview | null>(null);
   const isPreviewOpen = fullscreenPreview !== null;
+  const scrollRef = useRef<ScrollView>(null);
   const principalAmount = result.amount - result.downPayment;
+
+  // A fresh calculation (e.g. after Edit -> recalculate) reuses this screen, so
+  // reset the scroll to the top rather than leaving the user where they left off.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [result]);
   const tabs: Array<{ value: CalculationTab; label: string }> = [
     { value: 'summary', label: t('results.summary') },
     { value: 'charts', label: t('results.charts') },
@@ -360,6 +367,7 @@ export const LoanCalculationView = ({
   if (ownsScroll) {
     return (
       <ScrollView
+        ref={scrollRef}
         style={[styles.scroll, style]}
         contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
         stickyHeaderIndices={[0]}
