@@ -12,9 +12,8 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
-import { Card } from '@/components/ui/Card';
 import { FieldLabel } from '@/components/ui/FormPrimitives';
-import { colours, radii, spacing } from '@/theme';
+import { colours, layout, radii, spacing } from '@/theme';
 
 export type ImpactRow = { label: string; value: string };
 
@@ -100,7 +99,7 @@ export const OverpaymentImpactCard = ({
   title: string;
   rows: ImpactRow[];
 }) => (
-  <Card style={styles.impactCard}>
+  <View style={styles.impactCard}>
     <AppText variant="labelSm" tone="muted">
       {title}
     </AppText>
@@ -112,7 +111,7 @@ export const OverpaymentImpactCard = ({
         </View>
       ))}
     </View>
-  </Card>
+  </View>
 );
 
 export const OverpaymentSheetActions = ({
@@ -169,13 +168,12 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   impactCard: {
+    borderRadius: radii.card,
+    borderWidth: 1,
     borderColor: colours.successBorder,
     backgroundColor: colours.successSurface,
+    padding: layout.cardPadding,
     gap: spacing.sm,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
   },
   impactRows: {
     gap: spacing.xs,
