@@ -31,7 +31,6 @@ import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
 import { EditIcon } from '@/components/loans/LoanIcons';
 import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
 import { buildDraftLoanPreview, RawFormValues } from '@/loans/loanGroupFactory';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
 import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 
 type ResultParams = {
@@ -149,6 +148,12 @@ export default function ResultScreen() {
     router.back();
   }, [router]);
 
+  const handleEdit = useCallback(() => {
+    // Editing means going back to the calculator to change inputs — bypass the
+    // unsaved-result guard so the user isn't prompted to save or discard first.
+    continueWithoutGuard(() => router.back());
+  }, [continueWithoutGuard, router]);
+
   const confirmLeave = useCallback((continueNavigation: () => void) => {
     pendingLeaveRef.current = continueNavigation;
     setShowUnsavedModal(true);
@@ -214,14 +219,7 @@ export default function ResultScreen() {
         title={t('results.title')}
         variant="detail"
         leftAction={<HeaderBackAction onPress={handleBack} variant="circle" />}
-        rightAction={!isSavedMode ? (
-          <HeaderIconButton
-            onPress={openSave}
-            accessibilityLabel={t('results.saveThisLoan')}
-          >
-            <SaveIcon color={colours.primary} />
-          </HeaderIconButton>
-        ) : savedLoan ? (
+        rightAction={isSavedMode && savedLoan ? (
           <HeaderIconButton
             onPress={() => router.push(`/saved/${savedLoan.id}/edit`)}
             accessibilityLabel={t('edit.manageShort')}
@@ -249,9 +247,9 @@ export default function ResultScreen() {
             loan={draftLoan}
             result={result}
             mode="draft"
+            onSave={openSave}
             onShare={handleShare}
-            shareLabel={t('share.short')}
-            shareIcon={shareIcon}
+            onEdit={handleEdit}
           />
         ) : undefined}
       />

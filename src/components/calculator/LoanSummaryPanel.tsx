@@ -1,8 +1,12 @@
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
+import { EditIcon } from '@/components/loans/LoanIcons';
+import { QuickActionTile } from '@/components/ui/QuickActionTile';
+import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 import { formatCurrency } from '@/currency/format';
 import {
   buildSavedLoanDashboardProgress,
@@ -25,9 +29,10 @@ interface Props {
    * calculation includes an additional payment.
    */
   mode?: 'saved' | 'draft';
+  /** Draft-mode quick actions (save / share / edit the calculation). */
+  onSave?: () => void;
   onShare?: () => void;
-  shareLabel?: string;
-  shareIcon?: ReactNode;
+  onEdit?: () => void;
 }
 
 const getRemainingTermCaptionKey = (monthsRemaining: number) => {
@@ -69,9 +74,9 @@ export const LoanSummaryPanel = ({
   onTogglePinned,
   onTryOverpayments,
   mode = 'saved',
+  onSave,
   onShare,
-  shareLabel,
-  shareIcon,
+  onEdit,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const isDraft = mode === 'draft';
@@ -246,20 +251,35 @@ export const LoanSummaryPanel = ({
         </View>
       </View>
 
-      {/* Share action — only on the draft (calculation) surface; the saved view
-          shares from the screen header instead. */}
-      {isDraft && onShare ? (
-        <TouchableOpacity
-          style={styles.shareButton}
-          onPress={onShare}
-          activeOpacity={0.82}
-          accessibilityRole="button"
-        >
-          {shareIcon ? <View style={styles.shareIcon}>{shareIcon}</View> : null}
-          <Text style={styles.shareButtonText} numberOfLines={1}>
-            {shareLabel ?? t('share.short')}
-          </Text>
-        </TouchableOpacity>
+      {/* Quick actions — save, share, or edit the calculation (draft only). The
+          saved view manages these from its own header / quick-action card. */}
+      {isDraft ? (
+        <View style={styles.quickActionsCard}>
+          <Text style={styles.quickActionsTitle}>{t('loan.quickActions')}</Text>
+          <View style={styles.quickActionsRow}>
+            {onSave ? (
+              <QuickActionTile
+                label={t('common.save')}
+                icon={<SaveIcon size={21} color={colours.primary} />}
+                onPress={onSave}
+              />
+            ) : null}
+            {onShare ? (
+              <QuickActionTile
+                label={t('share.short')}
+                icon={<ShareIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+                onPress={onShare}
+              />
+            ) : null}
+            {onEdit ? (
+              <QuickActionTile
+                label={t('saved.edit')}
+                icon={<EditIcon size={21} color={colours.primary} />}
+                onPress={onEdit}
+              />
+            ) : null}
+          </View>
+        </View>
       ) : null}
     </View>
   );
@@ -438,24 +458,24 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     color: colours.primary,
   },
-  shareButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    borderRadius: radii.button,
+  quickActionsCard: {
+    backgroundColor: colours.surfaceMuted,
     borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.white,
-    paddingHorizontal: spacing.xl,
-    gap: spacing.xs,
+    borderColor: colours.surfaceStrong,
+    borderRadius: radii.card,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
   },
-  shareIcon: {
-    marginRight: 2,
-  },
-  shareButtonText: {
+  quickActionsTitle: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.sm,
-    color: colours.primary,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    textTransform: 'uppercase',
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
   },
 });
