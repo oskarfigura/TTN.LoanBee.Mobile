@@ -11,7 +11,7 @@ For detailed mortgage-tracker behaviour, validation, and edge cases, also read [
 
 | Route | Purpose | Main actions |
 |---|---|---|
-| `/(tabs)/index` | Home tab | Show the pinned mortgage dashboard, or open the guided calculator/tracking setup |
+| `/(tabs)/index` | Home tab | Show the pinned borrowing dashboard, or open the guided calculator/tracking setup |
 | `/(tabs)/result` | Hidden result tab | Review calculation, save/track, share, leave with unsaved-result guard |
 | `/(tabs)/saved` | Tracked and recent list | Open tracked loan/mortgage, manage recent calculations, toggle pin, jump back into the Home calculation journey |
 | `/(tabs)/settings` | Settings tab | Change language/currency, reopen guide/about, manage data |
@@ -54,7 +54,7 @@ Related behaviours:
 
 - Tapping the Home tab sends a fresh `dashboard` param so the calculator collapses back to the pinned dashboard when one exists.
 - Leaving the hidden Result route is guarded while the result is unsaved.
-- Returning from Tracked/Settings with `fromDashboard=1` should route back to `/`, not deeper into nested history.
+- Returning from Tracked/Settings with `fromDashboard=1` should route back to `/`, not deeper into the navigation stack.
 
 ## Core action flows
 
@@ -67,9 +67,9 @@ Related behaviours:
   - pushes `/guide?firstRun=1` if the guide has not been seen
   - sets `guide_seen_v1` when the guide screen mounts
 
-### 2. Calculate -> review result -> save/share
+### 2. Plan a new one -> review result -> save/share
 
-- Entry: Home tab, scenario mode
+- Entry: Home tab → Plan a new one
 - Files: `app/(tabs)/index.tsx`, `app/(tabs)/result.tsx`, `app/(tabs)/saved.tsx`, `app/saved/new.tsx`
 - State changes:
   - calculator submits pure-TS `getLoanCalculations(...)`
@@ -82,6 +82,7 @@ Related behaviours:
 - Entry: Result -> Save
 - Files: `app/saved/new.tsx`, `src/loans/loanGroupFactory.ts`, `src/storage/savedLoans.ts`
 - State changes:
+  - user chooses Loan or Mortgage at this step
   - creates a `SavedLoan` / `LoanGroup`
   - normalises `formSnapshot` and `resultSnapshot`
   - creates the initial `LoanDeal`
