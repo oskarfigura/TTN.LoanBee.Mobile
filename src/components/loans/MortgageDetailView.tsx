@@ -547,6 +547,7 @@ const MortgageSummaryPanel = ({
         <>
           <DashboardProgressGauge progress={dashboardProgress} />
           <MortgageSummaryMetrics summary={summary} progress={dashboardProgress} />
+          <CurrentDealSavingsCard loan={loan} currentDeal={currentDeal} />
         </>
       )}
       <CurrentDealSummaryPanel loan={loan} currentDeal={currentDeal} asOf={asOf} />
@@ -643,6 +644,49 @@ const SummaryFact = ({
   </View>
 );
 
+// Overpayment savings highlight, surfaced right under the key-metrics box so the
+// value the app exists to show isn't buried among the current-deal facts.
+const CurrentDealSavingsCard = ({
+  loan,
+  currentDeal,
+}: {
+  loan: SavedLoan;
+  currentDeal?: LoanDeal;
+}) => {
+  const { t } = useTranslation();
+  const impact = useMemo(
+    () => (currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined),
+    [currentDeal, loan.events],
+  );
+
+  if (!impact?.hasOverpayments) return null;
+
+  return (
+    <Card style={styles.soonerCardActive}>
+      <View style={styles.soonerCardHeader}>
+        <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
+        <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
+          {t('mortgage.dealOverpaymentsSummary')}
+        </AppText>
+      </View>
+      <View style={styles.soonerSavingsRow}>
+        <View style={styles.soonerMetric}>
+          <AppText variant="bodySm" tone="muted">{t('mortgage.dealInterestSavedLabel')}</AppText>
+          <AppText variant="labelMd" style={{ color: colours.secondary }}>
+            {formatCurrency(impact.interestSaved, loan.currency)}
+          </AppText>
+        </View>
+        <View style={styles.soonerMetric}>
+          <AppText variant="bodySm" tone="muted">{t('mortgage.dealExtraRepaidLabel')}</AppText>
+          <AppText variant="labelMd" style={{ color: colours.secondary }}>
+            {formatCurrency(impact.extraPrincipalRepaid, loan.currency)}
+          </AppText>
+        </View>
+      </View>
+    </Card>
+  );
+};
+
 const CurrentDealSummaryPanel = ({
   loan,
   currentDeal,
@@ -659,10 +703,6 @@ const CurrentDealSummaryPanel = ({
     balanceSourceMetadata.checkpoint?.reconciliationVariance,
     loan.currency,
     t,
-  );
-  const dealImpact = useMemo(
-    () => currentDeal ? getDealOverpaymentImpact(currentDeal, loan.events) : undefined,
-    [currentDeal, loan.events],
   );
 
   if (!currentDeal) {
@@ -722,9 +762,6 @@ const CurrentDealSummaryPanel = ({
         <SummaryFact label={t('results.monthlyPayment')} value={formatCurrency(currentDeal.monthlyPayment, loan.currency)} />
         <SummaryFact label={t('mortgage.currentDealEnds')} value={formatFriendlyDate(currentDeal.endDate, i18n.language)} />
         <SummaryFact label={t('calculator.additionalPayment')} value={formatCurrency(currentDeal.regularOverpayment, loan.currency)} />
-        {dealImpact?.hasOverpayments ? (
-          <SummaryFact label={t('mortgage.dealInterestSavedLabel')} value={formatCurrency(dealImpact.interestSaved, loan.currency)} />
-        ) : null}
       </View>
       <View style={styles.summarySourceRow}>
         <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>

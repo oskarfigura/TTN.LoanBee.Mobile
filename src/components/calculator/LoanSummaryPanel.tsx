@@ -147,6 +147,35 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned, onTryOverpaymen
         </View>
       </View>
 
+      {/* Overpayment savings / nudge card — surfaced right under the key metrics */}
+      {hasOverpayment && interestSaved ? (
+        <View style={styles.savingsCard}>
+          <Text style={styles.savingsKicker}>{t('loan.overpaymentSavings')}</Text>
+          <View style={styles.savingsRow}>
+            <Text style={styles.savingsRowLabel}>{t('recalculate.interestSaved')}</Text>
+            <Text style={styles.savingsRowValue}>
+              {formatCurrency(interestSaved, loan.currency)}
+            </Text>
+          </View>
+          {termSavedMonths ? (
+            <View style={styles.savingsRow}>
+              <Text style={styles.savingsRowLabel}>{t('recalculate.timeSaved')}</Text>
+              <Text style={styles.savingsRowValue}>
+                {formatTermDuration(termSavedMonths, t('results.years'), t('results.months'))}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.nudgeCard}>
+          <Text style={styles.nudgeTitle}>{t('loan.nudgeTitle')}</Text>
+          <Text style={styles.nudgeBody}>{t('loan.nudgeBody')}</Text>
+          <TouchableOpacity onPress={onTryOverpayments} activeOpacity={0.84} style={styles.nudgeCta}>
+            <Text style={styles.nudgeCtaText}>{t('recalculate.ctaButton')} →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Loan details panel */}
       <View style={styles.summaryRaisedPanel}>
         <View style={styles.summarySectionHeader}>
@@ -183,34 +212,6 @@ export const LoanSummaryPanel = ({ loan, result, onTogglePinned, onTryOverpaymen
         </View>
       </View>
 
-      {/* Overpayment savings / nudge card */}
-      {hasOverpayment && interestSaved ? (
-        <View style={styles.savingsCard}>
-          <Text style={styles.savingsKicker}>{t('loan.overpaymentSavings')}</Text>
-          <View style={styles.savingsRow}>
-            <Text style={styles.savingsRowLabel}>{t('recalculate.interestSaved')}</Text>
-            <Text style={styles.savingsRowValue}>
-              {formatCurrency(interestSaved, loan.currency)}
-            </Text>
-          </View>
-          {termSavedMonths ? (
-            <View style={styles.savingsRow}>
-              <Text style={styles.savingsRowLabel}>{t('recalculate.timeSaved')}</Text>
-              <Text style={styles.savingsRowValue}>
-                {formatTermDuration(termSavedMonths, t('results.years'), t('results.months'))}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      ) : (
-        <View style={styles.nudgeCard}>
-          <Text style={styles.nudgeTitle}>{t('loan.nudgeTitle')}</Text>
-          <Text style={styles.nudgeBody}>{t('loan.nudgeBody')}</Text>
-          <TouchableOpacity onPress={onTryOverpayments} activeOpacity={0.84} style={styles.nudgeCta}>
-            <Text style={styles.nudgeCtaText}>{t('recalculate.ctaButton')} →</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
