@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -83,7 +83,7 @@ const RecentCalculationCard = ({
                   {formatCurrency(result.monthlyPayments, item.currency)}
                 </AppText>
                 <AppText variant="bodySm" tone="muted">
-                  {`${t('results.monthlyPayment')} · ${t('recent.created', { date: formatFriendlyDate(item.createdAt.slice(0, 10), i18n.language) })}`}
+                  {t('recent.created', { date: formatFriendlyDate(item.createdAt.slice(0, 10), i18n.language) })}
                 </AppText>
               </View>
               <View style={styles.recentMetric}>
@@ -136,6 +136,7 @@ const RecentCalculationCard = ({
 export default function RecentCalculationsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [recentItems, setRecentItems] = useState(() => recentCalculationsStorage.getAll());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const selectionMode = selectedIds.size > 0;
@@ -237,32 +238,15 @@ export default function RecentCalculationsScreen() {
       </AppText>
       {selectionMode ? (
         <View style={styles.selectionBar}>
-          <View style={styles.selectionBarTop}>
-            <AppText variant="labelMd">
-              {t('recent.selectedCount', { count: selectedIds.size })}
-            </AppText>
-            <Button
-              label={allSelected ? t('recent.deselectAll') : t('recent.selectAll')}
-              onPress={toggleSelectAll}
-              variant="ghost"
-              style={styles.selectionAction}
-            />
-          </View>
-          <View style={styles.selectionActions}>
-            <Button
-              label={t('common.cancel')}
-              onPress={clearSelection}
-              variant="ghost"
-              style={styles.selectionAction}
-            />
-            <Button
-              label={t('recent.deleteSelected')}
-              onPress={deleteSelected}
-              variant="destructive-ghost"
-              leftIcon={<TrashIcon size={17} color={colours.error} strokeWidth={1.9} />}
-              style={styles.selectionAction}
-            />
-          </View>
+          <AppText variant="labelMd">
+            {t('recent.selectedCount', { count: selectedIds.size })}
+          </AppText>
+          <Button
+            label={allSelected ? t('recent.deselectAll') : t('recent.selectAll')}
+            onPress={toggleSelectAll}
+            variant="ghost"
+            style={styles.selectionAction}
+          />
         </View>
       ) : null}
     </View>
@@ -278,9 +262,10 @@ export default function RecentCalculationsScreen() {
         backgroundColor={colours.background}
       />
       <FlatList
+        style={styles.flatList}
         data={recentItems}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, selectionMode && styles.listWithActionBar]}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={<EmptyState title={t('recent.empty')} subtitle={t('recent.emptySubtitle')} />}
         renderItem={({ item }) => (
@@ -296,40 +281,72 @@ export default function RecentCalculationsScreen() {
           />
         )}
       />
+      {selectionMode ? (
+        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+          <Button
+            label={t('common.cancel')}
+            onPress={clearSelection}
+            variant="secondary"
+            style={styles.actionBarButton}
+          />
+          <Button
+            label={t('common.delete')}
+            onPress={deleteSelected}
+            variant="destructive"
+            leftIcon={<TrashIcon size={18} color={colours.white} strokeWidth={1.9} />}
+            style={styles.actionBarButton}
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
+  flatList: { flex: 1 },
   list: { padding: layout.screenPadding, flexGrow: 1 },
+  listWithActionBar: { paddingBottom: 96 },
   listHeader: { marginBottom: spacing.md, gap: spacing.sm },
   intro: {},
   selectionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
-    paddingHorizontal: layout.cardPadding,
-    paddingVertical: spacing.sm,
+    paddingLeft: layout.cardPadding,
+    paddingRight: spacing.xs,
+    paddingVertical: spacing.xs,
     borderWidth: 1,
     borderRadius: radii.card,
     borderColor: colours.primaryMuted,
     backgroundColor: colours.surfaceAccent,
   },
-  selectionBarTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  selectionActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: spacing.xs,
-  },
   selectionAction: {
-    minHeight: 38,
+    minHeight: 40,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+  },
+  actionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+    backgroundColor: colours.surfaceRaised,
+    shadowColor: colours.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  actionBarButton: {
+    flex: 1,
   },
   recentCard: {
     marginBottom: spacing.md,

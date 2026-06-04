@@ -92,6 +92,7 @@ jest.mock('react-native-safe-area-context', () => ({
   SafeAreaView: ({ children, ...props }: { children?: React.ReactNode }) => (
     React.createElement('SafeAreaView', props, children)
   ),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
 jest.mock('../../src/hooks/useSavedLoans', () => ({
@@ -301,12 +302,12 @@ describe('Recent calculations page', () => {
     });
 
     await act(async () => {
-      getButton(renderer, 'recent.deleteSelected').props.onPress();
+      getButton(renderer, 'common.delete').props.onPress();
     });
 
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-2');
-    expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'recent.deleteSelected')).toHaveLength(0);
+    expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'common.delete')).toHaveLength(0);
   });
 
   it('selects every calculation with select all then bulk deletes them', async () => {
@@ -329,7 +330,7 @@ describe('Recent calculations page', () => {
     expect(getButton(renderer, 'recent.deselectAll')).toBeTruthy();
 
     await act(async () => {
-      getButton(renderer, 'recent.deleteSelected').props.onPress();
+      getButton(renderer, 'common.delete').props.onPress();
     });
 
     expect(mockRemoveRecent).toHaveBeenCalledWith('recent-1');
