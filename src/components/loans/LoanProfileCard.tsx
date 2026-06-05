@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
@@ -39,7 +39,19 @@ export const LoanProfileCard = ({
 }: Props) => {
   const { t, i18n } = useTranslation();
   const isDraft = loan.status === 'draft';
+  const suppressPressRef = useRef(false);
   const handlePress = selectionMode ? (onToggleSelected ?? onPress) : onPress;
+  const handleLongPress = () => {
+    suppressPressRef.current = true;
+    onLongPress?.();
+    setTimeout(() => {
+      suppressPressRef.current = false;
+    }, 0);
+  };
+  const handleCardPress = () => {
+    if (suppressPressRef.current) return;
+    handlePress();
+  };
   // Draft loans built via the guided journey hold partial data, so skip the
   // insight computation (which assumes a complete loan) and render a resume card.
   const insight = useMemo(() => {
@@ -58,8 +70,8 @@ export const LoanProfileCard = ({
     const draftLabel = `${loan.nickname.trim() || t('track.draftUntitled')}. ${t('saved.draftA11y')}`;
     return (
       <TouchableOpacity
-        onPress={handlePress}
-        onLongPress={onLongPress}
+        onPress={handleCardPress}
+        onLongPress={handleLongPress}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel={draftLabel}
@@ -125,8 +137,8 @@ export const LoanProfileCard = ({
 
   return (
     <TouchableOpacity
-      onPress={handlePress}
-      onLongPress={onLongPress}
+      onPress={handleCardPress}
+      onLongPress={handleLongPress}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}

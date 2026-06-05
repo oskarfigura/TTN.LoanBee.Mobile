@@ -168,7 +168,7 @@ export const MortgageDetailView = ({
   const goToNewCalculation = () => {
     setAddDrawerVisible(false);
     setActionDrawerVisible(false);
-    router.push('/calculate');
+    router.push('/calculate' as never);
   };
   const openProjectionPreview = useCallback((preview: ProjectionPreview) => {
     setProjectionPreview(preview);

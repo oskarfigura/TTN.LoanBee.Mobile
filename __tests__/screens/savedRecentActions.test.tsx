@@ -310,6 +310,21 @@ describe('Recent calculations page', () => {
     expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'common.delete')).toHaveLength(0);
   });
 
+  it('does not open a recent calculation when the gesture was a long press', async () => {
+    const renderer = await renderRecent();
+    const [card] = getRecentCardPressables(renderer);
+
+    await act(async () => {
+      card.props.onLongPress();
+      card.props.onPress();
+    });
+
+    expect(mockRouter.push).not.toHaveBeenCalledWith({
+      pathname: '/result',
+      params: { mode: 'recent', recentId: 'recent-1' },
+    });
+  });
+
   it('selects every calculation with select all then bulk deletes them', async () => {
     mockRecentItems = [
       buildRecentItem('recent-1', '2026-06-04T09:00:00.000Z'),

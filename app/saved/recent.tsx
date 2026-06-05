@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -52,7 +52,19 @@ const RecentCalculationCard = ({
   selectionMode: boolean;
 }) => {
   const { t, i18n } = useTranslation();
+  const suppressPressRef = useRef(false);
   const handlePress = selectionMode ? onToggleSelected : onOpen;
+  const handleLongPress = () => {
+    suppressPressRef.current = true;
+    onLongPress();
+    setTimeout(() => {
+      suppressPressRef.current = false;
+    }, 0);
+  };
+  const handleCardPress = () => {
+    if (suppressPressRef.current) return;
+    handlePress();
+  };
 
   // Display values come straight from the snapshot recorded at calculation time —
   // no amortisation is re-run on list render. `loanAmount`/`interest` are echoed
@@ -70,8 +82,8 @@ const RecentCalculationCard = ({
       padding={0}
     >
       <TouchableOpacity
-        onPress={handlePress}
-        onLongPress={onLongPress}
+        onPress={handleCardPress}
+        onLongPress={handleLongPress}
         activeOpacity={0.84}
         accessibilityRole="button"
       >
