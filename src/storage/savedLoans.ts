@@ -174,19 +174,37 @@ const loadAll = (): LoanGroup[] => {
   return result;
 };
 
+// Normalise a single raw record (already-current group or legacy loan) into a
+// LoanGroup. Migration reads nested fields (formSnapshot/resultSnapshot), so a
+// malformed record — e.g. a hand-edited or partial import — can throw. Catch it,
+// report, and drop that one record rather than letting the whole list fail to load.
+const normaliseRecord = (loan: Partial<LoanGroup>): LoanGroup | null => {
+  try {
+    return isLoanGroup(loan)
+      ? normaliseLoanGroup(loan)
+      : migrateLegacySavedLoan(loan as LegacySavedLoan);
+  } catch (cause) {
+    reportStorageError(new SavedLoanStorageError('Skipped a malformed saved-loan record', cause));
+    return null;
+  }
+};
+
+const isLoan = (loan: LoanGroup | null): loan is LoanGroup => loan !== null;
+
 const computeLoadAll = (currentRaw: string | undefined): LoanGroup[] => {
   const current = parseJsonArray<Partial<LoanGroup>>(currentRaw, 'SAVED_LOANS');
   if (currentRaw !== undefined) {
-    const normalised = current.map(loan => (
-      isLoanGroup(loan)
-        ? normaliseLoanGroup(loan)
-        : migrateLegacySavedLoan(loan as LegacySavedLoan)
-    ));
-    if (normalised.some((loan, index) => loan !== current[index])) {
-      try { saveAll(normalised); }
+    const kept = current.map(normaliseRecord).filter(isLoan);
+    // Re-persist when anything changed: a record was dropped (length differs) or
+    // normalisation/migration produced a new object. A dropped record self-heals
+    // the stored payload by rewriting it without the bad entry.
+    const changed = kept.length !== current.length
+      || kept.some((loan, index) => loan !== current[index]);
+    if (changed) {
+      try { saveAll(kept); }
       catch { /* the in-memory result is still usable; the throw was already reported */ }
     }
-    return normalised;
+    return kept;
   }
 
   const legacy = parseJsonArray<LegacySavedLoan>(
@@ -195,7 +213,7 @@ const computeLoadAll = (currentRaw: string | undefined): LoanGroup[] => {
   );
   if (legacy.length === 0) return [];
 
-  const migrated = legacy.map(migrateLegacySavedLoan);
+  const migrated = legacy.map(normaliseRecord).filter(isLoan);
   try {
     saveAll(migrated);
     storage.remove(STORAGE_KEYS.SAVED_LOANS_LEGACY);

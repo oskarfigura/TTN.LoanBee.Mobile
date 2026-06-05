@@ -250,6 +250,30 @@ describe('savedLoansStorage', () => {
     consoleErr.mockRestore();
   });
 
+  it('skips malformed records and keeps the valid ones, then self-heals the payload', () => {
+    const listener = jest.fn();
+    const unsubscribe = onSavedLoanStorageError(listener);
+    const consoleErr = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const valid = makeLoan({ id: 'good-1' });
+    // A legacy-shaped record missing formSnapshot throws during migration.
+    const malformed = { id: 'bad-1', createdAt: '2024-01-01T00:00:00.000Z' };
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([valid, malformed]));
+
+    const result = savedLoansStorage.getAll();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('good-1');
+    expect(listener).toHaveBeenCalled();
+    // The bad record is rewritten out of the stored payload.
+    const persisted = JSON.parse(storage.getString(STORAGE_KEYS.SAVED_LOANS) ?? '[]');
+    expect(persisted).toHaveLength(1);
+    expect(persisted[0].id).toBe('good-1');
+
+    unsubscribe();
+    consoleErr.mockRestore();
+  });
+
   it('addEvent rejects events with malformed dates', () => {
     savedLoansStorage.add(makeLoan());
     const badEvent = makeEvent({ date: 'nonsense' });

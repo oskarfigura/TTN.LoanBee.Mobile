@@ -38,7 +38,7 @@ Screen padding: `paddingHorizontal: 16` (content), `20` (headers).
 
 ## Test Setup
 
-Tests use **ts-jest** in three isolated Jest projects (`core`, `storage`, `design-system`). Do NOT switch to jest-expo — react-native-mmkv requires a manual mock that ts-jest handles cleanly without the jest-expo Babel pipeline.
+Tests use **ts-jest** in five isolated Jest projects (`core`, `storage`, `display`, `design-system`, `screens`). Do NOT switch to jest-expo — react-native-mmkv requires a manual mock that ts-jest handles cleanly without the jest-expo Babel pipeline.
 
 ```bash
 npm test    # runs all Jest projects
@@ -48,7 +48,7 @@ Mocks live in `src/__mocks__/`: `react-native-mmkv.ts` (in-memory Map) and `reac
 
 ## Currency System
 
-`src/currency/currencies.ts` defines the four supported currencies. `languageToCurrency()` maps `pl` → PLN, anything else → GBP. The global default is stored in MMKV under `user_currency` and initialised from the device locale on first launch. Each `SavedLoan` carries its own `currency` field — always pass the loan's currency (not the global default) to `formatCurrency()` in result/chart/table components.
+`src/currency/currencies.ts` defines the four supported currencies. `languageToCurrency()` (in `src/currency/defaults.ts`) maps `pl` → PLN, anything else → GBP. The global default is stored in MMKV under `user_currency` and initialised from the device locale on first launch. Each `SavedLoan` carries its own `currency` field — always pass the loan's currency (not the global default) to `formatCurrency()` in result/chart/table components.
 
 ## Saved Loan Schema (`src/types/SavedLoan.ts`)
 
