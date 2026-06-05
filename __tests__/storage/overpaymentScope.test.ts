@@ -9,10 +9,12 @@ import {
 } from '../../src/loans/loanOverpaymentCalc';
 import { getLoanCalculations } from '../../src/core/amortisation';
 import {
-  buildDealBalanceArrays,
   getDealOverpaymentImpact,
+  normaliseDealChain,
 } from '../../src/mortgage/tracker';
+import { buildMortgageProjection } from '../../src/mortgage/projection';
 import { LoanDeal, LoanFormSnapshot, MortgageEvent, SavedLoan } from '../../src/types/SavedLoan';
+import { monthsBetween } from '../../src/utils/date';
 
 const loanForm: LoanFormSnapshot = {
   loanAmount: 250000,
@@ -259,11 +261,23 @@ describe('createDealOverpaymentScope', () => {
     });
   });
 
-  it('chartData matches buildDealBalanceArrays', () => {
+  it('chartData spans the whole mortgage, isolating this deal\'s overpayments', () => {
     const loan = makeMortgage();
-    const scope = createDealOverpaymentScope(loan, loan.deals[0]);
-    const { baseline, scenario } = buildDealBalanceArrays(loan.deals[0], loan.events);
+    const deal = loan.deals[0];
+    const scope = createDealOverpaymentScope(loan, deal);
+
+    const scenario = buildMortgageProjection(loan).loanChartRemainingArray;
+    const baselineLoan: SavedLoan = {
+      ...loan,
+      deals: loan.deals.map(d => (d.id === deal.id ? { ...d, regularOverpayment: 0 } : d)),
+      events: loan.events.filter(e => !(e.dealId === deal.id && e.type === 'lumpOverpayment')),
+    };
+    const baseline = buildMortgageProjection(normaliseDealChain(baselineLoan, deal.id)).loanChartRemainingArray;
+
     expect(scope.chartData).toEqual({ baselineRemaining: baseline, scenarioRemaining: scenario });
+    // The curve now covers the full remaining mortgage term, not just the deal window.
+    const dealWindowMonths = monthsBetween(deal.startDate, deal.endDate);
+    expect(scope.chartData!.baselineRemaining.length).toBeGreaterThan(dealWindowMonths);
   });
 
   it('applySaveMonthly updates the deal regular overpayment', () => {

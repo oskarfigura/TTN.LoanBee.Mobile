@@ -9,8 +9,8 @@ import {
   LumpSumEntry,
 } from '@/loans/loanOverpaymentCalc';
 import { removeMortgageEvent, upsertMortgageEvent } from '@/mortgage/events';
+import { buildMortgageProjection } from '@/mortgage/projection';
 import {
-  buildDealBalanceArrays,
   getDealOverpaymentImpact,
   normaliseDealChain,
 } from '@/mortgage/tracker';
@@ -193,6 +193,17 @@ export const createLoanOverpaymentScope = (loan: SavedLoan): OverpaymentScope =>
 
 // ─── Deal scope ─────────────────────────────────────────────────────────────
 
+// Returns a copy of the loan with this deal's overpayments removed (regular set to
+// zero, lump events dropped) and the deal chain re-normalised so later deals' opening
+// balances reflect the higher running balance. Projecting this alongside the saved
+// loan isolates exactly this deal's overpayment impact across the whole mortgage
+// timeline — every other deal keeps its own overpayments in both runs.
+const stripDealOverpayments = (loan: SavedLoan, deal: LoanDeal): SavedLoan => {
+  const deals = loan.deals.map(d => (d.id === deal.id ? { ...d, regularOverpayment: 0 } : d));
+  const events = loan.events.filter(e => !(e.dealId === deal.id && e.type === 'lumpOverpayment'));
+  return normaliseDealChain({ ...loan, deals, events }, deal.id);
+};
+
 export const createDealOverpaymentScope = (loan: SavedLoan, deal: LoanDeal): OverpaymentScope => {
   const currency = loan.currency;
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
@@ -231,11 +242,15 @@ export const createDealOverpaymentScope = (loan: SavedLoan, deal: LoanDeal): Ove
     minDate: parseDateLabelValue(deal.startDate) ?? new Date(),
     maxDate: parseDateLabelValue(deal.endDate) ?? new Date(),
     bannerImpact: toImpact(currentImpact),
+    // Plot the whole-mortgage balance over time, not just this deal's window: the
+    // scenario is the loan as saved, the baseline is the same loan with this deal's
+    // overpayments stripped. The gap between the two curves is this deal's impact,
+    // carried forward through every later deal.
     chartData: currentImpact.hasOverpayments
-      ? (() => {
-        const { baseline, scenario } = buildDealBalanceArrays(deal, loan.events);
-        return { baselineRemaining: baseline, scenarioRemaining: scenario };
-      })()
+      ? {
+        baselineRemaining: buildMortgageProjection(stripDealOverpayments(loan, deal)).loanChartRemainingArray,
+        scenarioRemaining: buildMortgageProjection(loan).loanChartRemainingArray,
+      }
       : null,
     computeMonthlyImpact: amount => toImpact(
       getDealOverpaymentImpact({ ...deal, regularOverpayment: amount }, loan.events),

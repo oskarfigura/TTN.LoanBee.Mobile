@@ -17,6 +17,20 @@ const SAMPLE_STEP = 12;
 const POINT_SPACING = 44;
 const INITIAL_SPACING = 8;
 const END_SPACING = 8;
+// Fixed width for each x-axis label so the text stays legible no matter how tightly
+// the points are packed, plus the minimum clear gap to keep between two labels.
+const X_LABEL_WIDTH = 46;
+const MIN_LABEL_GAP = 52;
+
+// gifted-charts sizes each x-axis label's container to the point spacing and clips the
+// text to it, so a condensed chart shrinks labels to an unreadable sliver. This custom
+// label renders at a fixed width and offsets itself by half the overflow so it still
+// sits centred on its data point (matching the library's default centring maths).
+const XAxisLabel = ({ text, spacing }: { text: string; spacing: number }) => (
+  <View style={{ width: X_LABEL_WIDTH, marginLeft: (spacing - X_LABEL_WIDTH) / 2 }}>
+    <Text style={styles.xAxisLabel} numberOfLines={1}>{text}</Text>
+  </View>
+);
 
 export const OverpaymentsComparisonChart = ({
   baselineRemaining,
@@ -59,21 +73,31 @@ export const OverpaymentsComparisonChart = ({
   const indexes = buildYearlyIndexes();
   if (indexes.length < 2) return null;
 
-  const { chartWidth, scrollEnabled } = getProjectionChartLayout({
+  const { chartWidth, scrollEnabled, pointSpacing } = getProjectionChartLayout({
     containerWidth,
     pointCount: indexes.length,
     perPointWidth: POINT_SPACING,
     edgeSpacing: INITIAL_SPACING + END_SPACING,
+    // Condense the whole timeline into the viewport so a narrow screen shows the
+    // entire balance curve at once rather than a scrollable snapshot of a few years.
+    fitToWidth: true,
   });
 
-  const labelEvery = indexes.length <= 12 ? 1 : Math.ceil(indexes.length / 6);
+  // Thin labels to the actual spacing so they never overlap, and anchor the cadence to
+  // the final point — the payoff year is the most useful label to guarantee is shown.
+  const labelEvery = Math.max(1, Math.ceil(MIN_LABEL_GAP / pointSpacing));
+  const lastPosition = indexes.length - 1;
 
   const baselineData = indexes.map((index, position) => ({
     value: baselinePadded[index],
-    label: position % labelEvery === 0 || index === maxLen - 1
-      ? `Yr ${Math.ceil((index + 1) / SAMPLE_STEP)}`
-      : '',
     dataPointColor: colours.primary,
+    ...((lastPosition - position) % labelEvery === 0
+      ? {
+        labelComponent: () => (
+          <XAxisLabel text={`Yr ${Math.ceil((index + 1) / SAMPLE_STEP)}`} spacing={pointSpacing} />
+        ),
+      }
+      : {}),
   }));
 
   const scenarioData = indexes.map(index => ({
@@ -101,7 +125,7 @@ export const OverpaymentsComparisonChart = ({
           data2={scenarioData}
           width={chartWidth}
           height={height}
-          spacing={POINT_SPACING}
+          spacing={pointSpacing}
           areaChart
           areaChart2
           thickness1={3}
@@ -156,6 +180,12 @@ const styles = StyleSheet.create({
     ...fontFaces.body.regular,
     fontSize: fontSizes.tiny,
     color: colours.textSecondary,
+  },
+  xAxisLabel: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.tiny,
+    color: colours.textSecondary,
+    textAlign: 'center',
   },
   legend: {
     flexDirection: 'row',
