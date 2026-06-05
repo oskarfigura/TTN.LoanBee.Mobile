@@ -31,7 +31,7 @@ export const getProjectionChartLayout = ({
   edgeSpacing = 0,
   axisWidth = Y_AXIS_AND_EDGE_SPACE,
   fitToWidth = false,
-  minPerPointWidth = 10,
+  minPerPointWidth = 4,
 }: {
   containerWidth: number;
   pointCount: number;
@@ -56,9 +56,11 @@ export const getProjectionChartLayout = ({
   let pointSpacing = perPointWidth;
 
   if (fitToWidth && safePointCount > 0) {
-    // Solve spacing from `pointCount * spacing + edgeSpacing <= viewportWidth`, then
-    // clamp: never stretch a short timeline past its natural spacing, never squeeze a
-    // long one below the legible floor (past that point the chart scrolls instead).
+    // Solve spacing from `pointCount * spacing + edgeSpacing <= viewportWidth` so the
+    // whole timeline — including the final point — fits without scrolling. Clamp only at
+    // the natural width (never stretch a short series) and a tiny floor (never collapse
+    // the curve); the floor sits low enough that realistic terms always fit, so the
+    // chart only falls back to scrolling for pathologically long timelines.
     const fitSpacing = Math.floor((viewportWidth - edgeSpacing) / safePointCount);
     pointSpacing = Math.max(minPerPointWidth, Math.min(perPointWidth, fitSpacing));
   }
@@ -66,8 +68,15 @@ export const getProjectionChartLayout = ({
   const contentWidth = Math.ceil(safePointCount * pointSpacing + edgeSpacing);
   const scrollEnabled = contentWidth > viewportWidth;
 
+  // The chart's drawing width must equal the points' own spacing-derived span: gifted
+  // -charts maps the line to x from `spacing`, so handing it a wider `width` (e.g. the
+  // full viewport) desyncs the line from the axis and truncates the right-hand tail.
+  // When scrolling, that span is the content; when fitting, it's also the content (it
+  // is <= viewport by construction); only a non-fit, non-scroll chart fills the viewport.
+  const chartWidth = scrollEnabled || fitToWidth ? contentWidth : viewportWidth;
+
   return {
-    chartWidth: scrollEnabled ? contentWidth : viewportWidth,
+    chartWidth,
     viewportWidth,
     pointSpacing,
     scrollEnabled,
