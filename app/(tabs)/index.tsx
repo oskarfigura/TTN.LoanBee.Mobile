@@ -143,7 +143,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   );
 
   const openCalculator = useCallback(() => {
-    router.push('/calculate');
+    router.push('/calculate' as never);
   }, [router]);
 
   const returnToDashboard = useCallback(() => {

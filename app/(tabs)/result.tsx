@@ -75,6 +75,8 @@ export default function ResultScreen() {
     params.recentId ? recentCalculationsStorage.getById(params.recentId) ?? null : null
   ), [params.recentId]);
   const isSavedMode = params.mode === 'saved' && savedLoan !== null;
+  const isRecentMode = params.mode === 'recent' && recentCalculation !== null;
+  const shouldGuardUnsavedResult = !isSavedMode && !isRecentMode;
   const draftSession = useMemo(() => getDraftResultSession(params.draftId), [params.draftId]);
 
   const result = useMemo(() => {
@@ -158,7 +160,7 @@ export default function ResultScreen() {
     // the result in the stack so editing supersedes it. Works whether this result came
     // from the calculator (draft) or the Recent list — both carry the form values.
     continueWithoutGuard(() => router.replace({
-      pathname: '/calculate',
+      pathname: '/calculate' as never,
       params: buildEditCalculatorParams(formValues as unknown as LoanCalculatorFormValues, currency),
     }));
   }, [continueWithoutGuard, currency, formValues, router]);
@@ -190,15 +192,15 @@ export default function ResultScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (isSavedMode) return undefined;
+      if (!shouldGuardUnsavedResult) return undefined;
       setResultLeaveGuard(confirmLeave);
       return () => setResultLeaveGuard(null);
-    }, [confirmLeave, isSavedMode]),
+    }, [confirmLeave, shouldGuardUnsavedResult]),
   );
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', event => {
-      if (isSavedMode || allowLeaveRef.current) return;
+      if (!shouldGuardUnsavedResult || allowLeaveRef.current) return;
 
       event.preventDefault();
       confirmLeave(() => {
@@ -207,7 +209,7 @@ export default function ResultScreen() {
     });
 
     return unsubscribe;
-  }, [confirmLeave, continueWithoutGuard, isSavedMode, navigation]);
+  }, [confirmLeave, continueWithoutGuard, navigation, shouldGuardUnsavedResult]);
 
   if (!result || !formValues) {
     return (

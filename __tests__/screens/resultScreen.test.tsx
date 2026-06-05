@@ -112,6 +112,31 @@ jest.mock('../../src/components/loans/LoanIcons', () => ({
   EditIcon: () => React.createElement('EditIcon'),
 }));
 
+jest.mock('../../src/share/shareCalculation', () => ({
+  shareCalculation: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('../../src/storage/recentCalculations', () => ({
+  recentCalculationsStorage: {
+    getById: jest.fn((id: string) => (
+      id === 'recent-1'
+        ? {
+          id,
+          currency: 'GBP',
+          category: 'loan',
+          formValues,
+        }
+        : undefined
+    )),
+  },
+}));
+
+jest.mock('../../src/storage/savedLoans', () => ({
+  savedLoansStorage: {
+    getById: jest.fn(() => null),
+  },
+}));
+
 jest.mock('../../src/review', () => ({
   useStoreReview: () => ({
     recordUsefulAction: mockRecordUsefulAction,
@@ -235,5 +260,17 @@ describe('ResultScreen', () => {
     });
     expect(mockRecordUsefulAction).toHaveBeenCalledTimes(1);
     expect(mockRequestReview).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not guard stored recent calculations when leaving', async () => {
+    mockParams = {
+      mode: 'recent',
+      recentId: 'recent-1',
+      currency: 'GBP',
+    };
+
+    await renderResultScreen();
+
+    expect(confirmResultLeave(jest.fn())).toBe(false);
   });
 });
