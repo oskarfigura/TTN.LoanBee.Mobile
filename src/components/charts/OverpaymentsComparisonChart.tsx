@@ -16,11 +16,13 @@ interface Props {
 const SAMPLE_STEP = 12;
 const POINT_SPACING = 44;
 const INITIAL_SPACING = 8;
-const END_SPACING = 8;
 // Fixed width for each x-axis label so the text stays legible no matter how tightly
 // the points are packed, plus the minimum clear gap to keep between two labels.
 const X_LABEL_WIDTH = 46;
 const MIN_LABEL_GAP = 52;
+// Reserve enough room past the final point for half of its centred label so the
+// last year (which is always labelled) isn't clipped at the chart's right edge.
+const END_SPACING = X_LABEL_WIDTH / 2 + 4;
 
 // gifted-charts sizes each x-axis label's container to the point spacing and clips the
 // text to it, so a condensed chart shrinks labels to an unreadable sliver. This custom
@@ -49,13 +51,12 @@ export const OverpaymentsComparisonChart = ({
     return `${symbol}${Math.round(abs)}`;
   };
 
-  // Align both arrays to the same length by padding the shorter with zeros.
+  // The baseline (no overpayments) always runs at least as long as the scenario, so it
+  // sets the chart's full width; pad defensively in case they ever match exactly.
   const maxLen = Math.max(baselineRemaining.length, scenarioRemaining.length);
-  const padded = (arr: number[]) =>
-    arr.length >= maxLen ? arr : [...arr, ...Array(maxLen - arr.length).fill(0)];
-
-  const baselinePadded = padded(baselineRemaining);
-  const scenarioPadded = padded(scenarioRemaining);
+  const baselinePadded = baselineRemaining.length >= maxLen
+    ? baselineRemaining
+    : [...baselineRemaining, ...Array(maxLen - baselineRemaining.length).fill(0)];
 
   // Sample at yearly intervals, always include the last point.
   const buildYearlyIndexes = () => {
@@ -100,10 +101,20 @@ export const OverpaymentsComparisonChart = ({
       : {}),
   }));
 
-  const scenarioData = indexes.map(index => ({
-    value: scenarioPadded[index],
-    dataPointColor: colours.teal,
-  }));
+  // End the "with overpayments" line at payoff rather than padding it flat along £0:
+  // plot each sampled point until the loan clears, then a single point at the payoff
+  // balance so the line touches the axis and stops. The baseline keeps running to its
+  // own (later) payoff, so the gap between the two lines is the time saved.
+  const scenarioLastIndex = scenarioRemaining.length - 1;
+  const scenarioData: Array<{ value: number; dataPointColor: string }> = [];
+  for (let position = 0; position < indexes.length; position += 1) {
+    const index = indexes[position];
+    if (index >= scenarioLastIndex) {
+      scenarioData.push({ value: scenarioRemaining[scenarioLastIndex], dataPointColor: colours.teal });
+      break;
+    }
+    scenarioData.push({ value: scenarioRemaining[index], dataPointColor: colours.teal });
+  }
 
   const legendItems = [
     { labelKey: 'overpayments.withoutOverpayments', color: colours.primary },
@@ -159,7 +170,6 @@ export const OverpaymentsComparisonChart = ({
           disableScroll={!scrollEnabled}
           curved
           curvature={0.16}
-          isAnimated
         />
       </ScrollView>
       <View style={styles.legend}>
