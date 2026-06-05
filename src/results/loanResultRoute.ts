@@ -41,6 +41,42 @@ export const getResultForSavedLoan = (loan: SavedLoan): LoanResult => {
   );
 };
 
+// Baseline variants: the same calculation with overpayments removed
+// (additionalMonthlyPayment = 0). Their loanChartRemainingArray feeds the with/without
+// comparison chart on the result/charts view. Mirrors how totalInterestPaidBaseline is
+// derived (CLAUDE.md) — a second pass rather than a separate engine.
+export const getBaselineResultForFormValues = (form: LoanCalculatorFormValues): LoanResult => (
+  getLoanCalculations(
+    form.loanAmount,
+    form.interest,
+    form.termInYears ?? 0,
+    form.termInMonths ?? 0,
+    form.desiredMonthlyPayment ?? 0,
+    form.calculationType as LoanCalculationType,
+    form.downPayment,
+    form.downPaymentType as DownPaymentType,
+    0,
+    form.startDate,
+  )
+);
+
+export const getBaselineResultForSavedLoan = (loan: SavedLoan): LoanResult => {
+  const form = loan.formSnapshot;
+
+  return getLoanCalculations(
+    form.loanAmount,
+    form.interest,
+    form.termInYears,
+    form.termInMonths,
+    form.desiredMonthlyPayment ?? 0,
+    form.calculationType.toLowerCase() as LoanCalculationType,
+    form.downPayment,
+    form.downPaymentType.toLowerCase() as DownPaymentType,
+    0,
+    form.startDate,
+  );
+};
+
 export const buildSavedLoanResultParams = (loan: SavedLoan) => ({
   mode: 'saved',
   savedLoanId: loan.id,

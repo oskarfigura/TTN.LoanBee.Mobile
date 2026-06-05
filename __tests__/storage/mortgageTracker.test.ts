@@ -16,6 +16,7 @@ import {
   getPublishedDeals,
   getRemainingMortgageTermInMonths,
   getTimelineWarnings,
+  loanHasOverpayments,
   normaliseDealChain,
   projectDeal,
   recalculateLaterDealOpeningBalances,
@@ -1489,5 +1490,51 @@ describe('mortgage tracker', () => {
     expect(projection.additionalBorrowingTotal).toBe(25000);
     expect(projection.totalPrincipalPaid).toBeGreaterThan(0);
     expect(projection.currentBalance).toBeLessThanOrEqual(225000);
+  });
+});
+
+describe('overpayment comparison on the projection', () => {
+  const last = (arr: number[]) => arr[arr.length - 1];
+
+  it('detects a recurring deal overpayment', () => {
+    expect(loanHasOverpayments(makeMortgage())).toBe(true);
+  });
+
+  it('detects a one-off lump overpayment event', () => {
+    const loan = makeMortgage({
+      deals: [{ ...makeMortgage().deals[0], regularOverpayment: 0 }],
+      events: [{
+        id: 'lump-1',
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+        dealId: 'deal-current',
+        type: 'lumpOverpayment',
+        date: '2026-07-01',
+        amount: 5000,
+      }],
+    });
+
+    expect(loanHasOverpayments(loan)).toBe(true);
+  });
+
+  it('returns false when no overpayments are present', () => {
+    const loan = makeMortgage({
+      deals: [{ ...makeMortgage().deals[0], regularOverpayment: 0 }],
+      events: [],
+    });
+
+    expect(loanHasOverpayments(loan)).toBe(false);
+  });
+
+  it('exposes a baseline remaining series that clears slower than the scenario', () => {
+    const projection = buildMortgageProjection(makeMortgage(), new Date('2026-07-15T12:00:00Z'));
+    const scenario = projection.loanChartRemainingArray;
+    const baseline = projection.baselineRemainingArray;
+
+    expect(baseline).toBeDefined();
+    // Without the overpayment the loan takes more months to clear, so the baseline series
+    // runs longer and still owes money at the month the scenario is already paid off.
+    expect(baseline!.length).toBeGreaterThan(scenario.length);
+    expect(baseline![scenario.length - 1]).toBeGreaterThan(last(scenario));
   });
 });

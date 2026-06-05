@@ -4,6 +4,9 @@ import {
   beginDraftResult,
   buildSavedLoanResultParams,
   getResultForSavedLoan,
+  getResultForFormValues,
+  getBaselineResultForSavedLoan,
+  getBaselineResultForFormValues,
 } from '../../src/results/loanResultRoute';
 import { recentCalculationsStorage } from '../../src/storage/recentCalculations';
 import { SavedLoan } from '../../src/types/SavedLoan';
@@ -112,5 +115,43 @@ describe('saved loan result params', () => {
     });
     expect(recent?.category).toBeUndefined();
     expect(typeof session?.createdAt).toBe('number');
+  });
+});
+
+describe('baseline (no-overpayment) result', () => {
+  const last = (arr: number[]) => arr[arr.length - 1];
+
+  it('pays off slower without the overpayment, so the baseline runs longer', () => {
+    const overpaid = getResultForSavedLoan(loan);
+    const baseline = getBaselineResultForSavedLoan(loan);
+
+    // Removing the £100/mo overpayment means the loan takes more months to clear.
+    expect(baseline.loanChartRemainingArray.length).toBeGreaterThan(
+      overpaid.loanChartRemainingArray.length,
+    );
+    // And total interest is higher than the scenario with overpayments.
+    expect(baseline.totalInterestPaid).toBeGreaterThan(overpaid.totalInterestPaid);
+  });
+
+  it('matches the scenario when there is no overpayment to strip', () => {
+    const form = {
+      currency: 'GBP' as const,
+      loanAmount: 200000,
+      interest: 4,
+      termInYears: 25,
+      termInMonths: 0,
+      downPayment: 0,
+      downPaymentType: 'cash' as const,
+      desiredMonthlyPayment: 0,
+      additionalMonthlyPayment: 0,
+      startDate: '2026-01-01',
+      calculationType: 'term' as const,
+    };
+
+    const result = getResultForFormValues(form);
+    const baseline = getBaselineResultForFormValues(form);
+
+    expect(baseline.loanChartRemainingArray).toEqual(result.loanChartRemainingArray);
+    expect(last(baseline.loanChartRemainingArray)).toBe(last(result.loanChartRemainingArray));
   });
 });

@@ -523,6 +523,14 @@ export const projectDeal = (
   };
 };
 
+// Whether the loan carries any overpayment anywhere — a recurring deal overpayment or a
+// one-off lump-sum event. Gates the with/without comparison chart on the projection view,
+// which is only meaningful when a baseline actually diverges from the scenario.
+export const loanHasOverpayments = (loan: LoanGroup): boolean => (
+  loan.deals.some(deal => deal.regularOverpayment > 0)
+  || loan.events.some(event => event.type === 'lumpOverpayment')
+);
+
 export interface DealOverpaymentImpact {
   interestSaved: number;
   extraPrincipalRepaid: number;

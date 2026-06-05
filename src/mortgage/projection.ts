@@ -56,6 +56,10 @@ export interface MortgageProjection {
   loanChartMonthlyArray: number[];
   loanChartInterestArray: number[];
   loanChartRemainingArray: number[];
+  // Remaining-balance series for the no-overpayment baseline, parallel to
+  // loanChartRemainingArray. Only populated by buildMortgageProjection (which already
+  // computes the baseline run); lets the projection view draw a with/without comparison.
+  baselineRemainingArray?: number[];
   // Cumulative lump overpayments applied, parallel to the other chart arrays. Lets the
   // repayment chart break overpayments out of the principal so a single year's lump
   // doesn't read as a mystery spike.
@@ -395,6 +399,7 @@ export const buildMortgageProjection = (
 
   return {
     ...projection,
+    baselineRemainingArray: baselineProjection.loanChartRemainingArray,
     overpaymentSavingsEstimate: toMoney(baselineProjection.totalInterestPaid - projection.totalInterestPaid),
   };
 };

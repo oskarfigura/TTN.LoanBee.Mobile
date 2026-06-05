@@ -12,7 +12,7 @@ import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDial
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
-import { getResultForSavedLoan } from '@/results/loanResultRoute';
+import { getResultForSavedLoan, getBaselineResultForSavedLoan } from '@/results/loanResultRoute';
 import { shareCalculation } from '@/share/shareCalculation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
@@ -73,6 +73,13 @@ export default function LoanDetailScreen() {
     if (!loan) return null;
     return getResultForSavedLoan(loan);
   }, [loan]);
+  // Baseline remaining-balance series for the with/without overpayment comparison chart,
+  // only when the loan carries a recurring overpayment (non-mortgage detail uses the calc view).
+  const baselineRemainingArray = useMemo(() => (
+    loan && (loan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
+      ? getBaselineResultForSavedLoan(loan).loanChartRemainingArray
+      : undefined
+  ), [loan]);
   const currentDeal = useMemo(() => (
     loan?.category === 'mortgage' ? getCurrentDeal(loan) : undefined
   ), [loan]);
@@ -332,6 +339,7 @@ export default function LoanDetailScreen() {
         result={result}
         startDate={loan.formSnapshot.startDate}
         currency={loan.currency}
+        baselineRemainingArray={baselineRemainingArray}
         tabStyle="underline"
         showFinancialDisclaimer
         ownsScroll

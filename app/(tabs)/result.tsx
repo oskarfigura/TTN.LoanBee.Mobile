@@ -20,6 +20,8 @@ import {
   LoanResult,
   getResultForSavedLoan,
   getResultForFormValues,
+  getBaselineResultForSavedLoan,
+  getBaselineResultForFormValues,
   buildEditCalculatorParams,
 } from '@/results/loanResultRoute';
 import { LoanCalculatorFormValues } from '@/hooks/useLoanCalculatorForm';
@@ -92,6 +94,24 @@ export default function ResultScreen() {
     ?? parseJson<Record<string, unknown>>(params.formValues)
   ), [draftSession?.formValues, params.formValues, recentCalculation?.formValues, savedLoan]);
   const currency = ((savedLoan?.currency ?? draftSession?.currency ?? recentCalculation?.currency ?? params.currency) as CurrencyCode | undefined) ?? 'GBP';
+  // Baseline remaining-balance series for the with/without overpayment comparison chart —
+  // only when a recurring overpayment exists. Mirrors the `result` source precedence; the
+  // raw-param fallback has no inputs to re-run, so the card is simply omitted there.
+  const baselineRemainingArray = useMemo(() => {
+    if (savedLoan) {
+      return (savedLoan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
+        ? getBaselineResultForSavedLoan(savedLoan).loanChartRemainingArray
+        : undefined;
+    }
+    const form = (draftSession?.formValues ?? recentCalculation?.formValues) as
+      LoanCalculatorFormValues | undefined;
+    if (form) {
+      return (form.additionalMonthlyPayment ?? 0) > 0
+        ? getBaselineResultForFormValues(form).loanChartRemainingArray
+        : undefined;
+    }
+    return undefined;
+  }, [draftSession?.formValues, recentCalculation?.formValues, savedLoan]);
   // Preview an unsaved calculation through the same summary surface the saved-loan
   // detail uses, by building a transient draft loan from the calculation inputs.
   const draftLoan = useMemo(
@@ -254,6 +274,7 @@ export default function ResultScreen() {
         startDate={String(formValues.startDate)}
         currency={currency}
         savedLoan={savedLoan ?? undefined}
+        baselineRemainingArray={baselineRemainingArray}
         onShare={handleShare}
         shareLabel={t('share.short')}
         shareIcon={shareIcon}
