@@ -48,14 +48,39 @@ export const RepaymentBarChart = ({
   // (e.g. an 18-month loan ends on a half-year); clamp its end to the last index so
   // those trailing months still get their own bar rather than being dropped.
   const lastIndex = monthlyArray.length - 1;
-  const rawYearlyData = [];
+  const buckets: { year: number; principalPaid: number; interestPaid: number; totalPaid: number }[] = [];
   for (let start = 0; start < lastIndex; start += SAMPLE_STEP) {
     const end = Math.min(start + SAMPLE_STEP, lastIndex);
     const totalPaid = monthlyArray[end] - monthlyArray[start];
     const interestPaid = interestArray[end] - interestArray[start];
     const principalPaid = Math.max(0, totalPaid - interestPaid);
     const year = Math.ceil(end / SAMPLE_STEP);
-    const stacks: StackSegment[] = [
+    buckets.push({ year, principalPaid, interestPaid, totalPaid });
+  }
+
+  // The amortisation engine settles a sub-instalment remainder as one extra closing
+  // entry (e.g. a £379 final payment after the last full £1,502 instalment). Bucketed
+  // naively that stub spills into a fresh year and renders as a jarring one-month
+  // sliver tacked on past the real final year. When the closing bucket is smaller than
+  // a regular instalment, fold it back into the preceding year so the chart ends on the
+  // loan's true final year while still conserving the total paid.
+  const regularPayment = monthlyArray.length > 1 ? monthlyArray[1] - monthlyArray[0] : 0;
+  if (buckets.length >= 2 && regularPayment > 0) {
+    const tail = buckets[buckets.length - 1];
+    if (tail.totalPaid < regularPayment - 1e-6) {
+      const prev = buckets[buckets.length - 2];
+      prev.principalPaid += tail.principalPaid;
+      prev.interestPaid += tail.interestPaid;
+      prev.totalPaid += tail.totalPaid;
+      buckets.pop();
+    }
+  }
+
+  if (buckets.length === 0) return <ChartEmptyState height={height} />;
+
+  const rawYearlyData = buckets.map(({ year, principalPaid, interestPaid }) => ({
+    year,
+    stacks: [
       {
         value: principalPaid,
         color: colours.primary,
@@ -68,14 +93,8 @@ export const RepaymentBarChart = ({
         borderTopLeftRadius: 5,
         borderTopRightRadius: 5,
       },
-    ];
-    rawYearlyData.push({
-      stacks,
-      year,
-    });
-  }
-
-  if (rawYearlyData.length === 0) return <ChartEmptyState height={height} />;
+    ] as StackSegment[],
+  }));
 
   const { chartWidth, scrollEnabled, pointSpacing } = getProjectionChartLayout({
     containerWidth,

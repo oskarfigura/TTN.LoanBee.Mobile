@@ -41,6 +41,9 @@ jest.mock('../../src/currency/format', () => ({
 }));
 
 import { RepaymentBarChart } from '../../src/components/charts/RepaymentBarChart';
+import { getLoanCalculations } from '../../src/core/amortisation';
+import { LoanCalculationType } from '../../src/core/LoanCalculationType';
+import { DownPaymentType } from '../../src/core/DownPaymentType';
 
 const buildArrays = (months = 36) => {
   const monthly: number[] = [];
@@ -175,6 +178,42 @@ describe('RepaymentBarChart yearly downsampling', () => {
       expect(year.stacks[0].value).toBe(9600);
       expect(year.stacks[1].value).toBe(2400);
     });
+  });
+
+  it('folds a trailing settlement stub into the final year instead of a sliver bar', () => {
+    // Twelve full £1,000/mo payments, then the engine appends a £300 closing
+    // settlement (smaller than a regular instalment). That stub must be absorbed
+    // into year one, not rendered as its own one-month "Y2" sliver.
+    const monthly = [...Array.from({ length: 13 }, (_, m) => m * 1000), 12300];
+    const interest = [...Array.from({ length: 13 }, (_, m) => m * 200), 2450];
+    renderBars({ monthlyArray: monthly, interestArray: interest });
+
+    expect(capturedStackData).toHaveLength(1);
+    expect(labelsOf()).toEqual(['Y1']);
+    // Year 1 absorbs the stub: principal 9600 + 250, interest 2400 + 50.
+    expect(capturedStackData![0].stacks[0].value).toBe(9850);
+    expect(capturedStackData![0].stacks[1].value).toBe(2450);
+  });
+
+  it('ends a real overpayment mortgage on its true final year, not a closing sliver', () => {
+    // Reported case: a £250k / 3.5% / 25y mortgage with a £250/mo overpayment clears
+    // in 19 years plus a small settlement stub. The chart must end on Y19 with a
+    // full-year bar rather than tacking on a one-month Y20 sliver.
+    const result = getLoanCalculations(
+      250000, 3.5, 25, 0, 0, LoanCalculationType.TERM, 0, DownPaymentType.CASH, 250, '2024-01-01',
+    );
+    renderBars({
+      monthlyArray: result.loanChartMonthlyArray,
+      interestArray: result.loanChartInterestArray,
+    });
+
+    const data = capturedStackData!;
+    const regularPayment = result.loanChartMonthlyArray[1] - result.loanChartMonthlyArray[0];
+    const lastBar = data[data.length - 1];
+    const lastBarTotal = lastBar.stacks[0].value + lastBar.stacks[1].value;
+
+    expect(labelsOf()[data.length - 1]).toBe('Y19');
+    expect(lastBarTotal).toBeGreaterThan(regularPayment);
   });
 
   it('renders a zero-height slot for a year with no payment change without breaking labels', () => {
