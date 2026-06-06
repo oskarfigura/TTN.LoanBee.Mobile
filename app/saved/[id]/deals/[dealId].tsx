@@ -31,7 +31,7 @@ import {
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
-import { validateCompletionOverpaymentRow } from '@/mortgage/validation';
+import { validateCompletionOverpaymentRows } from '@/mortgage/validation';
 import {
   formatFriendlyDate,
   formatFriendlyDateRange,
@@ -147,10 +147,7 @@ const CompletedDealDetailView = ({
   const minimumDate = parseDateLabelValue(deal.startDate) ?? undefined;
   const maximumDate = parseDateLabelValue(deal.completion?.completedAt ?? deal.endDate) ?? undefined;
   const overpaymentValidations = useMemo(() => (
-    new Map(overpayments.map(row => [
-      row.id,
-      validateCompletionOverpaymentRow(row, deal, deal.completion?.completedAt ?? deal.endDate),
-    ]))
+    validateCompletionOverpaymentRows(overpayments, deal, deal.completion?.completedAt ?? deal.endDate)
   ), [deal, overpayments]);
   const hasInvalidOverpayment = [...overpaymentValidations.values()].some(validation => !validation.isValid);
 

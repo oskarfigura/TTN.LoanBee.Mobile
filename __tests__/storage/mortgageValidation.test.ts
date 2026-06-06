@@ -2,6 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   validateCompletionAmounts,
   validateCompletionOverpaymentRow,
+  validateCompletionOverpaymentRows,
   validateCurrentDealDurationText,
   validateTrackLumpRows,
 } from '@/mortgage/validation';
@@ -73,6 +74,31 @@ describe('mortgage validation helpers', () => {
       dateErrorKey: 'mortgage.eventOutsideDealDates',
     });
     expect(validateCompletionOverpaymentRow({ date: '2026-06-01', amount: '999999' }, deal, '2031-01-01')).toMatchObject({
+      isValid: false,
+      amount: { errorKey: 'mortgage.overpaymentTooLarge' },
+    });
+  });
+});
+
+describe('validateCompletionOverpaymentRows (collective cap)', () => {
+  it('accepts multiple rows that together stay within the balance', () => {
+    const result = validateCompletionOverpaymentRows([
+      { id: 'a', date: '2026-06-01', amount: '50000' },
+      { id: 'b', date: '2027-06-01', amount: '50000' },
+    ], deal, '2031-01-01');
+
+    expect(result.get('a')).toMatchObject({ isValid: true });
+    expect(result.get('b')).toMatchObject({ isValid: true });
+  });
+
+  it('flags a later row once the running total would exceed the balance', () => {
+    const result = validateCompletionOverpaymentRows([
+      { id: 'a', date: '2026-06-01', amount: '130000' },
+      { id: 'b', date: '2027-06-01', amount: '130000' },
+    ], deal, '2031-01-01');
+
+    expect(result.get('a')).toMatchObject({ isValid: true });
+    expect(result.get('b')).toMatchObject({
       isValid: false,
       amount: { errorKey: 'mortgage.overpaymentTooLarge' },
     });

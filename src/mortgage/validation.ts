@@ -94,6 +94,42 @@ export const validateCompletionOverpaymentRow = (
   };
 };
 
+// Validate a whole set of completion overpayment rows together. Each row on its
+// own is checked against the projected balance at its date, but two rows can
+// each be under that balance while collectively exceeding it. Process in date
+// order, tracking the running total, so a later lump can only draw on the
+// balance an earlier one left behind.
+export const validateCompletionOverpaymentRows = (
+  rows: Array<CompletionOverpaymentRowInput & { id: string }>,
+  deal: LoanDeal,
+  completedAt: string,
+): Map<string, CompletionOverpaymentRowValidation> => {
+  const ordered = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const result = new Map<string, CompletionOverpaymentRowValidation>();
+  let cumulative = 0;
+
+  for (const row of ordered) {
+    const base = validateCompletionOverpaymentRow(row, deal, completedAt);
+
+    if (base.isValid) {
+      const available = Math.max(0, base.projectedBalance - cumulative);
+      if (base.amount.numeric > available) {
+        result.set(row.id, {
+          ...base,
+          amount: { ...base.amount, errorKey: 'mortgage.overpaymentTooLarge', isValid: false },
+          isValid: false,
+        });
+        continue;
+      }
+      cumulative += base.amount.numeric;
+    }
+
+    result.set(row.id, base);
+  }
+
+  return result;
+};
+
 export type TrackLumpRowInput = {
   id: string;
   date: string;
