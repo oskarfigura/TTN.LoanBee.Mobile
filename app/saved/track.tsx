@@ -37,6 +37,7 @@ import { LoanCategory, MortgageRepaymentType } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
 import { addMonthsToIsoDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { validateDurationText, validateMoneyText } from '@/utils/formValidation';
+import { validateTrackLumpRows } from '@/mortgage/validation';
 import { useStoreReview } from '@/review';
 import { colours, layout, radii, spacing } from '@/theme';
 
@@ -133,12 +134,21 @@ export default function TrackMortgageScreen() {
     || (payoffDateIso !== undefined && dealEndDate > payoffDateIso)
   );
 
+  // Lump overpayments must fall within [start, payoff] and not collectively
+  // exceed the balance — otherwise the projection silently clamps/drops them.
+  const lumpValidations = useMemo(
+    () => validateTrackLumpRows(lumpRows, startDate, payoffDateIso, balanceValidation.numeric),
+    [lumpRows, startDate, payoffDateIso, balanceValidation.numeric],
+  );
+  const lumpsValid = lumpValidations.every(row => row.isValid);
+
   const canSave = nickname.trim().length > 0
     && isValidIsoDate(startDate)
     && balanceValidation.isValid
     && rateValidation.isValid
     && durationValidation.isValid
-    && !dealEndInvalid;
+    && !dealEndInvalid
+    && lumpsValid;
 
   useEffect(() => {
     if (category !== 'loan') return;
@@ -414,17 +424,23 @@ export default function TrackMortgageScreen() {
 
             <View style={styles.fieldGroup}>
               <FieldLabel>{t('track.lumpOverpayments')}</FieldLabel>
-              {lumpRows.map(row => (
-                <OverpaymentEntryRow
-                  key={row.id}
-                  row={row}
-                  currencySymbol={currencySymbol}
-                  minimumDate={parseDateLabelValue(startDate) ?? undefined}
-                  onDateChange={(rowId, date) => setLumpRows(prev => prev.map(r => (r.id === rowId ? { ...r, date } : r)))}
-                  onAmountChange={(rowId, amount) => setLumpRows(prev => prev.map(r => (r.id === rowId ? { ...r, amount } : r)))}
-                  onRemove={rowId => setLumpRows(prev => prev.filter(r => r.id !== rowId))}
-                />
-              ))}
+              {lumpRows.map(row => {
+                const validation = lumpValidations.find(v => v.id === row.id);
+                return (
+                  <OverpaymentEntryRow
+                    key={row.id}
+                    row={row}
+                    currencySymbol={currencySymbol}
+                    minimumDate={parseDateLabelValue(startDate) ?? undefined}
+                    maximumDate={payoffDateIso ? parseDateLabelValue(payoffDateIso) ?? undefined : undefined}
+                    dateError={validation?.dateErrorKey ? t(validation.dateErrorKey) : undefined}
+                    amountError={validation?.amountErrorKey ? t(validation.amountErrorKey) : undefined}
+                    onDateChange={(rowId, date) => setLumpRows(prev => prev.map(r => (r.id === rowId ? { ...r, date } : r)))}
+                    onAmountChange={(rowId, amount) => setLumpRows(prev => prev.map(r => (r.id === rowId ? { ...r, amount } : r)))}
+                    onRemove={rowId => setLumpRows(prev => prev.filter(r => r.id !== rowId))}
+                  />
+                );
+              })}
               <Button
                 label={t('track.addLumpOverpayment')}
                 onPress={addLumpRow}

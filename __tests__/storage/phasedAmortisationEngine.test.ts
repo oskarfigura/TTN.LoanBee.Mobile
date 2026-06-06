@@ -69,6 +69,39 @@ describe('computePhasedTotals', () => {
     // 130 months out — beyond the 120-month schedule, so it is a no-op.
     expect(phased([{ date: '2034-11-01', amount: 20000 }])).toEqual(phased([]));
   });
+
+  // Regression: a lump that leaves a residual smaller than one monthly payment.
+  // getLoanCalculations' final-row branch overshoots here, emitting an extra
+  // negative "refund" row — which used to add a phantom month to the term.
+  describe('residual smaller than one payment (B1)', () => {
+    const monthly = baseResult.monthlyPayments;
+    const monthlyRate = INTEREST / 100 / 12;
+    const lumpMonthIndex = 100; // 100 months after START is 2032-05-01.
+    const lumpDate = '2032-05-01';
+    const balanceBeforeLump = parseFloat(baseResult.tableItems[lumpMonthIndex - 1].ending);
+    // Leave roughly half a payment outstanding so the next month clears it.
+    const lump = balanceBeforeLump - monthly * 0.5;
+    const residualBalance = balanceBeforeLump - lump;
+
+    it('clears in exactly one further month with the right interest (no negative refund)', () => {
+      const result = phased([{ date: lumpDate, amount: lump }]);
+
+      expect(result.totalTermInMonths).toBe(lumpMonthIndex + 1);
+      // Interest = every month up to the lump, plus one final month on the residual.
+      // The old refund-row bug made the final month's interest negative.
+      const expectedInterest = sumInterestThroughMonth(lumpMonthIndex) + +(residualBalance * monthlyRate).toFixed(2);
+      expect(result.totalInterestPaid).toBeCloseTo(expectedInterest, 2);
+    });
+
+    it('remaining-balance series has no upward spike and ends at zero', () => {
+      const array = remaining([{ date: lumpDate, amount: lump }]);
+
+      expect(array[array.length - 1]).toBe(0);
+      for (let i = 1; i < array.length; i += 1) {
+        expect(array[i]).toBeLessThanOrEqual(array[i - 1]);
+      }
+    });
+  });
 });
 
 describe('computePhasedRemainingArray', () => {

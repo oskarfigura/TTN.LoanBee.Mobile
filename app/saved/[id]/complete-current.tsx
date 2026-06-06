@@ -16,6 +16,7 @@ import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from
 import {
   validateCompletionAmounts,
   validateCompletionOverpaymentRow,
+  validateCompletionOverpaymentRows,
 } from '@/mortgage/validation';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, spacing } from '@/theme';
@@ -74,11 +75,10 @@ export default function CompleteCurrentDealScreen() {
     : undefined;
   const overpaymentValidations = useMemo(() => {
     if (!currentDeal) return new Map<string, ReturnType<typeof validateCompletionOverpaymentRow>>();
-    return new Map(overpayments.map(row => [
-      row.id,
-      validateCompletionOverpaymentRow(row, currentDeal, completedAt),
-    ]));
-  }, [completedAt, currentDeal, overpayments]);
+    // The overpayment rows here are new (not yet saved), so the deal's existing
+    // events all count toward the projected balance they are checked against.
+    return validateCompletionOverpaymentRows(overpayments, currentDeal, completedAt, loan?.events ?? []);
+  }, [completedAt, currentDeal, overpayments, loan]);
   const hasInvalidOverpayment = [...overpaymentValidations.values()].some(validation => !validation.isValid);
   const canComplete = (
     completionAmounts.closingBalance.isValid
