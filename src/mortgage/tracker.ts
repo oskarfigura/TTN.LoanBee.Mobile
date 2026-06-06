@@ -93,7 +93,13 @@ const addDaysIso = (dateString: string, days: number): string => {
 
 const addMonthsIso = (dateString: string, months: number): string => {
   const date = parseDate(dateString);
+  // Clamp the day so a 31st (or 29/30) doesn't overflow into the next month when
+  // the target month is shorter — keeps deal end dates and durations exact.
+  const day = date.getDate();
+  date.setDate(1);
   date.setMonth(date.getMonth() + months);
+  const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  date.setDate(Math.min(day, lastDayOfMonth));
   return dateToIso(date);
 };
 

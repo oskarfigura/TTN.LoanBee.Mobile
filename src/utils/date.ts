@@ -67,11 +67,17 @@ export const formatIsoDate = (date: Date): string => {
 };
 
 // Add whole calendar months to an ISO date, keeping the same day where possible.
-// Returns the input unchanged when it can't be parsed.
+// Returns the input unchanged when it can't be parsed. The day is clamped to the
+// target month's last day so e.g. 31 Jan + 1 month is 28/29 Feb, not 2/3 Mar —
+// a bare setMonth overflows into the following month for short months.
 export const addMonthsToIsoDate = (dateString: string, months: number): string => {
   const date = parseDateLabelValue(dateString);
   if (!date) return dateString;
+  const day = date.getDate();
+  date.setDate(1);
   date.setMonth(date.getMonth() + months);
+  const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  date.setDate(Math.min(day, lastDayOfMonth));
   return formatIsoDate(date);
 };
 
