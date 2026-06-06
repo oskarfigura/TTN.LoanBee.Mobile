@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { InteractionManager, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -170,13 +170,13 @@ export const MortgageDetailView = ({
       });
     };
 
-    const interaction = InteractionManager.runAfterInteractions(() => {
+    const idleHandle = requestIdleCallback(() => {
       showStage(0);
     });
 
     return () => {
       cancelled = true;
-      interaction.cancel();
+      cancelIdleCallback(idleHandle);
     };
   }, [activeTab, projectionRenderKey]);
 

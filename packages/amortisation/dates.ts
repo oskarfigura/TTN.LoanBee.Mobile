@@ -66,9 +66,6 @@ export const formatIsoDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Advance a Date in place by whole calendar months, clamping the day to the
-// target month's last day so e.g. 31 Jan + 1 month is 28/29 Feb, not 2/3 Mar —
-// a bare setMonth overflows into the following month for short months.
 export const advanceMonthsClamped = (date: Date, months: number): void => {
   const day = date.getDate();
   date.setDate(1);
@@ -77,13 +74,43 @@ export const advanceMonthsClamped = (date: Date, months: number): void => {
   date.setDate(Math.min(day, lastDayOfMonth));
 };
 
-// Add whole calendar months to an ISO date, keeping the same day where possible.
-// Returns the input unchanged when it can't be parsed.
 export const addMonthsToIsoDate = (dateString: string, months: number): string => {
   const date = parseDateLabelValue(dateString);
   if (!date) return dateString;
   advanceMonthsClamped(date, months);
   return formatIsoDate(date);
+};
+
+export const monthsBetween = (
+  startDate: string | Date,
+  endDate: string | Date,
+): number => {
+  const start = typeof startDate === 'string' ? parseDateLabelValue(startDate) : startDate;
+  const end = typeof endDate === 'string' ? parseDateLabelValue(endDate) : endDate;
+  if (!start || !end) return 0;
+  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
+};
+
+export const getOverallTermInMonths = (
+  termInYears: number,
+  termInMonths: number,
+) => {
+  let overallTermInMonths = termInMonths;
+  if (termInYears > 0) {
+    overallTermInMonths += termInYears * 12;
+  }
+  return overallTermInMonths;
+};
+
+export const getLoanEndDate = (
+  startDate: string,
+  timeInYears: number,
+  timeInMonths: number,
+) => {
+  const date = parseDateLabelValue(startDate) ?? new Date(startDate);
+  const overallTimeInMonths = getOverallTermInMonths(timeInYears, timeInMonths);
+  date.setMonth(date.getMonth() + overallTimeInMonths);
+  return date;
 };
 
 export const formatFriendlyDate = (dateString: string | undefined, locale?: string) => {
@@ -116,38 +143,6 @@ export const formatFriendlyMonthYear = (dateString: string | undefined, locale?:
   });
 };
 
-export const formatFriendlyDateRange = (
-  startDate: string | undefined,
-  endDate: string | undefined,
-  locale?: string,
-) => {
-  const start = formatFriendlyDate(startDate, locale);
-  const end = formatFriendlyDate(endDate, locale);
-
-  if (!start) return end;
-  if (!end) return start;
-
-  return `${start} - ${end}`;
-};
-
-// Whole months between two dates. ISO strings are parsed via
-// parseDateLabelValue (local midnight) so the result does not flip across
-// timezone boundaries — `new Date('2024-01-01')` parses as UTC midnight and
-// would give the wrong month in negative-offset timezones.
-export const monthsBetween = (
-  startDate: string | Date,
-  endDate: string | Date,
-): number => {
-  const start = typeof startDate === 'string' ? parseDateLabelValue(startDate) : startDate;
-  const end = typeof endDate === 'string' ? parseDateLabelValue(endDate) : endDate;
-  if (!start || !end) return 0;
-  return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()));
-};
-
-// Amortisation rows often carry no explicit date; derive the month label from the
-// loan start date plus the 1-based period number. formatIsoDate keeps the month
-// correct across timezone boundaries (toISOString would shift to UTC and could
-// roll a month-start date back into the previous month in positive offsets).
 export const formatAmortisationPeriodLabel = (
   startDate: string,
   periodNumber: number,
@@ -159,4 +154,13 @@ export const formatAmortisationPeriodLabel = (
   date.setMonth(date.getMonth() + periodNumber - 1);
 
   return formatFriendlyMonthYear(formatIsoDate(date), language);
+};
+
+export const formatPayoffDate = (startDate: string, totalMonths: number, locale?: string) => {
+  const date = parseDateLabelValue(startDate);
+  if (!date) return '—';
+
+  date.setMonth(date.getMonth() + Math.max(totalMonths, 0));
+
+  return formatFriendlyDate(formatIsoDate(date), locale);
 };

@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  addMonthsToIsoDate,
   formatFriendlyDate,
   formatFriendlyDateRange,
   formatIsoDate,
@@ -32,5 +33,29 @@ describe('date utils', () => {
 
   it('formats picker dates as local ISO dates', () => {
     expect(formatIsoDate(new Date(2026, 5, 1))).toBe('2026-06-01');
+  });
+
+  describe('addMonthsToIsoDate', () => {
+    it('keeps the same day for months that are long enough', () => {
+      expect(addMonthsToIsoDate('2026-01-15', 1)).toBe('2026-02-15');
+      expect(addMonthsToIsoDate('2026-06-30', 24)).toBe('2028-06-30');
+    });
+
+    it('clamps the day to the last day of a shorter target month', () => {
+      // 31 Jan + 1 month must be 28 Feb, not 3 Mar (the bare setMonth overflow).
+      expect(addMonthsToIsoDate('2026-01-31', 1)).toBe('2026-02-28');
+      // Leap year keeps the 29th.
+      expect(addMonthsToIsoDate('2028-01-31', 1)).toBe('2028-02-29');
+      // 31 May + 1 month → 30 Jun.
+      expect(addMonthsToIsoDate('2026-05-31', 1)).toBe('2026-06-30');
+    });
+
+    it('rolls across year boundaries', () => {
+      expect(addMonthsToIsoDate('2026-11-30', 3)).toBe('2027-02-28');
+    });
+
+    it('returns the input unchanged when it cannot be parsed', () => {
+      expect(addMonthsToIsoDate('not-a-date', 3)).toBe('not-a-date');
+    });
   });
 });

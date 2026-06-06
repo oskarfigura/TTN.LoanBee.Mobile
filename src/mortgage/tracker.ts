@@ -5,7 +5,7 @@ import {
 } from '@/types/SavedLoan';
 import { calculateMonthlyPayments } from '@/core/amortisation';
 import { getEffectiveLoanAmount } from '@/utils/paymentValidation';
-import { monthsBetween as sharedMonthsBetween } from '@/utils/date';
+import { advanceMonthsClamped, monthsBetween as sharedMonthsBetween } from '@/utils/date';
 
 export interface DealProjection {
   dealId: string;
@@ -93,7 +93,9 @@ const addDaysIso = (dateString: string, days: number): string => {
 
 const addMonthsIso = (dateString: string, months: number): string => {
   const date = parseDate(dateString);
-  date.setMonth(date.getMonth() + months);
+  // Clamp the day so a 31st (or 29/30) doesn't overflow into the next month when
+  // the target month is shorter — keeps deal end dates and durations exact.
+  advanceMonthsClamped(date, months);
   return dateToIso(date);
 };
 
