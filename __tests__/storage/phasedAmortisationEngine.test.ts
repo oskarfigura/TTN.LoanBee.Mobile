@@ -69,6 +69,34 @@ describe('computePhasedTotals', () => {
     // 130 months out — beyond the 120-month schedule, so it is a no-op.
     expect(phased([{ date: '2034-11-01', amount: 20000 }])).toEqual(phased([]));
   });
+
+  // Regression: a lump that leaves a residual smaller than one monthly payment.
+  // getLoanCalculations' final-row branch overshoots here, emitting an extra
+  // negative "refund" row — which used to add a phantom month to the term.
+  describe('residual smaller than one payment (B1)', () => {
+    const monthly = baseResult.monthlyPayments;
+    const lumpMonthIndex = 100; // 100 months after START is 2032-05-01.
+    const lumpDate = '2032-05-01';
+    const balanceBeforeLump = parseFloat(baseResult.tableItems[lumpMonthIndex - 1].ending);
+    // Leave roughly half a payment outstanding so the next month clears it.
+    const lump = balanceBeforeLump - monthly * 0.5;
+
+    it('clears in exactly one further month with no phantom refund row', () => {
+      const result = phased([{ date: lumpDate, amount: lump }]);
+
+      expect(result.totalTermInMonths).toBe(lumpMonthIndex + 1);
+      expect(result.totalInterestPaid).toBeGreaterThan(0);
+    });
+
+    it('remaining-balance series has no upward spike and ends at zero', () => {
+      const array = remaining([{ date: lumpDate, amount: lump }]);
+
+      expect(array[array.length - 1]).toBe(0);
+      for (let i = 1; i < array.length; i += 1) {
+        expect(array[i]).toBeLessThanOrEqual(array[i - 1]);
+      }
+    });
+  });
 });
 
 describe('computePhasedRemainingArray', () => {

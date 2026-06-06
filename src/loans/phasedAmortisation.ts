@@ -16,11 +16,51 @@ type PhasedInputs = {
   lumpSums: LumpSumEntry[];
 };
 
+// The subset of a getLoanCalculations result the phased loops actually read. The
+// full result is structurally assignable to this, and so is the one-month tail
+// the guard below synthesises.
+type SchedulePhase = {
+  tableItems: Array<{ interest: string; ending: string }>;
+  totalInterestPaid: number;
+  loanChartRemainingArray: number[];
+};
+
 const sortByDate = (lumpSums: LumpSumEntry[]): LumpSumEntry[] => (
   [...lumpSums]
     .filter(ls => ls.amount > 0 && parseDateLabelValue(ls.date) !== null)
     .sort((a, b) => a.date.localeCompare(b.date))
 );
+
+// Recompute the continuing schedule for the reduced balance left after a lump
+// sum. When that balance clears within a single payment, getLoanCalculations'
+// final-row branch overshoots: it emits a row whose balance jumps *up* followed
+// by a spurious negative-interest "refund" row, which understates total interest
+// and draws an upward spike in the remaining-balance series. The condition
+// `balance * (1 + monthlyRate) <= monthlyPayment` is exactly when the first
+// month would overshoot, so resolve that tail directly — one month of interest,
+// then the loan is closed.
+const continueSchedule = (
+  balance: number,
+  date: string,
+  baseResult: PhasedInputs['baseResult'],
+  interest: number,
+): SchedulePhase => {
+  const monthlyRate = interest / 100 / 12;
+  if (balance * (1 + monthlyRate) <= baseResult.monthlyPayments) {
+    const finalInterest = +(balance * monthlyRate).toFixed(2);
+    return {
+      tableItems: [{ interest: finalInterest.toFixed(2), ending: '0.00' }],
+      totalInterestPaid: finalInterest,
+      loanChartRemainingArray: [balance, 0],
+    };
+  }
+  return getLoanCalculations(
+    balance, interest, 0, 0,
+    baseResult.monthlyPayments, 'payment',
+    0, 'percent',
+    0, date,
+  );
+};
 
 // Applies a sorted list of lump sums to an amortisation schedule. After each
 // lump sum the remaining schedule is recalculated against the new lower
@@ -41,7 +81,7 @@ export const computePhasedTotals = ({
     };
   }
 
-  let currentResult = baseResult;
+  let currentResult: SchedulePhase = baseResult;
   let currentStartDate = startDate;
   let accumulatedInterest = 0;
   let accumulatedMonths = 0;
@@ -72,12 +112,7 @@ export const computePhasedTotals = ({
       };
     }
 
-    currentResult = getLoanCalculations(
-      newBalance, interest, 0, 0,
-      baseResult.monthlyPayments, 'payment',
-      0, 'percent',
-      0, ls.date,
-    );
+    currentResult = continueSchedule(newBalance, ls.date, baseResult, interest);
     currentStartDate = ls.date;
   }
 
@@ -102,7 +137,7 @@ export const computePhasedRemainingArray = ({
   if (sorted.length === 0) return [...baseResult.loanChartRemainingArray];
 
   let accumulated: number[] = [];
-  let currentResult = baseResult;
+  let currentResult: SchedulePhase = baseResult;
   let currentStartDate = startDate;
 
   for (const ls of sorted) {
@@ -123,12 +158,7 @@ export const computePhasedRemainingArray = ({
 
     if (newBalance <= 0) return accumulated;
 
-    currentResult = getLoanCalculations(
-      newBalance, interest, 0, 0,
-      baseResult.monthlyPayments, 'payment',
-      0, 'percent',
-      0, ls.date,
-    );
+    currentResult = continueSchedule(newBalance, ls.date, baseResult, interest);
     currentStartDate = ls.date;
   }
 
