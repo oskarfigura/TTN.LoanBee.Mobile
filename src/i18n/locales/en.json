@@ -360,6 +360,19 @@
     "cancel": "Cancel",
     "delete": "Delete"
   },
+  "chartHelp": {
+    "open": "About {{title}}",
+    "repaymentProjectionTitle": "Repayment projection",
+    "repaymentProjectionBody": "This chart groups payments by year and splits each bar into principal and interest. Principal reduces the balance; interest is the cost of borrowing for that year.",
+    "loanBreakdownTitle": "Loan breakdown",
+    "loanBreakdownBody": "This chart compares the original principal with the total interest expected over the full term, so you can see how much of the total cost comes from borrowing charges.",
+    "cumulativePaymentsTitle": "Cumulative payments",
+    "cumulativePaymentsBody": "This chart tracks how total payments, interest paid, and remaining balance change over time. It helps show how the balance falls as payments accumulate.",
+    "balanceComparisonTitle": "Balance over time",
+    "balanceComparisonBody": "This chart compares the projected remaining balance with and without overpayments. The faster the overpayment line falls, the sooner the borrowing is expected to be repaid.",
+    "mortgageBalanceProjectionTitle": "Mortgage balance projection",
+    "mortgageBalanceProjectionBody": "This chart shows the projected mortgage balance across the tracked timeline. Published deal changes, saved events, and overpayments are included when they apply."
+  },
   "forms": {
     "required": "Required",
     "requiredPositive": "Enter a value greater than zero",

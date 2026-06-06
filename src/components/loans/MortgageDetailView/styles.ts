@@ -475,6 +475,11 @@ export const styles = StyleSheet.create({
   previewTitle: {
     flex: 1,
   },
+  chartActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   fullscreenButton: {
     minHeight: 36,
     flexDirection: 'row',

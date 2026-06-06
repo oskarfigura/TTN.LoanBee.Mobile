@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { CumulativeAreaChart } from '@/components/charts/CumulativeAreaChart';
+import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/components/charts/ChartHelp';
 import { LoanBreakdownDonut } from '@/components/charts/LoanBreakdownDonut';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
 import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
@@ -35,6 +36,7 @@ import { LoanSummaryOverview } from './LoanSummaryOverview';
 
 type CalculationTab = 'summary' | 'charts' | 'schedule';
 type FullscreenPreview = 'repayment' | 'breakdown' | 'cumulative' | 'overpayment' | 'schedule';
+type ChartHelpId = 'repaymentProjection' | 'loanBreakdown' | 'cumulativePayments' | 'balanceComparison';
 
 interface Props {
   result: LoanResult;
@@ -75,6 +77,7 @@ export const LoanCalculationView = ({
   const [activeTab, setActiveTab] = useState<CalculationTab>('summary');
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [fullscreenPreview, setFullscreenPreview] = useState<FullscreenPreview | null>(null);
+  const [chartHelp, setChartHelp] = useState<ChartHelpId | null>(null);
   const isPreviewOpen = fullscreenPreview !== null;
   const scrollRef = useRef<ScrollView>(null);
   const principalAmount = result.amount - result.downPayment;
@@ -152,6 +155,14 @@ export const LoanCalculationView = ({
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
   }, []);
 
+  const openChartHelp = useCallback((helpId: ChartHelpId) => {
+    setChartHelp(helpId);
+  }, []);
+
+  const closeChartHelp = useCallback(() => {
+    setChartHelp(null);
+  }, []);
+
   useEffect(() => (
     () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
@@ -176,6 +187,53 @@ export const LoanCalculationView = ({
     if (fullscreenPreview === 'overpayment') return t('overpayments.balanceChart');
     return t('results.amortisationTable');
   };
+
+  const getChartHelpContent = (helpId: ChartHelpId): ChartHelpContent => {
+    if (helpId === 'repaymentProjection') {
+      return {
+        title: t('chartHelp.repaymentProjectionTitle'),
+        body: t('chartHelp.repaymentProjectionBody'),
+      };
+    }
+    if (helpId === 'loanBreakdown') {
+      return {
+        title: t('chartHelp.loanBreakdownTitle'),
+        body: t('chartHelp.loanBreakdownBody'),
+      };
+    }
+    if (helpId === 'cumulativePayments') {
+      return {
+        title: t('chartHelp.cumulativePaymentsTitle'),
+        body: t('chartHelp.cumulativePaymentsBody'),
+      };
+    }
+
+    return {
+      title: t('chartHelp.balanceComparisonTitle'),
+      body: t('chartHelp.balanceComparisonBody'),
+    };
+  };
+
+  const getFullscreenHelpId = (): ChartHelpId | null => {
+    if (fullscreenPreview === 'repayment') return 'repaymentProjection';
+    if (fullscreenPreview === 'breakdown') return 'loanBreakdown';
+    if (fullscreenPreview === 'cumulative') return 'cumulativePayments';
+    if (fullscreenPreview === 'overpayment') return 'balanceComparison';
+    return null;
+  };
+
+  const renderChartHeader = (title: string, helpId: ChartHelpId) => (
+    <View style={styles.chartHeader}>
+      <AppText variant="title3" style={styles.chartTitle}>{title}</AppText>
+      <View style={styles.chartActions}>
+        <ChartHelpButton
+          accessibilityLabel={t('chartHelp.open', { title })}
+          onPress={() => openChartHelp(helpId)}
+        />
+        <FullscreenIcon />
+      </View>
+    </View>
+  );
 
   const renderFullscreenPreview = () => {
     if (fullscreenPreview === 'repayment') {
@@ -236,6 +294,9 @@ export const LoanCalculationView = ({
     return null;
   };
 
+  const fullscreenHelpId = getFullscreenHelpId();
+  const chartHelpContent = chartHelp ? getChartHelpContent(chartHelp) : null;
+
   const tabBody = (
     <>
       {showFinancialDisclaimer ? (
@@ -268,10 +329,7 @@ export const LoanCalculationView = ({
             style={({ pressed }) => [pressed && styles.previewPressed]}
           >
             <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('results.repaymentBreakdown')}</AppText>
-                <FullscreenIcon />
-              </View>
+              {renderChartHeader(t('results.repaymentBreakdown'), 'repaymentProjection')}
               <RepaymentBarChart
                 monthlyArray={result.loanChartMonthlyArray}
                 interestArray={result.loanChartInterestArray}
@@ -286,10 +344,7 @@ export const LoanCalculationView = ({
             style={({ pressed }) => [pressed && styles.previewPressed]}
           >
             <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('results.loanBreakdown')}</AppText>
-                <FullscreenIcon />
-              </View>
+              {renderChartHeader(t('results.loanBreakdown'), 'loanBreakdown')}
               <LoanBreakdownDonut
                 principal={principalAmount}
                 totalInterest={result.totalInterestPaid}
@@ -304,10 +359,7 @@ export const LoanCalculationView = ({
             style={({ pressed }) => [pressed && styles.previewPressed]}
           >
             <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('results.cumulativePayments')}</AppText>
-                <FullscreenIcon />
-              </View>
+              {renderChartHeader(t('results.cumulativePayments'), 'cumulativePayments')}
               <CumulativeAreaChart
                 monthlyArray={result.loanChartMonthlyArray}
                 interestArray={result.loanChartInterestArray}
@@ -324,10 +376,7 @@ export const LoanCalculationView = ({
               style={({ pressed }) => [pressed && styles.previewPressed]}
             >
               <Card style={styles.chartCard}>
-                <View style={styles.chartHeader}>
-                  <AppText variant="title3">{t('overpayments.balanceChart')}</AppText>
-                  <FullscreenIcon />
-                </View>
+                {renderChartHeader(t('overpayments.balanceChart'), 'balanceComparison')}
                 <OverpaymentsComparisonChart
                   baselineRemaining={overpaymentBaseline}
                   scenarioRemaining={result.loanChartRemainingArray}
@@ -384,6 +433,12 @@ export const LoanCalculationView = ({
         <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.scheduleTitle}>{getFullscreenTitle()}</AppText>
+            {fullscreenHelpId ? (
+              <ChartHelpButton
+                accessibilityLabel={t('chartHelp.open', { title: getFullscreenTitle() })}
+                onPress={() => openChartHelp(fullscreenHelpId)}
+              />
+            ) : null}
             <TouchableOpacity
               style={styles.closeButton}
               onPress={closeFullscreenPreview}
@@ -404,6 +459,12 @@ export const LoanCalculationView = ({
           </ScrollView>
         </SafeAreaView>
       </Modal>
+      <ChartHelpDrawer
+        visible={chartHelp !== null}
+        content={chartHelpContent}
+        closeLabel={t('common.close')}
+        onClose={closeChartHelp}
+      />
     </>
   );
 
@@ -487,6 +548,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colours.border,
     paddingBottom: 10,
     marginBottom: 12,
+  },
+  chartTitle: {
+    flex: 1,
+  },
+  chartActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   previewPressed: {
     opacity: 0.84,

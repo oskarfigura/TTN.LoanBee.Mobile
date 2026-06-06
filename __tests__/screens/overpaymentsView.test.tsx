@@ -339,6 +339,22 @@ describe('OverpaymentsView', () => {
     expect(mockLockAsync).toHaveBeenCalledWith('PORTRAIT_UP');
   });
 
+  it('opens chart help without opening the fullscreen chart', async () => {
+    const renderer = await renderOverpayments();
+    const helpButton = renderer.root.find(node => (
+      String(node.type) === 'TouchableOpacity' && node.props.accessibilityLabel === 'chartHelp.open'
+    ));
+    const stopPropagation = jest.fn();
+
+    await act(async () => {
+      helpButton.props.onPress({ stopPropagation });
+    });
+
+    expect(stopPropagation).toHaveBeenCalledTimes(1);
+    expect(mockUnlockAsync).not.toHaveBeenCalled();
+    expect(textContent(renderer.root)).toContain('chartHelp.balanceComparisonBody');
+  });
+
   it('keeps the drawer impact card flat so the success panel has no bottom shadow', async () => {
     const { OverpaymentImpactCard } = await import('../../src/components/loans/OverpaymentSheetPrimitives');
     let renderer: ReactTestRenderer | undefined;

@@ -12,6 +12,7 @@ import { OverpaymentImpact, OverpaymentScope } from '@/loans/overpaymentScope';
 import { formatOverpaymentDuration, ImpactRow } from '@/components/loans/OverpaymentSheetPrimitives';
 import { MonthlyOverpaymentSheet } from '@/components/loans/MonthlyOverpaymentSheet';
 import { LumpSumSheet } from '@/components/loans/LumpSumSheet';
+import { ChartHelpButton, ChartHelpDrawer } from '@/components/charts/ChartHelp';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -53,6 +54,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
   const [lumpSumSheetVisible, setLumpSumSheetVisible] = useState(false);
   const [editingEvent, setEditingEvent] = useState<MortgageEvent | null>(null);
   const [chartFullscreen, setChartFullscreen] = useState(false);
+  const [chartHelpVisible, setChartHelpVisible] = useState(false);
 
   const openFullscreen = useCallback(() => {
     setChartFullscreen(true);
@@ -173,6 +175,10 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
 
   const { labels, currency, monthlyAmount, lumpEvents, bannerImpact, chartData } = scope;
   const bannerRows = bannerImpact ? toRows(bannerImpact, true) : null;
+  const balanceChartHelp = {
+    title: t('chartHelp.balanceComparisonTitle'),
+    body: t('chartHelp.balanceComparisonBody'),
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
@@ -281,8 +287,14 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
             <Card style={styles.chartCard} padding={0}>
               <View style={styles.chartHeader}>
                 <AppText variant="title3" style={styles.previewTitle}>{t('overpayments.balanceChart')}</AppText>
-                <View style={styles.fullscreenButton}>
-                  <FullscreenIcon />
+                <View style={styles.chartActions}>
+                  <ChartHelpButton
+                    accessibilityLabel={t('chartHelp.open', { title: t('overpayments.balanceChart') })}
+                    onPress={() => setChartHelpVisible(true)}
+                  />
+                  <View style={styles.fullscreenButton}>
+                    <FullscreenIcon />
+                  </View>
                 </View>
               </View>
               <View style={styles.chartBody}>
@@ -345,6 +357,10 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.previewTitle}>{t('overpayments.balanceChart')}</AppText>
+            <ChartHelpButton
+              accessibilityLabel={t('chartHelp.open', { title: t('overpayments.balanceChart') })}
+              onPress={() => setChartHelpVisible(true)}
+            />
             <TouchableOpacity style={styles.closeButton} onPress={closeFullscreen} activeOpacity={0.8}>
               <AppText variant="labelSm" tone="accent" style={styles.actionButtonText}>{t('common.close')}</AppText>
             </TouchableOpacity>
@@ -361,6 +377,12 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
           </ScrollView>
         </SafeAreaView>
       </Modal>
+      <ChartHelpDrawer
+        visible={chartHelpVisible}
+        content={balanceChartHelp}
+        closeLabel={t('common.close')}
+        onClose={() => setChartHelpVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -442,6 +464,11 @@ const styles = StyleSheet.create({
   chartBody: { padding: spacing.md, paddingBottom: spacing.sm },
   previewPressed: { opacity: 0.84 },
   previewTitle: { flex: 1 },
+  chartActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   fullscreenButton: {
     minHeight: 36,
     flexDirection: 'row',

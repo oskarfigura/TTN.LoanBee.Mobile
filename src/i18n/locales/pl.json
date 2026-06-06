@@ -360,6 +360,19 @@
     "cancel": "Anuluj",
     "delete": "Usuń"
   },
+  "chartHelp": {
+    "open": "O wykresie: {{title}}",
+    "repaymentProjectionTitle": "Prognoza spłat",
+    "repaymentProjectionBody": "Ten wykres grupuje płatności według lat i dzieli każdy słupek na kapitał oraz odsetki. Kapitał zmniejsza saldo, a odsetki są kosztem pożyczania w danym roku.",
+    "loanBreakdownTitle": "Podział kredytu",
+    "loanBreakdownBody": "Ten wykres porównuje pierwotny kapitał z łącznymi odsetkami oczekiwanymi przez cały okres, aby pokazać, jaka część całkowitego kosztu wynika z opłat za pożyczenie.",
+    "cumulativePaymentsTitle": "Łączne płatności",
+    "cumulativePaymentsBody": "Ten wykres pokazuje, jak w czasie zmieniają się łączne płatności, zapłacone odsetki i pozostałe saldo. Pomaga zobaczyć, jak saldo maleje wraz z narastaniem płatności.",
+    "balanceComparisonTitle": "Saldo w czasie",
+    "balanceComparisonBody": "Ten wykres porównuje prognozowane pozostałe saldo z nadpłatami i bez nich. Im szybciej opada linia z nadpłatami, tym wcześniej zobowiązanie powinno zostać spłacone.",
+    "mortgageBalanceProjectionTitle": "Prognoza salda hipoteki",
+    "mortgageBalanceProjectionBody": "Ten wykres pokazuje prognozowane saldo hipoteki na całej śledzonej osi czasu. Opublikowane zmiany umów, zapisane zdarzenia i nadpłaty są uwzględniane, gdy mają zastosowanie."
+  },
   "forms": {
     "required": "Wymagane",
     "requiredPositive": "Wprowadź wartość większą od zera",

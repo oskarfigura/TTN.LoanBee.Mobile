@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { AmortisationTable } from '@/components/calculator/AmortisationTable';
+import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/components/charts/ChartHelp';
 import { CumulativeAreaChart } from '@/components/charts/CumulativeAreaChart';
 import { MortgageBalanceChart } from '@/components/charts/MortgageBalanceChart';
 import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
@@ -65,6 +66,7 @@ import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate } from '@/ut
 type MortgageDetailTab = 'overview' | 'projection' | 'timeline';
 type ProjectionPreview = 'balance' | 'repayment' | 'cumulative' | 'schedule';
 type ProjectionRenderStage = 0 | 1 | 2 | 3 | 4;
+type ChartHelpId = 'mortgageBalanceProjection' | 'repaymentProjection' | 'cumulativePayments';
 
 const PROJECTION_RENDER_STAGES: ProjectionRenderStage[] = [1, 2, 3, 4];
 
@@ -94,6 +96,7 @@ export const MortgageDetailView = ({
   const [addDrawerVisible, setAddDrawerVisible] = useState(false);
   const [actionDrawerVisible, setActionDrawerVisible] = useState(false);
   const [projectionPreview, setProjectionPreview] = useState<ProjectionPreview | null>(null);
+  const [chartHelp, setChartHelp] = useState<ChartHelpId | null>(null);
   const projectionRenderKey = `${loan.id}:${loan.updatedAt}`;
   const [projectionRenderState, setProjectionRenderState] = useState<{
     key: string;
@@ -227,11 +230,42 @@ export const MortgageDetailView = ({
     setProjectionPreview(null);
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => undefined);
   }, []);
+  const openChartHelp = useCallback((helpId: ChartHelpId) => {
+    setChartHelp(helpId);
+  }, []);
+  const closeChartHelp = useCallback(() => {
+    setChartHelp(null);
+  }, []);
   const getProjectionPreviewTitle = () => {
     if (projectionPreview === 'balance') return t('mortgage.balanceProjection');
     if (projectionPreview === 'repayment') return t('results.repaymentBreakdown');
     if (projectionPreview === 'cumulative') return t('results.cumulativePayments');
     return t('mortgage.trackedSchedule');
+  };
+  const getChartHelpContent = (helpId: ChartHelpId): ChartHelpContent => {
+    if (helpId === 'mortgageBalanceProjection') {
+      return {
+        title: t('chartHelp.mortgageBalanceProjectionTitle'),
+        body: t('chartHelp.mortgageBalanceProjectionBody'),
+      };
+    }
+    if (helpId === 'repaymentProjection') {
+      return {
+        title: t('chartHelp.repaymentProjectionTitle'),
+        body: t('chartHelp.repaymentProjectionBody'),
+      };
+    }
+
+    return {
+      title: t('chartHelp.cumulativePaymentsTitle'),
+      body: t('chartHelp.cumulativePaymentsBody'),
+    };
+  };
+  const getProjectionPreviewHelpId = (): ChartHelpId | null => {
+    if (projectionPreview === 'balance') return 'mortgageBalanceProjection';
+    if (projectionPreview === 'repayment') return 'repaymentProjection';
+    if (projectionPreview === 'cumulative') return 'cumulativePayments';
+    return null;
   };
   const renderProjectionPreview = () => {
     if (projectionPreview === 'balance') {
@@ -284,6 +318,8 @@ export const MortgageDetailView = ({
 
     return null;
   };
+  const projectionPreviewHelpId = getProjectionPreviewHelpId();
+  const chartHelpContent = chartHelp ? getChartHelpContent(chartHelp) : null;
 
   useEffect(() => (
     () => {
@@ -350,7 +386,9 @@ export const MortgageDetailView = ({
             <ProjectionChartCard
               title={t('mortgage.balanceProjection')}
               accessibilityLabel={`${t('mortgage.balanceProjection')} ${t('results.fullScreen')}`}
+              helpAccessibilityLabel={t('chartHelp.open', { title: t('mortgage.balanceProjection') })}
               onPress={() => openProjectionPreview('balance')}
+              onHelpPress={() => openChartHelp('mortgageBalanceProjection')}
             >
               <MortgageBalanceChart
                 baselineRemaining={overpaymentBaseline}
@@ -369,7 +407,9 @@ export const MortgageDetailView = ({
             <ProjectionChartCard
               title={t('results.repaymentBreakdown')}
               accessibilityLabel={`${t('results.repaymentBreakdown')} ${t('results.fullScreen')}`}
+              helpAccessibilityLabel={t('chartHelp.open', { title: t('results.repaymentBreakdown') })}
               onPress={() => openProjectionPreview('repayment')}
+              onHelpPress={() => openChartHelp('repaymentProjection')}
             >
               <RepaymentBarChart
                 monthlyArray={projection.loanChartMonthlyArray}
@@ -385,7 +425,9 @@ export const MortgageDetailView = ({
             <ProjectionChartCard
               title={t('results.cumulativePayments')}
               accessibilityLabel={`${t('results.cumulativePayments')} ${t('results.fullScreen')}`}
+              helpAccessibilityLabel={t('chartHelp.open', { title: t('results.cumulativePayments') })}
               onPress={() => openProjectionPreview('cumulative')}
+              onHelpPress={() => openChartHelp('cumulativePayments')}
             >
               <CumulativeAreaChart
                 monthlyArray={projection.loanChartMonthlyArray}
@@ -448,6 +490,12 @@ export const MortgageDetailView = ({
         <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.previewTitle}>{getProjectionPreviewTitle()}</AppText>
+            {projectionPreviewHelpId ? (
+              <ChartHelpButton
+                accessibilityLabel={t('chartHelp.open', { title: getProjectionPreviewTitle() })}
+                onPress={() => openChartHelp(projectionPreviewHelpId)}
+              />
+            ) : null}
             <TouchableOpacity
               style={styles.closeButton}
               onPress={closeProjectionPreview}
@@ -493,6 +541,12 @@ export const MortgageDetailView = ({
         onClose={() => setActionDrawerVisible(false)}
         onNavigate={navigateFromActions}
         onNewCalculation={goToNewCalculation}
+      />
+      <ChartHelpDrawer
+        visible={chartHelp !== null}
+        content={chartHelpContent}
+        closeLabel={t('common.close')}
+        onClose={closeChartHelp}
       />
     </ScrollView>
     </GestureDetector>
@@ -1120,12 +1174,16 @@ const ProjectionBasisCard = ({
 const ProjectionChartCard = ({
   title,
   accessibilityLabel,
+  helpAccessibilityLabel,
   onPress,
+  onHelpPress,
   children,
 }: {
   title: string;
   accessibilityLabel: string;
+  helpAccessibilityLabel: string;
   onPress: () => void;
+  onHelpPress: () => void;
   children: React.ReactNode;
 }) => (
   <Pressable
@@ -1136,8 +1194,14 @@ const ProjectionChartCard = ({
   >
     <Card style={styles.chartCard}>
       <View style={styles.chartHeader}>
-        <AppText variant="title3">{title}</AppText>
-        <FullscreenIcon />
+        <AppText variant="title3" style={styles.previewTitle}>{title}</AppText>
+        <View style={styles.chartActions}>
+          <ChartHelpButton
+            accessibilityLabel={helpAccessibilityLabel}
+            onPress={onHelpPress}
+          />
+          <FullscreenIcon />
+        </View>
       </View>
       {children}
     </Card>
