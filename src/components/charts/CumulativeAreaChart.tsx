@@ -21,7 +21,11 @@ const POINT_SPACING = 44;
 const INITIAL_SPACING = 8;
 const X_LABEL_WIDTH = 46;
 const MIN_LABEL_GAP = 52;
-const END_SPACING = X_LABEL_WIDTH / 2 + 4;
+// The final label is right-anchored (ends at its point) rather than centred, so the
+// chart only needs a small trailing pad instead of reserving half a label width. This
+// lets the plotted series stretch close to the right edge rather than stopping short
+// with a band of empty gridlines after the last point.
+const END_SPACING = 12;
 const SECTION_COUNT = 4;
 
 /**
@@ -32,9 +36,23 @@ const SECTION_COUNT = 4;
 export const hasCumulativeChartData = (monthlyPointCount: number) =>
   monthlyPointCount - 1 >= SAMPLE_STEP;
 
-const XAxisLabel = ({ text, spacing }: { text: string; spacing: number }) => (
-  <View style={{ width: X_LABEL_WIDTH, marginLeft: (spacing - X_LABEL_WIDTH) / 2 }}>
-    <Text style={styles.xAxisLabel} numberOfLines={1}>{text}</Text>
+const XAxisLabel = ({ text, spacing, anchor = 'center' }: { text: string; spacing: number; anchor?: 'center' | 'end' }) => (
+  // gifted-charts positions the label's left edge at its data point. 'center' shifts the
+  // box back so the text sits under the point; 'end' pulls the box so it finishes at the
+  // point and the text right-aligns — used for the final point so it never overflows the
+  // right edge and the chart can use a minimal trailing pad.
+  <View
+    style={{
+      width: X_LABEL_WIDTH,
+      marginLeft: anchor === 'end' ? spacing - X_LABEL_WIDTH : (spacing - X_LABEL_WIDTH) / 2,
+    }}
+  >
+    <Text
+      style={[styles.xAxisLabel, anchor === 'end' && styles.xAxisLabelEnd]}
+      numberOfLines={1}
+    >
+      {text}
+    </Text>
   </View>
 );
 
@@ -101,7 +119,11 @@ export const CumulativeAreaChart = ({
     ...(shouldLabel(position)
       ? {
         labelComponent: () => (
-          <XAxisLabel text={`Yr ${Math.ceil((index + 1) / SAMPLE_STEP)}`} spacing={pointSpacing} />
+          <XAxisLabel
+            text={`Yr ${Math.ceil((index + 1) / SAMPLE_STEP)}`}
+            spacing={pointSpacing}
+            anchor={position === lastPosition ? 'end' : 'center'}
+          />
         ),
       }
       : {}),
@@ -212,6 +234,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.tiny,
     color: colours.textSecondary,
     textAlign: 'center',
+  },
+  xAxisLabelEnd: {
+    textAlign: 'right',
   },
   legend: {
     flexDirection: 'row',

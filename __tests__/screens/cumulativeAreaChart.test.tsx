@@ -97,9 +97,43 @@ describe('CumulativeAreaChart', () => {
       layoutNode.props.onLayout({ nativeEvent: { layout: { width: 360 } } });
     });
 
+    // Edge spacing is INITIAL_SPACING (8) + END_SPACING (12) = 20.
     expect(capturedLineProps?.width).toBe(294);
-    expect(capturedLineProps?.spacing).toBe(Math.floor((294 - 35) / 17));
+    expect(capturedLineProps?.spacing).toBe(Math.floor((294 - 20) / 17));
     expect(capturedLineProps?.disableScroll).toBe(true);
+  });
+
+  it('stretches the series close to the right edge with only a small trailing pad', () => {
+    const { monthly, interest, remaining } = buildArrays();
+    let renderer!: ReturnType<typeof create>;
+
+    act(() => {
+      renderer = create(React.createElement(CumulativeAreaChart, {
+        monthlyArray: monthly,
+        interestArray: interest,
+        remainingArray: remaining,
+        currency: 'GBP',
+        fitToWidth: true,
+      }));
+    });
+
+    const layoutNode = renderer.root.findAll(node => (
+      String(node.type) === 'View' && typeof node.props.onLayout === 'function'
+    ))[0];
+
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 360 } } });
+    });
+
+    const pointCount = capturedLineProps!.data.length;
+    const lastPointX = capturedLineProps!.initialSpacing + (pointCount - 1) * capturedLineProps!.spacing;
+    const trailingGap = capturedLineProps!.width - lastPointX;
+
+    // The last plotted point must sit within roughly one spacing slot of the right
+    // edge, so the data fills the card instead of stopping short under empty gridlines.
+    expect(capturedLineProps!.endSpacing).toBeLessThanOrEqual(12);
+    expect(trailingGap).toBeLessThanOrEqual(capturedLineProps!.spacing + capturedLineProps!.endSpacing);
+    expect(lastPointX).toBeGreaterThan(capturedLineProps!.width * 0.9);
   });
 
   it('labels the cumulative timeline from the first completed year through the final year', () => {
