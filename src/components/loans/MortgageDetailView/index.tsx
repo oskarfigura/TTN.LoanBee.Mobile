@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { InteractionManager, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './styles';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -64,6 +64,9 @@ import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate } from '@/ut
 
 type MortgageDetailTab = 'overview' | 'projection' | 'timeline';
 type ProjectionPreview = 'balance' | 'repayment' | 'cumulative' | 'schedule';
+type ProjectionRenderStage = 0 | 1 | 2 | 3 | 4;
+
+const PROJECTION_RENDER_STAGES: ProjectionRenderStage[] = [1, 2, 3, 4];
 
 const SUMMARY_METRIC_KEYS = [
   'mortgage.currentBalance',
@@ -91,6 +94,14 @@ export const MortgageDetailView = ({
   const [addDrawerVisible, setAddDrawerVisible] = useState(false);
   const [actionDrawerVisible, setActionDrawerVisible] = useState(false);
   const [projectionPreview, setProjectionPreview] = useState<ProjectionPreview | null>(null);
+  const projectionRenderKey = `${loan.id}:${loan.updatedAt}`;
+  const [projectionRenderState, setProjectionRenderState] = useState<{
+    key: string;
+    stage: ProjectionRenderStage;
+  }>({ key: projectionRenderKey, stage: 0 });
+  const projectionRenderStage = projectionRenderState.key === projectionRenderKey
+    ? projectionRenderState.stage
+    : 0;
   const isProjectionPreviewOpen = projectionPreview !== null;
   const asOf = useMemo(() => new Date(), [loan]);
   const result = useMemo(() => getResultForSavedLoan(loan), [loan]);
@@ -130,11 +141,41 @@ export const MortgageDetailView = ({
     ? ['overview', 'projection']
     : ['overview', 'projection', 'timeline'];
   const switchTab = useCallback((nextTab: MortgageDetailTab) => {
+    if (activeTab !== nextTab) {
+      setProjectionRenderState({ key: projectionRenderKey, stage: 0 });
+    }
     setActiveTab(nextTab);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     });
-  }, []);
+  }, [activeTab, projectionRenderKey]);
+
+  useEffect(() => {
+    if (activeTab !== 'projection') return undefined;
+
+    let cancelled = false;
+    setProjectionRenderState({ key: projectionRenderKey, stage: 0 });
+
+    const showStage = (index: number) => {
+      const nextStage = PROJECTION_RENDER_STAGES[index];
+      if (!nextStage || cancelled) return;
+
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        setProjectionRenderState({ key: projectionRenderKey, stage: nextStage });
+        showStage(index + 1);
+      });
+    };
+
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      showStage(0);
+    });
+
+    return () => {
+      cancelled = true;
+      interaction.cancel();
+    };
+  }, [activeTab, projectionRenderKey]);
 
   // A future-start mortgage can't sit on the (now hidden) timeline tab.
   useEffect(() => {
@@ -305,17 +346,12 @@ export const MortgageDetailView = ({
           <ProjectionBasisCard
             currentDeal={currentDeal}
           />
-          <Pressable
-            onPress={() => openProjectionPreview('balance')}
-            accessibilityRole="button"
-            accessibilityLabel={`${t('mortgage.balanceProjection')} ${t('results.fullScreen')}`}
-            style={({ pressed }) => [pressed && styles.previewPressed]}
-          >
-            <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('mortgage.balanceProjection')}</AppText>
-                <FullscreenIcon />
-              </View>
+          {projectionRenderStage >= 1 ? (
+            <ProjectionChartCard
+              title={t('mortgage.balanceProjection')}
+              accessibilityLabel={`${t('mortgage.balanceProjection')} ${t('results.fullScreen')}`}
+              onPress={() => openProjectionPreview('balance')}
+            >
               <MortgageBalanceChart
                 baselineRemaining={overpaymentBaseline}
                 scenarioRemaining={projection.loanChartRemainingArray}
@@ -325,38 +361,32 @@ export const MortgageDetailView = ({
                   scenario: 'overpayments.withOverpayments',
                 } : undefined}
               />
-            </Card>
-          </Pressable>
-          <Pressable
-            onPress={() => openProjectionPreview('repayment')}
-            accessibilityRole="button"
-            accessibilityLabel={`${t('results.repaymentBreakdown')} ${t('results.fullScreen')}`}
-            style={({ pressed }) => [pressed && styles.previewPressed]}
-          >
-            <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('results.repaymentBreakdown')}</AppText>
-                <FullscreenIcon />
-              </View>
+            </ProjectionChartCard>
+          ) : (
+            <ProjectionSkeletonCard title={t('mortgage.balanceProjection')} />
+          )}
+          {projectionRenderStage >= 2 ? (
+            <ProjectionChartCard
+              title={t('results.repaymentBreakdown')}
+              accessibilityLabel={`${t('results.repaymentBreakdown')} ${t('results.fullScreen')}`}
+              onPress={() => openProjectionPreview('repayment')}
+            >
               <RepaymentBarChart
                 monthlyArray={projection.loanChartMonthlyArray}
                 interestArray={projection.loanChartInterestArray}
                 currency={loan.currency}
                 fitToWidth
               />
-            </Card>
-          </Pressable>
-          <Pressable
-            onPress={() => openProjectionPreview('cumulative')}
-            accessibilityRole="button"
-            accessibilityLabel={`${t('results.cumulativePayments')} ${t('results.fullScreen')}`}
-            style={({ pressed }) => [pressed && styles.previewPressed]}
-          >
-            <Card style={styles.chartCard}>
-              <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('results.cumulativePayments')}</AppText>
-                <FullscreenIcon />
-              </View>
+            </ProjectionChartCard>
+          ) : (
+            <ProjectionSkeletonCard title={t('results.repaymentBreakdown')} />
+          )}
+          {projectionRenderStage >= 3 ? (
+            <ProjectionChartCard
+              title={t('results.cumulativePayments')}
+              accessibilityLabel={`${t('results.cumulativePayments')} ${t('results.fullScreen')}`}
+              onPress={() => openProjectionPreview('cumulative')}
+            >
               <CumulativeAreaChart
                 monthlyArray={projection.loanChartMonthlyArray}
                 interestArray={projection.loanChartInterestArray}
@@ -364,27 +394,33 @@ export const MortgageDetailView = ({
                 currency={loan.currency}
                 fitToWidth
               />
+            </ProjectionChartCard>
+          ) : (
+            <ProjectionSkeletonCard title={t('results.cumulativePayments')} />
+          )}
+          {projectionRenderStage >= 4 ? (
+            <Card style={[styles.chartCard, styles.scheduleCard]}>
+              <View style={styles.chartHeader}>
+                <AppText variant="title3">{t('mortgage.trackedSchedule')}</AppText>
+                <TouchableOpacity
+                  style={styles.fullscreenButton}
+                  onPress={() => openProjectionPreview('schedule')}
+                  accessibilityRole="button"
+                  activeOpacity={0.8}
+                >
+                  <FullscreenIcon />
+                </TouchableOpacity>
+              </View>
+              <AmortisationTable
+                items={projection.tableItems}
+                startDate={publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate}
+                currency={loan.currency}
+                scrollGesture={tableScrollGesture}
+              />
             </Card>
-          </Pressable>
-          <Card style={[styles.chartCard, styles.scheduleCard]}>
-            <View style={styles.chartHeader}>
-              <AppText variant="title3">{t('mortgage.trackedSchedule')}</AppText>
-              <TouchableOpacity
-                style={styles.fullscreenButton}
-                onPress={() => openProjectionPreview('schedule')}
-                accessibilityRole="button"
-                activeOpacity={0.8}
-              >
-                <FullscreenIcon />
-              </TouchableOpacity>
-            </View>
-            <AmortisationTable
-              items={projection.tableItems}
-              startDate={publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate}
-              currency={loan.currency}
-              scrollGesture={tableScrollGesture}
-            />
-          </Card>
+          ) : (
+            <ProjectionSkeletonCard title={t('mortgage.trackedSchedule')} schedule />
+          )}
         </View>
       ) : null}
 
@@ -1080,6 +1116,64 @@ const ProjectionBasisCard = ({
     </Card>
   );
 };
+
+const ProjectionChartCard = ({
+  title,
+  accessibilityLabel,
+  onPress,
+  children,
+}: {
+  title: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+  children: React.ReactNode;
+}) => (
+  <Pressable
+    onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel}
+    style={({ pressed }) => [pressed && styles.previewPressed]}
+  >
+    <Card style={styles.chartCard}>
+      <View style={styles.chartHeader}>
+        <AppText variant="title3">{title}</AppText>
+        <FullscreenIcon />
+      </View>
+      {children}
+    </Card>
+  </Pressable>
+);
+
+const ProjectionSkeletonCard = ({
+  title,
+  schedule,
+}: {
+  title: string;
+  schedule?: boolean;
+}) => (
+  <Card style={[styles.chartCard, schedule && styles.scheduleCard]}>
+    <View style={styles.chartHeader}>
+      <AppText variant="title3">{title}</AppText>
+      <View style={styles.fullscreenIconPlaceholder} />
+    </View>
+    {schedule ? (
+      <View style={styles.scheduleSkeleton}>
+        <View style={[styles.skeletonLine, styles.skeletonLineFull]} />
+        <View style={[styles.skeletonLine, styles.skeletonLineMedium]} />
+        <View style={[styles.skeletonLine, styles.skeletonLineFull]} />
+        <View style={[styles.skeletonLine, styles.skeletonLineShort]} />
+      </View>
+    ) : (
+      <View style={styles.chartSkeleton}>
+        <View style={styles.skeletonRule} />
+        <View style={[styles.skeletonBar, styles.skeletonBarTall]} />
+        <View style={[styles.skeletonBar, styles.skeletonBarMedium]} />
+        <View style={[styles.skeletonBar, styles.skeletonBarShort]} />
+        <View style={[styles.skeletonBar, styles.skeletonBarMediumTall]} />
+      </View>
+    )}
+  </Card>
+);
 
 const QuickActionsDrawer = ({
   title,

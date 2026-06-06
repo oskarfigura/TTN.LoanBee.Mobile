@@ -487,6 +487,72 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colours.border,
   },
+  fullscreenIconPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.button,
+    backgroundColor: colours.surface,
+    borderWidth: 1,
+    borderColor: colours.border,
+  },
+  chartSkeleton: {
+    minHeight: 196,
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    borderRadius: radii.input,
+    backgroundColor: colours.surface,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  skeletonRule: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    top: '46%',
+    height: 1,
+    backgroundColor: colours.border,
+  },
+  skeletonBar: {
+    width: 28,
+    borderRadius: radii.sm,
+    backgroundColor: colours.surfaceStrong,
+  },
+  skeletonBarTall: {
+    height: 132,
+  },
+  skeletonBarMedium: {
+    height: 94,
+  },
+  skeletonBarShort: {
+    height: 58,
+  },
+  skeletonBarMediumTall: {
+    height: 116,
+  },
+  scheduleSkeleton: {
+    minHeight: 226,
+    gap: spacing.sm,
+    borderRadius: radii.input,
+    backgroundColor: colours.surface,
+    padding: spacing.md,
+  },
+  skeletonLine: {
+    height: 22,
+    borderRadius: radii.sm,
+    backgroundColor: colours.surfaceStrong,
+  },
+  skeletonLineFull: {
+    width: '100%',
+  },
+  skeletonLineMedium: {
+    width: '72%',
+  },
+  skeletonLineShort: {
+    width: '48%',
+  },
   actionButtonText: {
     textTransform: 'uppercase',
   },

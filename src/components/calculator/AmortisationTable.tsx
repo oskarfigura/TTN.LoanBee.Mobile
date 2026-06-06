@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutChangeEvent } from 'react-native';
 import { GestureDetector, NativeGesture } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
@@ -33,14 +33,19 @@ export const AmortisationTable = ({ items, startDate, currency, pageSize = 12, s
   const [containerWidth, setContainerWidth] = useState(0);
   const totalPages = Math.ceil(items.length / pageSize);
   const safePage = clampPage(page, totalPages);
-  const pageItems = items.slice(safePage * pageSize, (safePage + 1) * pageSize);
-  const displayRows = buildAmortisationDisplayRows({
-    items,
-    startDate,
-    currency,
-    language: i18n.language,
-  });
-  const pageDisplayRows = displayRows.slice(safePage * pageSize, (safePage + 1) * pageSize);
+  const pageItems = useMemo(
+    () => items.slice(safePage * pageSize, (safePage + 1) * pageSize),
+    [items, pageSize, safePage],
+  );
+  const pageDisplayRows = useMemo(
+    () => buildAmortisationDisplayRows({
+      items: pageItems,
+      startDate,
+      currency,
+      language: i18n.language,
+    }),
+    [currency, i18n.language, pageItems, startDate],
+  );
   const visiblePages = getPaginationWindow(safePage, totalPages, 5);
   const tableWidth = Math.max(TABLE_WIDTH, containerWidth);
   const periodColumnWidth = Math.round(tableWidth * 0.21);
