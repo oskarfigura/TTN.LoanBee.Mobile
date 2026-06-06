@@ -1,16 +1,17 @@
 import { CurrencyCode } from '@/currency/currencies';
-import { formatCurrency } from '@/currency/format';
 import {
   LoanDashboardProgress,
   LoanInsightProgress,
   LoanInsightSummary,
-  buildCalculationSummary,
   buildSavedLoanDashboardProgress,
   buildSavedLoanSummary,
 } from '@/loans/loanInsightSummary';
 import { LoanResult } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
-import { formatAmortisationPeriodLabel, formatFriendlyMonthYear } from '@/utils/date';
+import {
+  buildAmortisationDisplayRows as buildPackageAmortisationDisplayRows,
+  buildCalculationDisplayContract as buildPackageCalculationDisplayContract,
+} from '@amortisation';
 
 export type UserVisibleMetric = {
   id: string;
@@ -51,23 +52,6 @@ export type AmortisationDisplayRow = {
   metrics: UserVisibleMetric[];
 };
 
-type AmortisationSourceItem = {
-  itemNo: number;
-  date?: string;
-  remaining: string;
-  principal: string;
-  interest: string;
-  ending: string;
-};
-
-const calculationMetricIds = [
-  'loanAmount',
-  'payoffDate',
-  'interestRate',
-  'totalInterest',
-  'totalCost',
-];
-
 const savedMetricIdByLabelKey: Record<string, string> = {
   'mortgage.currentBalance': 'currentBalance',
   'results.monthlyPayment': 'monthlyPayment',
@@ -92,22 +76,6 @@ const makeMetric = (id: string, labelKey: string, value: string): UserVisibleMet
   value,
 });
 
-const getMetric = (metrics: UserVisibleMetric[], id: string): UserVisibleMetric | undefined => (
-  metrics.find(metric => metric.id === id)
-);
-
-const addIdsToCalculationSummary = (summary: LoanInsightSummary): UserVisibleLoanSummary => {
-  const { progress: _progress, ...summaryWithoutProgress } = summary;
-
-  return {
-    ...summaryWithoutProgress,
-    hero: makeMetric('monthlyPayment', summary.hero.labelKey, summary.hero.value),
-    metrics: summary.metrics.map((metric, index) => (
-      makeMetric(calculationMetricIds[index] ?? metric.labelKey, metric.labelKey, metric.value)
-    )),
-  };
-};
-
 const getSavedMetricId = (labelKey: string, index: number): string => (
   savedMetricIdByLabelKey[labelKey] ?? `${labelKey}-${index}`
 );
@@ -126,23 +94,7 @@ const addIdsToSavedSummary = (summary: LoanInsightSummary): UserVisibleLoanSumma
   } : undefined,
 });
 
-const formatTermDuration = (months: number, yrsLabel: string, moLabel: string): string => {
-  const years = Math.floor(months / 12);
-  const mo = months % 12;
-  if (years === 0) return `${mo} ${moLabel}`;
-  if (mo === 0) return `${years} ${yrsLabel}`;
-  return `${years} ${yrsLabel} ${mo} ${moLabel}`;
-};
-
-export const buildCalculationDisplayContract = ({
-  result,
-  startDate,
-  currency,
-  locale,
-  additionalMonthlyPayment = 0,
-  yearsLabel = 'yrs',
-  monthsLabel = 'mo',
-}: {
+export const buildCalculationDisplayContract = buildPackageCalculationDisplayContract as (args: {
   result: LoanResult;
   startDate: string;
   currency: CurrencyCode;
@@ -150,49 +102,7 @@ export const buildCalculationDisplayContract = ({
   additionalMonthlyPayment?: number;
   yearsLabel?: string;
   monthsLabel?: string;
-}): CalculationDisplayContract => {
-  const summary = addIdsToCalculationSummary(
-    buildCalculationSummary(result, startDate, currency, locale),
-  );
-  const totalMonths = Math.max(
-    result.tableItems.length,
-    result.termInYears * 12 + result.termInMonths,
-  );
-  const monthlyPayment = summary.hero;
-  const loanAmount = getMetric(summary.metrics, 'loanAmount');
-  const payoffDate = getMetric(summary.metrics, 'payoffDate');
-  const interestRate = getMetric(summary.metrics, 'interestRate');
-  const totalInterest = getMetric(summary.metrics, 'totalInterest');
-  const totalCost = getMetric(summary.metrics, 'totalCost');
-  const loanDetailsMetrics = [
-    loanAmount,
-    interestRate,
-    additionalMonthlyPayment > 0
-      ? makeMetric(
-        'additionalMonthlyPayment',
-        'calculator.additionalPayment',
-        formatCurrency(additionalMonthlyPayment, currency),
-      )
-      : undefined,
-  ].filter((metric): metric is UserVisibleMetric => Boolean(metric));
-
-  return {
-    summary,
-    totalMonths,
-    termDuration: formatTermDuration(totalMonths, yearsLabel, monthsLabel),
-    sections: [
-      {
-        id: 'keyMetrics',
-        metrics: [monthlyPayment, payoffDate, totalInterest, totalCost]
-          .filter((metric): metric is UserVisibleMetric => Boolean(metric)),
-      },
-      {
-        id: 'loanDetails',
-        metrics: loanDetailsMetrics,
-      },
-    ],
-  };
-};
+}) => CalculationDisplayContract;
 
 export const buildSavedLoanDisplayContract = ({
   loan,
@@ -223,28 +133,9 @@ export const buildSavedLoanDisplayContract = ({
   };
 };
 
-export const buildAmortisationDisplayRows = ({
-  items,
-  startDate,
-  currency,
-  language,
-}: {
-  items: AmortisationSourceItem[];
+export const buildAmortisationDisplayRows = buildPackageAmortisationDisplayRows as (args: {
+  items: LoanResult['tableItems'];
   startDate: string;
   currency: CurrencyCode;
   language: string;
-}): AmortisationDisplayRow[] => (
-  items.map(item => ({
-    id: String(item.itemNo),
-    itemNo: item.itemNo,
-    period: item.date
-      ? formatFriendlyMonthYear(item.date, language)
-      : formatAmortisationPeriodLabel(startDate, item.itemNo, language),
-    metrics: [
-      makeMetric('openingBalance', 'results.openingBalance', formatCurrency(+item.remaining, currency)),
-      makeMetric('principal', 'results.principal', formatCurrency(+item.principal, currency)),
-      makeMetric('interest', 'results.interest', formatCurrency(+item.interest, currency)),
-      makeMetric('closingBalance', 'results.closingBalance', formatCurrency(+item.ending, currency)),
-    ],
-  }))
-);
+}) => AmortisationDisplayRow[];
