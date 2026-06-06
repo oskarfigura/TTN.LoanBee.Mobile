@@ -1,4 +1,1 @@
-export enum LoanCalculationType {
-    TERM = "term",
-    PAYMENT = "payment"
-}
+export { LoanCalculationType } from '@amortisation';

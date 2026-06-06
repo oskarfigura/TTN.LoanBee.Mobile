@@ -1,4 +1,1 @@
-export enum DownPaymentType {
-    PERCENT = "percent",
-    CASH = "cash"
-}
+export { DownPaymentType } from '@amortisation';

@@ -32,6 +32,8 @@
         ],
         "testEnvironment": "node",
         "moduleNameMapper": {
+          "^@amortisation$": "<rootDir>/packages/amortisation",
+          "^@amortisation/(.*)$": "<rootDir>/packages/amortisation/$1",
           "^@/(.*)$": "<rootDir>/src/$1"
         },
         "transform": {
@@ -50,6 +52,8 @@
         ],
         "testEnvironment": "node",
         "moduleNameMapper": {
+          "^@amortisation$": "<rootDir>/packages/amortisation",
+          "^@amortisation/(.*)$": "<rootDir>/packages/amortisation/$1",
           "^@/(.*)$": "<rootDir>/src/$1",
           "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
         },
@@ -69,6 +73,8 @@
         ],
         "testEnvironment": "node",
         "moduleNameMapper": {
+          "^@amortisation$": "<rootDir>/packages/amortisation",
+          "^@amortisation/(.*)$": "<rootDir>/packages/amortisation/$1",
           "^@/(.*)$": "<rootDir>/src/$1"
         },
         "transform": {
@@ -87,6 +93,8 @@
         ],
         "testEnvironment": "node",
         "moduleNameMapper": {
+          "^@amortisation$": "<rootDir>/packages/amortisation",
+          "^@amortisation/(.*)$": "<rootDir>/packages/amortisation/$1",
           "^@/(.*)$": "<rootDir>/src/$1"
         },
         "transform": {
@@ -105,6 +113,8 @@
         ],
         "testEnvironment": "node",
         "moduleNameMapper": {
+          "^@amortisation$": "<rootDir>/packages/amortisation",
+          "^@amortisation/(.*)$": "<rootDir>/packages/amortisation/$1",
           "^@/(.*)$": "<rootDir>/src/$1",
           "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
         },

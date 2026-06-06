@@ -2,10 +2,7 @@ import { z } from 'zod';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
-
-// Mirrors LIMITS in src/share/calculationShareLink.ts. Keep in sync.
-export const MAX_LOAN_AMOUNT = 100_000_000;
-export const MAX_MONTHLY_PAYMENT = 1_000_000;
+import { MAX_LOAN_AMOUNT, MAX_MONTHLY_PAYMENT } from '@amortisation/normalise';
 
 // Kept free of expo-localization / MMKV imports so it can be unit-tested in the
 // node Jest project without native-module shims. useLoanCalculatorForm wires it
