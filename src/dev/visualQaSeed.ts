@@ -5,6 +5,7 @@ import { CurrencyCode } from '@/currency/currencies';
 import { buildInitialDeal, buildResultSnapshot, normaliseFormSnapshot } from '@/loans/loanGroupFactory';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanCategory, LoanDeal, LoanFormSnapshot, LoanGroup, MortgageEvent } from '@/types/SavedLoan';
+import { advanceMonthsClamped } from '@/utils/date';
 
 type SeedFormValues = {
   loanAmount: number;
@@ -36,7 +37,7 @@ const now = '2026-05-22T09:00:00.000Z';
 
 const addMonths = (dateString: string, months: number): string => {
   const date = new Date(`${dateString}T00:00:00`);
-  date.setMonth(date.getMonth() + months);
+  advanceMonthsClamped(date, months);
   return date.toISOString().split('T')[0];
 };
 

@@ -156,11 +156,11 @@ describe('mortgage tracker', () => {
       'pl',
     );
 
-    expect(savedSummary.hero.value.startsWith('zł')).toBe(true);
+    expect(savedSummary.hero.value.endsWith('zł')).toBe(true);
     expect(savedSummary.metrics).toEqual(expect.arrayContaining([
-      { labelKey: 'results.monthlyPayment', value: 'zł1,385.00' },
-      { labelKey: 'results.totalInterest', value: expect.stringMatching(/^zł/) },
-      { labelKey: 'results.totalCost', value: expect.stringMatching(/^zł/) },
+      { labelKey: 'results.monthlyPayment', value: '1385,00 zł' },
+      { labelKey: 'results.totalInterest', value: expect.stringMatching(/zł$/) },
+      { labelKey: 'results.totalCost', value: expect.stringMatching(/zł$/) },
     ]));
   });
 

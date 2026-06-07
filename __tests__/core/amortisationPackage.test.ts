@@ -115,7 +115,7 @@ describe('packages/amortisation contract', () => {
       additionalMonthlyPayment: 250,
     });
 
-    expect(contract.summary.hero.value).toBe('zł1,601.68');
+    expect(contract.summary.hero.value).toBe('1601,68 zł');
     expect(contract.sections[0].metrics.map(metric => metric.id)).toEqual([
       'monthlyPayment',
       'payoffDate',
@@ -123,7 +123,7 @@ describe('packages/amortisation contract', () => {
       'totalCost',
     ]);
     expect(contract.sections[1].metrics).toEqual(expect.arrayContaining([
-      { id: 'additionalMonthlyPayment', labelKey: 'calculator.additionalPayment', value: 'zł250.00' },
+      { id: 'additionalMonthlyPayment', labelKey: 'calculator.additionalPayment', value: '250,00 zł' },
     ]));
   });
 

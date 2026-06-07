@@ -78,6 +78,21 @@ export const calculateMonthlyPayments = (
   return amount * ((monthlyInterest * commonMultiplier) / (commonMultiplier - 1));
 };
 
+export const calculateMinimumPaymentForTerm = (
+  amount: number,
+  interest: number,
+  termInMonths = MAX_AMORTISATION_ROWS,
+) => {
+  const months = Math.max(1, Math.floor(termInMonths));
+  const monthlyInterest = interest / 100 / 12;
+
+  if (monthlyInterest === 0) {
+    return Math.ceil(amount / months);
+  }
+
+  return Math.ceil(calculateMonthlyPayments(monthlyInterest, 0, months, amount));
+};
+
 export const calculateTerm = (
   monthlyInterest: number,
   desiredMonthlyPayments: number,
@@ -156,10 +171,14 @@ export const getTableItems = (
     count++;
   }
 
+  const remainingBalance = +Math.max(remainingLoanAmount, 0).toFixed(2);
+  const isFullyAmortised = remainingBalance === 0;
   const years = Math.floor(tableItemsArray.length / 12);
   const months = tableItemsArray.length % 12;
   const totalInterestPaid = loanChartInterestArray[loanChartInterestArray.length - 1];
-  const totalAmountPaid = amount + downPayment + totalInterestPaid;
+  const totalAmountPaid = isFullyAmortised
+    ? amount + downPayment + totalInterestPaid
+    : downPayment + monthlyAccumulative;
 
   return {
     tableItems: tableItemsArray,
@@ -171,6 +190,8 @@ export const getTableItems = (
     loanChartInterestArray,
     loanChartRemainingArray,
     loanChartLabelArray,
+    isFullyAmortised,
+    remainingBalance,
   };
 };
 

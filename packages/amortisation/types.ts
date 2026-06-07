@@ -56,6 +56,8 @@ export interface LoanCalculationResult {
   loanChartInterestArray: number[];
   loanChartRemainingArray: number[];
   loanChartLabelArray: string[];
+  isFullyAmortised: boolean;
+  remainingBalance: number;
   monthlyPayments: number;
   downPayment: number;
   amount: number;

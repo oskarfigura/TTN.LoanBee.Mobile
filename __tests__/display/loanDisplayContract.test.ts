@@ -155,11 +155,11 @@ describe('loan display contract', () => {
     });
     const loanDetails = contract.sections.find(section => section.id === 'loanDetails')?.metrics ?? [];
 
-    expect(contract.summary.hero.value).toBe('zł1,601.68');
+    expect(contract.summary.hero.value).toBe('1601,68 zł');
     expect(findMetric(loanDetails, 'additionalMonthlyPayment')).toEqual({
       id: 'additionalMonthlyPayment',
       labelKey: 'calculator.additionalPayment',
-      value: 'zł250.00',
+      value: '250,00 zł',
     });
   });
 
@@ -177,8 +177,8 @@ describe('loan display contract', () => {
         .flatMap(section => section.metrics)
         .find(metric => metric.id === 'totalCost');
 
-      expect(contract.summary.hero.value.startsWith(currency.symbol)).toBe(true);
-      expect(totalCost?.value.startsWith(currency.symbol)).toBe(true);
+      expect(contract.summary.hero.value.includes(currency.symbol)).toBe(true);
+      expect(totalCost?.value.includes(currency.symbol)).toBe(true);
     });
   });
 
@@ -227,15 +227,15 @@ describe('loan display contract', () => {
     });
 
     expect(contract.dashboardMetrics).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: 'currentBalance', value: expect.stringMatching(/^zł/) }),
-      { id: 'monthlyPayment', labelKey: 'results.monthlyPayment', value: 'zł1,525.00' },
+      expect.objectContaining({ id: 'currentBalance', value: expect.stringMatching(/zł$/) }),
+      { id: 'monthlyPayment', labelKey: 'results.monthlyPayment', value: '1525,00 zł' },
       expect.objectContaining({ id: 'payoffDate' }),
     ]));
     expect(contract.summary.metrics).toEqual(expect.arrayContaining([
-      { id: 'monthlyPayment', labelKey: 'results.monthlyPayment', value: 'zł1,525.00' },
+      { id: 'monthlyPayment', labelKey: 'results.monthlyPayment', value: '1525,00 zł' },
       { id: 'interestRate', labelKey: 'calculator.interestRate', value: '5.1%' },
-      expect.objectContaining({ id: 'totalInterest', value: expect.stringMatching(/^zł/) }),
-      expect.objectContaining({ id: 'totalCost', value: expect.stringMatching(/^zł/) }),
+      expect.objectContaining({ id: 'totalInterest', value: expect.stringMatching(/zł$/) }),
+      expect.objectContaining({ id: 'totalCost', value: expect.stringMatching(/zł$/) }),
     ]));
   });
 

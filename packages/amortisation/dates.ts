@@ -109,7 +109,7 @@ export const getLoanEndDate = (
 ) => {
   const date = parseDateLabelValue(startDate) ?? new Date(startDate);
   const overallTimeInMonths = getOverallTermInMonths(timeInYears, timeInMonths);
-  date.setMonth(date.getMonth() + overallTimeInMonths);
+  advanceMonthsClamped(date, overallTimeInMonths);
   return date;
 };
 
@@ -151,7 +151,7 @@ export const formatAmortisationPeriodLabel = (
   const date = parseDateLabelValue(startDate);
   if (!date) return String(periodNumber);
 
-  date.setMonth(date.getMonth() + periodNumber - 1);
+  advanceMonthsClamped(date, periodNumber - 1);
 
   return formatFriendlyMonthYear(formatIsoDate(date), language);
 };
@@ -160,7 +160,7 @@ export const formatPayoffDate = (startDate: string, totalMonths: number, locale?
   const date = parseDateLabelValue(startDate);
   if (!date) return '—';
 
-  date.setMonth(date.getMonth() + Math.max(totalMonths, 0));
+  advanceMonthsClamped(date, Math.max(totalMonths, 0));
 
   return formatFriendlyDate(formatIsoDate(date), locale);
 };
