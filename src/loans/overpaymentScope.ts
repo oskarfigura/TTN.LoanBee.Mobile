@@ -15,7 +15,7 @@ import {
   normaliseDealChain,
 } from '@/mortgage/tracker';
 import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
-import { parseDateLabelValue } from '@/utils/date';
+import { advanceMonthsClamped, parseDateLabelValue } from '@/utils/date';
 import { createLocalId } from '@/utils/id';
 
 // The two overpayment surfaces (whole-loan and per-deal) share an identical screen
@@ -93,10 +93,10 @@ export const createLoanOverpaymentScope = (loan: SavedLoan): OverpaymentScope =>
   const baselineCalc = runCalc(0);
   const start = parseDateLabelValue(form.startDate) ?? new Date();
   const maxDate = new Date(start);
-  maxDate.setMonth(maxDate.getMonth() + baselineCalc.tableItems.length - 1);
+  advanceMonthsClamped(maxDate, baselineCalc.tableItems.length - 1);
   // Lump sums need at least one elapsed payment period (monthIndex must be >= 1).
   const minDate = new Date(start);
-  minDate.setMonth(minDate.getMonth() + 1);
+  advanceMonthsClamped(minDate, 1);
 
   const toImpact = (monthly: number, lumps: LumpSumEntry[]): OverpaymentImpact | null => {
     const result = computeLoanOverpayments(form, monthly, lumps);

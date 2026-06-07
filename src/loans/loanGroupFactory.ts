@@ -5,7 +5,7 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { generateDefaultDealName } from '@/mortgage/tracker';
 import { LOAN_GROUP_SCHEMA_VERSION, LoanDeal, LoanFormSnapshot, LoanGroup, LoanResultSnapshot } from '@/types/SavedLoan';
 import { getEffectiveLoanAmount as computeEffectiveLoanAmount } from '@/utils/paymentValidation';
-import { formatIsoDate } from '@/utils/date';
+import { advanceMonthsClamped, formatIsoDate } from '@/utils/date';
 
 export type RawFormValues = {
   loanAmount: number;
@@ -38,7 +38,7 @@ interface InitialDealOptions {
 const addMonths = (dateString: string, months: number): string => {
   const date = new Date(`${dateString}T00:00:00`);
   if (Number.isNaN(date.getTime())) return dateString;
-  date.setMonth(date.getMonth() + months);
+  advanceMonthsClamped(date, months);
   return formatIsoDate(date);
 };
 

@@ -21,7 +21,7 @@ import { formatCurrency } from '@/currency/format';
 import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/mortgage/tracker';
 import { LoanDeal, MortgageRepaymentType } from '@/types/SavedLoan';
 import { colours, elevation, radii, spacing } from '@/theme';
-import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { advanceMonthsClamped, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import {
   NumericValidation,
   validateDurationText,
@@ -62,7 +62,7 @@ const splitMonths = (totalMonths: number) => ({
 const addMonthsIso = (dateString: string, totalMonths: number): string => {
   const date = parseDateLabelValue(dateString);
   if (!date) return dateString;
-  date.setMonth(date.getMonth() + totalMonths);
+  advanceMonthsClamped(date, totalMonths);
   return formatIsoDate(date);
 };
 

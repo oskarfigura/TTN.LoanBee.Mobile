@@ -5,7 +5,7 @@ import { buildMortgageProjection } from '@/mortgage/projection';
 import { getMortgageTrackerSummary, getPublishedDeals } from '@/mortgage/tracker';
 import { LoanResult } from '@/results/loanResultRoute';
 import { LoanDeal, SavedLoan } from '@/types/SavedLoan';
-import { formatFriendlyDate, formatIsoDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
+import { advanceMonthsClamped, formatFriendlyDate, formatIsoDate, monthsBetween, parseDateLabelValue } from '@/utils/date';
 
 export type LoanInsightContext = 'saved' | 'calculation';
 
@@ -57,7 +57,7 @@ export const formatPayoffDate = (startDate: string, totalMonths: number, locale?
   const date = parseDateLabelValue(startDate);
   if (!date) return '—';
 
-  date.setMonth(date.getMonth() + Math.max(totalMonths, 0));
+  advanceMonthsClamped(date, Math.max(totalMonths, 0));
 
   return formatFriendlyDate(formatIsoDate(date), locale);
 };

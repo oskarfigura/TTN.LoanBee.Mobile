@@ -1,4 +1,4 @@
-import { calculateMinPayment } from './calculation';
+import { calculateMinimumPaymentForTerm } from './calculation';
 import { DEFAULT_CURRENCY, normalizeCurrency } from './currency';
 import { formatIsoDate, isValidIsoDate } from './dates';
 import {
@@ -92,7 +92,12 @@ export const getMinimumAmortisingPayment = (
   downPaymentType: DownPaymentType | string,
 ) => {
   const effectiveLoanAmount = getEffectiveLoanAmount(loanAmount, downPayment, downPaymentType);
-  return calculateMinPayment(effectiveLoanAmount, interest);
+  // The minimum that actually clears the balance within the schedule cap. The old
+  // interest-only-plus-£1 floor (calculateMinPayment) let payments through that
+  // never amortise: the schedule hit MAX_AMORTISATION_ROWS with a large balance
+  // still owed, and term / total interest / payoff date were then derived from
+  // that capped schedule as if the loan had finished.
+  return calculateMinimumPaymentForTerm(effectiveLoanAmount, interest);
 };
 
 export const normalizeShareableCalculationValues = (

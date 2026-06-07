@@ -1,5 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { DownPaymentType } from '@/core/DownPaymentType';
+import { getLoanCalculations } from '@/core/amortisation';
+import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
 
 describe('paymentValidation', () => {
@@ -11,8 +13,28 @@ describe('paymentValidation', () => {
     expect(getEffectiveLoanAmount(300000, 25000, DownPaymentType.CASH)).toBe(275000);
   });
 
-  it('returns the minimum payment needed to reduce the balance', () => {
-    expect(getMinimumAmortisingPayment(300000, 3, 10, DownPaymentType.PERCENT)).toBe(676);
+  it('returns the minimum payment that actually amortises within the schedule cap', () => {
+    // 270k effective @ 3%. The old interest-only-plus-£1 floor returned 676, which
+    // only reduced the balance by ~£1/mo and never paid the loan off.
+    expect(getMinimumAmortisingPayment(300000, 3, 10, DownPaymentType.PERCENT)).toBe(701);
+  });
+
+  it('produces a fully-amortised schedule when paying exactly the minimum', () => {
+    const minimum = getMinimumAmortisingPayment(300000, 3, 10, DownPaymentType.PERCENT);
+    const result = getLoanCalculations(
+      300000,
+      3,
+      0,
+      0,
+      minimum,
+      LoanCalculationType.PAYMENT,
+      10,
+      DownPaymentType.PERCENT,
+      0,
+      '2026-01-01',
+    );
+    expect(result.isFullyAmortised).toBe(true);
+    expect(result.remainingBalance).toBe(0);
   });
 
   it('accepts uppercase downPaymentType casing (stored snapshot form)', () => {

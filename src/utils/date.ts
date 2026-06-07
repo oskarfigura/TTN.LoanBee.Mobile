@@ -156,7 +156,7 @@ export const formatAmortisationPeriodLabel = (
   const date = parseDateLabelValue(startDate);
   if (!date) return String(periodNumber);
 
-  date.setMonth(date.getMonth() + periodNumber - 1);
+  advanceMonthsClamped(date, periodNumber - 1);
 
   return formatFriendlyMonthYear(formatIsoDate(date), language);
 };

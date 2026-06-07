@@ -19,7 +19,7 @@ import { CURRENCIES } from '@/currency/currencies';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
 import { createLocalId } from '@/utils/id';
-import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
+import { advanceMonthsClamped, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
 import { validateMoneyText } from '@/utils/formValidation';
 
 const oneYearFromNow = (): string => {
@@ -60,7 +60,7 @@ export default function NewLoanLumpSumScreen() {
   const minDate = loanStartDate > today ? loanStartDate : today;
   const maxDate = (() => {
     const d = new Date(loanStartDate);
-    d.setMonth(d.getMonth() + loan.resultSnapshot.totalTermInMonths - 1);
+    advanceMonthsClamped(d, loan.resultSnapshot.totalTermInMonths - 1);
     return d;
   })();
   const amountValidation = validateMoneyText(amount);

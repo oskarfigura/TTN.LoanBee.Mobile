@@ -67,8 +67,8 @@ describe('loanCalculatorSchema — term and payment refinements', () => {
     expect(errorFor(result, 'desiredMonthlyPayment')).toBe('errors.desiredPaymentRequired');
   });
 
-  it('rejects a desired payment below the interest-only minimum', () => {
-    // 270k effective @ 3% → interest-only ≈ £676/mo, so £100 never amortises.
+  it('rejects a desired payment below the minimum amortising payment', () => {
+    // 270k effective @ 3% → minimum amortising payment ≈ £701/mo, so £100 never amortises.
     const result = parse({ calculationType: 'payment', desiredMonthlyPayment: 100 });
     expect(errorFor(result, 'desiredMonthlyPayment')).toContain('errors.desiredPaymentMinimum');
   });
