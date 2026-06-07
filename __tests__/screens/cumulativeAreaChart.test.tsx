@@ -75,7 +75,7 @@ describe('CumulativeAreaChart', () => {
     expect(capturedLineProps!.maxValue).toBeGreaterThan(Math.max(...allValues));
   });
 
-  it('uses the full fitted viewport width without stretching the data spacing', () => {
+  it('fills the fitted viewport width by stretching the data spacing exactly', () => {
     const { monthly, interest, remaining } = buildArrays();
     let renderer!: ReturnType<typeof create>;
 
@@ -97,9 +97,13 @@ describe('CumulativeAreaChart', () => {
       layoutNode.props.onLayout({ nativeEvent: { layout: { width: 360 } } });
     });
 
-    // Edge spacing is INITIAL_SPACING (8) + END_SPACING (12) = 20.
+    // Edge spacing is INITIAL_SPACING (8) + END_SPACING (12) = 20. The 17 intervals are
+    // distributed as an exact fraction (not floored) so they span the whole 294px width
+    // instead of leaving the series short under empty trailing gridlines.
+    const intervals = capturedLineProps!.data.length - 1;
     expect(capturedLineProps?.width).toBe(294);
-    expect(capturedLineProps?.spacing).toBe(Math.floor((294 - 20) / 17));
+    expect(capturedLineProps?.spacing).toBeCloseTo((294 - 20) / intervals);
+    expect(intervals * capturedLineProps!.spacing + 20).toBeCloseTo(294);
     expect(capturedLineProps?.disableScroll).toBe(true);
   });
 

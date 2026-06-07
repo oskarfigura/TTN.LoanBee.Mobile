@@ -51,7 +51,11 @@ export const getProjectionChartLayout = ({
    * points, so their visible span is `(pointCount - 1) * spacing`.
    */
   spacingMode?: 'points' | 'intervals';
-  /** Let a fitted chart hand the full viewport width to the chart library. */
+  /**
+   * Let a fitted, non-scrolling chart hand the full viewport width to the chart library
+   * and stretch its point spacing to fill it exactly, so the series spans the whole width
+   * instead of stopping short under empty trailing gridlines.
+   */
   fillAvailableWidth?: boolean;
 }): ProjectionChartLayout => {
   const safeContainer = Number.isFinite(containerWidth) && containerWidth > 0
@@ -82,10 +86,20 @@ export const getProjectionChartLayout = ({
   const contentWidth = Math.ceil(spacingUnits * pointSpacing + edgeSpacing);
   const scrollEnabled = contentWidth > viewportWidth;
 
+  // A fill-to-width chart hands the full viewport to the chart library so the gridlines
+  // reach the card edge. The fitted spacing above is floored (and capped at perPointWidth),
+  // so the final point can stop several pixels short of that width — the series then ends
+  // under empty trailing gridlines. When such a chart isn't scrolling, redistribute the
+  // spacing as an exact fraction so the points span the whole width and the last point
+  // (the end of the mortgage term) lands right at the trailing edge margin.
+  if (fitToWidth && fillAvailableWidth && !scrollEnabled && spacingUnits > 0) {
+    pointSpacing = (viewportWidth - edgeSpacing) / spacingUnits;
+  }
+
   // Most fitted charts keep the chart width equal to the spacing-derived content span.
   // Some gifted-charts line charts render the surrounding rules/axis from the explicit
-  // width, though, so they can opt into the full viewport while the points still use the
-  // fitted spacing above.
+  // width, though, so they can opt into the full viewport while the points stretch to
+  // fill it.
   const chartWidth = scrollEnabled || (fitToWidth && !fillAvailableWidth)
     ? contentWidth
     : viewportWidth;
