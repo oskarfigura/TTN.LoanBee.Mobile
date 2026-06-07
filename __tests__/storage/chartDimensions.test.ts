@@ -90,7 +90,7 @@ describe('getProjectionChartLayout', () => {
     expect(layout.chartWidth).toBeLessThanOrEqual(294);
   });
 
-  it('fitToWidth can fill the available viewport while preserving fitted point spacing', () => {
+  it('fitToWidth fills the available viewport so the series spans the full width', () => {
     const layout = getProjectionChartLayout({
       containerWidth: 360,
       pointCount: 18,
@@ -101,11 +101,35 @@ describe('getProjectionChartLayout', () => {
       fillAvailableWidth: true,
     });
 
-    const expectedSpacing = Math.floor((294 - 35) / 17);
+    // Spacing is distributed exactly (not floored) so the 17 intervals plus the edge pad
+    // span the whole viewport — the final point reaches the trailing edge margin instead
+    // of stopping short under empty gridlines.
+    const expectedSpacing = (294 - 35) / 17;
     expect(layout.viewportWidth).toBe(294);
-    expect(layout.pointSpacing).toBe(expectedSpacing);
+    expect(layout.pointSpacing).toBeCloseTo(expectedSpacing);
     expect(layout.scrollEnabled).toBe(false);
     expect(layout.chartWidth).toBe(294);
+    // The plotted span (intervals + edge pad) exactly fills the viewport width.
+    expect(17 * layout.pointSpacing + 35).toBeCloseTo(294);
+  });
+
+  it('fitToWidth fill stretches a short timeline to occupy the full width', () => {
+    const layout = getProjectionChartLayout({
+      containerWidth: 360,
+      pointCount: 4,
+      perPointWidth: 44,
+      edgeSpacing: 20,
+      fitToWidth: true,
+      spacingMode: 'intervals',
+      fillAvailableWidth: true,
+    });
+
+    // Without fill, a short series caps at perPointWidth (44) and leaves a wide gap; with
+    // fill the 3 intervals stretch past 44 so the curve still reaches the trailing edge.
+    expect(layout.scrollEnabled).toBe(false);
+    expect(layout.chartWidth).toBe(294);
+    expect(layout.pointSpacing).toBeGreaterThan(44);
+    expect(3 * layout.pointSpacing + 20).toBeCloseTo(294);
   });
 
   it('fitToWidth never stretches a short timeline past its natural spacing', () => {
