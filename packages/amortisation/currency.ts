@@ -49,17 +49,15 @@ export const formatCurrency = (amount: number, currency: CurrencyCode | string):
 };
 
 export const formatCurrencyCompact = (amount: number, currency: CurrencyCode | string): string => {
-  const symbol = getCurrencySymbol(currency);
-  const abs = Math.abs(amount);
-  let formatted: string;
-
-  if (abs >= 1_000_000) {
-    formatted = `${(abs / 1_000_000).toFixed(2)}M`;
-  } else if (abs >= 1_000) {
-    formatted = `${(abs / 1_000).toFixed(1)}k`;
-  } else {
-    formatted = abs.toFixed(2);
-  }
-
-  return amount < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
+  const code = normalizeCurrency(currency);
+  const value = Number.isFinite(amount) ? amount : 0;
+  // Same per-currency locale as formatCurrency so the symbol sits on the correct
+  // side (e.g. "1,6 mln zł", not "zł1.6M"). Compact notation keeps chart axes short.
+  const formatted = new Intl.NumberFormat(CURRENCY_LOCALES[code], {
+    style: 'currency',
+    currency: code,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+  return formatted.replace(/[\u00A0\u202F]/g, ' ');
 };
