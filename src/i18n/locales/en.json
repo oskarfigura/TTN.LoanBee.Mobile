@@ -138,10 +138,19 @@
   "loanPurpose": {
     "personal": "Personal",
     "car": "Car",
+    "homeImprovement": "Renovations",
+    "travel": "Travel",
+    "jewellery": "Jewellery",
+    "business": "Business",
+    "stocks": "Stocks",
+    "crypto": "Crypto",
+    "medical": "Medical",
+    "shopping": "Shopping",
+    "gaming": "Gaming",
+    "boat": "Boat",
+    "education": "Education",
     "bike": "Bike",
     "motorbike": "Motorbike",
-    "homeImprovement": "Home improvement",
-    "education": "Education",
     "other": "Other"
   },
   "recent": {

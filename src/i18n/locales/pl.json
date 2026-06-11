@@ -138,10 +138,19 @@
   "loanPurpose": {
     "personal": "Osobisty",
     "car": "Samochód",
+    "homeImprovement": "Remont",
+    "travel": "Podróże",
+    "jewellery": "Biżuteria",
+    "business": "Firma",
+    "stocks": "Akcje",
+    "crypto": "Krypto",
+    "medical": "Medyczny",
+    "shopping": "Zakupy",
+    "gaming": "Gaming",
+    "boat": "Łódź",
+    "education": "Edukacja",
     "bike": "Rower",
     "motorbike": "Motocykl",
-    "homeImprovement": "Remont",
-    "education": "Edukacja",
     "other": "Inne"
   },
   "recent": {

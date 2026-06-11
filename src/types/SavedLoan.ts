@@ -7,6 +7,15 @@ export type LoanPurpose =
   | 'bike'
   | 'motorbike'
   | 'homeImprovement'
+  | 'travel'
+  | 'jewellery'
+  | 'business'
+  | 'stocks'
+  | 'crypto'
+  | 'medical'
+  | 'shopping'
+  | 'gaming'
+  | 'boat'
   | 'education'
   | 'other';
 export type LoanGroupStatus = 'draft' | 'tracked';

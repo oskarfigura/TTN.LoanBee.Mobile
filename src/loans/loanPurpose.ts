@@ -5,10 +5,19 @@ export const DEFAULT_LOAN_PURPOSE: LoanPurpose = 'personal';
 export const LOAN_PURPOSES: LoanPurpose[] = [
   'personal',
   'car',
+  'homeImprovement',
+  'travel',
+  'jewellery',
+  'business',
+  'stocks',
+  'crypto',
+  'medical',
+  'shopping',
+  'gaming',
+  'boat',
+  'education',
   'bike',
   'motorbike',
-  'homeImprovement',
-  'education',
   'other',
 ];
 

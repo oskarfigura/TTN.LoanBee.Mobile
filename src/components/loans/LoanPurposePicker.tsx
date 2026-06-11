@@ -1,8 +1,25 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
+import { AnchorIcon } from '@/components/ui/Icons/AnchorIcon/AnchorIcon';
+import { BarLineChartIcon } from '@/components/ui/Icons/BarLineChartIcon/BarLineChartIcon';
+import { BikeIcon } from '@/components/ui/Icons/BikeIcon/BikeIcon';
+import { BitcoinIcon } from '@/components/ui/Icons/BitcoinIcon/BitcoinIcon';
+import { CarIcon } from '@/components/ui/Icons/CarIcon/CarIcon';
+import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
+import { ChevronDownIcon } from '@/components/ui/Icons/ChevronDownIcon/ChevronDownIcon';
+import { DiamondIcon } from '@/components/ui/Icons/DiamondIcon/DiamondIcon';
+import { GamingPadIcon } from '@/components/ui/Icons/GamingPadIcon/GamingPadIcon';
+import { GraduationHatIcon } from '@/components/ui/Icons/GraduationHatIcon/GraduationHatIcon';
+import { HeartHandIcon } from '@/components/ui/Icons/HeartHandIcon/HeartHandIcon';
+import { LineChartUpIcon } from '@/components/ui/Icons/LineChartUpIcon/LineChartUpIcon';
+import { ListIcon } from '@/components/ui/Icons/ListIcon/ListIcon';
+import { MedicalCircleIcon } from '@/components/ui/Icons/MedicalCircleIcon/MedicalCircleIcon';
+import { MotorbikeIcon } from '@/components/ui/Icons/MotorbikeIcon/MotorbikeIcon';
+import { PlaneIcon } from '@/components/ui/Icons/PlaneIcon/PlaneIcon';
+import { RollerBrushIcon } from '@/components/ui/Icons/RollerBrushIcon/RollerBrushIcon';
+import { ShoppingBagIcon } from '@/components/ui/Icons/ShoppingBagIcon/ShoppingBagIcon';
 import { LOAN_PURPOSES } from '@/loans/loanPurpose';
 import type { LoanPurpose } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
@@ -10,6 +27,8 @@ import { colours, radii, spacing } from '@/theme';
 interface IconProps {
   purpose: LoanPurpose;
   size?: number;
+  color?: string;
+  selected?: boolean;
 }
 
 interface PickerProps {
@@ -17,204 +36,52 @@ interface PickerProps {
   onChange: (next: LoanPurpose) => void;
 }
 
-const getLoanPurposeTheme = (purpose: LoanPurpose) => {
+export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }: IconProps) => {
+  const strokeWidth = 1.85;
+
   switch (purpose) {
     case 'car':
-      return {
-        background: colours.secondarySoft,
-        border: colours.secondaryBright,
-        primary: colours.primary,
-        secondary: colours.secondary,
-      };
+      return <CarIcon size={size} color={color} strokeWidth={strokeWidth} />;
     case 'bike':
-      return {
-        background: colours.successLight,
-        border: colours.successBorder,
-        primary: colours.success,
-        secondary: colours.teal,
-      };
+      return <BikeIcon size={size} color={color} />;
     case 'motorbike':
-      return {
-        background: colours.warningSurface,
-        border: colours.honeySoft,
-        primary: colours.warning,
-        secondary: colours.honey,
-      };
+      return <MotorbikeIcon size={size} color={color} />;
     case 'homeImprovement':
-      return {
-        background: colours.surfaceAccent,
-        border: colours.surfaceStrong,
-        primary: colours.primary,
-        secondary: colours.teal,
-      };
+      return <RollerBrushIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'travel':
+      return <PlaneIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'jewellery':
+      return <DiamondIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'business':
+      return <BarLineChartIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'stocks':
+      return <LineChartUpIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'crypto':
+      return <BitcoinIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'medical':
+      return <MedicalCircleIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'shopping':
+      return <ShoppingBagIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'gaming':
+      return <GamingPadIcon size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'boat':
+      return <AnchorIcon size={size} color={color} strokeWidth={strokeWidth} />;
     case 'education':
-      return {
-        background: colours.primarySoft,
-        border: colours.primaryMuted,
-        primary: colours.primary,
-        secondary: colours.accent,
-      };
+      return <GraduationHatIcon size={size} color={color} strokeWidth={strokeWidth} />;
     case 'other':
-      return {
-        background: colours.surfaceMuted,
-        border: colours.borderSoft,
-        primary: colours.primaryInk,
-        secondary: colours.textSecondary,
-      };
+      return <ListIcon size={size} color={color} strokeWidth={strokeWidth} />;
     case 'personal':
     default:
-      return {
-        background: colours.successSurface,
-        border: colours.successBorder,
-        primary: colours.primary,
-        secondary: colours.success,
-      };
+      return <HeartHandIcon size={size} color={color} strokeWidth={strokeWidth} />;
   }
 };
 
-export const LoanPurposeIcon = ({ purpose, size = 22 }: IconProps) => {
-  const theme = getLoanPurposeTheme(purpose);
-  const primary = theme.primary;
-  const secondary = theme.secondary;
-
-  if (purpose === 'car') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M5.5 11.5 7.2 7.8A2 2 0 0 1 9 6.6h6a2 2 0 0 1 1.8 1.2l1.7 3.7"
-          stroke={primary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M4.8 11.2h14.4a1.8 1.8 0 0 1 1.8 1.8v3.1H3v-3.1a1.8 1.8 0 0 1 1.8-1.8z"
-          stroke={primary}
-          strokeWidth={1.8}
-          strokeLinejoin="round"
-        />
-        <Circle cx={7.2} cy={16.2} r={1.6} fill={secondary} />
-        <Circle cx={16.8} cy={16.2} r={1.6} fill={secondary} />
-      </Svg>
-    );
-  }
-
-  if (purpose === 'bike') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Circle cx={6.5} cy={16.5} r={3.2} stroke={primary} strokeWidth={1.8} />
-        <Circle cx={17.5} cy={16.5} r={3.2} stroke={primary} strokeWidth={1.8} />
-        <Path
-          d="M8.2 16.5h3.4l3-5.2m-3 5.2-2.6-5.2h3.8m1.8 0h2.1"
-          stroke={secondary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    );
-  }
-
-  if (purpose === 'motorbike') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Circle cx={6.2} cy={16.5} r={2.8} stroke={primary} strokeWidth={1.8} />
-        <Circle cx={17.8} cy={16.5} r={2.8} stroke={primary} strokeWidth={1.8} />
-        <Path
-          d="M7.8 16.5h3.3l2.1-3.8h2.9l1.7 3.8M10.8 12.7H8.6m4.6 0-1-2.2h2.7"
-          stroke={secondary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path d="M15.2 10.5h3.1" stroke={primary} strokeWidth={1.8} strokeLinecap="round" />
-      </Svg>
-    );
-  }
-
-  if (purpose === 'homeImprovement') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M4.5 11.3 12 5.4l7.5 5.9M6.7 10.5v8h10.6v-8"
-          stroke={primary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path
-          d="m9.2 15.8 4.9-4.9 2 2-4.9 4.9H9.2v-2z"
-          stroke={secondary}
-          strokeWidth={1.6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    );
-  }
-
-  if (purpose === 'education') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="m4 9 8-4 8 4-8 4-8-4z"
-          stroke={primary}
-          strokeWidth={1.8}
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M7.5 11.2v3.5c1.3 1.4 2.8 2.1 4.5 2.1s3.2-.7 4.5-2.1v-3.5"
-          stroke={secondary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <Path d="M19.5 9.5v4.8" stroke={primary} strokeWidth={1.8} strokeLinecap="round" />
-      </Svg>
-    );
-  }
-
-  if (purpose === 'other') {
-    return (
-      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-        <Path
-          d="M7 4.8h10A2.2 2.2 0 0 1 19.2 7v10a2.2 2.2 0 0 1-2.2 2.2H7A2.2 2.2 0 0 1 4.8 17V7A2.2 2.2 0 0 1 7 4.8z"
-          stroke={primary}
-          strokeWidth={1.8}
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M9 9h6M9 12h4.2M9 15h5.5"
-          stroke={secondary}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-        />
-      </Svg>
-    );
-  }
-
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M5 10.4h14v7.1A2.5 2.5 0 0 1 16.5 20h-9A2.5 2.5 0 0 1 5 17.5v-7.1z"
-        stroke={primary}
-        strokeWidth={1.8}
-        strokeLinejoin="round"
-      />
-      <Path
-        d="M8.5 10.4V8a3.5 3.5 0 0 1 7 0v2.4"
-        stroke={primary}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-      />
-      <Path d="M8.5 14.6h7" stroke={secondary} strokeWidth={1.8} strokeLinecap="round" />
-    </Svg>
-  );
-};
-
-export const LoanPurposeIconTile = ({ purpose, size = 40 }: IconProps) => {
-  const theme = getLoanPurposeTheme(purpose);
-
+export const LoanPurposeIconTile = ({
+  purpose,
+  size = 40,
+  color = colours.primary,
+  selected = false,
+}: IconProps) => {
   return (
     <View
       style={[
@@ -223,70 +90,178 @@ export const LoanPurposeIconTile = ({ purpose, size = 40 }: IconProps) => {
           width: size,
           height: size,
           borderRadius: Math.round(size * 0.35),
-          backgroundColor: theme.background,
-          borderColor: theme.border,
         },
+        selected && styles.iconTileSelected,
       ]}
     >
-      <LoanPurposeIcon purpose={purpose} size={Math.round(size * 0.55)} />
+      <LoanPurposeIcon purpose={purpose} size={Math.round(size * 0.55)} color={color} />
     </View>
   );
 };
 
 export const LoanPurposePicker = ({ value, onChange }: PickerProps) => {
   const { t } = useTranslation();
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const selectedLabel = t(`loanPurpose.${value}`);
+
+  const handleSelect = (purpose: LoanPurpose) => {
+    onChange(purpose);
+    setDrawerVisible(false);
+  };
 
   return (
-    <View style={styles.grid}>
-      {LOAN_PURPOSES.map(purpose => {
-        const selected = value === purpose;
-        return (
-          <TouchableOpacity
-            key={purpose}
-            style={[styles.option, selected && styles.optionSelected]}
-            onPress={() => onChange(purpose)}
-            activeOpacity={0.84}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-          >
-            <LoanPurposeIconTile purpose={purpose} size={36} />
-            <AppText variant="labelMd" tone={selected ? 'accent' : 'default'} numberOfLines={1}>
-              {t(`loanPurpose.${purpose}`)}
-            </AppText>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+    <>
+      <TouchableOpacity
+        style={styles.select}
+        onPress={() => setDrawerVisible(true)}
+        activeOpacity={0.84}
+        accessibilityRole="button"
+        accessibilityLabel={t('save.loanPurpose')}
+      >
+        <LoanPurposeIconTile purpose={value} size={36} />
+        <View style={styles.selectCopy}>
+          <AppText variant="bodyMd" numberOfLines={1}>
+            {selectedLabel}
+          </AppText>
+        </View>
+        <ChevronDownIcon size={20} color={colours.textSecondary} strokeWidth={2} />
+      </TouchableOpacity>
+
+      <Modal
+        transparent
+        visible={drawerVisible}
+        animationType="slide"
+        onRequestClose={() => setDrawerVisible(false)}
+      >
+        <Pressable style={styles.drawerScrim} onPress={() => setDrawerVisible(false)}>
+          <Pressable style={styles.drawer} accessibilityViewIsModal>
+            <View style={styles.drawerHandle} />
+            <View style={styles.drawerHeader}>
+              <AppText variant="title3">{t('save.loanPurpose')}</AppText>
+              <TouchableOpacity onPress={() => setDrawerVisible(false)} activeOpacity={0.84}>
+                <AppText variant="labelMd" tone="accent">
+                  {t('common.close')}
+                </AppText>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.optionScroller}
+              contentContainerStyle={styles.optionList}
+              showsVerticalScrollIndicator={false}
+            >
+              {LOAN_PURPOSES.map(purpose => {
+                const selected = value === purpose;
+                return (
+                  <TouchableOpacity
+                    key={purpose}
+                    style={[styles.option, selected && styles.optionSelected]}
+                    onPress={() => handleSelect(purpose)}
+                    activeOpacity={0.84}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <LoanPurposeIconTile purpose={purpose} size={38} selected={selected} />
+                    <AppText variant="bodyMd" style={styles.optionLabel} numberOfLines={1}>
+                      {t(`loanPurpose.${purpose}`)}
+                    </AppText>
+                    {selected ? (
+                      <CheckIcon size={20} color={colours.primary} strokeWidth={2.3} />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  option: {
-    flexBasis: '48%',
-    flexGrow: 1,
-    minHeight: 58,
+  select: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    minHeight: 50,
     borderRadius: radii.input,
     borderWidth: 1,
     borderColor: colours.borderSoft,
     backgroundColor: colours.surfaceRaised,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  selectCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  drawerScrim: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: colours.modalScrim,
+  },
+  drawer: {
+    maxHeight: '82%',
+    borderTopLeftRadius: radii.card,
+    borderTopRightRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.lg,
+  },
+  drawerHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colours.borderSoft,
+    marginBottom: spacing.sm,
+  },
+  drawerHeader: {
+    minHeight: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  optionList: {
+    gap: spacing.xs,
+    paddingBottom: spacing.xs,
+  },
+  optionScroller: {
+    flexGrow: 0,
+  },
+  option: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    backgroundColor: colours.surfaceRaised,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
   optionSelected: {
     borderColor: colours.primary,
     backgroundColor: colours.surfaceAccent,
   },
+  optionLabel: {
+    flex: 1,
+    minWidth: 0,
+  },
   iconTile: {
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+    borderColor: colours.borderSoft,
+    backgroundColor: colours.surfaceMuted,
+  },
+  iconTileSelected: {
+    borderColor: colours.primaryMuted,
+    backgroundColor: colours.primarySoft,
   },
 });

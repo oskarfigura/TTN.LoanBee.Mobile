@@ -291,6 +291,7 @@ export default function TrackMortgageScreen() {
           onPress={handleSave}
           disabled={!canSave}
           leftIcon={<SaveIcon color={colours.white} size={18} />}
+          style={styles.saveButton}
         />
       )}
     >
@@ -580,6 +581,10 @@ const styles = StyleSheet.create({
     backgroundColor: colours.surfaceMuted,
   },
   derivedValue: { color: colours.textPrimary },
+  saveButton: {
+    marginBottom: spacing.xs,
+    paddingVertical: spacing.md,
+  },
   addBtn: { marginTop: spacing.xs },
   enrichmentToggle: {
     flexDirection: 'row',
