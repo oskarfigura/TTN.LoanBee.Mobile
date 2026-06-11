@@ -12,8 +12,13 @@ export const styles = StyleSheet.create({
   stickyTabs: {
     marginHorizontal: -layout.screenPadding,
     backgroundColor: colours.background,
-    zIndex: 2,
-    elevation: 2,
+    // The pinned tab bar must sit above the scrolling content on Android, where
+    // `elevation` (not zIndex) decides which overlapping view receives a touch. The
+    // content panels below reach elevation 5 (summaryRaisedPanel → elevation.level2),
+    // so the header must clear that or scrolled-up cards/charts steal taps meant for
+    // the tabs.
+    zIndex: 10,
+    elevation: 6,
   },
   tabControl: {
     marginHorizontal: 0,
