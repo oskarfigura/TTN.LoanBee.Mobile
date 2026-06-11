@@ -30,8 +30,8 @@ import { CurrencyCode } from '@/currency/currencies';
 import { LoanResult } from '@/results/loanResultRoute';
 import { colours, layout, radii, spacing } from '@/theme';
 import { SavedLoan } from '@/types/SavedLoan';
+import { buildAmortisationCsv } from '@oskarfigura/amortisation';
 import { AmortisationTable } from './AmortisationTable';
-import { buildAmortisationCsv } from './amortisationTableUtils';
 import { LoanSummaryOverview } from './LoanSummaryOverview';
 
 type CalculationTab = 'summary' | 'charts' | 'schedule';

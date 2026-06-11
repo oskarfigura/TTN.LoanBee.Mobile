@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   buildAmortisationCsv,
   formatAmortisationPeriodLabel,
-} from '../../src/components/calculator/amortisationTableUtils';
+} from '@oskarfigura/amortisation';
 
 const sampleItems = [
   {
@@ -21,7 +21,7 @@ const sampleItems = [
   },
 ];
 
-describe('amortisation table utils', () => {
+describe('@oskarfigura/amortisation CSV helpers', () => {
   it('builds a csv with translated headers and spreadsheet-friendly numbers', () => {
     const csv = buildAmortisationCsv({
       items: sampleItems,
