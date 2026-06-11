@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     // so the header must clear that or scrolled-up cards/charts steal taps meant for
     // the tabs.
     zIndex: 10,
-    elevation: 8,
+    elevation: 6,
   },
   tabControl: {
     marginHorizontal: 0,

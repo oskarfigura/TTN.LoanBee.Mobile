@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     // `elevation` (not zIndex) decides which overlapping view receives a touch.
     // Otherwise cards/charts scrolling up under the header steal taps meant for the tabs.
     zIndex: 10,
-    elevation: 8,
+    elevation: 6,
   },
   tabControl: { marginBottom: spacing.sm },
   underlineTabControl: {
