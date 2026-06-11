@@ -158,6 +158,42 @@ const hasMortgageRepaymentToggle = (renderer: ReactTestRenderer): boolean => (
   ))
 );
 
+const findModeToggle = (renderer: ReactTestRenderer): ReactTestInstance | undefined => (
+  renderer.root.findAll(node => String(node.type) === 'SegmentedControl').find(node => (
+    (node.props.options as Array<{ value: string }>).some(option => option.value === 'beginning')
+  ))
+);
+
+// Locate the first AppTextInput that follows the field label `labelText`. A
+// depth-first walk tracks the most recent FieldLabel, so each input is matched
+// to the label rendered just above it (robust to the surrounding wrapper tree).
+const inputForLabel = (renderer: ReactTestRenderer, labelText: string): ReactTestInstance => {
+  let currentLabel = '';
+  let found: ReactTestInstance | undefined;
+  const walk = (node: ReactTestInstance | string | number | null | undefined): void => {
+    if (found || node === null || node === undefined || typeof node === 'string' || typeof node === 'number') {
+      return;
+    }
+    if (String(node.type) === 'FieldLabel') currentLabel = textContent(node);
+    if (String(node.type) === 'AppTextInput' && currentLabel === labelText) {
+      found = node;
+      return;
+    }
+    node.children.forEach(child => walk(child as ReactTestInstance | string | number));
+  };
+  walk(renderer.root);
+  return found!;
+};
+
+const pressSave = async (renderer: ReactTestRenderer): Promise<void> => {
+  const saveButton = renderer.root
+    .findAll(node => String(node.type) === 'Button')
+    .find(node => node.props.label === 'track.save')!;
+  await act(async () => {
+    (saveButton.props.onPress as () => void)();
+  });
+};
+
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation((message?: unknown, ...args: unknown[]) => {
     if (typeof message === 'string' && message.includes('react-test-renderer is deprecated')) {
@@ -207,5 +243,70 @@ describe('Track form journey', () => {
 
     expect(hasMortgageRepaymentToggle(renderer)).toBe(false);
     expect(renderer.root.findAll(node => String(node.type) === 'DatePickerField').some(node => node.props.label === 'track.dealEndDate')).toBe(false);
+  });
+
+  it('reveals price + deposit and hides the balance field when tracking from the beginning', async () => {
+    const renderer = await renderTrack();
+
+    // Default mortgage mode is "from today": balance field, no price/deposit.
+    expect(textContent(renderer.root)).toContain('track.currentBalance');
+    expect(textContent(renderer.root)).not.toContain('track.propertyPrice');
+
+    await act(async () => {
+      findModeToggle(renderer)!.props.onChange('beginning');
+    });
+
+    const text = textContent(renderer.root);
+    expect(text).toContain('track.propertyPrice');
+    expect(text).toContain('track.deposit');
+    expect(text).not.toContain('track.currentBalance');
+    expect(text).not.toContain('track.startingBalance');
+  });
+
+  it('saves the derived borrowed balance and records the deposit', async () => {
+    const renderer = await renderTrack();
+
+    await act(async () => {
+      findModeToggle(renderer)!.props.onChange('beginning');
+    });
+    await act(async () => {
+      inputForLabel(renderer, 'track.nickname').props.onChangeText('Family home');
+    });
+    await act(async () => {
+      inputForLabel(renderer, 'track.propertyPrice').props.onChangeText('300000');
+    });
+    await act(async () => {
+      inputForLabel(renderer, 'track.deposit').props.onChangeText('60000');
+    });
+    await act(async () => {
+      inputForLabel(renderer, 'track.rate').props.onChangeText('4.5');
+    });
+    await act(async () => {
+      // First input in the (original) term group is the years field.
+      inputForLabel(renderer, 'track.originalTerm').props.onChangeText('25');
+    });
+
+    await pressSave(renderer);
+
+    expect(mockAdd).toHaveBeenCalledTimes(1);
+    const saved = mockAdd.mock.calls[0][0] as {
+      deals: Array<{ openingBalance: number }>;
+      formSnapshot: { loanAmount: number; downPayment: number };
+    };
+    expect(saved.deals[0].openingBalance).toBe(240000);
+    expect(saved.formSnapshot.loanAmount).toBe(300000);
+    expect(saved.formSnapshot.downPayment).toBe(60000);
+  });
+
+  it('hides the from-today / from-the-beginning toggle for loans', async () => {
+    const renderer = await renderTrack();
+
+    expect(findModeToggle(renderer)).toBeDefined();
+
+    await act(async () => {
+      getCategoryToggle(renderer).props.onChange('loan');
+    });
+
+    expect(findModeToggle(renderer)).toBeUndefined();
   });
 });

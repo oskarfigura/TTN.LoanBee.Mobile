@@ -156,6 +156,42 @@ describe('buildTrackedMortgageFromForm', () => {
     expect(projection.totalInterestPaid).toBeGreaterThan(0);
   });
 
+  it('derives the borrowed balance from price minus deposit and records the deposit', () => {
+    const loan = buildTrackedMortgageFromForm(baseValues({
+      propertyValue: 300000,
+      deposit: 60000,
+      currentBalance: 240000, // price − deposit, computed by the form
+    }));
+
+    // Snapshot mirrors a calculator-saved mortgage: price as loanAmount, deposit as a cash down payment.
+    expect(loan.formSnapshot.loanAmount).toBe(300000);
+    expect(loan.formSnapshot.downPayment).toBe(60000);
+    expect(loan.formSnapshot.downPaymentType).toBe('CASH');
+    // The deal (and therefore the projection) opens at the borrowed amount.
+    expect(loan.deals[0].openingBalance).toBe(240000);
+  });
+
+  it('records the deposit without double-counting it in the amortisation', () => {
+    const withDeposit = buildTrackedMortgageFromForm(baseValues({
+      propertyValue: 300000,
+      deposit: 60000,
+      currentBalance: 240000,
+    }));
+    const balanceOnly = buildTrackedMortgageFromForm(baseValues({ currentBalance: 240000 }));
+
+    expect(withDeposit.resultSnapshot.totalInterestPaid)
+      .toBeCloseTo(balanceOnly.resultSnapshot.totalInterestPaid, 2);
+    expect(buildMortgageProjection(withDeposit).currentBalance)
+      .toBeCloseTo(buildMortgageProjection(balanceOnly).currentBalance, 2);
+  });
+
+  it('leaves loanAmount as the balance and deposit at zero when none is supplied (from-today / loans)', () => {
+    const loan = buildTrackedMortgageFromForm(baseValues({ currentBalance: 200000 }));
+
+    expect(loan.formSnapshot.loanAmount).toBe(200000);
+    expect(loan.formSnapshot.downPayment).toBe(0);
+  });
+
   it('reuses a supplied id and createdAt (resume/finalise a draft in place)', () => {
     const loan = buildTrackedMortgageFromForm(baseValues(), { id: 'fixed-id', createdAt: '2020-01-01T00:00:00.000Z' });
     expect(loan.id).toBe('fixed-id');

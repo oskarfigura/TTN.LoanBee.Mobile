@@ -44,6 +44,14 @@ export interface TrackMortgageFormValues {
   category?: LoanCategory;
   /** Balance at the selected start date. */
   currentBalance: number;
+  /**
+   * Original purchase price, captured only when tracking a mortgage "from the
+   * beginning". Recorded on the snapshot; the borrowed balance is derived as
+   * `propertyValue - deposit` and passed as `currentBalance`.
+   */
+  propertyValue?: number;
+  /** Cash deposit paid at purchase. Pairs with `propertyValue` in from-beginning mode. */
+  deposit?: number;
   interestRate: number;
   repaymentType: MortgageRepaymentType;
   /** Months from the selected start date until the borrowing is fully repaid. */
@@ -144,12 +152,17 @@ export const buildTrackedMortgageFromForm = (
       amount: row.amount,
     }));
 
+  // From-beginning mode supplies the original price + deposit so the snapshot
+  // mirrors a calculator-saved mortgage (loanAmount = price, downPayment = deposit);
+  // getEffectiveLoanAmount then resolves the borrowed balance. From-today and
+  // loans omit both, leaving the balance as the loan amount and no deposit.
+  const deposit = Math.max(0, values.deposit ?? 0);
   const formSnapshot: LoanFormSnapshot = {
-    loanAmount: values.currentBalance,
+    loanAmount: values.propertyValue ?? values.currentBalance,
     interest: values.interestRate,
     termInYears: term.years,
     termInMonths: term.months,
-    downPayment: 0,
+    downPayment: deposit,
     downPaymentType: 'CASH',
     desiredMonthlyPayment: null,
     additionalMonthlyPayment: regularOverpayment || null,

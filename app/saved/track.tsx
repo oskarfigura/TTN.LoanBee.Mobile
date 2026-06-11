@@ -69,8 +69,14 @@ export default function TrackMortgageScreen() {
   const [lender, setLender] = useState(seed?.lender ?? '');
   const [currency, setCurrency] = useState<CurrencyCode>(seed?.currency ?? defaultCurrency);
   const [category, setCategory] = useState<LoanCategory>(existing?.category ?? 'mortgage');
+  // Mortgages can be tracked "from today" (current balance) or "from the
+  // beginning" (original purchase price + deposit, from which the borrowed
+  // balance is derived). Resuming a legacy draft always lands on today.
+  const [mode, setMode] = useState<'today' | 'beginning'>('today');
   const [startDate, setStartDate] = useState(today);
   const [balance, setBalance] = useState(numberText(seed?.currentBalance));
+  const [propertyPrice, setPropertyPrice] = useState('');
+  const [deposit, setDeposit] = useState('');
   const [rate, setRate] = useState(numberText(seed?.interestRate));
   const [repaymentType, setRepaymentType] = useState<MortgageRepaymentType>(
     seed?.repaymentType ?? 'repayment',
@@ -92,24 +98,43 @@ export default function TrackMortgageScreen() {
 
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
   const isMortgage = category === 'mortgage';
+  // Deposit capture is a mortgage-only concept; loans never expose the toggle.
+  const useBeginning = isMortgage && mode === 'beginning';
   const startDatePosition = startDate < today ? 'past' : startDate > today ? 'future' : 'today';
   const balanceLabel = startDatePosition === 'today' ? t('track.currentBalance') : t('track.startingBalance');
   const balanceHint = startDatePosition === 'today' ? t('track.currentBalanceHint') : t('track.startingBalanceHint');
-  const termLabel = startDatePosition === 'today'
-    ? t('track.remainingTerm')
-    : startDatePosition === 'past'
-      ? t('track.originalTerm')
+  const termLabel = useBeginning || startDatePosition === 'past'
+    ? t('track.originalTerm')
+    : startDatePosition === 'today'
+      ? t('track.remainingTerm')
       : t('track.termLength');
-  const termHint = startDatePosition === 'today'
-    ? t('track.remainingTermHint')
-    : startDatePosition === 'past'
-      ? t('track.originalTermHint')
+  const termHint = useBeginning || startDatePosition === 'past'
+    ? t('track.originalTermHint')
+    : startDatePosition === 'today'
+      ? t('track.remainingTermHint')
       : t('track.termLengthHint');
 
   const balanceValidation = validateMoneyText(balance);
   const rateValidation = validateMoneyText(rate, { max: 100, maxErrorKey: 'forms.interestMax' });
   const durationValidation = validateDurationText(termYears, termMonths);
   const regularValidation = validateMoneyText(regularOverpayment, { required: false, allowZero: true });
+
+  // From-beginning mode: the borrowed balance is derived as price − deposit.
+  // A single (numeric, isValid) pair feeds the rest of the form so the summary,
+  // overpayment guards, save guard and builder stay balance-driven regardless of mode.
+  const priceValidation = validateMoneyText(propertyPrice);
+  const depositValidation = validateMoneyText(deposit, { required: false, allowZero: true });
+  const depositTooLarge = useBeginning
+    && priceValidation.isValid
+    && !depositValidation.isEmpty
+    && depositValidation.numeric >= priceValidation.numeric;
+  const derivedBorrowed = Math.max(0, priceValidation.numeric - depositValidation.numeric);
+  const beginningBalanceValid = priceValidation.isValid
+    && depositValidation.isValid
+    && !depositTooLarge
+    && derivedBorrowed > 0;
+  const effectiveBalanceNumeric = useBeginning ? derivedBorrowed : balanceValidation.numeric;
+  const effectiveBalanceValid = useBeginning ? beginningBalanceValid : balanceValidation.isValid;
 
   // Surface whichever duration problem actually blocks the save: an out-of-range
   // sub-field (e.g. 15 months) or the combined "total term must be positive"
@@ -137,14 +162,14 @@ export default function TrackMortgageScreen() {
   // Lump overpayments must fall within [start, payoff] and not collectively
   // exceed the balance — otherwise the projection silently clamps/drops them.
   const lumpValidations = useMemo(
-    () => validateTrackLumpRows(lumpRows, startDate, payoffDateIso, balanceValidation.numeric),
-    [lumpRows, startDate, payoffDateIso, balanceValidation.numeric],
+    () => validateTrackLumpRows(lumpRows, startDate, payoffDateIso, effectiveBalanceNumeric),
+    [lumpRows, startDate, payoffDateIso, effectiveBalanceNumeric],
   );
   const lumpsValid = lumpValidations.every(row => row.isValid);
 
   const canSave = nickname.trim().length > 0
     && isValidIsoDate(startDate)
-    && balanceValidation.isValid
+    && effectiveBalanceValid
     && rateValidation.isValid
     && durationValidation.isValid
     && !dealEndInvalid
@@ -160,11 +185,11 @@ export default function TrackMortgageScreen() {
   // real payoff, so only then is the (cheap, single-deal) projection run to get
   // the true date rather than overstating it.
   const summary = useMemo(() => {
-    if (!balanceValidation.isValid || !rateValidation.isValid || !durationValidation.isValid) {
+    if (!effectiveBalanceValid || !rateValidation.isValid || !durationValidation.isValid) {
       return null;
     }
     const monthly = calculateDealMonthlyPayment(
-      balanceValidation.numeric,
+      effectiveBalanceNumeric,
       rateValidation.numeric,
       durationValidation.totalMonths,
       repaymentType,
@@ -181,7 +206,7 @@ export default function TrackMortgageScreen() {
         nickname,
         currency,
         category,
-        currentBalance: balanceValidation.numeric,
+        currentBalance: effectiveBalanceNumeric,
         interestRate: rateValidation.numeric,
         repaymentType,
         remainingTermInMonths: durationValidation.totalMonths,
@@ -193,14 +218,15 @@ export default function TrackMortgageScreen() {
     }
 
     return { monthly, payoffDate };
-  }, [balanceValidation, rateValidation, durationValidation, repaymentType, regularValidation, lumpRows, nickname, currency, category, startDate]);
+  }, [effectiveBalanceValid, effectiveBalanceNumeric, rateValidation, durationValidation, repaymentType, regularValidation, lumpRows, nickname, currency, category, startDate]);
 
   const buildValues = (): TrackMortgageFormValues => ({
     nickname,
     lender: lender.trim() || undefined,
     currency,
     category,
-    currentBalance: balanceValidation.numeric,
+    currentBalance: effectiveBalanceNumeric,
+    ...(useBeginning ? { propertyValue: priceValidation.numeric, deposit: depositValidation.numeric } : {}),
     interestRate: rateValidation.numeric,
     repaymentType,
     remainingTermInMonths: durationValidation.totalMonths,
@@ -302,30 +328,87 @@ export default function TrackMortgageScreen() {
           />
         </View>
 
+        {isMortgage ? (
+          <View style={styles.fieldGroup}>
+            <SegmentedControl
+              value={mode}
+              onChange={setMode}
+              options={[
+                { label: t('track.modeToday'), value: 'today' },
+                { label: t('track.modeBeginning'), value: 'beginning' },
+              ]}
+            />
+            <FieldHint>{t(useBeginning ? 'track.modeBeginningHint' : 'track.modeTodayHint')}</FieldHint>
+          </View>
+        ) : null}
+
         <DatePickerField
-          label={t('track.dealStartDate')}
+          label={useBeginning ? t('track.purchaseDate') : t('track.dealStartDate')}
           value={startDate}
           onChange={value => {
             setStartDate(value);
             if (!seed?.dealEndDate) setDealEndDate(addMonthsToIsoDate(value, 24));
           }}
-          hint={t(isMortgage ? 'track.dealStartDateHint' : 'track.dealStartDateHintLoan')}
+          hint={t(useBeginning ? 'track.purchaseDateHint' : isMortgage ? 'track.dealStartDateHint' : 'track.dealStartDateHintLoan')}
         />
 
-        <View style={styles.fieldGroup}>
-          <FieldLabel>{balanceLabel}</FieldLabel>
-          <InputSurface error={!balanceValidation.isValid && !balanceValidation.isEmpty}>
-            <InputAffix>{currencySymbol}</InputAffix>
-            <AppTextInput
-              value={balance}
-              onChangeText={setBalance}
-              keyboardType="decimal-pad"
-              placeholder="0"
-            />
-          </InputSurface>
-          <FieldHint>{balanceHint}</FieldHint>
-          <FieldError message={!balanceValidation.isEmpty && balanceValidation.errorKey ? t(balanceValidation.errorKey) : undefined} />
-        </View>
+        {useBeginning ? (
+          <>
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('track.propertyPrice')}</FieldLabel>
+              <InputSurface error={!priceValidation.isValid && !priceValidation.isEmpty}>
+                <InputAffix>{currencySymbol}</InputAffix>
+                <AppTextInput
+                  value={propertyPrice}
+                  onChangeText={setPropertyPrice}
+                  keyboardType="decimal-pad"
+                  placeholder="0"
+                />
+              </InputSurface>
+              <FieldHint>{t('track.propertyPriceHint')}</FieldHint>
+              <FieldError message={!priceValidation.isEmpty && priceValidation.errorKey ? t(priceValidation.errorKey) : undefined} />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('track.deposit')}</FieldLabel>
+              <InputSurface error={depositTooLarge || (!depositValidation.isValid && !depositValidation.isEmpty)}>
+                <InputAffix>{currencySymbol}</InputAffix>
+                <AppTextInput
+                  value={deposit}
+                  onChangeText={setDeposit}
+                  keyboardType="decimal-pad"
+                  placeholder="0"
+                />
+              </InputSurface>
+              <FieldHint>{t('track.depositHint')}</FieldHint>
+              <FieldError message={depositTooLarge ? t('forms.downPaymentCash') : undefined} />
+            </View>
+
+            {beginningBalanceValid ? (
+              <View style={styles.derivedRow}>
+                <AppText variant="bodySm" tone="muted">{t('track.borrowedAmount')}</AppText>
+                <AppText variant="labelMd" style={styles.derivedValue}>
+                  {formatCurrency(derivedBorrowed, currency)}
+                </AppText>
+              </View>
+            ) : null}
+          </>
+        ) : (
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{balanceLabel}</FieldLabel>
+            <InputSurface error={!balanceValidation.isValid && !balanceValidation.isEmpty}>
+              <InputAffix>{currencySymbol}</InputAffix>
+              <AppTextInput
+                value={balance}
+                onChangeText={setBalance}
+                keyboardType="decimal-pad"
+                placeholder="0"
+              />
+            </InputSurface>
+            <FieldHint>{balanceHint}</FieldHint>
+            <FieldError message={!balanceValidation.isEmpty && balanceValidation.errorKey ? t(balanceValidation.errorKey) : undefined} />
+          </View>
+        )}
 
         <View style={styles.fieldGroup}>
           <FieldLabel>{t('track.rate')}</FieldLabel>
@@ -463,6 +546,14 @@ export default function TrackMortgageScreen() {
               {formatCurrency(summary.monthly, currency)}
             </AppText>
           </View>
+          {useBeginning && depositValidation.numeric > 0 ? (
+            <View style={styles.summaryRow}>
+              <AppText variant="bodySm" tone="muted">{t('track.summaryDeposit')}</AppText>
+              <AppText variant="bodyMd" style={styles.summaryValue}>
+                {formatCurrency(depositValidation.numeric, currency)}
+              </AppText>
+            </View>
+          ) : null}
           <View style={styles.summaryRow}>
             <AppText variant="bodySm" tone="muted">{t('track.summaryPayoff')}</AppText>
             <AppText variant="bodyMd" style={styles.summaryValue}>
@@ -480,6 +571,17 @@ const styles = StyleSheet.create({
   fieldGroup: { gap: spacing.xxs },
   row: { flexDirection: 'row', gap: spacing.sm },
   half: { flex: 1 },
+  derivedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: layout.cardPadding,
+    borderRadius: radii.card,
+    backgroundColor: colours.surfaceMuted,
+  },
+  derivedValue: { color: colours.textPrimary },
   addBtn: { marginTop: spacing.xs },
   enrichmentToggle: {
     flexDirection: 'row',
