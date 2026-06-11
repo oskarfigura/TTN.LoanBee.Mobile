@@ -30,16 +30,16 @@
     "title": "Nowe obliczenie",
     "stepIntent": "Krok 1",
     "intentTitle": "Co chcesz zrobić?",
-    "intentHelp": "Liczysz koszty, czy chcesz śledzić zobowiązanie, które już masz?",
+    "intentHelp": "Liczysz koszty, czy śledzisz to, co już masz?",
     "calculateTitle": "Oblicz raty",
-    "calculateHelp": "Oblicz koszt kredytu lub hipoteki — automatycznie zapisywane w Ostatnich.",
+    "calculateHelp": "Zobacz raty i całkowity koszt.",
     "trackTitle": "Śledź moje zobowiązania",
-    "trackIntentHelp": "Miej na oku hipotekę lub kredyt, który już masz.",
+    "trackIntentHelp": "Miej na oku to, co już masz.",
     "stepTrack": "Krok 2",
     "trackChoiceTitle": "Co chcesz śledzić?",
-    "trackChoiceHelp": "Wybierz typ, abyśmy dopasowali szczegóły.",
-    "trackMortgageHelp": "Zapisz hipotekę, którą już masz — od dziś albo od samego zakupu.",
-    "trackLoanHelp": "Zapisz kredyt, który już masz albo który zaraz się zacznie."
+    "trackChoiceHelp": "Wybierz typ, by dopasować szczegóły.",
+    "trackMortgageHelp": "Od dziś lub od zakupu.",
+    "trackLoanHelp": "Taki, który masz lub zaraz zaczniesz."
   },
   "results": {
     "title": "Wyniki",

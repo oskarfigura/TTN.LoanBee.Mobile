@@ -30,16 +30,16 @@
     "title": "New calculation",
     "stepIntent": "Step 1",
     "intentTitle": "What would you like to do?",
-    "intentHelp": "Are you working out the numbers, or keeping tabs on borrowing you already have?",
+    "intentHelp": "Working out numbers, or tracking what you have?",
     "calculateTitle": "Calculate repayments",
-    "calculateHelp": "Work out the cost of a loan or mortgage — saved to Recent automatically.",
+    "calculateHelp": "See repayments and total cost.",
     "trackTitle": "Track my borrowing",
-    "trackIntentHelp": "Keep tabs on a mortgage or loan you already have.",
+    "trackIntentHelp": "Keep an eye on what you already have.",
     "stepTrack": "Step 2",
     "trackChoiceTitle": "What are you tracking?",
-    "trackChoiceHelp": "Pick the type so we can tailor the details.",
-    "trackMortgageHelp": "Log a mortgage you already have — from today, or right back to purchase.",
-    "trackLoanHelp": "Log a loan you already have or are about to start."
+    "trackChoiceHelp": "Pick a type to tailor the details.",
+    "trackMortgageHelp": "From today or back to purchase.",
+    "trackLoanHelp": "One you have or are about to start."
   },
   "results": {
     "title": "Results",
