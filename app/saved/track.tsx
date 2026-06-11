@@ -332,7 +332,12 @@ export default function TrackMortgageScreen() {
           <View style={styles.fieldGroup}>
             <SegmentedControl
               value={mode}
-              onChange={setMode}
+              onChange={next => {
+                setMode(next);
+                // A historical purchase can't be in the future: clamp a future
+                // start date back to today when entering from-beginning mode.
+                if (next === 'beginning' && startDate > today) setStartDate(today);
+              }}
               options={[
                 { label: t('track.modeToday'), value: 'today' },
                 { label: t('track.modeBeginning'), value: 'beginning' },
@@ -350,6 +355,7 @@ export default function TrackMortgageScreen() {
             if (!seed?.dealEndDate) setDealEndDate(addMonthsToIsoDate(value, 24));
           }}
           hint={t(useBeginning ? 'track.purchaseDateHint' : isMortgage ? 'track.dealStartDateHint' : 'track.dealStartDateHintLoan')}
+          maximumDate={useBeginning ? parseDateLabelValue(today) ?? undefined : undefined}
         />
 
         {useBeginning ? (

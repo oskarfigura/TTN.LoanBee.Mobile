@@ -309,4 +309,26 @@ describe('Track form journey', () => {
 
     expect(findModeToggle(renderer)).toBeUndefined();
   });
+
+  it('caps the purchase date at today and clamps a future date when switching to from-the-beginning', async () => {
+    const renderer = await renderTrack();
+
+    // Pick a future start date while still in from-today mode…
+    await act(async () => {
+      getStartDateField(renderer).props.onChange('2999-01-01');
+    });
+    // …then switch to from-the-beginning.
+    await act(async () => {
+      findModeToggle(renderer)!.props.onChange('beginning');
+    });
+
+    const purchaseField = renderer.root
+      .findAll(node => String(node.type) === 'DatePickerField')
+      .find(node => node.props.label === 'track.purchaseDate')!;
+
+    // Future date is clamped (a historical purchase can't be in the future)…
+    expect(purchaseField.props.value).not.toBe('2999-01-01');
+    // …and the picker is capped so the user can't reselect a future date.
+    expect(purchaseField.props.maximumDate).toBeDefined();
+  });
 });
