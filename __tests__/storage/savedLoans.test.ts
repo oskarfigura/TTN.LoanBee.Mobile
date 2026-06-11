@@ -13,6 +13,7 @@ import {
 import { storage } from '../../src/storage/mmkv';
 import { STORAGE_KEYS } from '../../src/storage/keys';
 import { InvalidMortgageEventError } from '../../src/mortgage/events';
+import { DEFAULT_LOAN_PURPOSE } from '../../src/loans/loanPurpose';
 
 const makeLoan = (overrides: Partial<SavedLoan> = {}): SavedLoan => ({
   id: 'test-id-1',
@@ -216,6 +217,20 @@ describe('savedLoansStorage', () => {
     storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([withoutMortgageTerm]));
 
     expect(savedLoansStorage.getAll()[0].mortgageTermInMonths).toBe(120);
+  });
+
+  it('backfills loan purpose on existing tracked loans', () => {
+    const loan = makeLoan({ category: 'loan' });
+    const { loanPurpose, ...withoutPurpose } = loan;
+    void loanPurpose;
+
+    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify([withoutPurpose]));
+
+    const restored = savedLoansStorage.getAll()[0];
+    expect(restored.loanPurpose).toBe(DEFAULT_LOAN_PURPOSE);
+
+    const raw = storage.getString(STORAGE_KEYS.SAVED_LOANS) ?? '';
+    expect(JSON.parse(raw)[0].loanPurpose).toBe(DEFAULT_LOAN_PURPOSE);
   });
 
   it('stamps schemaVersion on add() so future migrations have a discriminator', () => {

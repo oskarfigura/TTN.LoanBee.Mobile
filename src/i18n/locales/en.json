@@ -131,6 +131,15 @@
       "loan": "Loan"
     }
   },
+  "loanPurpose": {
+    "personal": "Personal",
+    "car": "Car",
+    "bike": "Bike",
+    "motorbike": "Motorbike",
+    "homeImprovement": "Home improvement",
+    "education": "Education",
+    "other": "Other"
+  },
   "recent": {
     "title": "Recent calculations",
     "intro": "Recent calculations are kept separate from tracked borrowing until you choose to save them.",
@@ -167,6 +176,7 @@
     "none": "None",
     "custom": "Custom",
     "category": "Category",
+    "loanPurpose": "What is it for?",
     "mortgage": "Mortgage",
     "loan": "Personal Loan",
     "currency": "Currency",

@@ -1,6 +1,14 @@
 import { CurrencyCode } from '@/currency/currencies';
 
 export type LoanCategory = 'mortgage' | 'loan';
+export type LoanPurpose =
+  | 'personal'
+  | 'car'
+  | 'bike'
+  | 'motorbike'
+  | 'homeImprovement'
+  | 'education'
+  | 'other';
 export type LoanGroupStatus = 'draft' | 'tracked';
 export type LoanDealStatus = 'draft' | 'active' | 'completed';
 export type LoanDealSource = 'estimate' | 'userDeal';
@@ -102,6 +110,7 @@ export interface LoanGroup {
   nickname: string;
   lender?: string;
   category: LoanCategory;
+  loanPurpose?: LoanPurpose;
   currency: CurrencyCode;
   mortgageTermInMonths?: number;
   parentLoanId?: string;

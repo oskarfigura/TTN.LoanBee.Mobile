@@ -4,6 +4,7 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { generateDefaultDealName } from '@/mortgage/tracker';
 import { LOAN_GROUP_SCHEMA_VERSION, LoanDeal, LoanFormSnapshot, LoanGroup, LoanResultSnapshot } from '@/types/SavedLoan';
+import { DEFAULT_LOAN_PURPOSE } from '@/loans/loanPurpose';
 import { getEffectiveLoanAmount as computeEffectiveLoanAmount } from '@/utils/paymentValidation';
 import { advanceMonthsClamped, formatIsoDate } from '@/utils/date';
 
@@ -167,6 +168,7 @@ export const buildDraftLoanPreview = (
     nickname: '',
     lender: undefined,
     category: 'loan',
+    loanPurpose: DEFAULT_LOAN_PURPOSE,
     currency,
     status: 'draft',
     pinnedToDashboard: false,

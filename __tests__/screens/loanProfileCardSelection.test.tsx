@@ -53,6 +53,10 @@ jest.mock('../../src/components/loans/LoanIcons', () => ({
   PinIcon: (props: Record<string, unknown>) => React.createElement('PinIcon', props),
 }));
 
+jest.mock('../../src/components/loans/LoanPurposePicker', () => ({
+  LoanPurposeIconTile: (props: Record<string, unknown>) => React.createElement('LoanPurposeIconTile', props),
+}));
+
 jest.mock('../../src/components/loans/SavedLoanProgressBar', () => ({
   SavedLoanProgressBar: (props: Record<string, unknown>) => React.createElement('SavedLoanProgressBar', props),
 }));

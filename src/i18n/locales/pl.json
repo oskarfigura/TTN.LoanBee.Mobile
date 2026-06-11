@@ -131,6 +131,15 @@
       "loan": "Kredyt"
     }
   },
+  "loanPurpose": {
+    "personal": "Osobisty",
+    "car": "Samochód",
+    "bike": "Rower",
+    "motorbike": "Motocykl",
+    "homeImprovement": "Remont",
+    "education": "Edukacja",
+    "other": "Inne"
+  },
   "recent": {
     "title": "Ostatnie obliczenia",
     "intro": "Ostatnie obliczenia są oddzielone od śledzonych zobowiązań, dopóki ich nie zapiszesz.",
@@ -167,6 +176,7 @@
     "none": "Brak",
     "custom": "Własny",
     "category": "Kategoria",
+    "loanPurpose": "Na co jest kredyt?",
     "mortgage": "Hipoteka",
     "loan": "Kredyt Osobisty",
     "currency": "Waluta",

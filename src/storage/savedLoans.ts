@@ -10,6 +10,7 @@ import {
   MortgageEvent,
   SavedLoan,
 } from '@/types/SavedLoan';
+import { normaliseLoanPurpose } from '@/loans/loanPurpose';
 import { getEffectiveLoanAmount } from '@/utils/paymentValidation';
 import { advanceMonthsClamped, formatIsoDate } from '@/utils/date';
 
@@ -110,6 +111,7 @@ export const migrateLegacySavedLoan = (loan: LegacySavedLoan): LoanGroup => ({
   status: 'tracked',
   pinnedToDashboard: false,
   mortgageTermInMonths: getMortgageTermInMonths(loan),
+  loanPurpose: loan.category === 'loan' ? normaliseLoanPurpose(loan.loanPurpose) : undefined,
   deals: [buildMigratedDeal(loan)],
   events: [],
 });
@@ -124,11 +126,17 @@ const isLoanGroup = (loan: Partial<LoanGroup>): loan is LoanGroup => (
 const normaliseLoanGroup = (loan: LoanGroup): LoanGroup => {
   const needsTerm = !loan.mortgageTermInMonths;
   const needsVersion = loan.schemaVersion !== LOAN_GROUP_SCHEMA_VERSION;
-  if (!needsTerm && !needsVersion) return loan;
+  const normalisedLoanPurpose = loan.category === 'loan'
+    ? normaliseLoanPurpose(loan.loanPurpose)
+    : undefined;
+  const needsPurpose = loan.category === 'loan' && loan.loanPurpose !== normalisedLoanPurpose;
+  const shouldDropPurpose = loan.category === 'mortgage' && loan.loanPurpose !== undefined;
+  if (!needsTerm && !needsVersion && !needsPurpose && !shouldDropPurpose) return loan;
 
   return {
     ...loan,
     mortgageTermInMonths: needsTerm ? getMortgageTermInMonths(loan) : loan.mortgageTermInMonths,
+    loanPurpose: normalisedLoanPurpose,
     schemaVersion: LOAN_GROUP_SCHEMA_VERSION,
   };
 };

@@ -17,11 +17,13 @@ import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { DashboardHeader } from '@/components/loans/DashboardHeader';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { CalculatorIcon, EditIcon } from '@/components/loans/LoanIcons';
+import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
 import {
   LoanDashboardProgress,
   buildSavedLoanDisplayDetails,
 } from '@/loans/loanInsightSummary';
 import { UserVisibleMetric, buildSavedLoanDisplayContract } from '@/loans/loanDisplayContract';
+import { getLoanPurpose } from '@/loans/loanPurpose';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, elevation, fontFaces, fontSizes, layout, spacing } from '@/theme';
@@ -103,7 +105,7 @@ const LoanDashboardCard = React.memo(({
   onOpenDetails: (loanId: string) => void;
 }) => {
   const { t, i18n } = useTranslation();
-  const { progress, dashboardMetrics, dealLender } = useMemo(() => {
+  const { progress, dashboardMetrics, dealLender, purpose } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
     const asOf = new Date();
     const displayDetails = buildSavedLoanDisplayDetails(loan, asOf);
@@ -118,8 +120,11 @@ const LoanDashboardCard = React.memo(({
       progress: contract.dashboardProgress,
       dashboardMetrics: contract.dashboardMetrics,
       dealLender: displayDetails.lender,
+      purpose: getLoanPurpose(loan),
     };
   }, [i18n.language, loan]);
+  const categoryLabel = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
+  const subtitle = dealLender ? `${categoryLabel} · ${dealLender}` : categoryLabel;
 
   return (
     <View style={[styles.slide, { width }]}>
@@ -130,6 +135,7 @@ const LoanDashboardCard = React.memo(({
       >
         <View style={styles.summaryCard}>
           <View style={styles.cardHeader}>
+            {purpose ? <LoanPurposeIconTile purpose={purpose} size={48} /> : null}
             <View style={styles.cardHeaderCopy}>
               <Text
                 style={styles.cardTitle}
@@ -140,7 +146,7 @@ const LoanDashboardCard = React.memo(({
                 {loan.nickname}
               </Text>
               <Text style={styles.cardSubtitle} numberOfLines={1}>
-                {dealLender || t(`saved.category.${loan.category}`)}
+                {subtitle}
               </Text>
             </View>
           </View>
@@ -307,6 +313,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     alignItems: 'center',
+    gap: spacing.xs,
   },
   cardHeaderCopy: {
     alignItems: 'center',

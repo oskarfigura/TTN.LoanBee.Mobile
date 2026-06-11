@@ -15,6 +15,7 @@ import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
 import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
 import { ClockIcon } from '@/components/ui/Icons/ClockIcon/ClockIcon';
 import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
+import { getLoanPurpose } from '@/loans/loanPurpose';
 import { recentCalculationsStorage } from '@/storage/recentCalculations';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
@@ -35,11 +36,15 @@ export default function SavedScreen() {
   const visibleLoans = useMemo(() => {
     const normalisedQuery = query.trim().toLocaleLowerCase();
     const filtered = normalisedQuery
-      ? loans.filter(loan => [
-        loan.nickname,
-        loan.lender ?? '',
-        t(`saved.category.${loan.category}`),
-      ].some(value => value.toLocaleLowerCase().includes(normalisedQuery)))
+      ? loans.filter(loan => {
+        const loanPurpose = getLoanPurpose(loan);
+        return [
+          loan.nickname,
+          loan.lender ?? '',
+          t(`saved.category.${loan.category}`),
+          loanPurpose ? t(`loanPurpose.${loanPurpose}`) : '',
+        ].some(value => value.toLocaleLowerCase().includes(normalisedQuery));
+      })
       : loans;
 
     return [...filtered].sort((a, b) => {

@@ -12,6 +12,7 @@ import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
+import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import {
@@ -35,6 +36,7 @@ import {
   buildResultSnapshot,
   normaliseFormSnapshot,
 } from '@/loans/loanGroupFactory';
+import { DEFAULT_LOAN_PURPOSE } from '@/loans/loanPurpose';
 import { getDraftResultSession } from '@/results/draftResultStore';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
@@ -88,6 +90,7 @@ export default function SaveNewLoanScreen() {
   const [nickname, setNickname] = useState('');
   const [lender, setLender] = useState('');
   const [category, setCategory] = useState<LoanCategory>(recentCalculation?.category ?? 'loan');
+  const [loanPurpose, setLoanPurpose] = useState(DEFAULT_LOAN_PURPOSE);
   const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? recentCalculation?.currency ?? 'GBP');
 
   const isMortgage = category === 'mortgage';
@@ -134,6 +137,7 @@ export default function SaveNewLoanScreen() {
       nickname: nickname.trim(),
       lender: lender || undefined,
       category,
+      loanPurpose: category === 'loan' ? loanPurpose : undefined,
       currency,
       mortgageTermInMonths,
       status: 'tracked',
@@ -206,6 +210,13 @@ export default function SaveNewLoanScreen() {
               ]}
             />
           </View>
+
+          {category === 'loan' ? (
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('save.loanPurpose')}</FieldLabel>
+              <LoanPurposePicker value={loanPurpose} onChange={setLoanPurpose} />
+            </View>
+          ) : null}
 
           <View style={styles.fieldGroup}>
             <FieldLabel>{t('save.lender')}</FieldLabel>

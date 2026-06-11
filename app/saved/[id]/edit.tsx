@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/currency/format';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
+import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
 import { PinIcon } from '@/components/loans/LoanIcons';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { normaliseLoanPurpose } from '@/loans/loanPurpose';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
 
@@ -23,6 +25,7 @@ export default function EditLoanScreen() {
 
   const [nickname, setNickname] = useState(loan?.nickname ?? '');
   const [lender, setLender] = useState(loan?.lender ?? '');
+  const [loanPurpose, setLoanPurpose] = useState(normaliseLoanPurpose(loan?.loanPurpose));
   const [pinnedToDashboard, setPinnedToDashboard] = useState(loan?.pinnedToDashboard ?? false);
 
   if (!loan) {
@@ -50,6 +53,7 @@ export default function EditLoanScreen() {
       ...loan,
       nickname: nickname.trim(),
       lender: lender.trim() || undefined,
+      loanPurpose: loan.category === 'loan' ? loanPurpose : undefined,
       pinnedToDashboard,
       dashboardOrder: pinnedToDashboard
         ? loan.dashboardOrder ?? maxOrder + 1
@@ -107,6 +111,13 @@ export default function EditLoanScreen() {
           <FieldLabel>{t('save.lender')}</FieldLabel>
           <LenderTextInput value={lender} onChange={setLender} />
         </View>
+
+        {loan.category === 'loan' ? (
+          <View style={styles.field}>
+            <FieldLabel>{t('save.loanPurpose')}</FieldLabel>
+            <LoanPurposePicker value={loanPurpose} onChange={setLoanPurpose} />
+          </View>
+        ) : null}
 
         <TouchableOpacity
           style={[styles.pinToggle, pinnedToDashboard && styles.pinToggleActive]}

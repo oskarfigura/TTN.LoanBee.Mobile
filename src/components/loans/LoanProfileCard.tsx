@@ -3,10 +3,12 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
-import { ChevronRightIcon, LoanCategoryIcon, MortgageIcon, PinIcon } from '@/components/loans/LoanIcons';
+import { ChevronRightIcon, MortgageIcon, PinIcon } from '@/components/loans/LoanIcons';
+import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
 import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSummary';
+import { getLoanPurpose } from '@/loans/loanPurpose';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { SavedLoan } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
@@ -27,6 +29,17 @@ const SelectionCheckbox = ({ selected }: { selected: boolean }) => (
     {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
   </View>
 );
+
+const IdentityIcon = ({ loan }: { loan: SavedLoan }) => {
+  const purpose = getLoanPurpose(loan);
+  if (purpose) return <LoanPurposeIconTile purpose={purpose} size={40} />;
+
+  return (
+    <View style={styles.iconTile}>
+      <MortgageIcon color={colours.primary} size={18} />
+    </View>
+  );
+};
 
 export const LoanProfileCard = ({
   loan,
@@ -64,7 +77,8 @@ export const LoanProfileCard = ({
       summary: buildSavedLoanSummary(loan, result, asOf, i18n.language),
     };
   }, [i18n.language, loan, isDraft]);
-  const CategoryIcon = loan.category === 'mortgage' ? MortgageIcon : LoanCategoryIcon;
+  const purpose = getLoanPurpose(loan);
+  const categoryLabel = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
 
   if (isDraft || !insight) {
     const draftLabel = `${loan.nickname.trim() || t('track.draftUntitled')}. ${t('saved.draftA11y')}`;
@@ -79,9 +93,7 @@ export const LoanProfileCard = ({
         <Card padding={0} style={[styles.card, selected && styles.cardSelected]}>
           <View style={[styles.inner, styles.draftInner]}>
             <View style={styles.identity}>
-              <View style={styles.iconTile}>
-                <CategoryIcon color={colours.primary} size={18} />
-              </View>
+              <IdentityIcon loan={loan} />
               <View style={styles.titleBlock}>
                 <AppText variant="title3" tone="default" numberOfLines={1}>
                   {loan.nickname.trim() || t('track.draftUntitled')}
@@ -126,7 +138,7 @@ export const LoanProfileCard = ({
   // run-on announcement. Build a concise spoken summary of the key facts instead.
   const accessibilityLabel = [
     loan.nickname,
-    t(`saved.category.${loan.category}`),
+    categoryLabel,
     `${t(primaryMetric.labelKey)}: ${primaryMetric.value}`,
     summary.progress
       ? t('saved.balancePaidWithPercent', { percent: Math.round((summary.progress.value ?? 0) * 100) })
@@ -159,9 +171,7 @@ export const LoanProfileCard = ({
         <View style={styles.inner}>
           <View style={styles.header}>
             <View style={styles.identity}>
-              <View style={styles.iconTile}>
-                <CategoryIcon color={colours.primary} size={18} />
-              </View>
+              <IdentityIcon loan={loan} />
               <View style={styles.titleBlock}>
                 <AppText variant="title3" tone="default" numberOfLines={1} adjustsFontSizeToFit>
                   {loan.nickname}
@@ -169,7 +179,7 @@ export const LoanProfileCard = ({
                 <View style={styles.metaRow}>
                   <View style={styles.categoryLabel}>
                     <AppText variant="labelSm" tone="accent" numberOfLines={1}>
-                      {t(`saved.category.${loan.category}`)}
+                      {categoryLabel}
                     </AppText>
                   </View>
                   {displayDetails.lender ? (
