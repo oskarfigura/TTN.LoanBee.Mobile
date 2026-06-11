@@ -35,7 +35,11 @@
     "exploreScenario": "Explore scenario",
     "trackBorrowing": "Track one I have",
     "scenarioHelp": "Try numbers freely. The calculation is saved to Recent automatically.",
-    "trackHelp": "Set up borrowing you already have or are about to start."
+    "trackHelp": "Set up borrowing you already have or are about to start.",
+    "trackMortgageTitle": "Track a mortgage",
+    "trackMortgageHelp": "Log a mortgage you already have — from today, or right back to purchase.",
+    "trackLoanTitle": "Track a loan",
+    "trackLoanHelp": "Log a loan you already have or are about to start."
   },
   "results": {
     "title": "Results",
@@ -797,7 +801,7 @@
     "cta": "Track borrowing",
     "save": "Start tracking",
     "sectionToday": "Borrowing details",
-    "todayHelp": "Choose Loan or Mortgage, then enter the balance, rate, and term from the date this deal starts.",
+    "todayHelp": "Enter the balance, rate, and term from the date this deal starts.",
     "nickname": "Nickname",
     "nicknamePlaceholder": "e.g. Family home",
     "lender": "Lender",

@@ -47,7 +47,7 @@ const numberText = (value?: number): string =>
 export default function TrackMortgageScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, category: categoryParam } = useLocalSearchParams<{ id?: string; category?: string }>();
   const { add, update } = useSavedLoans();
   const { recordUsefulAction, requestReview } = useStoreReview();
 
@@ -68,7 +68,11 @@ export default function TrackMortgageScreen() {
   const [nickname, setNickname] = useState(seed?.nickname ?? '');
   const [lender, setLender] = useState(seed?.lender ?? '');
   const [currency, setCurrency] = useState<CurrencyCode>(seed?.currency ?? defaultCurrency);
-  const [category, setCategory] = useState<LoanCategory>(existing?.category ?? 'mortgage');
+  // Category is fixed by the intent step (or the resumed draft); the form no
+  // longer offers a Loan/Mortgage toggle, so it stays single-purpose.
+  const [category] = useState<LoanCategory>(
+    existing?.category ?? (categoryParam === 'loan' ? 'loan' : 'mortgage'),
+  );
   // Mortgages can be tracked "from today" (current balance) or "from the
   // beginning" (original purchase price + deposit, from which the borrowed
   // balance is derived). Resuming a legacy draft always lands on today.
@@ -314,18 +318,6 @@ export default function TrackMortgageScreen() {
         <View style={styles.fieldGroup}>
           <FieldLabel>{t('track.currency')}</FieldLabel>
           <CurrencyPicker value={currency} onChange={setCurrency} />
-        </View>
-
-        <View style={styles.fieldGroup}>
-          <FieldLabel>{t('save.category')}</FieldLabel>
-          <SegmentedControl
-            value={category}
-            onChange={setCategory}
-            options={[
-              { label: t('save.loan'), value: 'loan' },
-              { label: t('save.mortgage'), value: 'mortgage' },
-            ]}
-          />
         </View>
 
         {isMortgage ? (

@@ -145,7 +145,9 @@ describe('Home intent journey', () => {
 
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(0);
     expect(textContent(renderer.root)).toContain('journey.planTitle');
-    expect(textContent(renderer.root)).toContain('journey.trackBorrowing');
+    // Track is split into category-specific cards chosen up front.
+    expect(textContent(renderer.root)).toContain('journey.trackMortgageTitle');
+    expect(textContent(renderer.root)).toContain('journey.trackLoanTitle');
     expect(textContent(renderer.root)).not.toContain('journey.borrowingType');
 
     await act(async () => {
@@ -156,14 +158,19 @@ describe('Home intent journey', () => {
     expect(mockRouter.push).not.toHaveBeenCalled();
   });
 
-  it('routes Track one I have straight to the unified track form', async () => {
+  it('routes each track card to the category-specific track form', async () => {
     const renderer = await renderHome();
 
     await act(async () => {
-      findTouchableByText(renderer, 'journey.trackBorrowing').props.onPress();
+      findTouchableByText(renderer, 'journey.trackMortgageTitle').props.onPress();
     });
+    expect(mockRouter.push).toHaveBeenCalledWith('/saved/track?category=mortgage');
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/saved/track');
+    await act(async () => {
+      findTouchableByText(renderer, 'journey.trackLoanTitle').props.onPress();
+    });
+    expect(mockRouter.push).toHaveBeenCalledWith('/saved/track?category=loan');
+
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(0);
   });
 });

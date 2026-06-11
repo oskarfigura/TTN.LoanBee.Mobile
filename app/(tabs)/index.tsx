@@ -12,6 +12,7 @@ import { getLoanCalculations } from '@/core/amortisation';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CurrencyCode } from '@/currency/currencies';
+import { LoanCategory } from '@/types/SavedLoan';
 import { LoanForm } from '@/components/calculator/LoanForm';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
@@ -168,8 +169,10 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     setJourneyStep('form');
   }, []);
 
-  const openTrackForm = useCallback(() => {
-    router.push('/saved/track');
+  // Category is chosen here, at the intent step, so the track form is
+  // single-purpose (no in-form Loan/Mortgage toggle).
+  const openTrackForm = useCallback((category: LoanCategory) => {
+    router.push(`/saved/track?category=${category}` as never);
   }, [router]);
 
   const handleSubmit = (values: LoanCalculatorFormValues) => {
@@ -233,9 +236,14 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
               onPress={openPlanForm}
             />
             <JourneyOption
-              title={t('journey.trackBorrowing')}
-              body={t('journey.trackHelp')}
-              onPress={openTrackForm}
+              title={t('journey.trackMortgageTitle')}
+              body={t('journey.trackMortgageHelp')}
+              onPress={() => openTrackForm('mortgage')}
+            />
+            <JourneyOption
+              title={t('journey.trackLoanTitle')}
+              body={t('journey.trackLoanHelp')}
+              onPress={() => openTrackForm('loan')}
             />
           </View>
         </ScrollView>

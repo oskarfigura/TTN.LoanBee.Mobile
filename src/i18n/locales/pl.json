@@ -35,7 +35,11 @@
     "exploreScenario": "Sprawdzić scenariusz",
     "trackBorrowing": "Śledzić obecne",
     "scenarioHelp": "Swobodnie testuj liczby. Obliczenie automatycznie trafi do Ostatnich.",
-    "trackHelp": "Skonfiguruj zobowiązanie, które już masz albo które zaraz się zacznie."
+    "trackHelp": "Skonfiguruj zobowiązanie, które już masz albo które zaraz się zacznie.",
+    "trackMortgageTitle": "Śledź hipotekę",
+    "trackMortgageHelp": "Zapisz hipotekę, którą już masz — od dziś albo od samego zakupu.",
+    "trackLoanTitle": "Śledź kredyt",
+    "trackLoanHelp": "Zapisz kredyt, który już masz albo który zaraz się zacznie."
   },
   "results": {
     "title": "Wyniki",
@@ -797,7 +801,7 @@
     "cta": "Śledź zobowiązanie",
     "save": "Rozpocznij śledzenie",
     "sectionToday": "Szczegóły zobowiązania",
-    "todayHelp": "Wybierz Kredyt lub Hipotekę, a potem wpisz saldo, oprocentowanie i okres od daty rozpoczęcia tej umowy.",
+    "todayHelp": "Wpisz saldo, oprocentowanie i okres od daty rozpoczęcia tej umowy.",
     "nickname": "Nazwa",
     "nicknamePlaceholder": "np. Dom rodzinny",
     "lender": "Kredytodawca",
