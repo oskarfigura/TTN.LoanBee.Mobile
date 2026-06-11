@@ -5,10 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { colours, fontFaces, fontSizes } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';
 import { buildAmortisationDisplayRows } from '@/loans/loanDisplayContract';
+import { type AmortisationTableItem } from '@oskarfigura/amortisation';
 import { clampPage, getPaginationWindow } from './pagination';
-import {
-  AmortisationTableItem,
-} from './amortisationTableUtils';
 
 interface Props {
   items: AmortisationTableItem[];
