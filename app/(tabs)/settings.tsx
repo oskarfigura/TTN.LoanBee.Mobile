@@ -14,9 +14,7 @@ import { Card } from '@/components/ui/Card';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
-import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
-import { RouteIcon } from '@/components/ui/Icons/RouteIcon/RouteIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import {
   buildSavedLoansBackup,
@@ -62,7 +60,7 @@ const SettingsCallout = ({
       <AppText variant="bodySm" tone="muted">{body}</AppText>
     </View>
     <View style={styles.calloutChevron}>
-      <ChevronRightIcon size={16} color={colours.textSecondary} strokeWidth={2} />
+      <Icon icon={IconName.ChevronRightIcon} size={16} color={colours.textSecondary} strokeWidth={2} />
     </View>
   </TouchableOpacity>
 );
@@ -246,7 +244,7 @@ export default function SettingsScreen() {
             title={t('guide.settingsEntry')}
             body={t('settings.howItWorksBody')}
             tone="guide"
-            icon={<RouteIcon size={20} color={colours.primary} strokeWidth={2} />}
+            icon={<Icon icon={IconName.RouteIcon} size={20} color={colours.primary} strokeWidth={2} />}
             onPress={() => router.push('/guide')}
           />
           <View style={styles.calloutDivider} />
@@ -254,7 +252,7 @@ export default function SettingsScreen() {
             title={t('settings.about')}
             body={t('settings.aboutBody')}
             tone="about"
-            icon={<InfoCircleIcon size={20} color={colours.tealDeep} strokeWidth={2} />}
+            icon={<Icon icon={IconName.InfoCircleIcon} size={20} color={colours.tealDeep} strokeWidth={2} />}
             onPress={() => router.push('/about')}
           />
         </View>

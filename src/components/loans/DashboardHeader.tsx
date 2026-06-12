@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
-import { MenuIcon } from '@/components/ui/Icons/MenuIcon/MenuIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
 type DashboardRoute = '/saved' | '/settings';
@@ -101,7 +101,7 @@ export const DashboardHeader = ({ onNewCalculation, onNavigate }: Props) => {
             onPress={() => setMenuVisible(true)}
             accessibilityLabel={t('navigation.openMenu')}
           >
-            <MenuIcon color={colours.primary} size={20} strokeWidth={2} />
+            <Icon icon={IconName.MenuIcon} color={colours.primary} size={20} strokeWidth={2} />
           </HeaderIconButton>
         </View>
       </View>

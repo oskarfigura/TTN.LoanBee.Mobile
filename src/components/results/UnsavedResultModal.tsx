@@ -2,10 +2,7 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { AlertTriangleIcon } from '@/components/ui/Icons/AlertTriangleIcon/AlertTriangleIcon';
-import { EditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
-import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, fontFaces, fontSizes } from '@/theme';
 
 interface Props {
@@ -29,7 +26,7 @@ export const UnsavedResultModal = ({
         <Pressable style={styles.modal}>
           <View style={styles.header}>
             <View style={styles.iconWrap}>
-              <AlertTriangleIcon color={colours.primary} size={22} />
+              <Icon icon={IconName.AlertTriangleIcon} color={colours.primary} size={22} />
             </View>
             <View style={styles.copy}>
               <Text style={styles.title}>{t('results.unsavedTitle')}</Text>
@@ -38,21 +35,21 @@ export const UnsavedResultModal = ({
           <Button
             label={t('results.saveBeforeLeaving')}
             onPress={onSave}
-            leftIcon={<SaveIcon color={colours.white} size={18} />}
+            leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} />}
             style={styles.primaryAction}
           />
           <Button
             label={t('results.keepEditing')}
             onPress={onKeepEditing}
             variant="secondary"
-            leftIcon={<EditIcon color={colours.primaryInk} size={18} />}
+            leftIcon={<Icon icon={IconName.EditIcon} color={colours.primaryInk} size={18} />}
             style={styles.secondaryAction}
           />
           <Button
             label={t('results.discard')}
             onPress={onDiscard}
             variant="ghost"
-            leftIcon={<TrashIcon color={colours.primary} size={18} />}
+            leftIcon={<Icon icon={IconName.TrashIcon} color={colours.primary} size={18} />}
             style={styles.ghostAction}
           />
         </Pressable>

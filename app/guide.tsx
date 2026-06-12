@@ -5,26 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { SvgProps } from '@/components/ui/Svg';
-import { ArrowRightIcon } from '@/components/ui/Icons/ArrowRightIcon/ArrowRightIcon';
-import { GridIcon } from '@/components/ui/Icons/GridIcon/GridIcon';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
-import { TrendUpIcon } from '@/components/ui/Icons/TrendUpIcon/TrendUpIcon';
-import { XCloseIcon } from '@/components/ui/Icons/XCloseIcon/XCloseIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { markGuideSeen } from '@/onboarding/guideState';
 import { colours, layout, radii, spacing } from '@/theme';
 
-type IconComponent = (props: SvgProps) => React.JSX.Element;
-
 interface GuideStep {
   key: 'details' | 'compare' | 'save';
-  icon: IconComponent;
+  icon: IconName;
 }
 
 const GUIDE_STEPS: GuideStep[] = [
-  { key: 'details', icon: GridIcon },
-  { key: 'compare', icon: TrendUpIcon },
-  { key: 'save', icon: SaveIcon },
+  { key: 'details', icon: IconName.GridIcon },
+  { key: 'compare', icon: IconName.TrendUpIcon },
+  { key: 'save', icon: IconName.SaveIcon },
 ];
 
 export default function GuideScreen() {
@@ -60,7 +53,7 @@ export default function GuideScreen() {
           hitSlop={8}
           style={styles.closeButton}
         >
-          <XCloseIcon color={colours.textSecondary} size={20} strokeWidth={2} />
+          <Icon icon={IconName.XCloseIcon} color={colours.textSecondary} size={20} strokeWidth={2} />
           <AppText variant="labelMd" tone="muted">{t('guide.skip')}</AppText>
         </TouchableOpacity>
       </View>
@@ -77,13 +70,12 @@ export default function GuideScreen() {
 
         <View style={styles.stepsCard}>
           {GUIDE_STEPS.map((step, index) => {
-            const Icon = step.icon;
             const isLast = index === GUIDE_STEPS.length - 1;
 
             return (
               <View key={step.key} style={[styles.stepRow, isLast ? styles.lastStepRow : undefined]}>
                 <View style={styles.stepIconWrap}>
-                  <Icon color={colours.primary} size={22} strokeWidth={2} />
+                  <Icon icon={step.icon} color={colours.primary} size={22} strokeWidth={2} />
                 </View>
                 <View style={styles.stepCopy}>
                   <AppText variant="labelSm" style={styles.stepNumber}>
@@ -111,7 +103,7 @@ export default function GuideScreen() {
         <Button
           label={t('guide.startCalculating')}
           onPress={startCalculating}
-          rightIcon={<ArrowRightIcon color={colours.white} size={18} strokeWidth={2} />}
+          rightIcon={<Icon icon={IconName.ArrowRightIcon} color={colours.white} size={18} strokeWidth={2} />}
         />
       </View>
     </SafeAreaView>

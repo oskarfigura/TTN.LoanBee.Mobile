@@ -137,20 +137,9 @@ jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icons/ChevronRightIcon/ChevronRightIcon', () => ({
-  ChevronRightIcon: (props: Record<string, unknown>) => React.createElement('ChevronRightIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon', () => ({
-  CoinsStackedIcon: (props: Record<string, unknown>) => React.createElement('CoinsStackedIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/InfoCircleIcon/InfoCircleIcon', () => ({
-  InfoCircleIcon: (props: Record<string, unknown>) => React.createElement('InfoCircleIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/PlusIcon/PlusIcon', () => ({
-  PlusIcon: (props: Record<string, unknown>) => React.createElement('PlusIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 jest.mock('react-native-keyboard-controller', () => ({

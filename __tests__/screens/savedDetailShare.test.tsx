@@ -111,8 +111,9 @@ jest.mock('../../src/components/loans/MortgageDetailView', () => ({
   MortgageDetailView: (props: Record<string, unknown>) => React.createElement('MortgageDetailView', props),
 }));
 
-jest.mock('../../src/components/loans/LoanIcons', () => ({
-  MoreIcon: (props: Record<string, unknown>) => React.createElement('MoreIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 jest.mock('../../src/components/ui/AppText', () => ({
@@ -155,22 +156,6 @@ jest.mock('../../src/components/ui/QuickActionTile', () => ({
 
 jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon', () => ({
-  CoinsStackedIcon: (props: Record<string, unknown>) => React.createElement('CoinsStackedIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/EditIcon/EditIcon', () => ({
-  EditIcon: (props: Record<string, unknown>) => React.createElement('EditIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/ShareIcon/ShareIcon', () => ({
-  ShareIcon: (props: Record<string, unknown>) => React.createElement('ShareIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/TrashIcon/TrashIcon', () => ({
-  TrashIcon: (props: Record<string, unknown>) => React.createElement('TrashIcon', props),
 }));
 
 const formSnapshot = {

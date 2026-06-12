@@ -100,16 +100,9 @@ jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icons/SaveIcon/SaveIcon', () => ({
-  SaveIcon: () => React.createElement('SaveIcon'),
-}));
-
-jest.mock('../../src/components/ui/Icons/ShareIcon/ShareIcon', () => ({
-  ShareIcon: () => React.createElement('ShareIcon'),
-}));
-
-jest.mock('../../src/components/loans/LoanIcons', () => ({
-  EditIcon: () => React.createElement('EditIcon'),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 jest.mock('../../src/share/shareCalculation', () => ({

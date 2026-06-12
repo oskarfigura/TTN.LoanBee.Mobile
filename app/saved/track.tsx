@@ -25,7 +25,7 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@/components/ui/FormPrimitives';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import {
   buildTrackedMortgageFromForm,
   deriveTrackSeedFromLoan,
@@ -290,7 +290,7 @@ export default function TrackMortgageScreen() {
           label={t('track.save')}
           onPress={handleSave}
           disabled={!canSave}
-          leftIcon={<SaveIcon color={colours.white} size={18} />}
+          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} />}
           style={styles.saveButton}
         />
       )}

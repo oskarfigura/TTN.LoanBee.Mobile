@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@/components/ui/AppText';
-import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, layout, radii, spacing } from '@/theme';
 
 export type ChartHelpContent = {
@@ -44,7 +44,7 @@ export const ChartHelpButton = ({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <InfoCircleIcon size={18} color={colours.primary} strokeWidth={2} />
+      <Icon icon={IconName.InfoCircleIcon} size={18} color={colours.primary} strokeWidth={2} />
     </TouchableOpacity>
   );
 };

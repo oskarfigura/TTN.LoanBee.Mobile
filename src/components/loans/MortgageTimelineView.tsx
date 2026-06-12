@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { LiveDotIcon, PencilIcon, PlusIcon, TickIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
+import { LiveDotIcon } from '@/components/ui/LiveDotIcon';
 import { mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
 import { formatCurrency } from '@/currency/format';
 import { CurrencyCode } from '@/currency/currencies';
@@ -27,7 +28,6 @@ import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, fontFaces, fontSizes, radii, spacing } from '@/theme';
 import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate, formatFriendlyDateRange, parseDateLabelValue } from '@/utils/date';
-import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 
 interface Props {
   loan: SavedLoan;
@@ -54,9 +54,9 @@ export const MortgageWarningBanners = ({ loan }: { loan: SavedLoan }) => {
 };
 
 const statusIcon = (variant: 'neutral' | 'active' | 'success') => {
-  if (variant === 'success') return <TickIcon color={colours.success} size={12} />;
+  if (variant === 'success') return <Icon icon={IconName.TickIcon} color={colours.success} size={12} strokeWidth={2.4} />;
   if (variant === 'active') return <LiveDotIcon color={colours.white} size={8} />;
-  return <PencilIcon color={colours.textSecondary} size={12} />;
+  return <Icon icon={IconName.PencilIcon} color={colours.textSecondary} size={12} strokeWidth={2} />;
 };
 
 const StatusBadge = ({ label, variant = 'neutral' }: { label: string; variant?: 'neutral' | 'active' | 'success' }) => (
@@ -217,7 +217,7 @@ const DealActivityList = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 0 }}
               accessibilityLabel={t('mortgage.deleteEvent')}
             >
-              <TrashIcon size={15} color={colours.error} />
+              <Icon icon={IconName.TrashIcon} size={15} color={colours.error} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -257,7 +257,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
   const addDealButton = (
     <Button
       label={hasPublishedDeals ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
-      leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
+      leftIcon={<Icon icon={IconName.PlusIcon} color={colours.primaryInk} size={18} strokeWidth={1.9} />}
       onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
       variant="secondary"
     />

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { DashboardHeader } from '@/components/loans/DashboardHeader';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
-import { CalculatorIcon, EditIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
 import {
   LoanDashboardProgress,
@@ -89,7 +89,7 @@ const DashboardMetricPanel = ({
         </View>
       ))}
       <View style={styles.editBubble}>
-        <EditIcon color={colours.primary} size={23} />
+        <Icon icon={IconName.EditIcon} color={colours.primary} size={23} strokeWidth={1.8} />
       </View>
     </View>
   );
@@ -238,7 +238,7 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
         <Button
           label={t('results.newCalculation')}
           onPress={onNewCalculation}
-          rightIcon={<CalculatorIcon />}
+          rightIcon={<Icon icon={IconName.CalculatorIcon} color={colours.white} size={18} strokeWidth={1.8} />}
           style={styles.newCalculationButton}
         />
       </View>

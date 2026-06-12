@@ -1,6 +1,6 @@
 import React from 'react';
 import { colours } from '@/theme';
-import { ArrowLeftIcon } from './Icons/ArrowLeftIcon/ArrowLeftIcon';
+import { Icon, IconName } from './Icon';
 import { HeaderIconButton } from './HeaderIconButton';
 
 interface Props {
@@ -14,6 +14,6 @@ export const HeaderBackAction = ({
   accessibilityLabel = 'Go back',
 }: Props) => (
   <HeaderIconButton onPress={onPress} accessibilityLabel={accessibilityLabel}>
-    <ArrowLeftIcon color={colours.primary} size={21} strokeWidth={2.2} />
+    <Icon icon={IconName.ArrowLeftIcon} color={colours.primary} size={21} strokeWidth={2.2} />
   </HeaderIconButton>
 );

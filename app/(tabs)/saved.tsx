@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { LoanProfileCard } from '@/components/loans/LoanProfileCard';
-import { ChevronRightIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
@@ -12,9 +12,6 @@ import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Button } from '@/components/ui/Button';
 import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
-import { SearchIcon } from '@/components/ui/Icons/SearchIcon/SearchIcon';
-import { ClockIcon } from '@/components/ui/Icons/ClockIcon/ClockIcon';
-import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 import { getLoanPurpose } from '@/loans/loanPurpose';
 import { recentCalculationsStorage } from '@/storage/recentCalculations';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -139,12 +136,12 @@ export default function SavedScreen() {
       accessibilityRole="button"
       accessibilityLabel={t('recent.title')}
     >
-      <ClockIcon size={20} color={colours.primary} strokeWidth={1.9} />
+      <Icon icon={IconName.ClockIcon} size={20} color={colours.primary} strokeWidth={1.9} />
       <View style={styles.recentLinkCopy}>
         <AppText variant="labelMd">{t('recent.title')}</AppText>
         <AppText variant="bodySm" tone="muted">{t('recent.intro')}</AppText>
       </View>
-      <ChevronRightIcon size={18} color={colours.textSecondary} />
+      <Icon icon={IconName.ChevronRightIcon} size={18} color={colours.textSecondary} strokeWidth={1.8} />
     </TouchableOpacity>
   ) : null;
 
@@ -159,7 +156,7 @@ export default function SavedScreen() {
         ) : undefined}
         rightAction={hasRecent ? (
           <HeaderIconButton onPress={openRecentCalculations} accessibilityLabel={t('recent.title')}>
-            <ClockIcon size={22} color={colours.primary} strokeWidth={1.9} />
+            <Icon icon={IconName.ClockIcon} size={22} color={colours.primary} strokeWidth={1.9} />
           </HeaderIconButton>
         ) : undefined}
       />
@@ -205,7 +202,7 @@ export default function SavedScreen() {
                 {loans.length > 0 ? (
                   <View style={styles.controls}>
                     <InputSurface>
-                      <SearchIcon size={18} color={colours.textSecondary} strokeWidth={1.9} />
+                      <Icon icon={IconName.SearchIcon} size={18} color={colours.textSecondary} strokeWidth={1.9} />
                       <AppTextInput
                         value={query}
                         onChangeText={setQuery}
@@ -247,7 +244,7 @@ export default function SavedScreen() {
             label={t('common.delete')}
             onPress={deleteSelected}
             variant="destructive"
-            leftIcon={<TrashIcon size={18} color={colours.white} strokeWidth={1.9} />}
+            leftIcon={<Icon icon={IconName.TrashIcon} size={18} color={colours.white} strokeWidth={1.9} />}
             style={styles.actionBarButton}
           />
         </View>

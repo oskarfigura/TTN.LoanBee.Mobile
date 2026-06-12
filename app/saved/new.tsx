@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/FormPrimitives';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { createLocalId } from '@/utils/id';
 import { colours, layout, spacing } from '@/theme';
 import { useStoreReview } from '@/review';
@@ -237,7 +237,7 @@ export default function SaveNewLoanScreen() {
           label={t('save.save')}
           onPress={handleSave}
           disabled={!nickname.trim()}
-          leftIcon={<SaveIcon color={colours.white} size={18} />}
+          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} />}
           style={styles.saveBtn}
         />
         <Button

@@ -42,15 +42,9 @@ jest.mock('../../src/components/ui/Card', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/Icons/CheckIcon/CheckIcon', () => ({
-  CheckIcon: (props: Record<string, unknown>) => React.createElement('CheckIcon', props),
-}));
-
-jest.mock('../../src/components/loans/LoanIcons', () => ({
-  ChevronRightIcon: (props: Record<string, unknown>) => React.createElement('ChevronRightIcon', props),
-  LoanCategoryIcon: (props: Record<string, unknown>) => React.createElement('LoanCategoryIcon', props),
-  MortgageIcon: (props: Record<string, unknown>) => React.createElement('MortgageIcon', props),
-  PinIcon: (props: Record<string, unknown>) => React.createElement('PinIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 jest.mock('../../src/components/loans/LoanPurposePicker', () => ({

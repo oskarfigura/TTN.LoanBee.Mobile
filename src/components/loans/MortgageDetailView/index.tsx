@@ -15,23 +15,13 @@ import { MortgageBalanceChart } from '@/components/charts/MortgageBalanceChart';
 import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
-import { MoreIcon, PlusIcon } from '@/components/loans/LoanIcons';
 import { MortgageTimelineView, MortgageWarningBanners } from '@/components/loans/MortgageTimelineView';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { SegmentedControl } from '@/components/ui/FormPrimitives';
-import { AddDocumentIcon } from '@/components/ui/Icons/AddDocumentIcon/AddDocumentIcon';
-import { AlertTriangleIcon } from '@/components/ui/Icons/AlertTriangleIcon/AlertTriangleIcon';
-import { CalendarDateIcon } from '@/components/ui/Icons/CalendarDateIcon/CalendarDateIcon';
-import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
-import { ClockCheckIcon } from '@/components/ui/Icons/ClockCheckIcon/ClockCheckIcon';
-import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
-import { EyeIcon } from '@/components/ui/Icons/EyeIcon/EyeIcon';
-import { EditIcon as UiEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
-import { MessageTextCircleIcon } from '@/components/ui/Icons/MessageTextCircleIcon/MessageTextCircleIcon';
-import { ShieldTickIcon } from '@/components/ui/Icons/ShieldTickIcon/ShieldTickIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { formatCurrency } from '@/currency/format';
 import {
   buildSavedLoanDashboardProgress,
@@ -794,7 +784,7 @@ const CurrentDealSavingsCard = ({
     return (
       <Card style={[styles.soonerCardActive, styles.summarySavingsCard]}>
         <View style={styles.soonerCardHeader}>
-          <CoinsStackedIcon size={18} color={colours.secondary} strokeWidth={1.8} />
+          <Icon icon={IconName.CoinsStackedIcon} size={18} color={colours.secondary} strokeWidth={1.8} />
           <AppText variant="labelMd" tone="success" style={styles.soonerCardTitle}>
             {t('mortgage.dealOverpaymentsSummary')}
           </AppText>
@@ -820,7 +810,7 @@ const CurrentDealSavingsCard = ({
           accessibilityRole="button"
         >
           <AppText variant="labelMd" style={{ color: colours.secondary, flex: 1 }}>{t('mortgage.manageDealOverpayments')}</AppText>
-          <ChevronRightIcon size={14} color={colours.secondary} />
+          <Icon icon={IconName.ChevronRightIcon} size={14} color={colours.secondary} />
         </TouchableOpacity>
       </Card>
     );
@@ -831,7 +821,7 @@ const CurrentDealSavingsCard = ({
   return (
     <View style={[styles.soonerNudgeCard, styles.summarySavingsCard]}>
       <View style={styles.soonerNudgeInner}>
-        <CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.8} />
+        <Icon icon={IconName.CoinsStackedIcon} size={20} color={colours.primary} strokeWidth={1.8} />
         <View style={styles.soonerNudgeCopy}>
           <AppText variant="labelMd">{t('mortgage.couldPaySoonerTitle')}</AppText>
           <AppText variant="bodySm" tone="muted">{t('mortgage.couldPaySoonerBody')}</AppText>
@@ -1023,7 +1013,7 @@ const CompactTimelineSummary = ({
         {actionLabel ? (
           <Button
             label={actionLabel}
-            leftIcon={<PlusIcon color={colours.primaryInk} size={18} />}
+            leftIcon={<Icon icon={IconName.PlusIcon} color={colours.primaryInk} size={18} strokeWidth={1.9} />}
             onPress={onAddDeal}
             variant="icon-pill"
             style={styles.summaryTimelineAction}
@@ -1098,24 +1088,24 @@ const MortgageQuickActionsRow = ({
         {hasActiveDeal ? (
           <SummaryQuickAction
             label={t('mortgage.viewDeal')}
-            icon={<EyeIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            icon={<Icon icon={IconName.EyeIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
             onPress={onViewDeal}
           />
         ) : (
           <SummaryQuickAction
             label={t('results.newCalculation')}
-            icon={<AddDocumentIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+            icon={<Icon icon={IconName.AddDocumentIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
             onPress={onNewCalculation}
           />
         )}
         <SummaryQuickAction
           label={t('mortgage.add')}
-          icon={<PlusIcon size={21} color={colours.primary} />}
+          icon={<Icon icon={IconName.PlusIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
           onPress={onAdd}
         />
         <SummaryQuickAction
           label={t('common.more')}
-          icon={<MoreIcon size={21} color={colours.primary} />}
+          icon={<Icon icon={IconName.MoreIcon} size={21} color={colours.primary} strokeWidth={3} />}
           onPress={onMore}
         />
       </View>
@@ -1293,31 +1283,31 @@ const QuickActionsDrawer = ({
                 <QuickActionOption
                   title={t('mortgage.addOverpayment')}
                   description={t('mortgage.addOverpaymentHelp')}
-                  icon={<CoinsStackedIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.CoinsStackedIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/deals/${activeDeal.id}/overpayments`)}
                 />
                 <QuickActionOption
                   title={t('mortgage.recordBalance')}
                   description={t('mortgage.recordBalanceHelp')}
-                  icon={<ShieldTickIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.ShieldTickIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=balanceCheckpoint`)}
                 />
                 <QuickActionOption
                   title={t('mortgage.addNote')}
                   description={t('mortgage.addNoteHelp')}
-                  icon={<MessageTextCircleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.MessageTextCircleIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=note`)}
                 />
                 <QuickActionOption
                   title={t('mortgage.eventMissedPayment')}
                   description={t('mortgage.missedPaymentHelp')}
-                  icon={<AlertTriangleIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.AlertTriangleIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=missedPayment`)}
                 />
                 <QuickActionOption
                   title={t('mortgage.eventPaymentHoliday')}
                   description={t('mortgage.paymentHolidayHelp')}
-                  icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.ClockCheckIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/events/new?type=paymentHoliday`)}
                 />
               </>
@@ -1328,7 +1318,7 @@ const QuickActionsDrawer = ({
                 <QuickActionOption
                   title={t('mortgage.addDeal')}
                   description={t('mortgage.addNextDealHelp')}
-                  icon={<CalendarDateIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.CalendarDateIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={() => onNavigate(`/saved/${loan.id}/deals/new`)}
                 />
               </>
@@ -1340,7 +1330,7 @@ const QuickActionsDrawer = ({
                   <QuickActionOption
                     title={t('mortgage.addNextDeal')}
                     description={t('mortgage.addNextDealHelp')}
-                    icon={<CalendarDateIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    icon={<Icon icon={IconName.CalendarDateIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                     onPress={() => onNavigate(`/saved/${loan.id}/deals/new`)}
                   />
                 ) : null}
@@ -1348,7 +1338,7 @@ const QuickActionsDrawer = ({
                   <QuickActionOption
                     title={t('mortgage.editDraftDeal')}
                     description={t('mortgage.editDraftDealHelp')}
-                    icon={<UiEditIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    icon={<Icon icon={IconName.EditIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                     onPress={() => onNavigate(`/saved/${loan.id}/deals/${draftDeal.id}`)}
                   />
                 ) : null}
@@ -1356,14 +1346,14 @@ const QuickActionsDrawer = ({
                   <QuickActionOption
                     title={t('mortgage.completeCurrentDeal')}
                     description={t('mortgage.completeCurrentDealHelp')}
-                    icon={<ClockCheckIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                    icon={<Icon icon={IconName.ClockCheckIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                     onPress={() => onNavigate(`/saved/${loan.id}/complete-current`)}
                   />
                 ) : null}
                 <QuickActionOption
                   title={t('results.newCalculation')}
                   description={t('mortgage.newCalculationHelp')}
-                  icon={<AddDocumentIcon size={20} color={colours.primary} strokeWidth={1.9} />}
+                  icon={<Icon icon={IconName.AddDocumentIcon} size={20} color={colours.primary} strokeWidth={1.9} />}
                   onPress={onNewCalculation}
                 />
               </>

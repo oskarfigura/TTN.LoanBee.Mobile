@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { ArrowRightIcon } from '@/components/ui/Icons/ArrowRightIcon/ArrowRightIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, layout, spacing } from '@/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -39,7 +39,7 @@ export default function AboutScreen() {
             label={t('guide.aboutEntryCta')}
             variant="secondary"
             onPress={() => router.push('/guide')}
-            rightIcon={<ArrowRightIcon color={colours.primaryInk} size={18} strokeWidth={2} />}
+            rightIcon={<Icon icon={IconName.ArrowRightIcon} color={colours.primaryInk} size={18} strokeWidth={2} />}
           />
         </Card>
 

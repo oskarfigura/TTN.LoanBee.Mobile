@@ -9,8 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
-import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { formatCurrency } from '@/currency/format';
 import { buildRecentResultParams } from '@/results/loanResultRoute';
 import { RecentCalculation, recentCalculationsStorage } from '@/storage/recentCalculations';
@@ -125,7 +124,7 @@ const RecentCalculationCard = ({
           </View>
           {selectionMode ? (
             <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-              {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+              {selected ? <Icon icon={IconName.CheckIcon} size={14} color={colours.white} strokeWidth={2.4} /> : null}
             </View>
           ) : null}
         </View>
@@ -140,7 +139,7 @@ const RecentCalculationCard = ({
             accessibilityRole="button"
             accessibilityLabel={t('common.delete')}
           >
-            <TrashIcon size={19} color={colours.error} strokeWidth={1.9} />
+            <Icon icon={IconName.TrashIcon} size={19} color={colours.error} strokeWidth={1.9} />
           </TouchableOpacity>
         </View>
       ) : null}
@@ -308,7 +307,7 @@ export default function RecentCalculationsScreen() {
             label={t('common.delete')}
             onPress={deleteSelected}
             variant="destructive"
-            leftIcon={<TrashIcon size={18} color={colours.white} strokeWidth={1.9} />}
+            leftIcon={<Icon icon={IconName.TrashIcon} size={18} color={colours.white} strokeWidth={1.9} />}
             style={styles.actionBarButton}
           />
         </View>

@@ -3,9 +3,8 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
 import { Card } from '@/components/ui/Card';
-import { ChevronRightIcon, MortgageIcon, PinIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
-import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/loans/loanInsightSummary';
 import { getLoanPurpose } from '@/loans/loanPurpose';
@@ -26,7 +25,7 @@ interface Props {
 
 const SelectionCheckbox = ({ selected }: { selected: boolean }) => (
   <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
-    {selected ? <CheckIcon size={14} color={colours.white} strokeWidth={2.4} /> : null}
+    {selected ? <Icon icon={IconName.CheckIcon} size={14} color={colours.white} strokeWidth={2.4} /> : null}
   </View>
 );
 
@@ -36,7 +35,7 @@ const IdentityIcon = ({ loan }: { loan: SavedLoan }) => {
 
   return (
     <View style={styles.iconTile}>
-      <MortgageIcon color={colours.primary} size={18} />
+      <Icon icon={IconName.MortgageIcon} color={colours.primary} size={18} strokeWidth={1.8} />
     </View>
   );
 };
@@ -109,7 +108,7 @@ export const LoanProfileCard = ({
               <SelectionCheckbox selected={selected} />
             ) : (
               <View style={styles.detailsCue}>
-                <ChevronRightIcon color={colours.primary} size={18} />
+                <Icon icon={IconName.ChevronRightIcon} color={colours.primary} size={18} strokeWidth={1.8} />
               </View>
             )}
           </View>
@@ -204,7 +203,7 @@ export const LoanProfileCard = ({
                 style={[styles.pinButton, loan.pinnedToDashboard && styles.pinButtonActive]}
                 activeOpacity={0.84}
               >
-                <PinIcon color={loan.pinnedToDashboard ? colours.secondary : colours.primary} size={16} />
+                <Icon icon={IconName.PinIcon} color={loan.pinnedToDashboard ? colours.secondary : colours.primary} size={16} strokeWidth={1.8} />
               </TouchableOpacity>
             )}
           </View>

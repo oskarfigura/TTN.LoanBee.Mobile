@@ -2,10 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookmarkIcon } from '@/components/ui/Icons/BookmarkIcon/BookmarkIcon';
-import { HomeIcon } from '@/components/ui/Icons/HomeIcon/HomeIcon';
-import { PlusCircleIcon } from '@/components/ui/Icons/PlusCircleIcon/PlusCircleIcon';
-import { SettingsIcon } from '@/components/ui/Icons/SettingsIcon/SettingsIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, elevation, fontFaces, fontSizes, radii } from '@/theme';
 import { confirmResultLeave, hasResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 
@@ -13,18 +10,18 @@ type TabIconName = 'home' | 'calculate' | 'saved' | 'settings';
 
 const TabIcon = ({ name, color }: { name: TabIconName; color: string }) => {
   if (name === 'home') {
-    return <HomeIcon color={color} size={24} strokeWidth={1.9} />;
+    return <Icon icon={IconName.HomeIcon} color={color} size={24} strokeWidth={1.9} />;
   }
 
   if (name === 'saved') {
-    return <BookmarkIcon color={color} size={24} strokeWidth={1.9} />;
+    return <Icon icon={IconName.BookmarkIcon} color={color} size={24} strokeWidth={1.9} />;
   }
 
   if (name === 'calculate') {
-    return <PlusCircleIcon color={color} size={24} strokeWidth={1.9} />;
+    return <Icon icon={IconName.PlusCircleIcon} color={color} size={24} strokeWidth={1.9} />;
   }
 
-  return <SettingsIcon color={color} size={24} strokeWidth={1.9} />;
+  return <Icon icon={IconName.SettingsIcon} color={color} size={24} strokeWidth={1.9} />;
 };
 
 export default function TabLayout() {

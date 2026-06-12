@@ -7,6 +7,7 @@ Expo Router app with a 4-tab bottom navigator. All navigation is file-based unde
 ## Key Invariants
 
 - **The maths engine is `@oskarfigura/amortisation`** (GitHub Packages, ESM). `src/core/*` only re-exports from it. To change calculation behaviour, change it in the `TTN.Amortisation` repo, publish a new version, and bump it here. Run `npm test` before and after any change touching `src/core/`.
+- **Icon geometry is `@oskarfigura/icons`** (GitHub Packages, ESM, shared with the web app). Render icons via `<Icon icon={IconName.X} size color strokeWidth />` from `src/components/ui/Icon.tsx`, which maps the package geometry onto `react-native-svg` primitives through the `Svg` wrapper. Do NOT hand-write per-icon component files — there is no `src/components/ui/Icons/` directory anymore. To add or change an icon, edit the `TTN.Icons` repo, publish a new version, and bump it here. The one exception is `LiveDotIcon` (`src/components/ui/LiveDotIcon.tsx`), a filled-circle primitive kept local because the package models stroke-only geometry.
 - **All colours must use `colours.*`** from `src/theme/colours.ts`. Never write a hex literal in a component or screen.
 - **All font families must use `fonts.body` or `fonts.heading`** from `src/theme/typography.ts`. Never write `fontFamily: 'Inter'` inline.
 - **All font weights must use `fontWeights.*`** from `src/theme/typography.ts`. Never write `fontWeight: '700'` inline.

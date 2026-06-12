@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { Card } from './Card';
-import { TrashIcon } from './Icons/TrashIcon/TrashIcon';
+import { Icon, IconName } from './Icon';
 import { colours, spacing } from '@/theme';
 
 interface Props {
@@ -41,7 +41,7 @@ export const DestructiveConfirmDialog = ({
               label={confirmLabel}
               onPress={onConfirm}
               variant="destructive"
-              leftIcon={<TrashIcon color={colours.white} size={16} />}
+              leftIcon={<Icon icon={IconName.TrashIcon} color={colours.white} size={16} />}
               style={styles.action}
             />
           </View>

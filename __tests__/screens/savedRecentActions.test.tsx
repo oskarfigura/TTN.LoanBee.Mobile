@@ -162,16 +162,9 @@ jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icons/SearchIcon/SearchIcon', () => ({
-  SearchIcon: (props: Record<string, unknown>) => React.createElement('SearchIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/CheckIcon/CheckIcon', () => ({
-  CheckIcon: (props: Record<string, unknown>) => React.createElement('CheckIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/TrashIcon/TrashIcon', () => ({
-  TrashIcon: (props: Record<string, unknown>) => React.createElement('TrashIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 const renderRecent = async (): Promise<ReactTestRenderer> => {

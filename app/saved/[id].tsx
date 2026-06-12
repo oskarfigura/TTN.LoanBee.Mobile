@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
 import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
-import { MoreIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { Button } from '@/components/ui/Button';
 import { AppText } from '@/components/ui/AppText';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
@@ -20,9 +20,6 @@ import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getCurrentDeal } from '@/mortgage/tracker';
-import { EditIcon as UiEditIcon } from '@/components/ui/Icons/EditIcon/EditIcon';
-import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
-import { TrashIcon } from '@/components/ui/Icons/TrashIcon/TrashIcon';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
@@ -167,17 +164,17 @@ export default function LoanDetailScreen() {
       <View style={styles.loanQuickActionsRow}>
         <QuickActionTile
           label={t('share.short')}
-          icon={<ShareIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          icon={<Icon icon={IconName.ShareIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
           onPress={handleShare}
         />
         <QuickActionTile
           label={t('saved.edit')}
-          icon={<UiEditIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+          icon={<Icon icon={IconName.EditIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
           onPress={() => router.push(`/saved/${id}/edit`)}
         />
         <QuickActionTile
           label={t('common.more')}
-          icon={<MoreIcon size={21} color={colours.primary} />}
+          icon={<Icon icon={IconName.MoreIcon} size={21} color={colours.primary} strokeWidth={3} />}
           onPress={() => setLoanMoreDrawerVisible(true)}
         />
       </View>
@@ -235,7 +232,7 @@ export default function LoanDetailScreen() {
         onPress={() => setMortgageMenuVisible(true)}
         accessibilityLabel={t('mortgage.mortgageActions')}
       >
-        <MoreIcon color={colours.primary} size={22} />
+        <Icon icon={IconName.MoreIcon} color={colours.primary} size={22} strokeWidth={3} />
       </HeaderIconButton>
     );
 
@@ -321,7 +318,7 @@ export default function LoanDetailScreen() {
       onPress={() => setLoanMenuVisible(true)}
       accessibilityLabel={t('loan.loanActions')}
     >
-      <MoreIcon color={colours.primary} size={22} />
+      <Icon icon={IconName.MoreIcon} color={colours.primary} size={22} strokeWidth={3} />
     </HeaderIconButton>
   );
 
@@ -404,7 +401,7 @@ export default function LoanDetailScreen() {
             </View>
             <TouchableOpacity style={styles.drawerOptionRow} onPress={handleShare} activeOpacity={0.84}>
               <View style={styles.drawerOptionIcon}>
-                <ShareIcon size={20} color={colours.primary} strokeWidth={1.9} />
+                <Icon icon={IconName.ShareIcon} size={20} color={colours.primary} strokeWidth={1.9} />
               </View>
               <View style={styles.drawerOptionCopy}>
                 <Text style={styles.drawerOptionTitle}>{t('share.short')}</Text>
@@ -413,7 +410,7 @@ export default function LoanDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.drawerOptionRow} onPress={openRenameModal} activeOpacity={0.84}>
               <View style={styles.drawerOptionIcon}>
-                <UiEditIcon size={20} color={colours.primary} strokeWidth={1.9} />
+                <Icon icon={IconName.EditIcon} size={20} color={colours.primary} strokeWidth={1.9} />
               </View>
               <View style={styles.drawerOptionCopy}>
                 <Text style={styles.drawerOptionTitle}>{t('loan.renameLoan')}</Text>
@@ -422,7 +419,7 @@ export default function LoanDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.drawerOptionRow} onPress={handleDelete} activeOpacity={0.84}>
               <View style={[styles.drawerOptionIcon, styles.drawerOptionIconDanger]}>
-                <TrashIcon size={20} color={colours.error} strokeWidth={1.9} />
+                <Icon icon={IconName.TrashIcon} size={20} color={colours.error} strokeWidth={1.9} />
               </View>
               <View style={styles.drawerOptionCopy}>
                 <Text style={[styles.drawerOptionTitle, styles.drawerOptionTitleDanger]}>{t('loan.deleteLoan')}</Text>

@@ -32,11 +32,9 @@ import { setResultLeaveGuard } from '@/navigation/resultLeaveGuard';
 import { useStoreReview } from '@/review';
 import { shareCalculation } from '@/share/shareCalculation';
 import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
-import { EditIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
 import { buildDraftLoanPreview, RawFormValues } from '@/loans/loanGroupFactory';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
-import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 
 type ResultParams = {
   draftId?: string;
@@ -121,7 +119,7 @@ export default function ResultScreen() {
     [currency, formValues, isSavedMode, result],
   );
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
-  const shareIcon = useMemo(() => <ShareIcon color={colours.primary} />, []);
+  const shareIcon = useMemo(() => <Icon icon={IconName.ShareIcon} color={colours.primary} />, []);
 
   useEffect(() => {
     if (isSavedMode || !result || recordedReviewActionRef.current) return;
@@ -255,14 +253,14 @@ export default function ResultScreen() {
             onPress={() => router.push(`/saved/${savedLoan.id}/edit`)}
             accessibilityLabel={t('edit.manageShort')}
           >
-            <EditIcon color={colours.primary} />
+            <Icon icon={IconName.EditIcon} color={colours.primary} size={18} strokeWidth={1.8} />
           </HeaderIconButton>
         ) : (
           <HeaderIconButton
             onPress={openSave}
             accessibilityLabel={t('common.save')}
           >
-            <SaveIcon color={colours.primary} size={20} />
+            <Icon icon={IconName.SaveIcon} color={colours.primary} size={20} />
           </HeaderIconButton>
         )}
         showBottomBorder={false}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { colours } from '@/theme';
-import { XCloseIcon } from './Icons/XCloseIcon/XCloseIcon';
+import { Icon, IconName } from './Icon';
 import { HeaderIconButton } from './HeaderIconButton';
 
 interface Props {
@@ -13,6 +13,6 @@ export const HeaderCloseAction = ({
   accessibilityLabel = 'Close',
 }: Props) => (
   <HeaderIconButton onPress={onPress} accessibilityLabel={accessibilityLabel}>
-    <XCloseIcon color={colours.primary} size={21} strokeWidth={2.2} />
+    <Icon icon={IconName.XCloseIcon} color={colours.primary} size={21} strokeWidth={2.2} />
   </HeaderIconButton>
 );

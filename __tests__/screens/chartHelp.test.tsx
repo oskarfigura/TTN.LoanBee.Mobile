@@ -41,8 +41,9 @@ jest.mock('../../src/components/ui/AppText', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/Icons/InfoCircleIcon/InfoCircleIcon', () => ({
-  InfoCircleIcon: (props: Record<string, unknown>) => React.createElement('InfoCircleIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 import { ChartHelpButton, ChartHelpDrawer } from '../../src/components/charts/ChartHelp';

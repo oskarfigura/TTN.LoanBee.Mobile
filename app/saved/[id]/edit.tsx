@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { formatCurrency } from '@/currency/format';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
-import { PinIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -125,7 +125,7 @@ export default function EditLoanScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.pinCopy}>
-            <PinIcon color={colours.primary} />
+            <Icon icon={IconName.PinIcon} color={colours.primary} size={16} strokeWidth={1.8} />
             <AppText variant="title3" tone="accent">
               {pinnedToDashboard ? t('mortgage.pinned') : t('mortgage.pinToDashboard')}
             </AppText>

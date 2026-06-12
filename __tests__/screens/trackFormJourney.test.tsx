@@ -123,8 +123,9 @@ jest.mock('../../src/components/ui/FormPrimitives', () => ({
   SegmentedControl: (props: Record<string, unknown>) => React.createElement('SegmentedControl', props),
 }));
 
-jest.mock('../../src/components/ui/Icons/SaveIcon/SaveIcon', () => ({
-  SaveIcon: (props: Record<string, unknown>) => React.createElement('SaveIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 const textContent = (node: ReactTestInstance | string | number | null | undefined): string => {

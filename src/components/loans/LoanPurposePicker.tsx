@@ -2,24 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui/AppText';
-import { AnchorIcon } from '@/components/ui/Icons/AnchorIcon/AnchorIcon';
-import { BarLineChartIcon } from '@/components/ui/Icons/BarLineChartIcon/BarLineChartIcon';
-import { BikeIcon } from '@/components/ui/Icons/BikeIcon/BikeIcon';
-import { BitcoinIcon } from '@/components/ui/Icons/BitcoinIcon/BitcoinIcon';
-import { CarIcon } from '@/components/ui/Icons/CarIcon/CarIcon';
-import { CheckIcon } from '@/components/ui/Icons/CheckIcon/CheckIcon';
-import { ChevronDownIcon } from '@/components/ui/Icons/ChevronDownIcon/ChevronDownIcon';
-import { DiamondIcon } from '@/components/ui/Icons/DiamondIcon/DiamondIcon';
-import { GamingPadIcon } from '@/components/ui/Icons/GamingPadIcon/GamingPadIcon';
-import { GraduationHatIcon } from '@/components/ui/Icons/GraduationHatIcon/GraduationHatIcon';
-import { HeartHandIcon } from '@/components/ui/Icons/HeartHandIcon/HeartHandIcon';
-import { LineChartUpIcon } from '@/components/ui/Icons/LineChartUpIcon/LineChartUpIcon';
-import { ListIcon } from '@/components/ui/Icons/ListIcon/ListIcon';
-import { MedicalCircleIcon } from '@/components/ui/Icons/MedicalCircleIcon/MedicalCircleIcon';
-import { MotorbikeIcon } from '@/components/ui/Icons/MotorbikeIcon/MotorbikeIcon';
-import { PlaneIcon } from '@/components/ui/Icons/PlaneIcon/PlaneIcon';
-import { RollerBrushIcon } from '@/components/ui/Icons/RollerBrushIcon/RollerBrushIcon';
-import { ShoppingBagIcon } from '@/components/ui/Icons/ShoppingBagIcon/ShoppingBagIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { LOAN_PURPOSES } from '@/loans/loanPurpose';
 import type { LoanPurpose } from '@/types/SavedLoan';
 import { colours, radii, spacing } from '@/theme';
@@ -41,38 +24,38 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
 
   switch (purpose) {
     case 'car':
-      return <CarIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.CarIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'bike':
-      return <BikeIcon size={size} color={color} />;
+      return <Icon icon={IconName.BikeIcon} size={size} color={color} />;
     case 'motorbike':
-      return <MotorbikeIcon size={size} color={color} />;
+      return <Icon icon={IconName.MotorbikeIcon} size={size} color={color} />;
     case 'homeImprovement':
-      return <RollerBrushIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.RollerBrushIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'travel':
-      return <PlaneIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.PlaneIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'jewellery':
-      return <DiamondIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.DiamondIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'business':
-      return <BarLineChartIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.BarLineChartIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'stocks':
-      return <LineChartUpIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.LineChartUpIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'crypto':
-      return <BitcoinIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.BitcoinIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'medical':
-      return <MedicalCircleIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.MedicalCircleIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'shopping':
-      return <ShoppingBagIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.ShoppingBagIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'gaming':
-      return <GamingPadIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.GamingPadIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'boat':
-      return <AnchorIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.AnchorIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'education':
-      return <GraduationHatIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.GraduationHatIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'other':
-      return <ListIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.ListIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'personal':
     default:
-      return <HeartHandIcon size={size} color={color} strokeWidth={strokeWidth} />;
+      return <Icon icon={IconName.HeartHandIcon} size={size} color={color} strokeWidth={strokeWidth} />;
   }
 };
 
@@ -124,7 +107,7 @@ export const LoanPurposePicker = ({ value, onChange }: PickerProps) => {
             {selectedLabel}
           </AppText>
         </View>
-        <ChevronDownIcon size={20} color={colours.textSecondary} strokeWidth={2} />
+        <Icon icon={IconName.ChevronDownIcon} size={20} color={colours.textSecondary} strokeWidth={2} />
       </TouchableOpacity>
 
       <Modal
@@ -166,7 +149,7 @@ export const LoanPurposePicker = ({ value, onChange }: PickerProps) => {
                       {t(`loanPurpose.${purpose}`)}
                     </AppText>
                     {selected ? (
-                      <CheckIcon size={20} color={colours.primary} strokeWidth={2.3} />
+                      <Icon icon={IconName.CheckIcon} size={20} color={colours.primary} strokeWidth={2.3} />
                     ) : null}
                   </TouchableOpacity>
                 );

@@ -15,12 +15,7 @@ import { CurrencyCode } from '@/currency/currencies';
 import { LoanCategory } from '@/types/SavedLoan';
 import { LoanForm } from '@/components/calculator/LoanForm';
 import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
-import {
-  CalculatorIcon,
-  TimelineIcon,
-  MortgageIcon,
-  LoanCategoryIcon,
-} from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { AppText } from '@/components/ui/AppText';
@@ -271,13 +266,13 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
         <JourneyOption
           title={t('journey.calculateTitle')}
           body={t('journey.calculateHelp')}
-          icon={<CalculatorIcon color={colours.primary} size={24} />}
+          icon={<Icon icon={IconName.CalculatorIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={openPlanForm}
         />
         <JourneyOption
           title={t('journey.trackTitle')}
           body={t('journey.trackIntentHelp')}
-          icon={<TimelineIcon color={colours.primary} size={24} />}
+          icon={<Icon icon={IconName.TimelineIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={openTrackBorrowing}
         />
       </JourneyStepScreen>
@@ -296,13 +291,13 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
         <JourneyOption
           title={t('save.mortgage')}
           body={t('journey.trackMortgageHelp')}
-          icon={<MortgageIcon color={colours.primary} size={24} />}
+          icon={<Icon icon={IconName.MortgageIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={() => openTrackForm('mortgage')}
         />
         <JourneyOption
           title={t('save.loan')}
           body={t('journey.trackLoanHelp')}
-          icon={<LoanCategoryIcon color={colours.primary} size={24} />}
+          icon={<Icon icon={IconName.LoanCategoryIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={() => openTrackForm('loan')}
         />
       </JourneyStepScreen>

@@ -19,10 +19,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { ChevronRightIcon } from '@/components/ui/Icons/ChevronRightIcon/ChevronRightIcon';
-import { CoinsStackedIcon } from '@/components/ui/Icons/CoinsStackedIcon/CoinsStackedIcon';
-import { InfoCircleIcon } from '@/components/ui/Icons/InfoCircleIcon/InfoCircleIcon';
-import { PlusIcon } from '@/components/ui/Icons/PlusIcon/PlusIcon';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { MortgageEvent, SavedLoan } from '@/types/SavedLoan';
 import { formatFriendlyDate } from '@/utils/date';
 import { colours, layout, radii, spacing } from '@/theme';
@@ -195,7 +192,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         {bannerRows ? (
           <Card style={styles.impactCard} variant="status">
             <View style={styles.impactInner}>
-              <CoinsStackedIcon size={20} color={colours.secondary} strokeWidth={1.8} />
+              <Icon icon={IconName.CoinsStackedIcon} size={20} color={colours.secondary} strokeWidth={1.8} />
               <View style={styles.impactText}>
                 {bannerRows.map((row, index) => (
                   <AppText
@@ -263,7 +260,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
                         {formatFriendlyDate(event.date, i18n.language)}
                       </AppText>
                     </View>
-                    <ChevronRightIcon size={16} color={colours.textSecondary} />
+                    <Icon icon={IconName.ChevronRightIcon} size={16} color={colours.textSecondary} />
                   </TouchableOpacity>
                 </React.Fragment>
               ))}
@@ -273,7 +270,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
             label={t('overpayments.lumpSumAdd')}
             onPress={openAddLumpSum}
             variant="secondary"
-            leftIcon={<PlusIcon size={16} color={colours.primary} />}
+            leftIcon={<Icon icon={IconName.PlusIcon} size={16} color={colours.primary} />}
           />
         </View>
 
@@ -311,7 +308,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         {/* Date guidance note (deal scope only) */}
         {labels.dateNoteKey ? (
           <View style={styles.dateNoteCard}>
-            <InfoCircleIcon size={16} color={colours.textSecondary} strokeWidth={1.8} />
+            <Icon icon={IconName.InfoCircleIcon} size={16} color={colours.textSecondary} strokeWidth={1.8} />
             <AppText variant="bodySm" tone="muted" style={styles.dateNoteText}>
               {t(labels.dateNoteKey)}
             </AppText>

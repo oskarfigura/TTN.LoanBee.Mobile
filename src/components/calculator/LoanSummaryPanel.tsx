@@ -3,10 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
-import { EditIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { QuickActionTile } from '@/components/ui/QuickActionTile';
-import { SaveIcon } from '@/components/ui/Icons/SaveIcon/SaveIcon';
-import { ShareIcon } from '@/components/ui/Icons/ShareIcon/ShareIcon';
 import { formatCurrency } from '@/currency/format';
 import {
   buildSavedLoanDashboardProgress,
@@ -260,21 +258,21 @@ export const LoanSummaryPanel = ({
             {onSave ? (
               <QuickActionTile
                 label={t('common.save')}
-                icon={<SaveIcon size={21} color={colours.primary} />}
+                icon={<Icon icon={IconName.SaveIcon} size={21} color={colours.primary} />}
                 onPress={onSave}
               />
             ) : null}
             {onShare ? (
               <QuickActionTile
                 label={t('share.short')}
-                icon={<ShareIcon size={21} color={colours.primary} strokeWidth={1.9} />}
+                icon={<Icon icon={IconName.ShareIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
                 onPress={onShare}
               />
             ) : null}
             {onEdit ? (
               <QuickActionTile
                 label={t('saved.edit')}
-                icon={<EditIcon size={21} color={colours.primary} />}
+                icon={<Icon icon={IconName.EditIcon} size={21} color={colours.primary} strokeWidth={1.8} />}
                 onPress={onEdit}
               />
             ) : null}

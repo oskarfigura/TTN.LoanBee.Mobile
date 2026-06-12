@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { PinIcon } from '@/components/loans/LoanIcons';
+import { Icon, IconName } from '@/components/ui/Icon';
 import { colours } from '@/theme';
 
 interface Props {
@@ -23,7 +23,7 @@ export const DashboardPinButton = ({ pinned, onPress, style }: Props) => {
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       activeOpacity={0.88}
     >
-      <PinIcon color={pinned ? colours.secondary : colours.primary} size={16} />
+      <Icon icon={IconName.PinIcon} color={pinned ? colours.secondary : colours.primary} size={16} strokeWidth={1.8} />
     </TouchableOpacity>
   );
 };

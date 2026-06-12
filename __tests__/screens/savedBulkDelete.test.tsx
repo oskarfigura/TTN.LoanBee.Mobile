@@ -123,8 +123,9 @@ jest.mock('../../src/components/loans/LoanProfileCard', () => ({
   LoanProfileCard: (props: Record<string, unknown>) => React.createElement('LoanProfileCard', props),
 }));
 
-jest.mock('../../src/components/loans/LoanIcons', () => ({
-  ChevronRightIcon: (props: Record<string, unknown>) => React.createElement('ChevronRightIcon', props),
+jest.mock('../../src/components/ui/Icon', () => ({
+  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
+  IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 jest.mock('../../src/components/ui/AppText', () => ({
@@ -160,18 +161,6 @@ jest.mock('../../src/components/ui/HeaderIconButton', () => ({
 
 jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/SearchIcon/SearchIcon', () => ({
-  SearchIcon: (props: Record<string, unknown>) => React.createElement('SearchIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/ClockIcon/ClockIcon', () => ({
-  ClockIcon: (props: Record<string, unknown>) => React.createElement('ClockIcon', props),
-}));
-
-jest.mock('../../src/components/ui/Icons/TrashIcon/TrashIcon', () => ({
-  TrashIcon: (props: Record<string, unknown>) => React.createElement('TrashIcon', props),
 }));
 
 const renderSaved = async (): Promise<ReactTestRenderer> => {
