@@ -1,48 +1,22 @@
 import React from 'react';
-import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { colours, elevation, radii } from '@/theme';
+import { Card as NativeCard, type CardVariant } from '@oskarfigura/ui-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 
-interface Props {
+export interface CardProps {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   padding?: number;
-  variant?: 'default' | 'hero' | 'accent' | 'status' | 'modal' | 'dense';
+  variant?: CardVariant;
 }
 
-export const Card = ({ children, style, padding = 16, variant = 'default' }: Props) => (
-  <View style={[styles.card, variantStyles[variant], { padding }, style]}>
+export const Card = ({ children, style, padding, variant = 'default' }: CardProps) => (
+  <NativeCard
+    padding={padding}
+    variant={variant}
+    style={style as never}
+  >
     {children}
-  </View>
+  </NativeCard>
 );
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colours.surfaceRaised,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
-    ...elevation.level1,
-  },
-});
-
-const variantStyles = StyleSheet.create({
-  default: {},
-  hero: {
-    backgroundColor: colours.surfaceRaised,
-    borderColor: colours.surfaceStrong,
-  },
-  accent: {
-    borderTopWidth: 3,
-    borderTopColor: colours.tealDeep,
-  },
-  status: {
-    backgroundColor: colours.successSurface,
-    borderColor: colours.successBorder,
-  },
-  modal: {
-    ...elevation.level2,
-  },
-  dense: {
-    borderColor: colours.border,
-  },
-});
+export type { CardVariant };
