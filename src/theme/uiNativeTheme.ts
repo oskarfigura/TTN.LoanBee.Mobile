@@ -1,7 +1,9 @@
-import { createTheme } from '@oskarfigura/ui-native';
+import { createTheme, type NativeTheme } from '@oskarfigura/ui-native';
 import { colours } from './colours';
+import { fonts } from './typography';
 
-export const loanBeeNativeTheme = createTheme({
+export const loanBeeNativeTheme = {
+  ...createTheme({
   colorPageBg: colours.background,
   colorBodyBg: colours.backgroundCanvas,
   colorBodyBorder: colours.border,
@@ -53,6 +55,10 @@ export const loanBeeNativeTheme = createTheme({
   colorButtonDestructiveDisabledBg: colours.errorSurface,
   colorButtonDestructiveDisabledText: colours.white,
 
+  radiusButton: 26,
+  radiusCircle: 999,
+  radiusInput: 12,
+
   green50: colours.successSurface,
   green100: colours.successBorder,
   green900: colours.success,
@@ -65,4 +71,15 @@ export const loanBeeNativeTheme = createTheme({
 
   shadowDefaultColor: colours.shadow,
   shadowBoxColor: colours.shadow,
-});
+  }),
+  colorAccentBorder: colours.tealDeep,
+  colorFieldLabel: colours.primaryInk,
+  colorHeaderIconBg: colours.blackSubtle,
+  colorSurfaceStrong: colours.surfaceStrong,
+  fontFamilyBodyRegular: fonts.body.regular,
+  fontFamilyBodyMedium: fonts.body.medium,
+  fontFamilyBodySemibold: fonts.body.semibold,
+  fontFamilyBodyBold: fonts.body.bold,
+  fontFamilyHeadingSemibold: fonts.heading.semibold,
+  fontFamilyHeadingBold: fonts.heading.bold,
+} satisfies NativeTheme;
