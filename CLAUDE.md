@@ -80,13 +80,20 @@ The project always runs via local builds — Expo Go is not supported due to nat
 
 ### GitHub Packages auth (required for `npm install`)
 
-`@oskarfigura/amortisation` is hosted on GitHub Packages. The committed `.npmrc` points the `@oskarfigura` scope at `https://npm.pkg.github.com` and reads the token from `NODE_AUTH_TOKEN`. Before installing, export a GitHub token with the `read:packages` scope:
+**Do this first, every time, before `npm install`:**
 
 ```bash
-gh auth refresh -h github.com -s read:packages   # one-time, adds the scope
 export NODE_AUTH_TOKEN=$(gh auth token)
 npm install
 ```
+
+That's it. If `gh auth token` fails (no token / missing scope), run this once:
+
+```bash
+gh auth refresh -h github.com -s read:packages
+```
+
+Then re-run the two lines above. `@oskarfigura/amortisation` lives on GitHub Packages and `.npmrc` pulls the token from `NODE_AUTH_TOKEN` — if it's not set, `npm install` will 401.
 
 CI must provide `NODE_AUTH_TOKEN` (e.g. the workflow's `GITHUB_TOKEN` or a PAT with `read:packages`).
 
