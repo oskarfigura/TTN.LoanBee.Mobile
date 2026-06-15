@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, ListRenderItem, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
@@ -13,6 +13,7 @@ import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Button } from '@oskarfigura/ui-native';
 import { AppTextInput, InputSurface } from '@oskarfigura/ui-native';
 import { getLoanPurpose } from '@/loans/loanPurpose';
+import { SavedLoan } from '@/types/SavedLoan';
 import { recentCalculationsStorage } from '@/storage/recentCalculations';
 import { savedLoansStorage } from '@/storage/savedLoans';
 import { colours, layout, radii, spacing } from '@/theme';
@@ -73,6 +74,10 @@ export default function SavedScreen() {
     router.push('/saved/recent');
   }, [router]);
 
+  const openLoan = useCallback((loan: SavedLoan) => {
+    router.push(loan.status === 'draft' ? `/saved/track?id=${loan.id}` : `/saved/${loan.id}`);
+  }, [router]);
+
   const toggleSelected = useCallback((id: string) => {
     setSelectedIds(current => {
       const next = new Set(current);
@@ -125,6 +130,22 @@ export default function SavedScreen() {
       ],
     );
   }, [remove, selectedIds, t]);
+
+  // Stable renderItem: identity only changes when selection state changes (which
+  // legitimately needs every row's `selected`/`selectionMode` to update). Crucially
+  // it does NOT depend on `query`, so search keystrokes don't re-render rows — the
+  // memoised LoanProfileCard skips any row whose loan reference is unchanged.
+  const renderItem = useCallback<ListRenderItem<SavedLoan>>(({ item }) => (
+    <LoanProfileCard
+      loan={item}
+      onPress={openLoan}
+      onTogglePinned={togglePinned}
+      selectionMode={selectionMode}
+      selected={selectedIds.has(item.id)}
+      onLongPress={startSelection}
+      onToggleSelected={toggleSelected}
+    />
+  ), [openLoan, togglePinned, selectionMode, selectedIds, startSelection, toggleSelected]);
 
   // Recent calculations live on their own page now; surface a link at the bottom
   // of the list (and a clock action in the header) rather than the full list here.
@@ -217,19 +238,13 @@ export default function SavedScreen() {
             )}
           </View>
         )}
-        renderItem={({ item }) => (
-          <LoanProfileCard
-            loan={item}
-            onPress={() => router.push(
-              item.status === 'draft' ? `/saved/track?id=${item.id}` : `/saved/${item.id}`,
-            )}
-            onTogglePinned={() => togglePinned(item.id)}
-            selectionMode={selectionMode}
-            selected={selectedIds.has(item.id)}
-            onLongPress={() => startSelection(item.id)}
-            onToggleSelected={() => toggleSelected(item.id)}
-          />
-        )}
+        renderItem={renderItem}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={9}
+        removeClippedSubviews
         ListFooterComponent={selectionMode ? null : recentFooter}
       />
       {selectionMode ? (

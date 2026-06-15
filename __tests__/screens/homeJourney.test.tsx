@@ -12,7 +12,9 @@ const mockSetValue = jest.fn();
 // Stable form reference: react-hook-form returns a stable object, so the focus
 // effect's callback identity stays constant and the effect runs on focus, not
 // on every render. A fresh object each render would re-fire it spuriously.
-const mockForm = { setValue: mockSetValue };
+// getValues returns undefined (≠ the mocked 'GBP' default) so the focus effect's
+// "only write when changed" guard still triggers setValue, matching prior behaviour.
+const mockForm = { setValue: mockSetValue, getValues: () => undefined };
 let mockParams: Record<string, string | undefined> = {};
 let mockLoans: unknown[] = [];
 const originalConsoleError = console.error;

@@ -113,11 +113,16 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   const [showCalculator, setShowCalculator] = useState(isCalculateTab);
   const firstRunChecked = useRef(false);
 
+  // Only the Home instance renders the dashboard. The Calculate tab mounts this same
+  // screen too (always alive in the tab navigator), so short-circuit the filter/sort
+  // there rather than recomputing it for a list it never shows.
   const pinnedLoans = useMemo(
-    () => loans
-      .filter(loan => loan.pinnedToDashboard)
-      .sort((a, b) => (a.dashboardOrder ?? 0) - (b.dashboardOrder ?? 0)),
-    [loans],
+    () => (isCalculateTab
+      ? []
+      : loans
+        .filter(loan => loan.pinnedToDashboard)
+        .sort((a, b) => (a.dashboardOrder ?? 0) - (b.dashboardOrder ?? 0))),
+    [loans, isCalculateTab],
   );
 
   useEffect(() => {
@@ -171,18 +176,25 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
+      // The Calculate tab never lists saved loans, so skip the MMKV read there.
+      if (!isCalculateTab) refresh();
       // Returning from the pushed track form should land back on the top intent,
       // not the track sub-step the user drilled into. Only resets that sub-step.
       setJourneyStep(step => (step === 'trackChoice' ? 'intent' : step));
       // Don't clobber an edited calc's currency while we're hydrating it.
       if (params.editValues) return;
-      form.setValue('currency', getDefaultCurrency(), {
-        shouldDirty: false,
-        shouldTouch: false,
-        shouldValidate: false,
-      });
-    }, [form, refresh, params.editValues])
+      // This effect runs on every focus (including returning from any pushed screen),
+      // so only write the currency when the default actually differs — a same-value
+      // setValue would still re-render the controlled currency field for nothing.
+      const nextCurrency = getDefaultCurrency();
+      if (form.getValues('currency') !== nextCurrency) {
+        form.setValue('currency', nextCurrency, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    }, [form, refresh, params.editValues, isCalculateTab])
   );
 
   const openCalculator = useCallback(() => {
