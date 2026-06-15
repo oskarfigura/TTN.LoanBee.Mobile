@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { I18nextProvider } from 'react-i18next';
+import { ThemeProvider } from '@oskarfigura/ui-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import {
 import i18n from '@/i18n';
 import { AdProvider } from '@/ads/AdProvider';
 import { fontFaces, fontSizes } from '@/theme';
+import { loanBeeNativeTheme } from '@/theme/uiNativeTheme';
 import { recordReviewAppOpen } from '@/review';
 import { installGlobalCrashHandler } from '@/diagnostics/crashLog';
 
@@ -64,51 +66,53 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <SafeAreaProvider>
-        <I18nextProvider i18n={i18n}>
-          <AdProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="about" />
-              <Stack.Screen name="guide" />
-              <Stack.Screen
-                name="saved/new"
-                options={{
-                  presentation: 'modal',
-                }}
-              />
-              <Stack.Screen name="saved/[id]" />
-              <Stack.Screen name="saved/recent" />
-              <Stack.Screen
-                name="saved/track"
-                options={{
-                  presentation: 'modal',
-                }}
-              />
-              <Stack.Screen name="saved/[id]/edit" />
-              <Stack.Screen name="saved/[id]/overpayments/index" />
-              <Stack.Screen
-                name="saved/[id]/deals/new"
-                options={{
-                  presentation: 'modal',
-                }}
-              />
-              <Stack.Screen name="saved/[id]/deals/[dealId]" />
-              <Stack.Screen
-                name="saved/[id]/events/new"
-                options={{
-                  presentation: 'modal',
-                }}
-              />
-              <Stack.Screen name="saved/[id]/events/[eventId]" />
-              <Stack.Screen
-                name="saved/[id]/complete-current"
-                options={{
-                  presentation: 'modal',
-                }}
-              />
-            </Stack>
-          </AdProvider>
-        </I18nextProvider>
+          <ThemeProvider theme={loanBeeNativeTheme}>
+            <I18nextProvider i18n={i18n}>
+              <AdProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="about" />
+                  <Stack.Screen name="guide" />
+                  <Stack.Screen
+                    name="saved/new"
+                    options={{
+                      presentation: 'modal',
+                    }}
+                  />
+                  <Stack.Screen name="saved/[id]" />
+                  <Stack.Screen name="saved/recent" />
+                  <Stack.Screen
+                    name="saved/track"
+                    options={{
+                      presentation: 'modal',
+                    }}
+                  />
+                  <Stack.Screen name="saved/[id]/edit" />
+                  <Stack.Screen name="saved/[id]/overpayments/index" />
+                  <Stack.Screen
+                    name="saved/[id]/deals/new"
+                    options={{
+                      presentation: 'modal',
+                    }}
+                  />
+                  <Stack.Screen name="saved/[id]/deals/[dealId]" />
+                  <Stack.Screen
+                    name="saved/[id]/events/new"
+                    options={{
+                      presentation: 'modal',
+                    }}
+                  />
+                  <Stack.Screen name="saved/[id]/events/[eventId]" />
+                  <Stack.Screen
+                    name="saved/[id]/complete-current"
+                    options={{
+                      presentation: 'modal',
+                    }}
+                  />
+                </Stack>
+              </AdProvider>
+            </I18nextProvider>
+          </ThemeProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

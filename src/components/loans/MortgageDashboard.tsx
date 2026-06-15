@@ -17,7 +17,6 @@ import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { DashboardHeader } from '@/components/loans/DashboardHeader';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
 import {
   LoanDashboardProgress,
   buildSavedLoanDisplayDetails,
@@ -135,7 +134,6 @@ const LoanDashboardCard = React.memo(({
       >
         <View style={styles.summaryCard}>
           <View style={styles.cardHeader}>
-            {purpose ? <LoanPurposeIconTile purpose={purpose} size={48} /> : null}
             <View style={styles.cardHeaderCopy}>
               <Text
                 style={styles.cardTitle}

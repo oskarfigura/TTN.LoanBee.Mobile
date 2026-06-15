@@ -136,6 +136,24 @@ __tests__/
 This app cannot run in Expo Go because it uses native modules (`react-native-mmkv` and
 `react-native-google-mobile-ads`). Use local native builds from this machine.
 
+### Step 1 — authenticate with GitHub Packages (required before `npm install`)
+
+`@oskarfigura/amortisation` is hosted on GitHub Packages. **Run this before every `npm install`:**
+
+```bash
+export NODE_AUTH_TOKEN=$(gh auth token)
+```
+
+If that fails, your `gh` token is missing the `read:packages` scope. Fix it once with:
+
+```bash
+gh auth refresh -h github.com -s read:packages
+```
+
+Then re-run `export NODE_AUTH_TOKEN=$(gh auth token)`. Without this env var set, `npm install` will 401.
+
+### Step 2 — install and run
+
 ```bash
 npm install
 npm test          # run all Jest projects
@@ -164,6 +182,7 @@ You do need the normal platform toolchains:
 Recommended first-time setup:
 
 ```bash
+export NODE_AUTH_TOKEN=$(gh auth token)   # must be set before npm install
 npm install
 npm run typecheck
 npm test
