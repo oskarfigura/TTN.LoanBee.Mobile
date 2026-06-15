@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Badge, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { LiveDotIcon } from '@/components/ui/LiveDotIcon';
@@ -259,7 +259,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
       label={hasPublishedDeals ? t('mortgage.addNextDeal') : t('mortgage.addCurrentDeal')}
       leftIcon={<Icon icon={IconName.PlusIcon} color={colours.primaryInk} size={18} strokeWidth={1.9} />}
       onPress={() => router.push(`/saved/${loan.id}/deals/new`)}
-      variant="secondary"
+      variant={ButtonVariant.Secondary}
     />
   );
   const deleteDeal = (deal: LoanDeal) => {
@@ -369,7 +369,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                 <TimelineAction
                   label={t('mortgage.completeCurrentDeal')}
                   onPress={() => router.push(`/saved/${loan.id}/complete-current`)}
-                  variant="primary"
+                  variant={ButtonVariant.Primary}
                   style={styles.currentPrimaryAction}
                 />
                 <View style={styles.timelineActionRow}>
@@ -429,7 +429,7 @@ export const MortgageTimelineView = ({ loan, showFooterAction = true, onLoanUpda
                   <TimelineAction
                     label={t('mortgage.editDeal')}
                     onPress={() => router.push(`/saved/${loan.id}/deals/${deal.id}?correct=1`)}
-                    variant="ghost"
+                    variant={ButtonVariant.Ghost}
                     style={styles.completedAction}
                   />
                 ) : null}

@@ -34,8 +34,10 @@ export const loanBeeNativeTheme = {
   colorButtonPrimaryBg: colours.primary,
   colorButtonPrimaryText: colours.white,
   colorButtonPrimaryBorder: colours.primary,
-  colorButtonPrimaryDisabledBg: colours.primaryMuted,
-  colorButtonPrimaryDisabledText: colours.white,
+  colorButtonPrimaryDisabledBg: colours.surfaceMuted,
+  colorButtonPrimaryDisabledText: colours.textSecondary,
+  colorButtonPrimaryDisabledBorder: colours.surfaceStrong,
+  colorButtonPrimaryDisabledIcon: colours.textSecondary,
 
   colorButtonSecondaryBg: colours.surfaceRaised,
   colorButtonSecondaryText: colours.primaryInk,

@@ -15,11 +15,11 @@ import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { MortgageTimelineView, MortgageWarningBanners } from '@/components/loans/MortgageTimelineView';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
-import { SegmentedControl } from '@/components/ui/FormPrimitives';
+import { SegmentedControl } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { formatCurrency } from '@/currency/format';
 import {
@@ -817,7 +817,7 @@ const CurrentDealSavingsCard = ({
       <Button
         label={t('mortgage.setUpDealOverpayment')}
         onPress={() => router.push(destination)}
-        variant="secondary"
+        variant={ButtonVariant.Secondary}
       />
     </View>
   );
@@ -1002,7 +1002,7 @@ const CompactTimelineSummary = ({
             label={actionLabel}
             leftIcon={<Icon icon={IconName.PlusIcon} color={colours.primaryInk} size={18} strokeWidth={1.9} />}
             onPress={onAddDeal}
-            variant="icon-pill"
+            variant="iconPill"
             style={styles.summaryTimelineAction}
           />
         ) : null}

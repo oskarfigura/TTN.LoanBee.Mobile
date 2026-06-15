@@ -18,7 +18,7 @@ import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { AppText } from '@/components/ui/AppText';
+import { AppText } from '@oskarfigura/ui-native';
 import { colours, elevation, layout, radii, spacing } from '@/theme';
 import { beginDraftResult } from '@/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,21 +40,23 @@ const JourneyOption = ({ title, body, meta, icon, onPress }: JourneyOptionProps)
     accessibilityRole="button"
     activeOpacity={0.84}
     onPress={onPress}
-    style={styles.optionCard}
+    style={styles.optionPressable}
   >
-    {icon ? <View style={styles.optionIcon}>{icon}</View> : null}
-    <View style={styles.optionText}>
-      {meta ? (
-        <AppText variant="labelSm" tone="accent" style={styles.optionMeta}>
-          {meta}
+    <View style={styles.optionCard}>
+      {icon ? <View style={styles.optionIcon}>{icon}</View> : null}
+      <View style={styles.optionText}>
+        {meta ? (
+          <AppText variant="labelSm" tone="accent" style={styles.optionMeta}>
+            {meta}
+          </AppText>
+        ) : null}
+        <AppText variant="title2" style={styles.optionTitle}>
+          {title}
         </AppText>
-      ) : null}
-      <AppText variant="title2" style={styles.optionTitle}>
-        {title}
-      </AppText>
-      <AppText variant="bodySm" tone="muted" style={styles.optionBody}>
-        {body}
-      </AppText>
+        <AppText variant="bodySm" tone="muted" style={styles.optionBody}>
+          {body}
+        </AppText>
+      </View>
     </View>
   </TouchableOpacity>
 );
@@ -353,6 +355,11 @@ const styles = StyleSheet.create({
   optionList: {
     gap: spacing.md,
   },
+  optionPressable: {
+    borderRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    ...elevation.level1,
+  },
   optionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -362,7 +369,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radii.card,
     padding: layout.cardPadding,
-    ...elevation.level1,
   },
   optionIcon: {
     width: 48,

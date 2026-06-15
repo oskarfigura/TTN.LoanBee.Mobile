@@ -13,15 +13,15 @@ import { CurrencyCode } from '@/currency/currencies';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import {
   AppTextInput,
   FieldLabel,
   FormSection,
   InputSurface,
   SegmentedControl,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Icon, IconName } from '@/components/ui/Icon';
@@ -243,7 +243,7 @@ export default function SaveNewLoanScreen() {
         <Button
           label={t('save.cancel')}
           onPress={() => router.back()}
-          variant="ghost"
+          variant={ButtonVariant.Ghost}
           style={styles.cancelBtn}
         />
       </ScrollView>

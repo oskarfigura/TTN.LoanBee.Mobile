@@ -3,10 +3,10 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Touchabl
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { AppTextInput, FieldError, FieldHint, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldHint, FieldLabel, InputAffix, InputSurface } from '@oskarfigura/ui-native';
 import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
 import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -220,7 +220,7 @@ export default function CompleteCurrentDealScreen() {
           <Button
             label={t('mortgage.addOverpaymentRow')}
             onPress={addOverpaymentRow}
-            variant="icon-pill"
+            variant="iconPill"
             style={styles.addOverpaymentButton}
           />
         </View>
@@ -288,7 +288,7 @@ export default function CompleteCurrentDealScreen() {
         <Button
           label={t('save.cancel')}
           onPress={() => router.back()}
-          variant="ghost"
+          variant={ButtonVariant.Ghost}
           style={styles.cancelBtn}
         />
       </ScrollView>

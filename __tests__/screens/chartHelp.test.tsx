@@ -35,11 +35,6 @@ jest.mock('react-native-safe-area-context', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
 jest.mock('../../src/components/ui/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),

@@ -4,8 +4,7 @@ import type { ErrorBoundaryProps } from 'expo-router';
 import i18n from '@/i18n';
 import { colours, spacing } from '@/theme';
 import { recordCrash } from '@/diagnostics/crashLog';
-import { AppText } from './AppText';
-import { Button } from './Button';
+import { AppText, Button } from '@oskarfigura/ui-native';
 
 // Expo Router renders this *above* RootLayout, so it mounts WITHOUT the app's
 // providers (SafeAreaProvider, I18nextProvider, GestureHandlerRootView). Keep it

@@ -13,9 +13,9 @@ import { MonthlyOverpaymentSheet } from '@/components/loans/MonthlyOverpaymentSh
 import { LumpSumSheet } from '@/components/loans/LumpSumSheet';
 import { ChartHelpButton, ChartHelpDrawer } from '@/components/charts/ChartHelp';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Icon, IconName } from '@/components/ui/Icon';
@@ -217,7 +217,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
             <Button
               label={t('overpayments.monthlyNotSet')}
               onPress={() => setMonthlySheetVisible(true)}
-              variant="secondary"
+              variant={ButtonVariant.Secondary}
             />
           )}
         </View>
@@ -256,7 +256,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
           <Button
             label={t('overpayments.lumpSumAdd')}
             onPress={openAddLumpSum}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             leftIcon={<Icon icon={IconName.PlusIcon} size={16} color={colours.primary} />}
           />
         </View>

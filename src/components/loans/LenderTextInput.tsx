@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, InputSurface } from '@oskarfigura/ui-native';
 
 interface Props {
   value: string;

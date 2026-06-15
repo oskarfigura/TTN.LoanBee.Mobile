@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from './AppText';
+import { AppText } from '@oskarfigura/ui-native';
 import { colours, elevation, radii, spacing } from '@/theme';
 
 interface Props {

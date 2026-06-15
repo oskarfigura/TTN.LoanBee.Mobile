@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/hooks/useSavedLoans';
 import { LoanProfileCard } from '@/components/loans/LoanProfileCard';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { AppText } from '@/components/ui/AppText';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HeaderIconButton } from '@oskarfigura/ui-native';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Button } from '@/components/ui/Button';
-import { AppTextInput, InputSurface } from '@/components/ui/FormPrimitives';
+import { Button } from '@oskarfigura/ui-native';
+import { AppTextInput, InputSurface } from '@oskarfigura/ui-native';
 import { getLoanPurpose } from '@/loans/loanPurpose';
 import { recentCalculationsStorage } from '@/storage/recentCalculations';
 import { savedLoansStorage } from '@/storage/savedLoans';
@@ -182,7 +182,7 @@ export default function SavedScreen() {
                 <Button
                   label={allSelected ? t('saved.deselectAll') : t('saved.selectAll')}
                   onPress={toggleSelectAll}
-                  variant="ghost"
+                  variant={ButtonVariant.Ghost}
                   style={styles.selectionAction}
                 />
               </View>
@@ -195,7 +195,7 @@ export default function SavedScreen() {
                   <Button
                     label={t('saved.createNewCalculation')}
                     onPress={() => router.push('/calculate' as never)}
-                    variant="secondary"
+                    variant={ButtonVariant.Secondary}
                     style={styles.headerButton}
                   />
                 </View>
@@ -237,13 +237,13 @@ export default function SavedScreen() {
           <Button
             label={t('common.cancel')}
             onPress={clearSelection}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             style={styles.actionBarButton}
           />
           <Button
             label={t('common.delete')}
             onPress={deleteSelected}
-            variant="destructive"
+            variant={ButtonVariant.Destructive}
             leftIcon={<Icon icon={IconName.TrashIcon} size={18} color={colours.white} strokeWidth={1.9} />}
             style={styles.actionBarButton}
           />

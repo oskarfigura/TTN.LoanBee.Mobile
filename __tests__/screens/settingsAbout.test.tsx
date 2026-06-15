@@ -108,21 +108,8 @@ jest.mock('../../src/components/calculator/CurrencyPicker', () => ({
   CurrencyPicker: (props: Record<string, unknown>) => React.createElement('CurrencyPicker', props),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/Card', () => ({
-  Card: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('Card', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/FormPrimitives', () => ({
-  SegmentedControl: (props: Record<string, unknown>) => React.createElement('SegmentedControl', props),
-}));
 
 jest.mock('../../src/components/ui/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),

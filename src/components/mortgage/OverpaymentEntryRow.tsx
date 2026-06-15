@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
-import { AppTextInput, FieldError, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppText } from '@oskarfigura/ui-native';
+import { AppTextInput, FieldError, InputAffix, InputSurface } from '@oskarfigura/ui-native';
 import { colours, spacing } from '@/theme';
 import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
 

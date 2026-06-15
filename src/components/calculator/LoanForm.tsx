@@ -20,7 +20,7 @@ import { LoanCalculationType } from '@/core/LoanCalculationType';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { CURRENCIES } from '@/currency/currencies';
 import { layout, spacing } from '@/theme';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@oskarfigura/ui-native';
 import {
   AppTextInput,
   FieldError,
@@ -30,7 +30,7 @@ import {
   InputAffix,
   InputSurface,
   SegmentedControl,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { DownPaymentToggle } from './DownPaymentToggle';
 
@@ -170,7 +170,7 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
         ]}
       >
         {topContent}
-        <FormSection style={styles.section} accent>
+        <FormSection style={styles.section}>
           <View ref={registerFieldRef('loanAmount')} style={styles.fieldGroup}>
             <FieldLabel>{t('calculator.loanAmount')}</FieldLabel>
             <Controller

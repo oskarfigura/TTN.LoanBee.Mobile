@@ -6,11 +6,11 @@ import {
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HeaderIconButton } from '@oskarfigura/ui-native';
 import { BannerAd } from '@/ads/BannerAd';
 import { colours } from '@/theme';
 import { CurrencyCode } from '@/currency/currencies';

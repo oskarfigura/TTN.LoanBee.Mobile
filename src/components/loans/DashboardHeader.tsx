@@ -9,8 +9,8 @@ import {
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { AppText } from '@oskarfigura/ui-native';
+import { HeaderIconButton } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 

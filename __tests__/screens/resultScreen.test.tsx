@@ -76,25 +76,12 @@ jest.mock('../../src/components/results/UnsavedResultModal', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/Button', () => ({
-  Button: (props: Record<string, unknown>) => React.createElement('Button', props),
-}));
 
 jest.mock('../../src/components/ui/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
-jest.mock('../../src/components/ui/HeaderIconButton', () => ({
-  HeaderIconButton: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('HeaderIconButton', props, children)
-  ),
-}));
 
 jest.mock('../../src/components/ui/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),

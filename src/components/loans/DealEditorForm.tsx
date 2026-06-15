@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { FormStepper, FormStepperSection } from '@/components/ui/FormStepper';
 import {
@@ -14,7 +14,7 @@ import {
   InputAffix,
   InputSurface,
   SegmentedControl,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
@@ -602,7 +602,7 @@ export const DealEditorForm = ({
           <Button
             label={t('mortgage.saveAsDraft')}
             onPress={() => saveWithStatus('draft')}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             style={styles.action}
             disabled={formHasErrors}
           />
@@ -610,10 +610,10 @@ export const DealEditorForm = ({
         <Button label={primaryLabel} onPress={handlePrimary} style={styles.action} disabled={formHasErrors} />
       </View>
       {onCancel ? (
-        <Button label={t('save.cancel')} onPress={onCancel} variant="ghost" style={styles.cancelAction} />
+        <Button label={t('save.cancel')} onPress={onCancel} variant={ButtonVariant.Ghost} style={styles.cancelAction} />
       ) : null}
       {onDeleteDraft ? (
-        <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="destructive-ghost" style={styles.deleteAction} />
+        <Button label={t('mortgage.deleteDraft')} onPress={onDeleteDraft} variant="destructiveGhost" style={styles.deleteAction} />
       ) : null}
     </View>
   );

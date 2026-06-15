@@ -6,18 +6,18 @@ import { savedLoansStorage } from '@/storage/savedLoans';
 import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
 import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { Button } from '@/components/ui/Button';
-import { AppText } from '@/components/ui/AppText';
+import { Button, ButtonVariant } from '@oskarfigura/ui-native';
+import { AppText } from '@oskarfigura/ui-native';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { QuickActionTile } from '@/components/ui/QuickActionTile';
-import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
+import { QuickActionTile } from '@oskarfigura/ui-native';
+import { AppTextInput, FieldLabel, InputSurface } from '@oskarfigura/ui-native';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 import { getResultForSavedLoan, getBaselineResultForSavedLoan } from '@/results/loanResultRoute';
 import { shareCalculation } from '@/share/shareCalculation';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { HeaderIconButton } from '@/components/ui/HeaderIconButton';
+import { HeaderIconButton } from '@oskarfigura/ui-native';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { getCurrentDeal } from '@/mortgage/tracker';
 
@@ -211,7 +211,7 @@ export default function LoanDetailScreen() {
             <Button
               label={t('save.cancel')}
               onPress={() => setRenameModalVisible(false)}
-              variant="ghost"
+              variant={ButtonVariant.Ghost}
               style={styles.renameAction}
             />
             <Button

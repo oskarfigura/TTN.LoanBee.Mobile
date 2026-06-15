@@ -92,11 +92,6 @@ jest.mock('../../src/components/ui/Icon', () => ({
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
 jest.mock('../../src/components/ui/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),

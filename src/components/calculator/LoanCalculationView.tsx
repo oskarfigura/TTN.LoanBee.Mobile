@@ -21,10 +21,10 @@ import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/compo
 import { LoanBreakdownDonut } from '@/components/charts/LoanBreakdownDonut';
 import { OverpaymentsComparisonChart } from '@/components/charts/OverpaymentsComparisonChart';
 import { RepaymentBarChart } from '@/components/charts/RepaymentBarChart';
-import { AppText } from '@/components/ui/AppText';
-import { Card } from '@/components/ui/Card';
+import { AppText } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
-import { SegmentedControl } from '@/components/ui/FormPrimitives';
+import { SegmentedControl } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { CurrencyCode } from '@/currency/currencies';
 import { LoanResult } from '@/results/loanResultRoute';

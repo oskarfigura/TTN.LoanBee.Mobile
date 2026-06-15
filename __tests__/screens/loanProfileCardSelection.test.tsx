@@ -30,17 +30,7 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/Card', () => ({
-  Card: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('Card', props, children)
-  ),
-}));
 
 jest.mock('../../src/components/ui/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),

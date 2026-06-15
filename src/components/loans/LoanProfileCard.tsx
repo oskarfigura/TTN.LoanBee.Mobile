@@ -1,8 +1,8 @@
 import React, { useMemo, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
-import { Card } from '@/components/ui/Card';
+import { AppText } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { LoanPurposeIconTile } from '@/components/loans/LoanPurposePicker';
 import { SavedLoanProgressBar } from '@/components/loans/SavedLoanProgressBar';

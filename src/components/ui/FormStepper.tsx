@@ -9,7 +9,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { SegmentedControl } from './FormPrimitives';
+import { SegmentedControl } from '@oskarfigura/ui-native';
 import { colours, layout, spacing } from '@/theme';
 
 export interface FormStepperSection {

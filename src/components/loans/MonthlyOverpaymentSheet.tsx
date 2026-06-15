@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { Button } from '@/components/ui/Button';
-import { AppTextInput, FieldError, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { Button, ButtonVariant } from '@oskarfigura/ui-native';
+import { AppTextInput, FieldError, InputAffix, InputSurface } from '@oskarfigura/ui-native';
 import {
   ImpactRow,
   OverpaymentFieldGroup,
@@ -77,13 +77,13 @@ export const MonthlyOverpaymentSheet = ({
             <Button
               label={t('overpayments.monthlyRemove')}
               onPress={onRemove}
-              variant="ghost"
+              variant={ButtonVariant.Ghost}
             />
           ) : (
             <Button
               label={t('overpayments.cancel')}
               onPress={onClose}
-              variant="ghost"
+              variant={ButtonVariant.Ghost}
             />
           )}
           primaryAction={(

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
+import { AppText } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { LOAN_PURPOSES } from '@/loans/loanPurpose';
 import type { LoanPurpose } from '@/types/SavedLoan';

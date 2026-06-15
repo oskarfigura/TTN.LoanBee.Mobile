@@ -1,7 +1,7 @@
 import React from 'react';
 import { colours } from '@/theme';
 import { Icon, IconName } from './Icon';
-import { HeaderIconButton } from './HeaderIconButton';
+import { HeaderIconButton } from '@oskarfigura/ui-native';
 
 interface Props {
   onPress: () => void;

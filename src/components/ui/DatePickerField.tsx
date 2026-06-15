@@ -7,7 +7,7 @@ import {
   FieldHint,
   FieldLabel,
   InputSurface,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { colours, spacing } from '@/theme';
 import { formatFriendlyDate, formatIsoDate, parseDateLabelValue } from '@/utils/date';
 

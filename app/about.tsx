@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Icon, IconName } from '@/components/ui/Icon';
@@ -37,7 +37,7 @@ export default function AboutScreen() {
           <AppText variant="bodySm" tone="muted" style={styles.guideBody}>{t('guide.aboutEntryBody')}</AppText>
           <Button
             label={t('guide.aboutEntryCta')}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             onPress={() => router.push('/guide')}
             rightIcon={<Icon icon={IconName.ArrowRightIcon} color={colours.primaryInk} size={18} strokeWidth={2} />}
           />

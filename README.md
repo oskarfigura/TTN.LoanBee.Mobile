@@ -161,6 +161,52 @@ npm run android   # build & run on connected Android device or emulator (expo ru
 npm run ios       # build & run on connected iOS device or simulator (expo run:ios)
 ```
 
+## Using a local TTN.UI native package
+
+Use this when you need LoanBee Mobile to run against unpublished changes from the local `TTN.UI`
+checkout instead of the published GitHub Packages version of `@oskarfigura/ui-native`.
+
+Build the native package from the design-system repo first:
+
+```bash
+cd /Users/oskarfigura/Documents/repos/TTN.UI
+npm install
+npm run build --workspace @oskarfigura/ui-native
+```
+
+Then install that local package into this app:
+
+```bash
+cd /Users/oskarfigura/Documents/repos/LoanBee.Mobile
+npm install /Users/oskarfigura/Documents/repos/TTN.UI/packages/ui-native
+npm run android   # or npm run ios
+```
+
+`@oskarfigura/ui-native` is consumed from its built `dist` folder. After changing code in
+`TTN.UI`, rebuild the package and restart the Expo/Metro process. If the app still sees old files,
+run the local `npm install .../packages/ui-native` command again and restart with a cleared Metro
+cache:
+
+```bash
+cd /Users/oskarfigura/Documents/repos/TTN.UI
+npm run build --workspace @oskarfigura/ui-native
+
+cd /Users/oskarfigura/Documents/repos/LoanBee.Mobile
+npm install /Users/oskarfigura/Documents/repos/TTN.UI/packages/ui-native
+npm run start -- --clear
+```
+
+To return to the published package, authenticate with GitHub Packages and reinstall the registry
+version:
+
+```bash
+export NODE_AUTH_TOKEN=$(gh auth token)
+npm install @oskarfigura/ui-native@^0.2.1
+```
+
+Prefer this local-path install over `npm link`; it keeps package exports and React peer
+dependencies closer to the production install shape.
+
 ## Native Project Layout
 
 - `android/` is currently present in this checkout and can be used directly with Gradle.

@@ -7,10 +7,10 @@ import { formatCurrency } from '@/currency/format';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { AppTextInput, FieldLabel, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
+import { AppTextInput, FieldLabel, InputSurface } from '@oskarfigura/ui-native';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { normaliseLoanPurpose } from '@/loans/loanPurpose';
@@ -102,7 +102,7 @@ export default function EditLoanScreen() {
           <Button
             label={t('saved.createNewCalculation')}
             onPress={() => router.push('/calculate' as never)}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             style={styles.stackAction}
           />
         </Card>
@@ -144,7 +144,7 @@ export default function EditLoanScreen() {
         <Button
           label={t('save.cancel')}
           onPress={() => router.back()}
-          variant="ghost"
+          variant={ButtonVariant.Ghost}
           style={styles.cancelBtn}
         />
       </ScrollView>

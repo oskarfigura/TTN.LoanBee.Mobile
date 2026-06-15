@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import {
   AppTextInput,
@@ -12,7 +12,7 @@ import {
   InputAffix,
   InputSurface,
   PillSelector,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import {
@@ -282,7 +282,7 @@ export const MortgageEventForm = ({
         <Button
           label={t('mortgage.deleteEvent')}
           onPress={onDelete}
-          variant="destructive"
+          variant={ButtonVariant.Destructive}
           style={styles.deleteAction}
         />
       ) : null}

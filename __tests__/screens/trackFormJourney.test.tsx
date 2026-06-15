@@ -82,15 +82,7 @@ jest.mock('../../src/components/mortgage/OverpaymentEntryRow', () => ({
   OverpaymentEntryRow: (props: Record<string, unknown>) => React.createElement('OverpaymentEntryRow', props),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/Button', () => ({
-  Button: (props: Record<string, unknown>) => React.createElement('Button', props),
-}));
 
 jest.mock('../../src/components/ui/DatePickerField', () => ({
   DatePickerField: (props: Record<string, unknown>) => React.createElement('DatePickerField', props),
@@ -102,26 +94,6 @@ jest.mock('../../src/components/ui/KeyboardAwareFormScreen', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/FormPrimitives', () => ({
-  AppTextInput: (props: Record<string, unknown>) => React.createElement('AppTextInput', props),
-  FieldError: (props: Record<string, unknown>) => React.createElement('FieldError', props),
-  FieldHint: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('FieldHint', props, children)
-  ),
-  FieldLabel: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('FieldLabel', props, children)
-  ),
-  FormSection: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('FormSection', props, children)
-  ),
-  InputAffix: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('InputAffix', props, children)
-  ),
-  InputSurface: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('InputSurface', props, children)
-  ),
-  SegmentedControl: (props: Record<string, unknown>) => React.createElement('SegmentedControl', props),
-}));
 
 jest.mock('../../src/components/ui/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),

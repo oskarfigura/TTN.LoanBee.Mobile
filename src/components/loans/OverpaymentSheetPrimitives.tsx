@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { FieldLabel } from '@/components/ui/FormPrimitives';
+import { AppText } from '@oskarfigura/ui-native';
+import { FieldLabel } from '@oskarfigura/ui-native';
 import { colours, layout, radii, spacing } from '@/theme';
 
 export type ImpactRow = { label: string; value: string };

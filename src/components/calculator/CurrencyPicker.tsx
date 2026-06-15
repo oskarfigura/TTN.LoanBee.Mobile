@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
-import { PillSelector } from '@/components/ui/FormPrimitives';
+import { PillSelector } from '@oskarfigura/ui-native';
 
 interface Props {
   value: CurrencyCode;

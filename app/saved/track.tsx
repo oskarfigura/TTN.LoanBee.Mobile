@@ -11,8 +11,8 @@ import { formatCurrency } from '@/currency/format';
 import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
 import { LenderTextInput } from '@/components/loans/LenderTextInput';
 import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { KeyboardAwareFormScreen } from '@/components/ui/KeyboardAwareFormScreen';
 import {
@@ -24,7 +24,7 @@ import {
   InputAffix,
   InputSurface,
   SegmentedControl,
-} from '@/components/ui/FormPrimitives';
+} from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import {
   buildTrackedMortgageFromForm,
@@ -290,8 +290,8 @@ export default function TrackMortgageScreen() {
           label={t('track.save')}
           onPress={handleSave}
           disabled={!canSave}
-          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} />}
-          style={styles.saveButton}
+          leftIcon={<Icon icon={IconName.SaveIcon} color={canSave ? colours.white : colours.textSecondary} size={18} />}
+          style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
         />
       )}
     >
@@ -526,7 +526,7 @@ export default function TrackMortgageScreen() {
               <Button
                 label={t('track.addLumpOverpayment')}
                 onPress={addLumpRow}
-                variant="icon-pill"
+                variant="iconPill"
                 style={styles.addBtn}
               />
             </View>
@@ -584,6 +584,10 @@ const styles = StyleSheet.create({
   saveButton: {
     marginBottom: spacing.xs,
     paddingVertical: spacing.md,
+  },
+  saveButtonDisabled: {
+    backgroundColor: colours.surfaceMuted,
+    borderColor: colours.surfaceStrong,
   },
   addBtn: { marginTop: spacing.xs },
   enrichmentToggle: {

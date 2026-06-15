@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DownPaymentType } from '@/core/DownPaymentType';
-import { SegmentedControl } from '@/components/ui/FormPrimitives';
+import { SegmentedControl } from '@oskarfigura/ui-native';
 
 interface Props {
   value: DownPaymentType;

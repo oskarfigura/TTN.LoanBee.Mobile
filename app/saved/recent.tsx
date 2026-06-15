@@ -3,9 +3,9 @@ import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-nativ
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -131,7 +131,7 @@ const RecentCalculationCard = ({
       </TouchableOpacity>
       {!selectionMode ? (
         <View style={styles.recentActions}>
-          <Button label={t('recent.track')} onPress={onTrack} variant="icon-pill" style={styles.trackAction} />
+          <Button label={t('recent.track')} onPress={onTrack} variant="iconPill" style={styles.trackAction} />
           <TouchableOpacity
             style={styles.deleteAction}
             onPress={onDelete}
@@ -258,7 +258,7 @@ export default function RecentCalculationsScreen() {
           <Button
             label={allSelected ? t('recent.deselectAll') : t('recent.selectAll')}
             onPress={toggleSelectAll}
-            variant="ghost"
+            variant={ButtonVariant.Ghost}
             style={styles.selectionAction}
           />
         </View>
@@ -300,13 +300,13 @@ export default function RecentCalculationsScreen() {
           <Button
             label={t('common.cancel')}
             onPress={clearSelection}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             style={styles.actionBarButton}
           />
           <Button
             label={t('common.delete')}
             onPress={deleteSelected}
-            variant="destructive"
+            variant={ButtonVariant.Destructive}
             leftIcon={<Icon icon={IconName.TrashIcon} size={18} color={colours.white} strokeWidth={1.9} />}
             style={styles.actionBarButton}
           />

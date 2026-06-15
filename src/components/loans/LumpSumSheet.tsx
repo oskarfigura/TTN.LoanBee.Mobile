@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { MortgageEvent } from '@/types/SavedLoan';
 import { formatIsoDate } from '@/utils/date';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonVariant } from '@oskarfigura/ui-native';
 import { DatePickerField, DatePickerFieldHandle } from '@/components/ui/DatePickerField';
-import { AppTextInput, FieldError, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, InputSurface } from '@oskarfigura/ui-native';
 import {
   ImpactRow,
   OverpaymentFieldGroup,
@@ -106,13 +106,13 @@ export const LumpSumSheet = ({
             <Button
               label={t('overpayments.delete')}
               onPress={handleDelete}
-              variant="destructive"
+              variant={ButtonVariant.Destructive}
             />
           ) : (
             <Button
               label={t('overpayments.cancel')}
               onPress={onClose}
-              variant="ghost"
+              variant={ButtonVariant.Ghost}
             />
           )}
           primaryAction={(

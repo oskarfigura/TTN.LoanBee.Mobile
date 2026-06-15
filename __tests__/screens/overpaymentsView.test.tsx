@@ -107,27 +107,9 @@ jest.mock('../../src/components/charts/OverpaymentsComparisonChart', () => ({
   ),
 }));
 
-jest.mock('../../src/components/ui/AppText', () => ({
-  AppText: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('AppText', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/Button', () => ({
-  Button: (props: Record<string, unknown>) => React.createElement('Button', props),
-}));
 
-jest.mock('../../src/components/ui/Card', () => ({
-  Card: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('Card', props, children)
-  ),
-}));
 
-jest.mock('../../src/components/ui/FormPrimitives', () => ({
-  FieldLabel: ({ children, ...props }: { children?: React.ReactNode }) => (
-    React.createElement('FieldLabel', props, children)
-  ),
-}));
 
 jest.mock('../../src/components/ui/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),

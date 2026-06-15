@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getLoanCalculations } from '@/core/amortisation';
 import { DownPaymentType } from '@/core/DownPaymentType';
 import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonVariant } from '@oskarfigura/ui-native';
 import { colours, fontFaces, fontSizes } from '@/theme';
 import { beginDraftResult } from '@/results/loanResultRoute';
 import { getShareableCalculationValuesFromParams } from '@/share/calculationShareLink';
@@ -55,7 +55,7 @@ export default function SharedCalculationScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.content}>
         <Text style={styles.title}>{t('share.opening')}</Text>
-        <Button label={t('common.goBack')} onPress={() => router.replace('/' as never)} variant="secondary" />
+        <Button label={t('common.goBack')} onPress={() => router.replace('/' as never)} variant={ButtonVariant.Secondary} />
       </View>
     </SafeAreaView>
   );

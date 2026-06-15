@@ -8,13 +8,13 @@ import { computeLoanWithEvents } from '@/loans/loanScenario';
 import { upsertMortgageEvent } from '@/mortgage/events';
 import { getResultForSavedLoan } from '@/results/loanResultRoute';
 import { savedLoansStorage } from '@/storage/savedLoans';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { FinancialDisclaimer } from '@/components/ui/FinancialDisclaimer';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@oskarfigura/ui-native';
 import { CURRENCIES } from '@/currency/currencies';
 import { colours, layout, spacing } from '@/theme';
 import { MortgageEvent } from '@/types/SavedLoan';
@@ -154,7 +154,7 @@ export default function NewLoanLumpSumScreen() {
         </View>
 
         <Button label={t('mortgage.saveEvent')} onPress={handleSave} disabled={!amountValidation.isValid} style={styles.saveBtn} />
-        <Button label={t('save.cancel')} onPress={() => router.back()} variant="ghost" style={styles.cancelBtn} />
+        <Button label={t('save.cancel')} onPress={() => router.back()} variant={ButtonVariant.Ghost} style={styles.cancelBtn} />
       </ScrollView>
     </SafeAreaView>
   );

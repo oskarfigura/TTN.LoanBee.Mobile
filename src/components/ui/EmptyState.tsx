@@ -1,4 +1,4 @@
-import { AppText } from './AppText';
+import { AppText } from '@oskarfigura/ui-native';
 import { EmptyState as NativeEmptyState, type EmptyStateProps } from '@oskarfigura/ui-native';
 
 type Props = Omit<EmptyStateProps, 'icon'>;

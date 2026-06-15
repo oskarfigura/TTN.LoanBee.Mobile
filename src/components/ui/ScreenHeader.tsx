@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from './AppText';
+import { AppText } from '@oskarfigura/ui-native';
 import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
 
 interface Props {

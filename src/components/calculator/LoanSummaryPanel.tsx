@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/components/loans/DashboardPinButton';
 import { DashboardProgressGauge } from '@/components/loans/DashboardProgressGauge';
 import { Icon, IconName } from '@/components/ui/Icon';
-import { QuickActionTile } from '@/components/ui/QuickActionTile';
+import { QuickActionTile } from '@oskarfigura/ui-native';
 import { formatCurrency } from '@/currency/format';
 import {
   buildSavedLoanDashboardProgress,

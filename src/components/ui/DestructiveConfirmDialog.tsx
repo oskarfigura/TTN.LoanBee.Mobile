@@ -1,8 +1,6 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { AppText } from './AppText';
-import { Button } from './Button';
-import { Card } from './Card';
+import { AppText, Button, ButtonVariant, Card } from '@oskarfigura/ui-native';
 import { Icon, IconName } from './Icon';
 import { colours, spacing } from '@/theme';
 
@@ -36,11 +34,11 @@ export const DestructiveConfirmDialog = ({
             </AppText>
           </View>
           <View style={styles.actions}>
-            <Button label={cancelLabel} onPress={onCancel} variant="secondary" style={styles.action} />
+            <Button label={cancelLabel} onPress={onCancel} variant={ButtonVariant.Secondary} style={styles.action} />
             <Button
               label={confirmLabel}
               onPress={onConfirm}
-              variant="destructive"
+              variant={ButtonVariant.Destructive}
               leftIcon={<Icon icon={IconName.TrashIcon} color={colours.white} size={16} />}
               style={styles.action}
             />

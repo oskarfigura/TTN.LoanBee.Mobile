@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/Card';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Card } from '@oskarfigura/ui-native';
+import { ProgressBar } from '@oskarfigura/ui-native';
 import { LoanInsightSummary } from '@/loans/loanInsightSummary';
 import { colours, fontFaces, fontSizes, radii, spacing } from '@/theme';
 

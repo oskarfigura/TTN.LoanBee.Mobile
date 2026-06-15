@@ -4,14 +4,14 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
+import { Button } from '@oskarfigura/ui-native';
+import { Card } from '@oskarfigura/ui-native';
 import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
 import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { DealEditorForm } from '@/components/loans/DealEditorForm';
-import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@/components/ui/FormPrimitives';
+import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@oskarfigura/ui-native';
 import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
 import { formatCurrency } from '@/currency/format';
 import {
@@ -248,7 +248,7 @@ const CompletedDealDetailView = ({
           <Button
             label={t('mortgage.addOverpaymentRow')}
             onPress={addRow}
-            variant="icon-pill"
+            variant="iconPill"
             style={styles.addOverpaymentButton}
           />
           <Button
@@ -262,14 +262,14 @@ const CompletedDealDetailView = ({
         <Button
           label={t('mortgage.editDeal')}
           onPress={() => router.replace(`/saved/${initialLoan.id}/deals/${deal.id}?correct=1`)}
-          variant="secondary"
+          variant={ButtonVariant.Secondary}
           style={styles.correctAction}
         />
         {onDelete ? (
           <Button
             label={t('mortgage.deleteDeal')}
             onPress={onDelete}
-            variant="destructive"
+            variant={ButtonVariant.Destructive}
             style={styles.correctAction}
           />
         ) : null}

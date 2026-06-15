@@ -176,7 +176,7 @@
           "^@oskarfigura/amortisation/(.*)$": "<rootDir>/node_modules/@oskarfigura/amortisation/dist/$1.js",
           "^@oskarfigura/icons$": "<rootDir>/node_modules/@oskarfigura/icons/dist/index.js",
           "^@oskarfigura/icons/(.*)$": "<rootDir>/node_modules/@oskarfigura/icons/dist/$1.js",
-          "^@oskarfigura/ui-native$": "<rootDir>/node_modules/@oskarfigura/ui-native/dist/index.js",
+          "^@oskarfigura/ui-native$": "<rootDir>/src/__mocks__/ui-native.ts",
           "^@oskarfigura/ui-native/(.*)$": "<rootDir>/node_modules/@oskarfigura/ui-native/dist/$1.js",
           "^@/(.*)$": "<rootDir>/src/$1",
           "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
@@ -211,7 +211,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@oskarfigura/amortisation": "^1.0.1",
     "@oskarfigura/icons": "^1.4.2",
-    "@oskarfigura/ui-native": "^0.2.1",
+    "@oskarfigura/ui-native": "^0.2.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.6.0",
     "expo": "~55.0.26",

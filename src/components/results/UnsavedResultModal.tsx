@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonVariant } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/components/ui/Icon';
 import { colours, fontFaces, fontSizes } from '@/theme';
 
@@ -41,14 +41,14 @@ export const UnsavedResultModal = ({
           <Button
             label={t('results.keepEditing')}
             onPress={onKeepEditing}
-            variant="secondary"
+            variant={ButtonVariant.Secondary}
             leftIcon={<Icon icon={IconName.EditIcon} color={colours.primaryInk} size={18} />}
             style={styles.secondaryAction}
           />
           <Button
             label={t('results.discard')}
             onPress={onDiscard}
-            variant="ghost"
+            variant={ButtonVariant.Ghost}
             leftIcon={<Icon icon={IconName.TrashIcon} color={colours.primary} size={18} />}
             style={styles.ghostAction}
           />
