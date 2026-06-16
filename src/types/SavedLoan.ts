@@ -3,20 +3,27 @@ import { CurrencyCode } from '@/currency/currencies';
 export type LoanCategory = 'mortgage' | 'loan';
 export type LoanPurpose =
   | 'personal'
+  | 'debtConsolidation'
   | 'car'
-  | 'bike'
-  | 'motorbike'
   | 'homeImprovement'
+  | 'furniture'
   | 'travel'
+  | 'truck'
+  | 'wedding'
   | 'jewellery'
   | 'business'
   | 'stocks'
   | 'crypto'
   | 'medical'
   | 'shopping'
+  | 'electronics'
   | 'gaming'
+  | 'pet'
   | 'boat'
+  | 'moving'
   | 'education'
+  | 'bike'
+  | 'motorbike'
   | 'other';
 export type LoanGroupStatus = 'draft' | 'tracked';
 export type LoanDealStatus = 'draft' | 'active' | 'completed';

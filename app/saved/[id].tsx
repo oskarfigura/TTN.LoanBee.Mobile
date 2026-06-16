@@ -372,6 +372,16 @@ export default function LoanDetailScreen() {
       >
         <Pressable style={styles.modalScrim} onPress={() => setLoanMenuVisible(false)}>
           <Pressable style={styles.actionMenu}>
+            <TouchableOpacity
+              style={styles.actionMenuRow}
+              onPress={() => {
+                setLoanMenuVisible(false);
+                router.push(`/saved/${id}/edit`);
+              }}
+              activeOpacity={0.84}
+            >
+              <Text style={styles.actionMenuText}>{t('saved.edit')}</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.actionMenuRow} onPress={handleShare} activeOpacity={0.84}>
               <Text style={styles.actionMenuText}>{t('share.short')}</Text>
             </TouchableOpacity>

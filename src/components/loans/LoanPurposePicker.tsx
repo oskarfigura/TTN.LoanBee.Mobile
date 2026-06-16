@@ -23,6 +23,8 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
   const strokeWidth = 1.85;
 
   switch (purpose) {
+    case 'debtConsolidation':
+      return <Icon icon={IconName.CoinsSwap01Icon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'car':
       return <Icon icon={IconName.CarIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'bike':
@@ -31,8 +33,12 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
       return <Icon icon={IconName.Motorbike02Icon} size={size} color={color} />;
     case 'homeImprovement':
       return <Icon icon={IconName.RollerBrushIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'furniture':
+      return <Icon icon={IconName.SofaIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'travel':
       return <Icon icon={IconName.PlaneIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'wedding':
+      return <Icon icon={IconName.HeartsIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'jewellery':
       return <Icon icon={IconName.DiamondIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'business':
@@ -45,10 +51,18 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
       return <Icon icon={IconName.MedicalCircleIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'shopping':
       return <Icon icon={IconName.ShoppingBagIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'electronics':
+      return <Icon icon={IconName.Laptop01Icon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'gaming':
       return <Icon icon={IconName.GamingPadIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'pet':
+      return <Icon icon={IconName.PawPrintIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'boat':
       return <Icon icon={IconName.AnchorIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'moving':
+      return <Icon icon={IconName.PackageIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'truck':
+      return <Icon icon={IconName.Truck01Icon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'education':
       return <Icon icon={IconName.GraduationHatIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'other':
