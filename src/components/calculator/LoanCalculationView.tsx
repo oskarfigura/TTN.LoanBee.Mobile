@@ -96,6 +96,13 @@ export const LoanCalculationView = ({
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [result]);
+  // Switching tabs swaps in a different-height panel, so reset to the top rather than
+  // leaving the user scrolled partway down the previous tab. No-ops when this view does
+  // not own its scroll (scrollRef is unset).
+  const handleTabChange = useCallback((tab: CalculationTab) => {
+    setActiveTab(tab);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []);
   const tabs: Array<{ value: CalculationTab; label: string }> = [
     { value: 'summary', label: t('results.summary') },
     { value: 'charts', label: t('results.charts') },
@@ -175,7 +182,7 @@ export const LoanCalculationView = ({
   const tabStrip = (
     <SegmentedControl
       value={activeTab}
-      onChange={setActiveTab}
+      onChange={handleTabChange}
       options={tabs}
       variant={tabStyle === 'underline' ? 'underline' : 'primary'}
       textVariant={tabStyle === 'underline' ? 'labelMd' : 'labelSm'}
@@ -473,18 +480,26 @@ export const LoanCalculationView = ({
   );
 
   if (ownsScroll) {
+    // The tab strip is a fixed sibling ABOVE the scroll view, not a sticky header
+    // inside it. React Native's `stickyHeaderIndices` translates the pinned header to
+    // keep it at the top, but on the new architecture the touch target does not follow
+    // that translation — so once the user scrolled, taps on the pinned tabs fell through
+    // and the Summary/Charts/Schedule tabs became unresponsive. Rendering the tabs
+    // outside the ScrollView keeps their hit-target stable (and removes the need for the
+    // old zIndex/elevation overlap workaround, since the views no longer overlap).
     return (
-      <ScrollView
-        ref={scrollRef}
-        style={[styles.scroll, style]}
-        contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
-        stickyHeaderIndices={[0]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.stickyTabs}>{tabStrip}</View>
-        {tabBody}
-      </ScrollView>
+      <View style={[styles.scroll, style]}>
+        <View style={styles.fixedTabs}>{tabStrip}</View>
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollContent, scrollContentStyle]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {tabBody}
+        </ScrollView>
+      </View>
     );
   }
 
@@ -505,14 +520,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
     paddingBottom: spacing['3xl'],
   },
-  stickyTabs: {
-    marginHorizontal: -layout.screenPadding,
+  fixedTabs: {
+    // Full-width pinned header above the scroll view. The horizontal padding matches the
+    // scroll content's; the underline tab strip's own negative margin bleeds its bottom
+    // border edge-to-edge, exactly as before — but the tabs are now always tappable.
+    paddingHorizontal: layout.screenPadding,
     backgroundColor: colours.background,
-    // The pinned tab bar must sit above the scrolling content on Android, where
-    // `elevation` (not zIndex) decides which overlapping view receives a touch.
-    // Otherwise cards/charts scrolling up under the header steal taps meant for the tabs.
-    zIndex: 10,
-    elevation: 6,
   },
   tabControl: { marginBottom: spacing.sm },
   underlineTabControl: {
