@@ -26,9 +26,9 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
     case 'car':
       return <Icon icon={IconName.CarIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'bike':
-      return <Icon icon={IconName.BikeIcon} size={size} color={color} />;
+      return <Icon icon={IconName.BikeIcon} size={size} color={color} strokeWidth={1} />;
     case 'motorbike':
-      return <Icon icon={IconName.MotorbikeIcon} size={size} color={color} />;
+      return <Icon icon={IconName.Motorbike02Icon} size={size} color={color} />;
     case 'homeImprovement':
       return <Icon icon={IconName.RollerBrushIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'travel':
