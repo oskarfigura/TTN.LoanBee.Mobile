@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  FlatList,
+  ListRenderItem,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -183,43 +185,49 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
     setActiveIndex(Math.min(Math.max(nextIndex, 0), loans.length - 1));
   };
 
+  // Each slide is its own vertical ScrollView so a tall card (or large font scale)
+  // still scrolls on small screens. The horizontal pager that owns them is now a
+  // FlatList — different axis from the slide scrollers (no same-orientation nesting,
+  // which is what made card taps/swipes glitch), and it virtualises so off-screen
+  // cards don't mount or run their amortisation until you page near them.
+  const renderSlide = useCallback<ListRenderItem<SavedLoan>>(({ item }) => (
+    <ScrollView
+      style={{ width: slideWidth }}
+      contentContainerStyle={[
+        styles.slideContent,
+        { paddingBottom: FLOATING_ACTION_SPACE + bottomInset },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      <LoanDashboardCard loan={item} width={slideWidth} onOpenDetails={openLoanDetails} />
+    </ScrollView>
+  ), [slideWidth, bottomInset, openLoanDetails]);
+
   return (
     <View style={styles.root}>
       <DashboardHeader
         onNewCalculation={onNewCalculation}
         onNavigate={navigateFromDashboardMenu}
       />
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingBottom: FLOATING_ACTION_SPACE + bottomInset },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.disclaimerWrap}>
-          <FinancialDisclaimer dismissible style={styles.disclaimer} />
-        </View>
-        <ScrollView
-          style={styles.carousel}
-          contentContainerStyle={styles.carouselContent}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={slideWidth}
-          decelerationRate="fast"
-          onMomentumScrollEnd={handleScrollEnd}
-        >
-          {loans.map(loan => (
-            <LoanDashboardCard
-              key={loan.id}
-              loan={loan}
-              width={slideWidth}
-              onOpenDetails={openLoanDetails}
-            />
-          ))}
-        </ScrollView>
-      </ScrollView>
+      <View style={styles.disclaimerWrap}>
+        <FinancialDisclaimer dismissible style={styles.disclaimer} />
+      </View>
+      <FlatList
+        style={styles.carousel}
+        data={loans}
+        keyExtractor={loan => loan.id}
+        renderItem={renderSlide}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={slideWidth}
+        decelerationRate="fast"
+        onMomentumScrollEnd={handleScrollEnd}
+        initialNumToRender={1}
+        maxToRenderPerBatch={2}
+        windowSize={3}
+        getItemLayout={(_, index) => ({ length: slideWidth, offset: slideWidth * index, index })}
+      />
       <View style={[styles.floatingAction, { paddingBottom: Math.max(bottomInset, spacing.xs) }]}>
         {loans.length > 1 ? (
           <View style={styles.indicatorBlock}>
@@ -246,22 +254,17 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colours.background },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingTop: spacing.md,
-  },
   disclaimerWrap: {
+    paddingTop: spacing.md,
     paddingHorizontal: layout.headerPadding,
   },
   disclaimer: {
     marginBottom: spacing.sm,
   },
   carousel: {
-    flexGrow: 0,
+    flex: 1,
   },
-  carouselContent: {
+  slideContent: {
     alignItems: 'stretch',
     paddingTop: spacing.xxs,
   },
