@@ -249,7 +249,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.0",
+    "@babel/core": "^7.29.6",
     "@jest/globals": "^29.7.0",
     "@types/react": "^19.2.14",
     "@types/react-test-renderer": "^19.1.0",
