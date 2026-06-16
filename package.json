@@ -211,7 +211,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@oskarfigura/amortisation": "^1.0.1",
     "@oskarfigura/icons": "^1.4.2",
-    "@oskarfigura/ui-native": "^0.2.3",
+    "@oskarfigura/ui-native": "^0.2.4",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.6.0",
     "expo": "~55.0.26",
