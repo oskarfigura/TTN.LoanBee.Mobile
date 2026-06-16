@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { memo, useMemo, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@oskarfigura/ui-native';
@@ -15,12 +15,16 @@ import { formatFriendlyDate } from '@/utils/date';
 
 interface Props {
   loan: SavedLoan;
-  onPress: () => void;
-  onTogglePinned: () => void;
+  // Callbacks receive the loan / id so the parent can pass a single stable
+  // reference per handler (instead of an inline closure per row). That keeps the
+  // `memo` wrapper below effective — rows only re-render when their own props
+  // change, so e.g. typing in the search box no longer re-renders every card.
+  onPress: (loan: SavedLoan) => void;
+  onTogglePinned: (id: string) => void;
   selectionMode?: boolean;
   selected?: boolean;
-  onLongPress?: () => void;
-  onToggleSelected?: () => void;
+  onLongPress?: (id: string) => void;
+  onToggleSelected?: (id: string) => void;
 }
 
 const SelectionCheckbox = ({ selected }: { selected: boolean }) => (
@@ -40,7 +44,7 @@ const IdentityIcon = ({ loan }: { loan: SavedLoan }) => {
   );
 };
 
-export const LoanProfileCard = ({
+const LoanProfileCardComponent = ({
   loan,
   onPress,
   onTogglePinned,
@@ -52,17 +56,20 @@ export const LoanProfileCard = ({
   const { t, i18n } = useTranslation();
   const isDraft = loan.status === 'draft';
   const suppressPressRef = useRef(false);
-  const handlePress = selectionMode ? (onToggleSelected ?? onPress) : onPress;
   const handleLongPress = () => {
     suppressPressRef.current = true;
-    onLongPress?.();
+    onLongPress?.(loan.id);
     setTimeout(() => {
       suppressPressRef.current = false;
     }, 0);
   };
   const handleCardPress = () => {
     if (suppressPressRef.current) return;
-    handlePress();
+    if (selectionMode && onToggleSelected) {
+      onToggleSelected(loan.id);
+      return;
+    }
+    onPress(loan);
   };
   // Draft loans built via the guided journey hold partial data, so skip the
   // insight computation (which assumes a complete loan) and render a resume card.
@@ -162,7 +169,7 @@ export const LoanProfileCard = ({
       }]}
       onAccessibilityAction={event => {
         if (event.nativeEvent.actionName === 'togglePin') {
-          onTogglePinned();
+          onTogglePinned(loan.id);
         }
       }}
     >
@@ -195,7 +202,7 @@ export const LoanProfileCard = ({
               <TouchableOpacity
                 onPress={event => {
                   event.stopPropagation();
-                  onTogglePinned();
+                  onTogglePinned(loan.id);
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={loan.pinnedToDashboard ? t('mortgage.unpinHint') : t('mortgage.pinToDashboard')}
@@ -253,6 +260,13 @@ export const LoanProfileCard = ({
     </TouchableOpacity>
   );
 };
+
+// Memoised: the saved list re-renders on search keystrokes, focus refreshes and
+// selection changes. Without this every row (each running a full amortisation in
+// its `useMemo`) re-rendered on each of those. Rows now re-render only when their
+// own `loan`, `selected` or `selectionMode` actually change.
+export const LoanProfileCard = memo(LoanProfileCardComponent);
+LoanProfileCard.displayName = 'LoanProfileCard';
 
 const styles = StyleSheet.create({
   card: {

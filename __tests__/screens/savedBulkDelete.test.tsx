@@ -192,7 +192,8 @@ describe('Saved loans bulk delete', () => {
     const renderer = await renderSaved();
 
     await act(async () => {
-      getCards(renderer)[0].props.onPress();
+      const card = getCards(renderer)[0];
+      card.props.onPress(card.props.loan);
     });
 
     expect(mockRouter.push).toHaveBeenCalledWith('/saved/loan-1');
@@ -202,7 +203,8 @@ describe('Saved loans bulk delete', () => {
     const renderer = await renderSaved();
 
     await act(async () => {
-      getCards(renderer)[0].props.onLongPress();
+      const card = getCards(renderer)[0];
+      card.props.onLongPress(card.props.loan.id);
     });
 
     expect(textContent(renderer.root)).toContain('saved.selectedCount');
@@ -225,7 +227,8 @@ describe('Saved loans bulk delete', () => {
     const renderer = await renderSaved();
 
     await act(async () => {
-      getCards(renderer)[0].props.onLongPress();
+      const card = getCards(renderer)[0];
+      card.props.onLongPress(card.props.loan.id);
     });
 
     await act(async () => {

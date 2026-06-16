@@ -131,12 +131,15 @@ export default function ResultScreen() {
   }, [isSavedMode, recordUsefulAction, requestReview, result]);
 
   const continueWithoutGuard = useCallback((continueNavigation: () => void) => {
+    // Bypass both leave guards (the tab-press guard and the beforeRemove listener)
+    // for this single navigation. allowLeaveRef is re-armed deterministically when
+    // the result screen regains focus (see the useFocusEffect below) rather than on
+    // a racy setTimeout(0) — that timer could reset the flag before an async
+    // beforeRemove re-fired, which re-triggered the guard and produced a duplicate
+    // "unsaved changes" prompt (or a stuck modal).
     allowLeaveRef.current = true;
     setResultLeaveGuard(null);
     continueNavigation();
-    setTimeout(() => {
-      allowLeaveRef.current = false;
-    }, 0);
   }, []);
 
   const openSave = useCallback(() => {
@@ -210,6 +213,10 @@ export default function ResultScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      // The result tab stays mounted, so re-arm the guard each time it regains focus
+      // (a deterministic reset, replacing the old setTimeout race). This restores
+      // guarding after the user leaves via "discard" and later navigates back.
+      allowLeaveRef.current = false;
       if (!shouldGuardUnsavedResult) return undefined;
       setResultLeaveGuard(confirmLeave);
       return () => setResultLeaveGuard(null);
