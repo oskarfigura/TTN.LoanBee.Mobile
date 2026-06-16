@@ -13,6 +13,7 @@ Expo Router app with a 4-tab bottom navigator. All navigation is file-based unde
 - **All font weights must use `fontWeights.*`** from `src/theme/typography.ts`. Never write `fontWeight: '700'` inline.
 - **Ads are fully isolated in `src/ads/`**. No ad import should appear outside that directory except `<AdProvider>` in `app/_layout.tsx` and `<BannerAd>` placements in screens.
 - **MMKV storage key names are versioned** (`saved_loans_v2`, `guide_seen_v1`, etc. in `src/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/storage/savedLoans.ts`.
+- **Never pin a tappable header with `stickyHeaderIndices`.** On RN's new architecture the sticky header's touch target does not follow its visual translation, so once the user scrolls, taps on the pinned element fall through silently (this broke the tab strips in both `LoanCalculationView` and `MortgageDetailView`). Render interactive headers — tab strips, segmented controls — as a fixed sibling `View` ABOVE the `ScrollView`, not inside it with `stickyHeaderIndices`. The guard test `__tests__/design-system/sticky-tabs.test.ts` fails the build if `stickyHeaderIndices` reappears in `app/` or `src/`.
 
 ## Design Tokens
 

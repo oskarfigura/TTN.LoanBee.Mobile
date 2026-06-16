@@ -9,16 +9,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
     paddingBottom: spacing['3xl'],
   },
-  stickyTabs: {
-    marginHorizontal: -layout.screenPadding,
+  fixedTabs: {
+    // Full-width pinned header above the scroll view. The horizontal padding matches the
+    // scroll content's; the underline tab strip's own negative margin bleeds its bottom
+    // border edge-to-edge, exactly as before — but the tabs are now always tappable.
+    paddingHorizontal: layout.screenPadding,
     backgroundColor: colours.background,
-    // The pinned tab bar must sit above the scrolling content on Android, where
-    // `elevation` (not zIndex) decides which overlapping view receives a touch. The
-    // content panels below reach elevation 5 (summaryRaisedPanel → elevation.level2),
-    // so the header must clear that or scrolled-up cards/charts steal taps meant for
-    // the tabs.
-    zIndex: 10,
-    elevation: 6,
   },
   tabControl: {
     marginHorizontal: 0,

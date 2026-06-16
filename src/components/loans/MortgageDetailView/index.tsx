@@ -318,14 +318,15 @@ export const MortgageDetailView = ({
 
   return (
     <GestureDetector gesture={swipeGesture}>
-    <ScrollView
-      ref={scrollRef}
-      style={styles.scroll}
-      stickyHeaderIndices={[0]}
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={styles.stickyTabs}>
+    <View style={styles.scroll}>
+      {/* The tab strip is a fixed sibling ABOVE the scroll view, not a sticky header
+          inside it. React Native's `stickyHeaderIndices` translates the pinned header to
+          keep it at the top, but on the new architecture the touch target does not follow
+          that translation — so once the user scrolled, taps on the pinned tabs fell
+          through and the tabs became unresponsive. Rendering the tabs outside the
+          ScrollView keeps their hit-target stable (and removes the need for the old
+          zIndex/elevation overlap workaround, since the views no longer overlap). */}
+      <View style={styles.fixedTabs}>
         <SegmentedControl
           value={activeTab}
           onChange={switchTab}
@@ -335,6 +336,12 @@ export const MortgageDetailView = ({
           style={styles.tabControl}
         />
       </View>
+    <ScrollView
+      ref={scrollRef}
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <FinancialDisclaimer dismissible style={styles.financialDisclaimer} />
       <MortgageWarningBanners loan={loan} />
 
@@ -539,6 +546,7 @@ export const MortgageDetailView = ({
         onClose={closeChartHelp}
       />
     </ScrollView>
+    </View>
     </GestureDetector>
   );
 };
