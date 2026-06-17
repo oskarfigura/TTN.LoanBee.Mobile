@@ -3,7 +3,7 @@ import { act, create, ReactTestInstance, ReactTestRenderer } from 'react-test-re
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { SavedLoan } from '../../src/types/SavedLoan';
+import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -80,7 +80,7 @@ jest.mock('react-native-safe-area-context', () => ({
   ),
 }));
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     getById: jest.fn(() => mockLoan),
     remove: jest.fn(),
@@ -89,47 +89,47 @@ jest.mock('../../src/storage/savedLoans', () => ({
   },
 }));
 
-jest.mock('../../src/results/loanResultRoute', () => ({
+jest.mock('@/shared/domain/results/loanResultRoute', () => ({
   getResultForSavedLoan: jest.fn(() => mockResult),
 }));
 
-jest.mock('../../src/share/shareCalculation', () => ({
+jest.mock('@/features/sharing/shareCalculation', () => ({
   shareCalculation: mockShareCalculation,
 }));
 
-jest.mock('../../src/components/calculator/LoanCalculationView', () => ({
+jest.mock('@/features/calculator/components/LoanCalculationView', () => ({
   LoanCalculationView: ({ summaryContent, ...props }: { summaryContent?: React.ReactNode }) => (
     React.createElement('LoanCalculationView', props, summaryContent)
   ),
 }));
 
-jest.mock('../../src/components/calculator/LoanSummaryPanel', () => ({
+jest.mock('@/features/calculator/components/LoanSummaryPanel', () => ({
   LoanSummaryPanel: (props: Record<string, unknown>) => React.createElement('LoanSummaryPanel', props),
 }));
 
-jest.mock('../../src/components/loans/MortgageDetailView', () => ({
+jest.mock('@/features/tracker/components/detail/MortgageDetailView', () => ({
   MortgageDetailView: (props: Record<string, unknown>) => React.createElement('MortgageDetailView', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 
 
-jest.mock('../../src/components/ui/DestructiveConfirmDialog', () => ({
+jest.mock('@/shared/ui/components/DestructiveConfirmDialog', () => ({
   DestructiveConfirmDialog: (props: Record<string, unknown>) => React.createElement('DestructiveConfirmDialog', props),
 }));
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
 
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
@@ -285,7 +285,7 @@ describe('Saved detail sharing', () => {
   });
 
   it('keeps mortgage overpayment savings consolidated into the summary card', () => {
-    const source = readFileSync(join(process.cwd(), 'src/components/loans/MortgageDetailView/index.tsx'), 'utf8');
+    const source = readFileSync(join(process.cwd(), 'src/features/tracker/components/detail/MortgageDetailView/index.tsx'), 'utf8');
 
     expect(source).not.toContain('<DealOverpaymentsCard');
     expect(source).not.toContain('const DealOverpaymentsCard');

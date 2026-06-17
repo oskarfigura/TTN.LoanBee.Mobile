@@ -3,16 +3,16 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MortgageEventForm, mortgageEventTypes } from '@/components/loans/MortgageEventForm';
+import { MortgageEventForm, mortgageEventTypes } from '@/features/tracker/components/editing/MortgageEventForm';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
-import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { upsertMortgageEvent } from '@/mortgage/events';
-import { getCurrentDeal } from '@/mortgage/tracker';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { MortgageEventType } from '@/types/SavedLoan';
-import { colours, layout, spacing } from '@/theme';
+import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { upsertMortgageEvent } from '@/shared/domain/mortgage/events';
+import { getCurrentDeal } from '@/shared/domain/mortgage/tracker';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { MortgageEventType } from '@/shared/domain/types/SavedLoan';
+import { colours, layout, spacing } from '@/shared/ui/theme';
 
 export default function NewMortgageEventScreen() {
   const { t } = useTranslation();

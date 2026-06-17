@@ -7,13 +7,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
-import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { DealEditorForm } from '@/components/loans/DealEditorForm';
+import { DestructiveConfirmDialog } from '@/shared/ui/components/DestructiveConfirmDialog';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { DealEditorForm } from '@/features/tracker/components/editing/DealEditorForm';
 import { AppTextInput, FieldError, FieldLabel, InputAffix, InputSurface } from '@oskarfigura/ui-native';
-import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
-import { formatCurrency } from '@/currency/format';
+import { CURRENCIES, CurrencyCode } from '@/shared/domain/currency/currencies';
+import { formatCurrency } from '@/shared/domain/currency/format';
 import {
   canActivateDeal,
   canDeleteDeal,
@@ -27,18 +27,18 @@ import {
   normaliseDealChain,
   removeLatestDealAndEvents,
   withMortgageTermInMonths,
-} from '@/mortgage/tracker';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { LoanDeal, MortgageEvent, SavedLoan } from '@/types/SavedLoan';
-import { colours, radii, spacing } from '@/theme';
-import { validateCompletionOverpaymentRows } from '@/mortgage/validation';
+} from '@/shared/domain/mortgage/tracker';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { LoanDeal, MortgageEvent, SavedLoan } from '@/shared/domain/types/SavedLoan';
+import { colours, radii, spacing } from '@/shared/ui/theme';
+import { validateCompletionOverpaymentRows } from '@/shared/domain/mortgage/validation';
 import {
   formatFriendlyDate,
   formatFriendlyDateRange,
   formatIsoDate,
   parseDateLabelValue,
-} from '@/utils/date';
-import { createLocalId } from '@/utils/id';
+} from '@/shared/lib/utils/date';
+import { createLocalId } from '@/shared/lib/utils/id';
 
 type OverpaymentRow = { id: string; date: string; amount: string };
 

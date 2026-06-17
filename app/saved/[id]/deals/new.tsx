@@ -6,9 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { DismissibleBanner } from '@oskarfigura/ui-native';
-import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { DealEditorForm } from '@/components/loans/DealEditorForm';
+import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { DealEditorForm } from '@/features/tracker/components/editing/DealEditorForm';
 import {
   buildNextDealDraft,
   getEstimateBackedDeal,
@@ -20,11 +20,11 @@ import {
   isEstimateBackedDeal,
   normaliseDealChain,
   withMortgageTermInMonths,
-} from '@/mortgage/tracker';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { LoanDeal } from '@/types/SavedLoan';
-import { createLocalId } from '@/utils/id';
-import { colours } from '@/theme';
+} from '@/shared/domain/mortgage/tracker';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { LoanDeal } from '@/shared/domain/types/SavedLoan';
+import { createLocalId } from '@/shared/lib/utils/id';
+import { colours } from '@/shared/ui/theme';
 
 export default function NewDealScreen() {
   const { t } = useTranslation();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { getNiceChartMaxValue, getProjectionChartLayout } from '../../src/components/charts/dimensions';
+import { getNiceChartMaxValue, getProjectionChartLayout } from '@/shared/ui/charts/dimensions';
 
 describe('getProjectionChartLayout', () => {
   it('fits the viewport without scrolling when content is short', () => {

@@ -1,7 +1,7 @@
 import { useGlobalSearchParams, useSegments } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdEventType, InterstitialAd } from 'react-native-google-mobile-ads';
-import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
+import { whenConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
 import { AD_UNITS } from './adUnits';
 import {
   isInterstitialEligible,

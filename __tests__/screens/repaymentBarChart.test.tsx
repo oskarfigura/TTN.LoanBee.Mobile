@@ -36,14 +36,14 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/currency/format', () => ({
+jest.mock('@/shared/domain/currency/format', () => ({
   formatCurrencyCompact: (value: number) => `£${value}`,
 }));
 
-import { RepaymentBarChart } from '../../src/components/charts/RepaymentBarChart';
-import { getLoanCalculations } from '../../src/core/amortisation';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
+import { RepaymentBarChart } from '@/shared/ui/charts/RepaymentBarChart';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
 
 const buildArrays = (months = 36) => {
   const monthly: number[] = [];

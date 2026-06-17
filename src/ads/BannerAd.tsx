@@ -3,7 +3,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BannerAd as GoogleBannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { AD_UNITS } from './adUnits';
-import { colours, fontFaces, fontSizes, layout } from '@/theme';
+import { colours, fontFaces, fontSizes, layout } from '@/shared/ui/theme';
 
 export const BannerAd = () => {
   const { t } = useTranslation();

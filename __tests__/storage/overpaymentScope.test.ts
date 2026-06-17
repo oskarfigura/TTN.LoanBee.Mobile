@@ -2,19 +2,19 @@ import { describe, expect, it } from '@jest/globals';
 import {
   createDealOverpaymentScope,
   createLoanOverpaymentScope,
-} from '../../src/loans/overpaymentScope';
+} from '@/shared/domain/loans/overpaymentScope';
 import {
   buildScenarioRemainingArray,
   computeLoanOverpayments,
-} from '../../src/loans/loanOverpaymentCalc';
-import { getLoanCalculations } from '../../src/core/amortisation';
+} from '@/shared/domain/loans/loanOverpaymentCalc';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
 import {
   getDealOverpaymentImpact,
   normaliseDealChain,
-} from '../../src/mortgage/tracker';
-import { buildMortgageProjection } from '../../src/mortgage/projection';
-import { LoanDeal, LoanFormSnapshot, MortgageEvent, SavedLoan } from '../../src/types/SavedLoan';
-import { monthsBetween } from '../../src/utils/date';
+} from '@/shared/domain/mortgage/tracker';
+import { buildMortgageProjection } from '@/shared/domain/mortgage/projection';
+import { LoanDeal, LoanFormSnapshot, MortgageEvent, SavedLoan } from '@/shared/domain/types/SavedLoan';
+import { monthsBetween } from '@/shared/lib/utils/date';
 
 const loanForm: LoanFormSnapshot = {
   loanAmount: 250000,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
-import { buildDraftLoanPreview, buildInitialDeal, RawFormValues } from '../../src/loans/loanGroupFactory';
-import { getLoanCalculations } from '../../src/core/amortisation';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
-import { LoanGroup } from '../../src/types/SavedLoan';
+import { buildDraftLoanPreview, buildInitialDeal, RawFormValues } from '@/shared/domain/loans/loanGroupFactory';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanGroup } from '@/shared/domain/types/SavedLoan';
 
 const makeMortgage = (overrides: Partial<LoanGroup> = {}): LoanGroup => ({
   id: 'mortgage-1',

@@ -16,12 +16,12 @@ import {
   Manrope_700Bold,
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
-import i18n from '@/i18n';
+import i18n from '@/shared/lib/i18n';
 import { AdProvider } from '@/ads/AdProvider';
-import { fontFaces, fontSizes } from '@/theme';
-import { loanBeeNativeTheme } from '@/theme/uiNativeTheme';
-import { recordReviewAppOpen } from '@/review';
-import { installGlobalCrashHandler } from '@/diagnostics/crashLog';
+import { fontFaces, fontSizes } from '@/shared/ui/theme';
+import { loanBeeNativeTheme } from '@/shared/ui/theme/uiNativeTheme';
+import { recordReviewAppOpen } from '@/shared/lib/services/review';
+import { installGlobalCrashHandler } from '@/shared/lib/services/diagnostics/crashLog';
 
 // Install as early as possible so uncaught JS errors during startup are captured.
 installGlobalCrashHandler();
@@ -29,7 +29,7 @@ installGlobalCrashHandler();
 // Expo Router wraps this root route in a React error boundary when a component
 // named `ErrorBoundary` is exported here, catching render errors anywhere in the
 // app and showing a recovery screen instead of a blank white screen.
-export { ErrorBoundary } from '@/components/ui/RootErrorBoundary';
+export { ErrorBoundary } from '@/shared/ui/components/RootErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
 

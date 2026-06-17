@@ -1,8 +1,8 @@
 import React from 'react';
 import { act, create, ReactTestInstance, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { OverpaymentImpact, OverpaymentScope } from '../../src/loans/overpaymentScope';
-import { MortgageEvent, SavedLoan } from '../../src/types/SavedLoan';
+import { OverpaymentImpact, OverpaymentScope } from '@/shared/domain/loans/overpaymentScope';
+import { MortgageEvent, SavedLoan } from '@/shared/domain/types/SavedLoan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -86,22 +86,22 @@ jest.mock('react-native-svg', () => {
   };
 });
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     getById: jest.fn(() => mockLoan),
     update: mockStorageUpdate,
   },
 }));
 
-jest.mock('../../src/components/loans/MonthlyOverpaymentSheet', () => ({
+jest.mock('@/features/tracker/components/overpayments/MonthlyOverpaymentSheet', () => ({
   MonthlyOverpaymentSheet: (props: Record<string, unknown>) => React.createElement('MonthlyOverpaymentSheet', props),
 }));
 
-jest.mock('../../src/components/loans/LumpSumSheet', () => ({
+jest.mock('@/features/tracker/components/overpayments/LumpSumSheet', () => ({
   LumpSumSheet: (props: Record<string, unknown>) => React.createElement('LumpSumSheet', props),
 }));
 
-jest.mock('../../src/components/charts/OverpaymentsComparisonChart', () => ({
+jest.mock('@/shared/ui/charts/OverpaymentsComparisonChart', () => ({
   OverpaymentsComparisonChart: (props: Record<string, unknown>) => (
     React.createElement('OverpaymentsComparisonChart', props)
   ),
@@ -111,15 +111,15 @@ jest.mock('../../src/components/charts/OverpaymentsComparisonChart', () => ({
 
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
@@ -186,7 +186,7 @@ const textContent = (node: ReactTestInstance | string | number | null | undefine
 };
 
 const renderOverpayments = async (): Promise<ReactTestRenderer> => {
-  const { OverpaymentsView } = await import('../../src/components/loans/OverpaymentsView');
+  const { OverpaymentsView } = await import('@/features/tracker/components/overpayments/OverpaymentsView');
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
@@ -327,7 +327,7 @@ describe('OverpaymentsView', () => {
   });
 
   it('keeps the drawer impact card flat so the success panel has no bottom shadow', async () => {
-    const { OverpaymentImpactCard } = await import('../../src/components/loans/OverpaymentSheetPrimitives');
+    const { OverpaymentImpactCard } = await import('@/features/tracker/components/overpayments/OverpaymentSheetPrimitives');
     let renderer: ReactTestRenderer | undefined;
 
     await act(async () => {

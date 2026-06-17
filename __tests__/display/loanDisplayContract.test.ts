@@ -1,20 +1,20 @@
 import { describe, expect, it } from '@jest/globals';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
-import { getLoanCalculations } from '../../src/core/amortisation';
-import { CURRENCIES } from '../../src/currency/currencies';
-import { formatCurrency } from '../../src/currency/format';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { CURRENCIES } from '@/shared/domain/currency/currencies';
+import { formatCurrency } from '@/shared/domain/currency/format';
 import {
   buildAmortisationDisplayRows,
   buildCalculationDisplayContract,
   buildSavedLoanDisplayContract,
-} from '../../src/loans/loanDisplayContract';
-import { buildScenarioRemainingArray, computeLoanOverpayments } from '../../src/loans/loanOverpaymentCalc';
-import { buildInitialDeal, buildResultSnapshot, normaliseFormSnapshot } from '../../src/loans/loanGroupFactory';
-import { getMortgageTrackerSummary } from '../../src/mortgage/tracker';
-import { getResultForSavedLoan } from '../../src/results/loanResultRoute';
-import { LoanGroup } from '../../src/types/SavedLoan';
-import { monthsBetween } from '../../src/utils/date';
+} from '@/shared/domain/loans/loanDisplayContract';
+import { buildScenarioRemainingArray, computeLoanOverpayments } from '@/shared/domain/loans/loanOverpaymentCalc';
+import { buildInitialDeal, buildResultSnapshot, normaliseFormSnapshot } from '@/shared/domain/loans/loanGroupFactory';
+import { getMortgageTrackerSummary } from '@/shared/domain/mortgage/tracker';
+import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
+import { LoanGroup } from '@/shared/domain/types/SavedLoan';
+import { monthsBetween } from '@/shared/lib/utils/date';
 
 const findMetric = (
   metrics: Array<{ id: string; value: string; labelKey: string }>,

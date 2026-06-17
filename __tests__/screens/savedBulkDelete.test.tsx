@@ -98,7 +98,7 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
-jest.mock('../../src/hooks/useSavedLoans', () => ({
+jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({
   useSavedLoans: () => ({
     loans: mockLoans,
     refresh: mockRefresh,
@@ -107,40 +107,40 @@ jest.mock('../../src/hooks/useSavedLoans', () => ({
   }),
 }));
 
-jest.mock('../../src/storage/recentCalculations', () => ({
+jest.mock('@/shared/lib/storage/recentCalculations', () => ({
   recentCalculationsStorage: {
     getAll: jest.fn(() => []),
   },
 }));
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     getAll: jest.fn(() => mockLoans),
   },
 }));
 
-jest.mock('../../src/components/loans/LoanProfileCard', () => ({
+jest.mock('@/features/tracker/components/dashboard/LoanProfileCard', () => ({
   LoanProfileCard: (props: Record<string, unknown>) => React.createElement('LoanProfileCard', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 
 
-jest.mock('../../src/components/ui/EmptyState', () => ({
+jest.mock('@/shared/ui/components/EmptyState', () => ({
   EmptyState: (props: Record<string, unknown>) => React.createElement('EmptyState', props),
 }));
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 

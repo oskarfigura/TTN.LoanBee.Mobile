@@ -61,7 +61,7 @@ Related behaviours:
 ### 1. First launch
 
 - Entry: app open
-- Files: `app/(tabs)/index.tsx`, `app/guide.tsx`, `src/onboarding/guideState.ts`, `src/onboarding/firstRunGate.ts`
+- Files: `app/(tabs)/index.tsx`, `app/guide.tsx`, `src/shared/lib/services/onboarding/guideState.ts`, `src/shared/lib/services/onboarding/firstRunGate.ts`
 - State changes:
   - waits for the consent flow to finish
   - pushes `/guide?firstRun=1` if the guide has not been seen
@@ -80,7 +80,7 @@ Related behaviours:
 ### 3. Save a calculation
 
 - Entry: Result -> Save
-- Files: `app/saved/new.tsx`, `src/loans/loanGroupFactory.ts`, `src/storage/savedLoans.ts`
+- Files: `app/saved/new.tsx`, `src/shared/domain/loans/loanGroupFactory.ts`, `src/shared/lib/storage/savedLoans.ts`
 - State changes:
   - user chooses Loan or Mortgage at this step
   - creates a `SavedLoan` / `LoanGroup`
@@ -92,7 +92,7 @@ Related behaviours:
 ### 4. Track borrowing from one start-date-driven form
 
 - Entry: Home → Track one I have
-- Files: `app/saved/track.tsx`, `src/mortgage/trackBuilder.ts`, `src/storage/savedLoans.ts`
+- Files: `app/saved/track.tsx`, `src/shared/domain/mortgage/trackBuilder.ts`, `src/shared/lib/storage/savedLoans.ts`
 - State changes:
   - user chooses Loan or Mortgage inside the Track form
   - creates a `LoanGroup` with one active deal anchored at the chosen deal start date
@@ -105,7 +105,7 @@ Related behaviours:
 ### 5. Review and manage a saved loan
 
 - Entry: Tracked tab, or post-save redirect
-- Files: `app/saved/[id].tsx`, `src/components/loans/MortgageDetailView.tsx`
+- Files: `app/saved/[id].tsx`, `src/features/tracker/components/detail/MortgageDetailView/index.tsx`
 - Shared actions:
   - share the original calculation URL with loan/mortgage-specific share copy
   - rename
@@ -122,7 +122,7 @@ Related behaviours:
 ### 6. Shared link / deep link
 
 - Entry: `/calculator/share`
-- Files: `app/calculator/share.tsx`, `src/share/calculationShareLink.ts`
+- Files: `app/calculator/share.tsx`, `src/features/sharing/calculationShareLink.ts`
 - State changes:
   - parses search params from a web URL or `loanbee://calculator/share` deep link
   - recomputes the result locally
@@ -153,10 +153,10 @@ Important persistence rules:
 Use these files together:
 
 - [saved-mortgage-journeys.md](./saved-mortgage-journeys.md): user journeys, validation rules, deliberate scope boundaries
-- `src/mortgage/tracker.ts`: deal sequencing, correction rules, activation/completion logic
-- `src/mortgage/projection.ts`: projected balance and chart data
-- `src/storage/savedLoans.ts`: migration and persistence wiring
-- `src/types/SavedLoan.ts`: entity model
+- `src/shared/domain/mortgage/tracker.ts`: deal sequencing, correction rules, activation/completion logic
+- `src/shared/domain/mortgage/projection.ts`: projected balance and chart data
+- `src/shared/lib/storage/savedLoans.ts`: migration and persistence wiring
+- `src/shared/domain/types/SavedLoan.ts`: entity model
 
 ## Test map
 

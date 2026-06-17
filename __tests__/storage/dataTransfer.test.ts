@@ -6,10 +6,10 @@ import {
   DataTransferError,
   importSavedLoansBackup,
   parseSavedLoansBackup,
-} from '../../src/storage/dataTransfer';
-import { savedLoansStorage } from '../../src/storage/savedLoans';
-import { LOAN_GROUP_SCHEMA_VERSION, SavedLoan } from '../../src/types/SavedLoan';
-import { storage } from '../../src/storage/mmkv';
+} from '@/shared/lib/storage/dataTransfer';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { LOAN_GROUP_SCHEMA_VERSION, SavedLoan } from '@/shared/domain/types/SavedLoan';
+import { storage } from '@/shared/lib/storage/mmkv';
 
 const makeLoan = (overrides: Partial<SavedLoan> = {}): SavedLoan => ({
   id: 'loan-1',

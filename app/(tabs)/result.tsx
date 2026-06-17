@@ -5,17 +5,17 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
+import { LoanCalculationView } from '@/features/calculator/components/LoanCalculationView';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
 import { HeaderIconButton } from '@oskarfigura/ui-native';
 import { BannerAd } from '@/ads/BannerAd';
-import { colours } from '@/theme';
-import { CurrencyCode } from '@/currency/currencies';
+import { colours } from '@/shared/ui/theme';
+import { CurrencyCode } from '@/shared/domain/currency/currencies';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SavedLoan } from '@/types/SavedLoan';
+import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import {
   LoanResult,
   getResultForSavedLoan,
@@ -23,18 +23,18 @@ import {
   getBaselineResultForSavedLoan,
   getBaselineResultForFormValues,
   buildEditCalculatorParams,
-} from '@/results/loanResultRoute';
-import { LoanCalculatorFormValues } from '@/hooks/useLoanCalculatorForm';
-import { getDraftResultSession } from '@/results/draftResultStore';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { recentCalculationsStorage } from '@/storage/recentCalculations';
-import { setResultLeaveGuard } from '@/navigation/resultLeaveGuard';
-import { useStoreReview } from '@/review';
-import { shareCalculation } from '@/share/shareCalculation';
-import { UnsavedResultModal } from '@/components/results/UnsavedResultModal';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
-import { buildDraftLoanPreview, RawFormValues } from '@/loans/loanGroupFactory';
+} from '@/shared/domain/results/loanResultRoute';
+import { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { getDraftResultSession } from '@/shared/domain/results/draftResultStore';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { setResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
+import { useStoreReview } from '@/shared/lib/services/review';
+import { shareCalculation } from '@/features/sharing/shareCalculation';
+import { UnsavedResultModal } from '@/features/calculator/components/UnsavedResultModal';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { LoanSummaryPanel } from '@/features/calculator/components/LoanSummaryPanel';
+import { buildDraftLoanPreview, RawFormValues } from '@/shared/domain/loans/loanGroupFactory';
 
 type ResultParams = {
   draftId?: string;

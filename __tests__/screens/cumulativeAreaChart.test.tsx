@@ -27,7 +27,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import { CumulativeAreaChart, hasCumulativeChartData } from '../../src/components/charts/CumulativeAreaChart';
+import { CumulativeAreaChart, hasCumulativeChartData } from '@/shared/ui/charts/CumulativeAreaChart';
 
 const buildArrays = (months = 216) => ({
   monthly: Array.from({ length: months }, (_, index) => index * 1200),

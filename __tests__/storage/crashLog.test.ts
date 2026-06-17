@@ -4,8 +4,8 @@ import {
   getLastCrash,
   installGlobalCrashHandler,
   recordCrash,
-} from '../../src/diagnostics/crashLog';
-import { storage } from '../../src/storage/mmkv';
+} from '@/shared/lib/services/diagnostics/crashLog';
+import { storage } from '@/shared/lib/storage/mmkv';
 
 beforeEach(() => {
   (storage as unknown as { clearAll: () => void }).clearAll();

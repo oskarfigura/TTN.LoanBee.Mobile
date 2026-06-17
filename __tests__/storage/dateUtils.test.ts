@@ -5,7 +5,7 @@ import {
   formatFriendlyDateRange,
   formatIsoDate,
   isValidIsoDate,
-} from '../../src/utils/date';
+} from '@/shared/lib/utils/date';
 
 describe('date utils', () => {
   it('formats English date labels with ordinal days and friendly month names', () => {

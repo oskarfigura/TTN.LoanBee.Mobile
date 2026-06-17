@@ -23,16 +23,16 @@ import {
   removeDealAndRecalculateLater,
   removeLaterDealsAndEvents,
   withMortgageTermInMonths,
-} from '../../src/mortgage/tracker';
-import { buildMortgageProjection } from '../../src/mortgage/projection';
+} from '@/shared/domain/mortgage/tracker';
+import { buildMortgageProjection } from '@/shared/domain/mortgage/projection';
 import {
   buildBalanceCheckpointReconciliation,
   getBalanceSourceMetadata,
-} from '../../src/mortgage/reconciliation';
-import { removeMortgageEvent, upsertMortgageEvent } from '../../src/mortgage/events';
-import { buildSavedLoanDisplayDetails, buildSavedLoanSummary } from '../../src/loans/loanInsightSummary';
-import { getResultForSavedLoan } from '../../src/results/loanResultRoute';
-import { LoanGroup } from '../../src/types/SavedLoan';
+} from '@/shared/domain/mortgage/reconciliation';
+import { removeMortgageEvent, upsertMortgageEvent } from '@/shared/domain/mortgage/events';
+import { buildSavedLoanDisplayDetails, buildSavedLoanSummary } from '@/shared/domain/loans/loanInsightSummary';
+import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
+import { LoanGroup } from '@/shared/domain/types/SavedLoan';
 
 const makeMortgage = (overrides: Partial<LoanGroup> = {}): LoanGroup => ({
   id: 'mortgage-1',

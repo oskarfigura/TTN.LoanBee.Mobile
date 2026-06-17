@@ -36,12 +36,12 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
-import { ChartHelpButton, ChartHelpDrawer } from '../../src/components/charts/ChartHelp';
+import { ChartHelpButton, ChartHelpDrawer } from '@/shared/ui/charts/ChartHelp';
 
 const textContent = (node: unknown): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';

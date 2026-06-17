@@ -26,11 +26,11 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-jest.mock('../../src/currency/format', () => ({
+jest.mock('@/shared/domain/currency/format', () => ({
   formatCurrency: (value: number) => `£${value}`,
 }));
 
-import { LoanBreakdownDonut } from '../../src/components/charts/LoanBreakdownDonut';
+import { LoanBreakdownDonut } from '@/shared/ui/charts/LoanBreakdownDonut';
 
 const textContent = (node: any): string => {
   if (node == null || typeof node === 'boolean') return '';

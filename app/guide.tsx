@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { markGuideSeen } from '@/onboarding/guideState';
-import { colours, layout, radii, spacing } from '@/theme';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { markGuideSeen } from '@/shared/lib/services/onboarding/guideState';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 
 interface GuideStep {
   key: 'details' | 'compare' | 'save';

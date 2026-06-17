@@ -1,4 +1,4 @@
-import { storage } from '@/storage/mmkv';
+import { storage } from '@/shared/lib/storage/mmkv';
 
 const INTERSTITIAL_STORAGE_KEYS = {
   LAST_SHOWN_AT: 'ad_interstitial_last_shown_at_v1',

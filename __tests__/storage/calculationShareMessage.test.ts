@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { buildCalculationSharePayload } from '@/share/calculationShareMessage';
-import { LoanResult } from '@/results/loanResultRoute';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { buildCalculationSharePayload } from '@/features/sharing/calculationShareMessage';
+import { LoanResult } from '@/shared/domain/results/loanResultRoute';
 
 const result = {
   amount: 250000,

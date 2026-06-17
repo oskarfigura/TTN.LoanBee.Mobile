@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import { getLoanCalculations } from '../../src/core/amortisation';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
 
 // Every chart (RepaymentBarChart, CumulativeAreaChart, MortgageBalanceChart,
 // LoanBreakdownDonut, OverpaymentsComparisonChart) plots the parallel arrays and

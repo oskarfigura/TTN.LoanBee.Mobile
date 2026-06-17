@@ -5,7 +5,7 @@ import { join } from 'path';
 type LocaleValue = string | number | boolean | null | LocaleValue[] | { [key: string]: LocaleValue };
 
 const readLocale = (name: string): Record<string, LocaleValue> => (
-  JSON.parse(readFileSync(join(__dirname, '../../src/i18n/locales', name), 'utf8'))
+  JSON.parse(readFileSync(join(__dirname, '../../src/shared/lib/i18n/locales', name), 'utf8'))
 );
 
 const flatten = (value: LocaleValue, prefix = ''): Record<string, string> => {

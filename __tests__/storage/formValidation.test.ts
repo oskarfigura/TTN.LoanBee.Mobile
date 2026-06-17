@@ -4,7 +4,7 @@ import {
   validateDurationText,
   validateMoneyText,
   validateNonNegativeIntegerText,
-} from '@/utils/formValidation';
+} from '@/shared/lib/utils/formValidation';
 
 describe('form validation helpers', () => {
   it('parses strict decimal numbers only', () => {

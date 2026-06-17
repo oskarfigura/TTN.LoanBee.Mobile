@@ -6,7 +6,7 @@ import {
   getOverallTermInMonths,
   getLoanEndDate,
   convertToWholeNumber,
-} from '../../src/core/loanHelper';
+} from '@/shared/domain/core/loanHelper';
 
 describe('nFormatter', () => {
   it('formats thousands with k suffix', () => {

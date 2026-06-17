@@ -60,46 +60,46 @@ jest.mock('react-native-safe-area-context', () => ({
   ),
 }));
 
-jest.mock('../../src/hooks/useLoanCalculatorForm', () => ({
+jest.mock('@/shared/lib/hooks/useLoanCalculatorForm', () => ({
   getDefaultCurrency: () => 'GBP',
   useLoanCalculatorForm: () => mockForm,
 }));
 
-jest.mock('../../src/hooks/useSavedLoans', () => ({
+jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({
   useSavedLoans: () => ({
     loans: mockLoans,
     refresh: mockRefresh,
   }),
 }));
 
-jest.mock('../../src/onboarding/guideState', () => ({
+jest.mock('@/shared/lib/services/onboarding/guideState', () => ({
   hasSeenGuide: () => true,
 }));
 
-jest.mock('../../src/onboarding/firstRunGate', () => ({
+jest.mock('@/shared/lib/services/onboarding/firstRunGate', () => ({
   whenConsentFlowComplete: () => Promise.resolve(),
 }));
 
-jest.mock('../../src/components/calculator/LoanForm', () => ({
+jest.mock('@/features/calculator/components/LoanForm', () => ({
   LoanForm: (props: Record<string, unknown>) => React.createElement('LoanForm', props),
 }));
 
-jest.mock('../../src/components/loans/MortgageDashboard', () => ({
+jest.mock('@/features/tracker/components/dashboard/MortgageDashboard', () => ({
   MortgageDashboard: (props: Record<string, unknown>) => React.createElement('MortgageDashboard', props),
 }));
 
 // Stub the journey icons so the test never pulls in react-native-svg.
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 

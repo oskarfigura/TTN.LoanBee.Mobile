@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { getDraftResultSession } from '../../src/results/draftResultStore';
+import { getDraftResultSession } from '@/shared/domain/results/draftResultStore';
 import {
   beginDraftResult,
   buildSavedLoanResultParams,
@@ -7,9 +7,9 @@ import {
   getResultForFormValues,
   getBaselineResultForSavedLoan,
   getBaselineResultForFormValues,
-} from '../../src/results/loanResultRoute';
-import { recentCalculationsStorage } from '../../src/storage/recentCalculations';
-import { SavedLoan } from '../../src/types/SavedLoan';
+} from '@/shared/domain/results/loanResultRoute';
+import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 
 const loan: SavedLoan = {
   id: 'loan-1',

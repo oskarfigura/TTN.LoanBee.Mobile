@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useSavedLoans } from '@/hooks/useSavedLoans';
-import { LoanCalculatorFormValues } from '@/hooks/useLoanCalculatorForm';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { SavedLoan } from '@/types/SavedLoan';
-import { getLoanCalculations } from '@/core/amortisation';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { CurrencyCode } from '@/currency/currencies';
-import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
-import { LenderTextInput } from '@/components/loans/LenderTextInput';
-import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
+import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
+import { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { SavedLoan } from '@/shared/domain/types/SavedLoan';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { CurrencyCode } from '@/shared/domain/currency/currencies';
+import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
+import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { LoanPurposePicker } from '@/features/tracker/components/editing/LoanPurposePicker';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import {
@@ -22,22 +22,22 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@oskarfigura/ui-native';
-import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { createLocalId } from '@/utils/id';
-import { colours, layout, spacing } from '@/theme';
-import { useStoreReview } from '@/review';
+import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { createLocalId } from '@/shared/lib/utils/id';
+import { colours, layout, spacing } from '@/shared/ui/theme';
+import { useStoreReview } from '@/shared/lib/services/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { recentCalculationsStorage } from '@/storage/recentCalculations';
-import { getResultForFormValues } from '@/results/loanResultRoute';
+import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { getResultForFormValues } from '@/shared/domain/results/loanResultRoute';
 import {
   buildInitialDeal,
   buildResultSnapshot,
   normaliseFormSnapshot,
-} from '@/loans/loanGroupFactory';
-import { DEFAULT_LOAN_PURPOSE } from '@/loans/loanPurpose';
-import { getDraftResultSession } from '@/results/draftResultStore';
+} from '@/shared/domain/loans/loanGroupFactory';
+import { DEFAULT_LOAN_PURPOSE } from '@/shared/domain/loans/loanPurpose';
+import { getDraftResultSession } from '@/shared/domain/results/draftResultStore';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
 type LoanCategory = 'mortgage' | 'loan';

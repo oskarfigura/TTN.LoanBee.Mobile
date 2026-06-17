@@ -2,9 +2,9 @@ import { describe, expect, it } from '@jest/globals';
 import {
   buildScenarioRemainingArray,
   computeLoanOverpayments,
-} from '../../src/loans/loanOverpaymentCalc';
-import { computeLoanWithEvents } from '../../src/loans/loanScenario';
-import { LoanFormSnapshot, SavedLoan } from '../../src/types/SavedLoan';
+} from '@/shared/domain/loans/loanOverpaymentCalc';
+import { computeLoanWithEvents } from '@/shared/domain/loans/loanScenario';
+import { LoanFormSnapshot, SavedLoan } from '@/shared/domain/types/SavedLoan';
 
 const form: LoanFormSnapshot = {
   loanAmount: 250000,

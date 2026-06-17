@@ -1,11 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
 import {
   getCalculationAppShareUrl,
   getCalculationWebShareUrl,
   getShareableCalculationValuesFromParams,
-} from '@/share/calculationShareLink';
+} from '@/features/sharing/calculationShareLink';
 
 describe('calculationShareLink', () => {
   it('serializes term mode to the web-compatible share URL', () => {

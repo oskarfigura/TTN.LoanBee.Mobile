@@ -5,24 +5,24 @@ import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
-import { DatePickerField } from '@/components/ui/DatePickerField';
+import { DatePickerField } from '@/shared/ui/components/DatePickerField';
 import { AppTextInput, FieldError, FieldHint, FieldLabel, InputAffix, InputSurface } from '@oskarfigura/ui-native';
-import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
-import { HeaderCloseAction } from '@/components/ui/HeaderCloseAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { CURRENCIES } from '@/currency/currencies';
-import { formatCurrency } from '@/currency/format';
-import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/mortgage/tracker';
+import { OverpaymentEntryRow, OverpaymentRow } from '@/features/tracker/components/overpayments/OverpaymentEntryRow';
+import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { CURRENCIES } from '@/shared/domain/currency/currencies';
+import { formatCurrency } from '@/shared/domain/currency/format';
+import { getCurrentDeal, projectDeal, recalculateLaterDealOpeningBalances } from '@/shared/domain/mortgage/tracker';
 import {
   validateCompletionAmounts,
   validateCompletionOverpaymentRow,
   validateCompletionOverpaymentRows,
-} from '@/mortgage/validation';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { colours, layout, spacing } from '@/theme';
-import { MortgageEvent } from '@/types/SavedLoan';
-import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
-import { createLocalId } from '@/utils/id';
+} from '@/shared/domain/mortgage/validation';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { colours, layout, spacing } from '@/shared/ui/theme';
+import { MortgageEvent } from '@/shared/domain/types/SavedLoan';
+import { formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/shared/lib/utils/date';
+import { createLocalId } from '@/shared/lib/utils/id';
 
 export default function CompleteCurrentDealScreen() {
   const { t } = useTranslation();

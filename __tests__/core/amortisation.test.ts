@@ -6,9 +6,9 @@ import {
   calculateMonthlyPayments,
   calculateTerm,
   getTableItems,
-} from '../../src/core/amortisation';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
+} from '@/shared/domain/core/amortisation';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
 
 // ─── calculateDownPayment ────────────────────────────────────────────────────
 

@@ -2,24 +2,24 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Modal, Pressable, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { LoanCalculationView } from '@/components/calculator/LoanCalculationView';
-import { LoanSummaryPanel } from '@/components/calculator/LoanSummaryPanel';
-import { Icon, IconName } from '@/components/ui/Icon';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { LoanCalculationView } from '@/features/calculator/components/LoanCalculationView';
+import { LoanSummaryPanel } from '@/features/calculator/components/LoanSummaryPanel';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { Button, ButtonVariant } from '@oskarfigura/ui-native';
 import { AppText } from '@oskarfigura/ui-native';
-import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
+import { DestructiveConfirmDialog } from '@/shared/ui/components/DestructiveConfirmDialog';
 import { QuickActionTile } from '@oskarfigura/ui-native';
 import { AppTextInput, FieldLabel, InputSurface } from '@oskarfigura/ui-native';
-import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/theme';
-import { getResultForSavedLoan, getBaselineResultForSavedLoan } from '@/results/loanResultRoute';
-import { shareCalculation } from '@/share/shareCalculation';
+import { colours, fontFaces, fontSizes, layout, radii, spacing } from '@/shared/ui/theme';
+import { getResultForSavedLoan, getBaselineResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
+import { shareCalculation } from '@/features/sharing/shareCalculation';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MortgageDetailView } from '@/components/loans/MortgageDetailView';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
+import { MortgageDetailView } from '@/features/tracker/components/detail/MortgageDetailView';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
 import { HeaderIconButton } from '@oskarfigura/ui-native';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { getCurrentDeal } from '@/mortgage/tracker';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { getCurrentDeal } from '@/shared/domain/mortgage/tracker';
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
