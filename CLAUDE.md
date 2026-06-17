@@ -2,17 +2,49 @@
 
 ## Architecture
 
-Expo Router app with a 4-tab bottom navigator. All navigation is file-based under `app/`. The core maths engine lives in the published package `@oskarfigura/amortisation` (pure TypeScript, zero runtime/React Native dependencies, shared with the web app). `src/core/` is now a thin re-export layer over that package — do not reimplement maths there.
+Expo Router app with a 4-tab bottom navigator. All navigation is file-based under `app/`. The core maths engine lives in the published package `@oskarfigura/amortisation` (pure TypeScript, zero runtime/React Native dependencies, shared with the web app). `src/shared/domain/core/` is now a thin re-export layer over that package — do not reimplement maths there.
+
+### Source layout (feature-based)
+
+`src/` is organised by feature, not by file type. The `@/` alias maps to `src/` (`@/* → ./src/*`).
+
+```
+src/
+  features/                    # feature UI (screens compose these)
+    calculator/components/     # loan form, result view, summary, amortisation table, UnsavedResultModal
+    tracker/components/        # saved-loans / mortgage-tracker UI, sub-grouped:
+                               #   dashboard/ overpayments/ editing/ detail/
+    sharing/                   # share link / message / native share
+  shared/                      # used by 2+ features or by infrastructure — 3 buckets:
+    ui/                        # anything visual
+      components/              #   primitives (Icon, ScreenHeader, DatePickerField, …)
+      charts/                  #   chart components (used by both calculator & tracker)
+      theme/                   #   colours, typography, spacing, shape, elevation
+    domain/                    # loan / finance business logic + its types & constants
+      loans/                   #   display contract, insights, overpayment calc, scenarios
+      mortgage/                #   multi-deal tracking & projection
+      results/                 #   calculator result snapshots / routing
+      currency/                #   currency definitions & locale defaults
+      core/                    #   maths re-export layer (@oskarfigura/amortisation)
+      types/                   #   SavedLoan and related entity types
+    lib/                       # generic technical plumbing, no business meaning
+      hooks/  utils/  storage/  i18n/  dev/
+      services/                #   onboarding, navigation, review, diagnostics
+  ads/                         # AdMob — kept isolated (see invariant below)
+  __mocks__/                   # jest mocks — path is hardcoded in jest moduleNameMapper, do not move
+```
+
+Decision rule for `shared/`: **visual → `ui`, loan/finance → `domain`, generic plumbing → `lib`.** Feature-specific *UI* lives under `features/<feature>/components/`; loan/mortgage *logic* is shared and lives under `shared/domain/` (the calculator and the tracker both consume it, and `shared/lib/storage` depends on it), so it is not split per-feature.
 
 ## Key Invariants
 
-- **The maths engine is `@oskarfigura/amortisation`** (GitHub Packages, ESM). `src/core/*` only re-exports from it. To change calculation behaviour, change it in the `TTN.Amortisation` repo, publish a new version, and bump it here. Run `npm test` before and after any change touching `src/core/`.
-- **Icon geometry is `@oskarfigura/icons`** (GitHub Packages, ESM, shared with the web app). Render icons via `<Icon icon={IconName.X} size color strokeWidth />` from `src/components/ui/Icon.tsx`, which maps the package geometry onto `react-native-svg` primitives through the `Svg` wrapper. Do NOT hand-write per-icon component files — there is no `src/components/ui/Icons/` directory anymore. To add or change an icon, edit the `TTN.Icons` repo, publish a new version, and bump it here. Two exceptions are kept local: `LiveDotIcon` (`src/components/ui/LiveDotIcon.tsx`), a filled-circle primitive, and `BeeMark` (`src/components/loans/DashboardHeader.tsx`), the LoanBee brand mascot. Both are kept local because the package models single-colour geometry (stroke-only, or a single `filled` solid) and these need fills the package can't represent — `LiveDotIcon` is a solid circle, and `BeeMark` is a multi-colour mascot (honey body, soft-opacity wings, dark stripes/eyes) mixing filled and stroked paths. `BeeMark` is also LoanBee-specific brand art and does not belong in the cross-product shared set.
-- **All colours must use `colours.*`** from `src/theme/colours.ts`. Never write a hex literal in a component or screen.
-- **All font families must use `fonts.body` or `fonts.heading`** from `src/theme/typography.ts`. Never write `fontFamily: 'Inter'` inline.
-- **All font weights must use `fontWeights.*`** from `src/theme/typography.ts`. Never write `fontWeight: '700'` inline.
+- **The maths engine is `@oskarfigura/amortisation`** (GitHub Packages, ESM). `src/shared/domain/core/*` only re-exports from it. To change calculation behaviour, change it in the `TTN.Amortisation` repo, publish a new version, and bump it here. Run `npm test` before and after any change touching `src/shared/domain/core/`.
+- **Icon geometry is `@oskarfigura/icons`** (GitHub Packages, ESM, shared with the web app). Render icons via `<Icon icon={IconName.X} size color strokeWidth />` from `src/shared/ui/components/Icon.tsx`, which maps the package geometry onto `react-native-svg` primitives through the `Svg` wrapper. Do NOT hand-write per-icon component files — there is no `src/shared/ui/components/Icons/` directory anymore. To add or change an icon, edit the `TTN.Icons` repo, publish a new version, and bump it here. Two exceptions are kept local: `LiveDotIcon` (`src/shared/ui/components/LiveDotIcon.tsx`), a filled-circle primitive, and `BeeMark` (`src/features/tracker/components/dashboard/DashboardHeader.tsx`), the LoanBee brand mascot. Both are kept local because the package models single-colour geometry (stroke-only, or a single `filled` solid) and these need fills the package can't represent — `LiveDotIcon` is a solid circle, and `BeeMark` is a multi-colour mascot (honey body, soft-opacity wings, dark stripes/eyes) mixing filled and stroked paths. `BeeMark` is also LoanBee-specific brand art and does not belong in the cross-product shared set.
+- **All colours must use `colours.*`** from `src/shared/ui/theme/colours.ts`. Never write a hex literal in a component or screen.
+- **All font families must use `fonts.body` or `fonts.heading`** from `src/shared/ui/theme/typography.ts`. Never write `fontFamily: 'Inter'` inline.
+- **All font weights must use `fontWeights.*`** from `src/shared/ui/theme/typography.ts`. Never write `fontWeight: '700'` inline.
 - **Ads are fully isolated in `src/ads/`**. No ad import should appear outside that directory except `<AdProvider>` in `app/_layout.tsx` and `<BannerAd>` placements in screens.
-- **MMKV storage key names are versioned** (`saved_loans_v2`, `guide_seen_v1`, etc. in `src/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/storage/savedLoans.ts`.
+- **MMKV storage key names are versioned** (`saved_loans_v2`, `guide_seen_v1`, etc. in `src/shared/lib/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/shared/lib/storage/savedLoans.ts`.
 - **Never pin a tappable header with `stickyHeaderIndices`.** On RN's new architecture the sticky header's touch target does not follow its visual translation, so once the user scrolls, taps on the pinned element fall through silently (this broke the tab strips in both `LoanCalculationView` and `MortgageDetailView`). Render interactive headers — tab strips, segmented controls — as a fixed sibling `View` ABOVE the `ScrollView`, not inside it with `stickyHeaderIndices`. The guard test `__tests__/design-system/sticky-tabs.test.ts` fails the build if `stickyHeaderIndices` reappears in `app/` or `src/`.
 
 ## Design Tokens
@@ -52,9 +84,9 @@ Mocks live in `src/__mocks__/`: `react-native-mmkv.ts` (in-memory Map) and `reac
 
 ## Currency System
 
-`src/currency/currencies.ts` defines the four supported currencies. `languageToCurrency()` (in `src/currency/defaults.ts`) maps `pl` → PLN, anything else → GBP. The global default is stored in MMKV under `user_currency` and initialised from the device locale on first launch. Each `SavedLoan` carries its own `currency` field — always pass the loan's currency (not the global default) to `formatCurrency()` in result/chart/table components.
+`src/shared/domain/currency/currencies.ts` defines the four supported currencies. `languageToCurrency()` (in `src/shared/domain/currency/defaults.ts`) maps `pl` → PLN, anything else → GBP. The global default is stored in MMKV under `user_currency` and initialised from the device locale on first launch. Each `SavedLoan` carries its own `currency` field — always pass the loan's currency (not the global default) to `formatCurrency()` in result/chart/table components.
 
-## Saved Loan Schema (`src/types/SavedLoan.ts`)
+## Saved Loan Schema (`src/shared/domain/types/SavedLoan.ts`)
 
 `resultSnapshot.totalInterestPaidBaseline` is computed at save time by running `getLoanCalculations()` a second time with `additionalMonthlyPayment = 0`. This avoids re-running the calculation on every list render. Overpayment savings = `totalInterestPaidBaseline - totalInterestPaid`. Only show the savings badge when `additionalMonthlyPayment > 0`.
 
@@ -64,7 +96,7 @@ Mocks live in `src/__mocks__/`: `react-native-mmkv.ts` (in-memory Map) and `reac
 
 ## i18n
 
-Locale detection order: MMKV `user_language` → `getLocales()[0].languageCode` → `'en'`. Supported codes: `en`, `pl`. To add a language: add a JSON file in `src/i18n/locales/`, extend the resources object in `src/i18n/index.ts`, and add the option to the Settings language toggle.
+Locale detection order: MMKV `user_language` → `getLocales()[0].languageCode` → `'en'`. Supported codes: `en`, `pl`. To add a language: add a JSON file in `src/shared/lib/i18n/locales/`, extend the resources object in `src/shared/lib/i18n/index.ts`, and add the option to the Settings language toggle.
 
 ## AdMob
 

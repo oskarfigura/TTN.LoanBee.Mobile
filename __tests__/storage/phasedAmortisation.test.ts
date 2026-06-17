@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import { computeLoanWithEvents } from '@/loans/loanScenario';
-import { computeLoanOverpayments } from '@/loans/loanOverpaymentCalc';
-import { LoanGroup } from '@/types/SavedLoan';
+import { computeLoanWithEvents } from '@/shared/domain/loans/loanScenario';
+import { computeLoanOverpayments } from '@/shared/domain/loans/loanOverpaymentCalc';
+import { LoanGroup } from '@/shared/domain/types/SavedLoan';
 
 const baseLoan: LoanGroup = {
   id: 'loan-1',

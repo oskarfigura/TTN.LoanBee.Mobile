@@ -3,11 +3,11 @@ import {
   buildTrackedMortgageFromForm,
   deriveTrackSeedFromLoan,
   TrackMortgageFormValues,
-} from '../../src/mortgage/trackBuilder';
-import { buildMortgageProjection } from '../../src/mortgage/projection';
-import { getCurrentDeal, getPublishedDeals } from '../../src/mortgage/tracker';
-import { monthsBetween } from '../../src/utils/date';
-import { LOAN_GROUP_SCHEMA_VERSION, LoanGroup } from '../../src/types/SavedLoan';
+} from '@/shared/domain/mortgage/trackBuilder';
+import { buildMortgageProjection } from '@/shared/domain/mortgage/projection';
+import { getCurrentDeal, getPublishedDeals } from '@/shared/domain/mortgage/tracker';
+import { monthsBetween } from '@/shared/lib/utils/date';
+import { LOAN_GROUP_SCHEMA_VERSION, LoanGroup } from '@/shared/domain/types/SavedLoan';
 
 const baseValues = (overrides: Partial<TrackMortgageFormValues> = {}): TrackMortgageFormValues => ({
   nickname: 'Family home',

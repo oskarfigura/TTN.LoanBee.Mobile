@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import {
   LoanCalculatorFormInputValues,
   loanCalculatorSchema,
-} from '@/hooks/loanCalculatorSchema';
+} from '@/shared/lib/hooks/loanCalculatorSchema';
 
 const baseValues: LoanCalculatorFormInputValues = {
   loanAmount: 300000,

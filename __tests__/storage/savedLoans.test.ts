@@ -3,17 +3,17 @@ import {
   onSavedLoanStorageError,
   SavedLoanStorageError,
   savedLoansStorage,
-} from '../../src/storage/savedLoans';
+} from '@/shared/lib/storage/savedLoans';
 import {
   LegacySavedLoan,
   LOAN_GROUP_SCHEMA_VERSION,
   MortgageEvent,
   SavedLoan,
-} from '../../src/types/SavedLoan';
-import { storage } from '../../src/storage/mmkv';
-import { STORAGE_KEYS } from '../../src/storage/keys';
-import { InvalidMortgageEventError } from '../../src/mortgage/events';
-import { DEFAULT_LOAN_PURPOSE } from '../../src/loans/loanPurpose';
+} from '@/shared/domain/types/SavedLoan';
+import { storage } from '@/shared/lib/storage/mmkv';
+import { STORAGE_KEYS } from '@/shared/lib/storage/keys';
+import { InvalidMortgageEventError } from '@/shared/domain/mortgage/events';
+import { DEFAULT_LOAN_PURPOSE } from '@/shared/domain/loans/loanPurpose';
 
 const makeLoan = (overrides: Partial<SavedLoan> = {}): SavedLoan => ({
   id: 'test-id-1',

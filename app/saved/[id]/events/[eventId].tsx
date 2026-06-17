@@ -3,18 +3,18 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MortgageEventForm, mortgageEventLabelKey } from '@/components/loans/MortgageEventForm';
+import { MortgageEventForm, mortgageEventLabelKey } from '@/features/tracker/components/editing/MortgageEventForm';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
-import { DestructiveConfirmDialog } from '@/components/ui/DestructiveConfirmDialog';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { formatCurrency } from '@/currency/format';
-import { removeMortgageEvent, upsertMortgageEvent } from '@/mortgage/events';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { colours, layout, spacing } from '@/theme';
-import { formatFriendlyDate } from '@/utils/date';
+import { DestructiveConfirmDialog } from '@/shared/ui/components/DestructiveConfirmDialog';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { formatCurrency } from '@/shared/domain/currency/format';
+import { removeMortgageEvent, upsertMortgageEvent } from '@/shared/domain/mortgage/events';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { colours, layout, spacing } from '@/shared/ui/theme';
+import { formatFriendlyDate } from '@/shared/lib/utils/date';
 
 export default function EditMortgageEventScreen() {
   const { t } = useTranslation();

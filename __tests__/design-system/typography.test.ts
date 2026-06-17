@@ -7,12 +7,12 @@ import {
   fonts,
   fontWeights,
   textStyles,
-} from '../../src/theme/typography';
+} from '@/shared/ui/theme/typography';
 
 const repoRoot = path.resolve(__dirname, '../..');
 const sourceRoots = ['app', 'src'];
 const sourceExtensions = new Set(['.ts', '.tsx']);
-const allowedTypographyFiles = new Set(['src/theme/typography.ts']);
+const allowedTypographyFiles = new Set(['src/shared/ui/theme/typography.ts']);
 const removedFontPackages = [
   '@expo-google-fonts/inter',
   '@expo-google-fonts/nunito',

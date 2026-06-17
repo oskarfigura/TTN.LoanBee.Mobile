@@ -6,15 +6,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { formatCurrency } from '@/currency/format';
-import { buildRecentResultParams } from '@/results/loanResultRoute';
-import { RecentCalculation, recentCalculationsStorage } from '@/storage/recentCalculations';
-import { colours, layout, radii, spacing } from '@/theme';
-import { formatFriendlyDate } from '@/utils/date';
+import { EmptyState } from '@/shared/ui/components/EmptyState';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { formatCurrency } from '@/shared/domain/currency/format';
+import { buildRecentResultParams } from '@/shared/domain/results/loanResultRoute';
+import { RecentCalculation, recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
+import { formatFriendlyDate } from '@/shared/lib/utils/date';
 
 const formatTermDuration = (months: number, yearsLabel: string, monthsLabel: string): string => {
   const years = Math.floor(months / 12);

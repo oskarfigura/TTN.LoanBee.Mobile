@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, ReactTestInstance, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { SavedLoan } from '../../src/types/SavedLoan';
+import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -32,20 +32,20 @@ jest.mock('react-i18next', () => ({
 
 
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
-jest.mock('../../src/components/loans/LoanPurposePicker', () => ({
+jest.mock('@/features/tracker/components/editing/LoanPurposePicker', () => ({
   LoanPurposeIconTile: (props: Record<string, unknown>) => React.createElement('LoanPurposeIconTile', props),
 }));
 
-jest.mock('../../src/components/loans/SavedLoanProgressBar', () => ({
+jest.mock('@/features/tracker/components/dashboard/SavedLoanProgressBar', () => ({
   SavedLoanProgressBar: (props: Record<string, unknown>) => React.createElement('SavedLoanProgressBar', props),
 }));
 
-jest.mock('../../src/results/loanResultRoute', () => ({
+jest.mock('@/shared/domain/results/loanResultRoute', () => ({
   getResultForSavedLoan: jest.fn(() => ({
     amount: 200000,
     downPayment: 0,
@@ -63,7 +63,7 @@ jest.mock('../../src/results/loanResultRoute', () => ({
   })),
 }));
 
-jest.mock('../../src/loans/loanInsightSummary', () => ({
+jest.mock('@/shared/domain/loans/loanInsightSummary', () => ({
   buildSavedLoanDisplayDetails: jest.fn(() => ({ lender: 'LoanBee Bank' })),
   buildSavedLoanSummary: jest.fn(() => ({
     hero: { labelKey: 'results.payoffDate', value: '2046' },
@@ -118,7 +118,7 @@ const loan: SavedLoan = {
 };
 
 const renderCard = async (props: Record<string, unknown> = {}): Promise<ReactTestRenderer> => {
-  const { LoanProfileCard } = await import('../../src/components/loans/LoanProfileCard');
+  const { LoanProfileCard } = await import('@/features/tracker/components/dashboard/LoanProfileCard');
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {

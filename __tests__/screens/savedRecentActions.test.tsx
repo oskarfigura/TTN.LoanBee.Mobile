@@ -95,7 +95,7 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 
-jest.mock('../../src/hooks/useSavedLoans', () => ({
+jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({
   useSavedLoans: () => ({
     loans: mockLoans,
     refresh: mockRefresh,
@@ -103,14 +103,14 @@ jest.mock('../../src/hooks/useSavedLoans', () => ({
   }),
 }));
 
-jest.mock('../../src/storage/recentCalculations', () => ({
+jest.mock('@/shared/lib/storage/recentCalculations', () => ({
   recentCalculationsStorage: {
     getAll: jest.fn(() => mockRecentItems),
     remove: mockRemoveRecent,
   },
 }));
 
-jest.mock('../../src/results/loanResultRoute', () => ({
+jest.mock('@/shared/domain/results/loanResultRoute', () => ({
   buildRecentResultParams: (id: string) => ({ mode: 'recent', recentId: id }),
   getResultForFormValues: () => ({
     monthlyPayments: 1200,
@@ -123,27 +123,27 @@ jest.mock('../../src/results/loanResultRoute', () => ({
   }),
 }));
 
-jest.mock('../../src/components/loans/LoanProfileCard', () => ({
+jest.mock('@/features/tracker/components/dashboard/LoanProfileCard', () => ({
   LoanProfileCard: (props: Record<string, unknown>) => React.createElement('LoanProfileCard', props),
 }));
 
 
 
 
-jest.mock('../../src/components/ui/EmptyState', () => ({
+jest.mock('@/shared/ui/components/EmptyState', () => ({
   EmptyState: (props: Record<string, unknown>) => React.createElement('EmptyState', props),
 }));
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));

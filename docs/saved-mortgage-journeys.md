@@ -239,7 +239,7 @@ These are the invariants tests must keep guarding:
 
 | Journey | Primary screen / component |
 |---|---|
-| J1 Save | `app/saved/new.tsx`, `src/loans/loanGroupFactory.ts` |
+| J1 Save | `app/saved/new.tsx`, `src/shared/domain/loans/loanGroupFactory.ts` |
 | J2 Track mortgage | `app/saved/track.tsx`, `buildTrackedMortgageFromForm` in `trackBuilder.ts` |
 | J3 Update opening balance | `OpeningBalanceHint` in `MortgageDetailView.tsx`, deal editor route |
 | J4 Review state | `MortgageDetailView.tsx`, `MortgageDashboard.tsx`, `MortgageTimelineView.tsx` |

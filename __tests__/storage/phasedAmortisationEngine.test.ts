@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import {
   computePhasedRemainingArray,
   computePhasedTotals,
-} from '@/loans/phasedAmortisation';
-import { getLoanCalculations } from '@/core/amortisation';
+} from '@/shared/domain/loans/phasedAmortisation';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
 
 const INTEREST = 5;
 const START = '2024-01-01';

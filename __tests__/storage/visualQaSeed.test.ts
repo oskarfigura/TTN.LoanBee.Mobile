@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach } from '@jest/globals';
-import { buildVisualQaLoans, seedVisualQaLoans } from '../../src/dev/visualQaSeed';
-import { savedLoansStorage } from '../../src/storage/savedLoans';
+import { buildVisualQaLoans, seedVisualQaLoans } from '@/shared/lib/dev/visualQaSeed';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 
 describe('visual QA seed data', () => {
   beforeEach(() => {

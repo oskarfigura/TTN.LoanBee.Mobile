@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { confirmResultLeave, setResultLeaveGuard } from '../../src/navigation/resultLeaveGuard';
+import { confirmResultLeave, setResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -52,25 +52,25 @@ jest.mock('react-native-safe-area-context', () => ({
   ),
 }));
 
-jest.mock('../../src/ads/BannerAd', () => ({
+jest.mock('@/ads/BannerAd', () => ({
   BannerAd: () => React.createElement('BannerAd'),
 }));
 
-jest.mock('../../src/components/calculator/LoanSummaryPanel', () => ({
+jest.mock('@/features/calculator/components/LoanSummaryPanel', () => ({
   LoanSummaryPanel: () => React.createElement('LoanSummaryPanel'),
 }));
 
-jest.mock('../../src/loans/loanGroupFactory', () => ({
+jest.mock('@/shared/domain/loans/loanGroupFactory', () => ({
   buildDraftLoanPreview: () => ({ id: 'draft-preview' }),
 }));
 
-jest.mock('../../src/components/calculator/LoanCalculationView', () => ({
+jest.mock('@/features/calculator/components/LoanCalculationView', () => ({
   LoanCalculationView: ({ summaryContent }: { summaryContent?: React.ReactNode }) => (
     React.createElement('LoanCalculationView', null, summaryContent)
   ),
 }));
 
-jest.mock('../../src/components/results/UnsavedResultModal', () => ({
+jest.mock('@/features/calculator/components/UnsavedResultModal', () => ({
   UnsavedResultModal: (props: Record<string, unknown>) => (
     React.createElement('UnsavedResultModal', props)
   ),
@@ -78,25 +78,25 @@ jest.mock('../../src/components/results/UnsavedResultModal', () => ({
 
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));
 
-jest.mock('../../src/share/shareCalculation', () => ({
+jest.mock('@/features/sharing/shareCalculation', () => ({
   shareCalculation: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock('../../src/storage/recentCalculations', () => ({
+jest.mock('@/shared/lib/storage/recentCalculations', () => ({
   recentCalculationsStorage: {
     getById: jest.fn((id: string) => (
       id === 'recent-1'
@@ -111,13 +111,13 @@ jest.mock('../../src/storage/recentCalculations', () => ({
   },
 }));
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     getById: jest.fn(() => null),
   },
 }));
 
-jest.mock('../../src/review', () => ({
+jest.mock('@/shared/lib/services/review', () => ({
   useStoreReview: () => ({
     recordUsefulAction: mockRecordUsefulAction,
     requestReview: mockRequestReview,

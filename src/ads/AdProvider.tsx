@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import MobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import { markConsentFlowComplete } from '@/onboarding/firstRunGate';
+import { markConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
 import { InterstitialGate } from './InterstitialGate';
 
 interface Props {

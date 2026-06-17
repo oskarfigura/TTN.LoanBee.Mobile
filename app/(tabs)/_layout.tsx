@@ -2,9 +2,9 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { colours, elevation, fontFaces, fontSizes, radii } from '@/theme';
-import { confirmResultLeave, hasResultLeaveGuard } from '@/navigation/resultLeaveGuard';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { colours, elevation, fontFaces, fontSizes, radii } from '@/shared/ui/theme';
+import { confirmResultLeave, hasResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
 
 type TabIconName = 'home' | 'calculate' | 'saved' | 'settings';
 

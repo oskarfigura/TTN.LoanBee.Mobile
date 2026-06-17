@@ -74,7 +74,7 @@ jest.mock('expo-constants', () => ({
   expoConfig: { version: '1.0.0' },
 }));
 
-jest.mock('../../src/hooks/useLocale', () => ({
+jest.mock('@/shared/lib/hooks/useLocale', () => ({
   useLocale: () => ({
     language: 'en',
     currency: 'GBP',
@@ -83,7 +83,7 @@ jest.mock('../../src/hooks/useLocale', () => ({
   }),
 }));
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     clear: jest.fn(),
     getAll: jest.fn(() => []),
@@ -91,7 +91,7 @@ jest.mock('../../src/storage/savedLoans', () => ({
   },
 }));
 
-jest.mock('../../src/storage/dataTransfer', () => ({
+jest.mock('@/shared/lib/storage/dataTransfer', () => ({
   buildSavedLoansBackup: jest.fn(() => '[]'),
   DataTransferError: class DataTransferError extends Error {
     code = 'invalidShape';
@@ -99,27 +99,27 @@ jest.mock('../../src/storage/dataTransfer', () => ({
   parseSavedLoansBackup: jest.fn(() => []),
 }));
 
-jest.mock('../../src/diagnostics/crashLog', () => ({
+jest.mock('@/shared/lib/services/diagnostics/crashLog', () => ({
   clearLastCrash: jest.fn(),
   getLastCrash: jest.fn(() => null),
 }));
 
-jest.mock('../../src/components/calculator/CurrencyPicker', () => ({
+jest.mock('@/features/calculator/components/CurrencyPicker', () => ({
   CurrencyPicker: (props: Record<string, unknown>) => React.createElement('CurrencyPicker', props),
 }));
 
 
 
 
-jest.mock('../../src/components/ui/HeaderBackAction', () => ({
+jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
 
-jest.mock('../../src/components/ui/ScreenHeader', () => ({
+jest.mock('@/shared/ui/components/ScreenHeader', () => ({
   ScreenHeader: (props: Record<string, unknown>) => React.createElement('ScreenHeader', props),
 }));
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));

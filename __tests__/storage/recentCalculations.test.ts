@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { getLoanCalculations } from '../../src/core/amortisation';
-import { DownPaymentType } from '../../src/core/DownPaymentType';
-import { LoanCalculationType } from '../../src/core/LoanCalculationType';
-import { recentCalculationsStorage } from '../../src/storage/recentCalculations';
-import { storage } from '../../src/storage/mmkv';
-import { STORAGE_KEYS } from '../../src/storage/keys';
-import type { CurrencyCode } from '../../src/currency/currencies';
-import type { LoanCalculatorFormValues } from '../../src/hooks/useLoanCalculatorForm';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { storage } from '@/shared/lib/storage/mmkv';
+import { STORAGE_KEYS } from '@/shared/lib/storage/keys';
+import type { CurrencyCode } from '@/shared/domain/currency/currencies';
+import type { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorForm';
 
 const makeForm = (overrides: Partial<LoanCalculatorFormValues> = {}): LoanCalculatorFormValues => {
   const base: LoanCalculatorFormValues = {

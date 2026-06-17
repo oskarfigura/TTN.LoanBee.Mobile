@@ -6,9 +6,9 @@ import {
   validateCompletionOverpaymentRows,
   validateCurrentDealDurationText,
   validateTrackLumpRows,
-} from '@/mortgage/validation';
-import { projectDeal } from '@/mortgage/tracker';
-import { LoanDeal, MortgageEvent } from '@/types/SavedLoan';
+} from '@/shared/domain/mortgage/validation';
+import { projectDeal } from '@/shared/domain/mortgage/tracker';
+import { LoanDeal, MortgageEvent } from '@/shared/domain/types/SavedLoan';
 
 const deal: LoanDeal = {
   id: 'deal-1',

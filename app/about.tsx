@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { colours, layout, spacing } from '@/theme';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { colours, layout, spacing } from '@/shared/ui/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const VARIABLE_KEYS = ['varA', 'varP', 'varR', 'varN'] as const;

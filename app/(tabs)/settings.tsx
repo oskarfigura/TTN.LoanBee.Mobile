@@ -7,22 +7,22 @@ import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import Constants from 'expo-constants';
-import { useLocale } from '@/hooks/useLocale';
-import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
+import { useLocale } from '@/shared/lib/hooks/useLocale';
+import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
 import { AppText } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
 import { SegmentedControl } from '@oskarfigura/ui-native';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { savedLoansStorage } from '@/storage/savedLoans';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 import {
   buildSavedLoansBackup,
   DataTransferError,
   parseSavedLoansBackup,
-} from '@/storage/dataTransfer';
-import { clearLastCrash, getLastCrash } from '@/diagnostics/crashLog';
-import { colours, layout, radii, spacing } from '@/theme';
+} from '@/shared/lib/storage/dataTransfer';
+import { clearLastCrash, getLastCrash } from '@/shared/lib/services/diagnostics/crashLog';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LANGUAGES = [
@@ -78,7 +78,7 @@ export default function SettingsScreen() {
   const loadVisualQaData = async () => {
     if (!__DEV__) return;
 
-    const { seedVisualQaLoans } = await import('@/dev/visualQaSeed');
+    const { seedVisualQaLoans } = await import('@/shared/lib/dev/visualQaSeed');
     const loans = seedVisualQaLoans();
     setDevActionCount(count => count + 1);
     Alert.alert(

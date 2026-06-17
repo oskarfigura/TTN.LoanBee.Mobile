@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { canRequestReview } from '../../src/review/eligibility';
+import { canRequestReview } from '@/shared/lib/services/review/eligibility';
 
 const baseInput = {
   appOpens: 3,

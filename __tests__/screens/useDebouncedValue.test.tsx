@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { useDebouncedValue } from '../../src/hooks/useDebouncedValue';
+import { useDebouncedValue } from '@/shared/lib/hooks/useDebouncedValue';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

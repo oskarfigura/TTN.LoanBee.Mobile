@@ -2,19 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useSavedLoans } from '@/hooks/useSavedLoans';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { storage } from '@/storage/mmkv';
-import { STORAGE_KEYS } from '@/storage/keys';
-import { CURRENCIES, CurrencyCode } from '@/currency/currencies';
-import { formatCurrency } from '@/currency/format';
-import { CurrencyPicker } from '@/components/calculator/CurrencyPicker';
-import { LenderTextInput } from '@/components/loans/LenderTextInput';
-import { OverpaymentEntryRow, OverpaymentRow } from '@/components/mortgage/OverpaymentEntryRow';
+import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { storage } from '@/shared/lib/storage/mmkv';
+import { STORAGE_KEYS } from '@/shared/lib/storage/keys';
+import { CURRENCIES, CurrencyCode } from '@/shared/domain/currency/currencies';
+import { formatCurrency } from '@/shared/domain/currency/format';
+import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
+import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { OverpaymentEntryRow, OverpaymentRow } from '@/features/tracker/components/overpayments/OverpaymentEntryRow';
 import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
-import { DatePickerField } from '@/components/ui/DatePickerField';
-import { KeyboardAwareFormScreen } from '@/components/ui/KeyboardAwareFormScreen';
+import { DatePickerField } from '@/shared/ui/components/DatePickerField';
+import { KeyboardAwareFormScreen } from '@/shared/ui/components/KeyboardAwareFormScreen';
 import {
   AppTextInput,
   FieldError,
@@ -25,21 +25,21 @@ import {
   InputSurface,
   SegmentedControl,
 } from '@oskarfigura/ui-native';
-import { Icon, IconName } from '@/components/ui/Icon';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
 import {
   buildTrackedMortgageFromForm,
   deriveTrackSeedFromLoan,
   TrackMortgageFormValues,
-} from '@/mortgage/trackBuilder';
-import { buildMortgageProjection } from '@/mortgage/projection';
-import { calculateDealMonthlyPayment } from '@/mortgage/tracker';
-import { LoanCategory, MortgageRepaymentType } from '@/types/SavedLoan';
-import { createLocalId } from '@/utils/id';
-import { addMonthsToIsoDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/utils/date';
-import { validateDurationText, validateMoneyText } from '@/utils/formValidation';
-import { validateTrackLumpRows } from '@/mortgage/validation';
-import { useStoreReview } from '@/review';
-import { colours, layout, radii, spacing } from '@/theme';
+} from '@/shared/domain/mortgage/trackBuilder';
+import { buildMortgageProjection } from '@/shared/domain/mortgage/projection';
+import { calculateDealMonthlyPayment } from '@/shared/domain/mortgage/tracker';
+import { LoanCategory, MortgageRepaymentType } from '@/shared/domain/types/SavedLoan';
+import { createLocalId } from '@/shared/lib/utils/id';
+import { addMonthsToIsoDate, formatIsoDate, isValidIsoDate, parseDateLabelValue } from '@/shared/lib/utils/date';
+import { validateDurationText, validateMoneyText } from '@/shared/lib/utils/formValidation';
+import { validateTrackLumpRows } from '@/shared/domain/mortgage/validation';
+import { useStoreReview } from '@/shared/lib/services/review';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 
 const numberText = (value?: number): string =>
   value === undefined || !Number.isFinite(value) || value <= 0 ? '' : String(value);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import { buildProjectionHighlights } from '../../src/mortgage/projectionHighlights';
-import type { LoanGroup } from '../../src/types/SavedLoan';
+import { buildProjectionHighlights } from '@/shared/domain/mortgage/projectionHighlights';
+import type { LoanGroup } from '@/shared/domain/types/SavedLoan';
 
 const makeLoan = (): LoanGroup => ({
   id: 'loan-1',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { languageToCurrency } from '@/currency/defaults';
+import { languageToCurrency } from '@/shared/domain/currency/defaults';
 
 // languageToCurrency sets the default currency for every new calculation and the
 // global default (via getDefaultCurrency / useLocale), so the pl -> PLN contract

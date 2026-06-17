@@ -3,15 +3,15 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getLoanCalculations } from '@/core/amortisation';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
 import { Button, ButtonVariant } from '@oskarfigura/ui-native';
-import { colours, fontFaces, fontSizes } from '@/theme';
-import { beginDraftResult } from '@/results/loanResultRoute';
-import { getShareableCalculationValuesFromParams } from '@/share/calculationShareLink';
-import { CurrencyCode } from '@/currency/currencies';
-import type { LoanCalculatorFormValues } from '@/hooks/useLoanCalculatorForm';
+import { colours, fontFaces, fontSizes } from '@/shared/ui/theme';
+import { beginDraftResult } from '@/shared/domain/results/loanResultRoute';
+import { getShareableCalculationValuesFromParams } from '@/features/sharing/calculationShareLink';
+import { CurrencyCode } from '@/shared/domain/currency/currencies';
+import type { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorForm';
 
 const toSearchParams = (params: Record<string, string | string[] | undefined>) => {
   const searchParams = new URLSearchParams();

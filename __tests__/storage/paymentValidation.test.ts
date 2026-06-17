@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { getLoanCalculations } from '@/core/amortisation';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/utils/paymentValidation';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { getEffectiveLoanAmount, getMinimumAmortisingPayment } from '@/shared/lib/utils/paymentValidation';
 
 describe('paymentValidation', () => {
   it('calculates the effective loan amount for percentage down payments', () => {

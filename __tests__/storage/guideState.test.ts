@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { hasSeenGuide, markGuideSeen } from '../../src/onboarding/guideState';
-import { STORAGE_KEYS } from '../../src/storage/keys';
-import { storage } from '../../src/storage/mmkv';
+import { hasSeenGuide, markGuideSeen } from '@/shared/lib/services/onboarding/guideState';
+import { STORAGE_KEYS } from '@/shared/lib/storage/keys';
+import { storage } from '@/shared/lib/storage/mmkv';
 
 beforeEach(() => {
   storage.clearAll();

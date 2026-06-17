@@ -27,8 +27,8 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
-import { MortgageBalanceChart } from '../../src/components/charts/MortgageBalanceChart';
-import { colours } from '../../src/theme';
+import { MortgageBalanceChart } from '@/shared/ui/charts/MortgageBalanceChart';
+import { colours } from '@/shared/ui/theme';
 
 const buildSeries = (length: number, step: number) => (
   Array.from({ length }, (_, index) => Math.max(0, 300000 - (index * step)))

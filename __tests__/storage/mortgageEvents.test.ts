@@ -2,8 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 import {
   InvalidMortgageEventError,
   upsertMortgageEvent,
-} from '@/mortgage/events';
-import { LoanGroup, MortgageEvent } from '@/types/SavedLoan';
+} from '@/shared/domain/mortgage/events';
+import { LoanGroup, MortgageEvent } from '@/shared/domain/types/SavedLoan';
 
 const emptyLoan: LoanGroup = {
   id: 'l1',

@@ -42,20 +42,20 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 
-jest.mock('../../src/hooks/useSavedLoans', () => ({
+jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({
   useSavedLoans: () => ({
     add: mockAdd,
     update: mockUpdate,
   }),
 }));
 
-jest.mock('../../src/storage/mmkv', () => ({
+jest.mock('@/shared/lib/storage/mmkv', () => ({
   storage: {
     getString: jest.fn(() => 'GBP'),
   },
 }));
 
-jest.mock('../../src/storage/savedLoans', () => ({
+jest.mock('@/shared/lib/storage/savedLoans', () => ({
   savedLoansStorage: {
     getById: jest.fn(() => undefined),
     getMaxDashboardOrder: jest.fn(() => 0),
@@ -63,39 +63,39 @@ jest.mock('../../src/storage/savedLoans', () => ({
   },
 }));
 
-jest.mock('../../src/review', () => ({
+jest.mock('@/shared/lib/services/review', () => ({
   useStoreReview: () => ({
     recordUsefulAction: mockRecordUsefulAction,
     requestReview: mockRequestReview,
   }),
 }));
 
-jest.mock('../../src/components/calculator/CurrencyPicker', () => ({
+jest.mock('@/features/calculator/components/CurrencyPicker', () => ({
   CurrencyPicker: (props: Record<string, unknown>) => React.createElement('CurrencyPicker', props),
 }));
 
-jest.mock('../../src/components/loans/LenderTextInput', () => ({
+jest.mock('@/features/tracker/components/editing/LenderTextInput', () => ({
   LenderTextInput: (props: Record<string, unknown>) => React.createElement('LenderTextInput', props),
 }));
 
-jest.mock('../../src/components/mortgage/OverpaymentEntryRow', () => ({
+jest.mock('@/features/tracker/components/overpayments/OverpaymentEntryRow', () => ({
   OverpaymentEntryRow: (props: Record<string, unknown>) => React.createElement('OverpaymentEntryRow', props),
 }));
 
 
 
-jest.mock('../../src/components/ui/DatePickerField', () => ({
+jest.mock('@/shared/ui/components/DatePickerField', () => ({
   DatePickerField: (props: Record<string, unknown>) => React.createElement('DatePickerField', props),
 }));
 
-jest.mock('../../src/components/ui/KeyboardAwareFormScreen', () => ({
+jest.mock('@/shared/ui/components/KeyboardAwareFormScreen', () => ({
   KeyboardAwareFormScreen: ({ children, footer, ...props }: { children?: React.ReactNode; footer?: React.ReactNode }) => (
     React.createElement('KeyboardAwareFormScreen', props, children, footer)
   ),
 }));
 
 
-jest.mock('../../src/components/ui/Icon', () => ({
+jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),
 }));

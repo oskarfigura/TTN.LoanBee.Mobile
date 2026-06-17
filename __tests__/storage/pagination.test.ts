@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import { clampPage, getPaginationWindow } from '../../src/components/calculator/pagination';
+import { clampPage, getPaginationWindow } from '@/features/calculator/components/pagination';
 
 describe('amortisation pagination helpers', () => {
   it('clamps pages into the available range', () => {

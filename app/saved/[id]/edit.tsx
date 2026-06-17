@@ -3,19 +3,19 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { formatCurrency } from '@/currency/format';
-import { LenderTextInput } from '@/components/loans/LenderTextInput';
-import { LoanPurposePicker } from '@/components/loans/LoanPurposePicker';
-import { Icon, IconName } from '@/components/ui/Icon';
+import { formatCurrency } from '@/shared/domain/currency/format';
+import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { LoanPurposePicker } from '@/features/tracker/components/editing/LoanPurposePicker';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
 import { AppTextInput, FieldLabel, InputSurface } from '@oskarfigura/ui-native';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { normaliseLoanPurpose } from '@/loans/loanPurpose';
-import { savedLoansStorage } from '@/storage/savedLoans';
-import { colours, layout, radii, spacing } from '@/theme';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
+import { normaliseLoanPurpose } from '@/shared/domain/loans/loanPurpose';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 
 export default function EditLoanScreen() {
   const { t } = useTranslation();

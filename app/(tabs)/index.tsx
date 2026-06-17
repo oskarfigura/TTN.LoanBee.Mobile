@@ -6,24 +6,24 @@ import {
   getDefaultCurrency,
   useLoanCalculatorForm,
   LoanCalculatorFormValues,
-} from '@/hooks/useLoanCalculatorForm';
-import { useSavedLoans } from '@/hooks/useSavedLoans';
-import { getLoanCalculations } from '@/core/amortisation';
-import { LoanCalculationType } from '@/core/LoanCalculationType';
-import { DownPaymentType } from '@/core/DownPaymentType';
-import { CurrencyCode } from '@/currency/currencies';
-import { LoanCategory } from '@/types/SavedLoan';
-import { LoanForm } from '@/components/calculator/LoanForm';
-import { MortgageDashboard } from '@/components/loans/MortgageDashboard';
-import { Icon, IconName } from '@/components/ui/Icon';
-import { HeaderBackAction } from '@/components/ui/HeaderBackAction';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
+} from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
+import { getLoanCalculations } from '@/shared/domain/core/amortisation';
+import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
+import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
+import { CurrencyCode } from '@/shared/domain/currency/currencies';
+import { LoanCategory } from '@/shared/domain/types/SavedLoan';
+import { LoanForm } from '@/features/calculator/components/LoanForm';
+import { MortgageDashboard } from '@/features/tracker/components/dashboard/MortgageDashboard';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
+import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
 import { AppText } from '@oskarfigura/ui-native';
-import { colours, elevation, layout, radii, spacing } from '@/theme';
-import { beginDraftResult } from '@/results/loanResultRoute';
+import { colours, elevation, layout, radii, spacing } from '@/shared/ui/theme';
+import { beginDraftResult } from '@/shared/domain/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { hasSeenGuide } from '@/onboarding/guideState';
-import { whenConsentFlowComplete } from '@/onboarding/firstRunGate';
+import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
+import { whenConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
 
 type JourneyStep = 'intent' | 'trackChoice' | 'form';
 
