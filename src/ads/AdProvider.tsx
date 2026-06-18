@@ -6,6 +6,7 @@ import { markConsentFlowComplete } from '@/shared/lib/services/onboarding/firstR
 import { whenOnboardingDismissed } from '@/shared/lib/services/onboarding/onboardingGate';
 import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
 import { InterstitialGate } from './InterstitialGate';
+import { ADS_ENABLED } from './adsConfig';
 
 interface Props {
   children: React.ReactNode;
@@ -31,6 +32,13 @@ const waitForActiveState = (): Promise<void> =>
 
 export const AdProvider = ({ children }: Props) => {
   useEffect(() => {
+    if (!ADS_ENABLED) {
+      // Release any first-run UI waiting for the consent flow. No ATT, UMP, or
+      // Mobile Ads SDK calls are made while advertising is disabled.
+      markConsentFlowComplete();
+      return;
+    }
+
     (async () => {
       try {
         // iOS only: the native App Tracking Transparency prompt must resolve before
@@ -76,7 +84,7 @@ export const AdProvider = ({ children }: Props) => {
   return (
     <>
       {children}
-      <InterstitialGate />
+      {ADS_ENABLED ? <InterstitialGate /> : null}
     </>
   );
 };
