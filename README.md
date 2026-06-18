@@ -2,8 +2,38 @@
 
 Loan amortisation calculator for iOS and Android. Mobile companion to [TTN.loan-amortisation-calculator.web](https://github.com/oskarfigura/TTN.loan-amortisation-calculator.web).
 
-## Android Build
-eas build -p android --profile production
+## Production Deployment
+
+Production releases for both operating systems are built with the EAS `production` profile, but
+their store submission flows differ.
+
+### iOS
+
+Build the production iOS app, selecting iOS if EAS prompts for a platform:
+
+```bash
+eas build --profile production
+```
+
+After the build succeeds, submit the latest iOS build to App Store Connect:
+
+```bash
+eas submit -p ios --latest
+```
+
+### Android
+
+Before building, verify that the Android `versionCode` is higher than the current Play Store
+production release. Build the production Android app, selecting Android if EAS prompts for a
+platform:
+
+```bash
+eas build --profile production
+```
+
+EAS produces an Android App Bundle (`.aab`). Download it from the EAS build page and manually
+upload it to the appropriate release in Google Play Console. Android store submission is not
+performed with `eas submit`.
 
 ## Most Common Jobs
 
@@ -294,6 +324,14 @@ npm run android   # Gradle build, install, and start on Android emulator/device
 npm run ios       # Xcode build, install, and start on iOS simulator/device
 ```
 
+To choose a specific iOS simulator, such as an iPad, run:
+
+```bash
+npm run ios -- --device
+```
+
+Select the desired iPad simulator from the interactive device list.
+
 ### Running On A Physical Android Device Over USB
 
 1. On the phone, enable **Developer options** and turn on **USB debugging**.
@@ -506,11 +544,13 @@ npm install --global eas-cli
 # Preview APK (internal distribution / QA)
 eas build --profile preview --platform android
 
-# Production AAB (Play Store / App Store)
+# Production build (select iOS or Android when prompted)
 eas build --profile production
 ```
 
 Before production, verify Android `versionCode` is higher than the Play Store production release.
+Submit the latest iOS build with `eas submit -p ios --latest`. Download Android's generated `.aab`
+and upload it manually through Google Play Console.
 For local production-style builds, use the Gradle/Xcode workflows above instead of EAS.
 
 ## Store Configuration
