@@ -263,7 +263,7 @@
     "title": "Start with your loan, then explore what could change.",
     "skip": "Close",
     "eyebrow": "Quick guide",
-    "body": "LoanBee keeps the maths out of the way so you can try numbers, compare options and save what matters.",
+    "body": "Try numbers, compare options and save what matters, all without a spreadsheet.",
     "stepLabel": "Step {{number}}",
     "startCalculating": "Start calculating",
     "steps": {
@@ -282,6 +282,8 @@
     },
     "inviteTitle": "No perfect setup needed",
     "inviteBody": "Start with what you know. You can adjust the numbers whenever you like.",
+    "trackingNoteTitle": "Keeping LoanBee free",
+    "trackingNoteBody": "LoanBee is free, supported by ads. Next, iOS will ask whether apps can track you, your choice either way.",
     "aboutEntryTitle": "New to LoanBee?",
     "aboutEntryBody": "Take the quick tour.",
     "aboutEntryCta": "How it works",

@@ -23,7 +23,6 @@ import { colours, elevation, layout, radii, spacing } from '@/shared/ui/theme';
 import { beginDraftResult } from '@/shared/domain/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
-import { whenConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
 
 type JourneyStep = 'intent' | 'trackChoice' | 'form';
 
@@ -128,19 +127,16 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   useEffect(() => {
     if (firstRunChecked.current) return;
     firstRunChecked.current = true;
-    if (hasSeenGuide()) return;
+    const seen = hasSeenGuide();
+    if (__DEV__) console.log('[firstrun] index: first-run effect. hasSeenGuide =', seen);
+    if (seen) return;
 
-    let cancelled = false;
-
-    whenConsentFlowComplete().then(() => {
-      if (!cancelled && !hasSeenGuide()) {
-        router.push('/guide?firstRun=1');
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
+    // Value-first onboarding: show the guide immediately on first launch. Its
+    // final card carries the tracking rationale, and dismissing it releases the
+    // ATT/consent flow (gated in AdProvider) — so the system dialogs no longer
+    // collide with the guide and appear afterwards, over the calculator.
+    if (__DEV__) console.log('[firstrun] index: pushing /guide?firstRun=1');
+    router.push('/guide?firstRun=1');
   }, [router]);
 
   useEffect(() => {
