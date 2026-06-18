@@ -47,21 +47,15 @@ export const AdProvider = ({ children }: Props) => {
         // Android, where there is no IDFA/ATT. Gate on the active state so the
         // prompt is presented rather than silently auto-denied during launch.
         if (Platform.OS === 'ios') {
-          if (__DEV__) console.log('[firstrun] AdProvider: effect start, waiting for active state');
           await waitForActiveState();
-          const seen = hasSeenGuide();
-          if (__DEV__) console.log('[firstrun] AdProvider: active. hasSeenGuide =', seen);
           // On first launch hold the system ATT prompt until the onboarding guide
           // (which carries the tracking rationale) has been dismissed, so the
           // priming context is shown before the system dialog. Returning users —
           // who have already seen onboarding — proceed straight to the prompt,
           // which is itself a no-op once the ATT status is determined.
-          if (!seen) {
-            if (__DEV__) console.log('[firstrun] AdProvider: awaiting onboarding dismissal');
+          if (!hasSeenGuide()) {
             await whenOnboardingDismissed();
-            if (__DEV__) console.log('[firstrun] AdProvider: onboarding dismissed, releasing ATT');
           }
-          if (__DEV__) console.log('[firstrun] AdProvider: calling requestTrackingPermissionsAsync');
           await requestTrackingPermissionsAsync();
         }
 

@@ -33,8 +33,6 @@ export default function GuideScreen() {
   // On first launch, leaving onboarding also releases the gated ATT/consent flow
   // in AdProvider — call it before navigating so the prompt isn't left waiting on
   // the gate's timeout fallback.
-  if (__DEV__) console.log('[firstrun] guide: render. isFirstRun =', isFirstRun);
-
   // Safety net for the iOS swipe-back gesture (and any other dismissal that
   // bypasses the buttons): releasing the ATT gate on unmount guarantees the
   // gate never hangs, since there is no timeout fallback. No-op once settled.
@@ -45,7 +43,6 @@ export default function GuideScreen() {
   }, [isFirstRun]);
 
   const finishOnboarding = () => {
-    if (__DEV__) console.log('[firstrun] guide: finishOnboarding (dismiss). isFirstRun =', isFirstRun);
     markGuideSeen();
     if (isFirstRun) {
       markOnboardingDismissed();

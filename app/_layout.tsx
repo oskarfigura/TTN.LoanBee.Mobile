@@ -84,7 +84,10 @@ export default function RootLayout() {
                   <Stack.Screen
                     name="saved/track"
                     options={{
-                      presentation: 'modal',
+                      // Full-screen rather than a draggable sheet: the track form is
+                      // long, and a partial-height modal cramps it and risks accidental
+                      // swipe-to-dismiss mid-entry. The form keeps its own close (X).
+                      presentation: 'fullScreenModal',
                     }}
                   />
                   <Stack.Screen name="saved/[id]/edit" />

@@ -32,17 +32,21 @@ interface JourneyOptionProps {
   meta?: string;
   icon?: React.ReactNode;
   onPress: () => void;
+  // The primary path (e.g. "Calculate repayments") gets a filled icon tile and a
+  // stronger border so the most common action reads as the default, instead of
+  // two equal-weight cards.
+  primary?: boolean;
 }
 
-const JourneyOption = ({ title, body, meta, icon, onPress }: JourneyOptionProps) => (
+const JourneyOption = ({ title, body, meta, icon, onPress, primary }: JourneyOptionProps) => (
   <TouchableOpacity
     accessibilityRole="button"
     activeOpacity={0.84}
     onPress={onPress}
     style={styles.optionPressable}
   >
-    <View style={styles.optionCard}>
-      {icon ? <View style={styles.optionIcon}>{icon}</View> : null}
+    <View style={[styles.optionCard, primary && styles.optionCardPrimary]}>
+      {icon ? <View style={[styles.optionIcon, primary && styles.optionIconPrimary]}>{icon}</View> : null}
       <View style={styles.optionText}>
         {meta ? (
           <AppText variant="labelSm" tone="accent" style={styles.optionMeta}>
@@ -56,29 +60,52 @@ const JourneyOption = ({ title, body, meta, icon, onPress }: JourneyOptionProps)
           {body}
         </AppText>
       </View>
+      <Icon icon={IconName.ChevronRightIcon} color={colours.textSecondary} size={20} strokeWidth={2} />
     </View>
   </TouchableOpacity>
+);
+
+// The branching journey is at most three steps deep (intent → choose → form).
+// A constant total keeps the indicator consistent across the steps that show it.
+const JOURNEY_TOTAL_STEPS = 3;
+
+const JourneyProgress = ({ step, total }: { step: number; total: number }) => (
+  <View
+    style={styles.progressRow}
+    accessibilityRole="progressbar"
+    accessibilityValue={{ min: 1, max: total, now: step }}
+  >
+    {Array.from({ length: total }).map((_, index) => (
+      <View
+        key={index}
+        style={[
+          styles.progressDot,
+          index === step - 1 && styles.progressDotActive,
+          index < step - 1 && styles.progressDotDone,
+        ]}
+      />
+    ))}
+  </View>
 );
 
 interface JourneyStepScreenProps {
   headerTitle: string;
   backAction?: React.ReactNode;
-  kicker: string;
+  step: number;
   title: string;
   help: string;
   children: React.ReactNode;
+  footerHint?: string;
 }
 
 // Shared chrome for each journey step (header, intro, option list) so the
 // intent and track-choice steps stay in sync.
-const JourneyStepScreen = ({ headerTitle, backAction, kicker, title, help, children }: JourneyStepScreenProps) => (
+const JourneyStepScreen = ({ headerTitle, backAction, step, title, help, children, footerHint }: JourneyStepScreenProps) => (
   <SafeAreaView style={styles.safe} edges={[]}>
     <ScreenHeader title={headerTitle} variant="top-level" leftAction={backAction} />
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.journeyIntro}>
-        <AppText variant="labelSm" tone="accent" style={styles.kicker}>
-          {kicker}
-        </AppText>
+        <JourneyProgress step={step} total={JOURNEY_TOTAL_STEPS} />
         <AppText variant="title1" style={styles.journeyTitle}>
           {title}
         </AppText>
@@ -89,6 +116,16 @@ const JourneyStepScreen = ({ headerTitle, backAction, kicker, title, help, child
 
       <View style={styles.optionList}>{children}</View>
     </ScrollView>
+    {footerHint ? (
+      <View style={styles.footerHintWrap}>
+        <View style={styles.footerHint}>
+          <Icon icon={IconName.LightBulbIcon} color={colours.warning} size={16} strokeWidth={2} />
+          <AppText variant="bodySm" style={styles.footerHintText}>
+            {footerHint}
+          </AppText>
+        </View>
+      </View>
+    ) : null}
   </SafeAreaView>
 );
 
@@ -127,15 +164,12 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   useEffect(() => {
     if (firstRunChecked.current) return;
     firstRunChecked.current = true;
-    const seen = hasSeenGuide();
-    if (__DEV__) console.log('[firstrun] index: first-run effect. hasSeenGuide =', seen);
-    if (seen) return;
+    if (hasSeenGuide()) return;
 
     // Value-first onboarding: show the guide immediately on first launch. Its
     // final card carries the tracking rationale, and dismissing it releases the
     // ATT/consent flow (gated in AdProvider) — so the system dialogs no longer
     // collide with the guide and appear afterwards, over the calculator.
-    if (__DEV__) console.log('[firstrun] index: pushing /guide?firstRun=1');
     router.push('/guide?firstRun=1');
   }, [router]);
 
@@ -269,20 +303,24 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       <JourneyStepScreen
         headerTitle={t('journey.title')}
         backAction={journeyBackAction}
-        kicker={t('journey.stepIntent')}
+        step={1}
         title={t('journey.intentTitle')}
         help={t('journey.intentHelp')}
+        footerHint={t('journey.intentHint')}
       >
         <JourneyOption
+          meta={t('journey.calculateTag')}
           title={t('journey.calculateTitle')}
           body={t('journey.calculateHelp')}
-          icon={<Icon icon={IconName.CalculatorIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
+          icon={<Icon icon={IconName.CalculatorIcon} color={colours.white} size={24} strokeWidth={1.8} />}
           onPress={openPlanForm}
+          primary
         />
         <JourneyOption
+          meta={t('journey.trackTag')}
           title={t('journey.trackTitle')}
           body={t('journey.trackIntentHelp')}
-          icon={<Icon icon={IconName.TimelineIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
+          icon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={openTrackBorrowing}
         />
       </JourneyStepScreen>
@@ -294,7 +332,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       <JourneyStepScreen
         headerTitle={t('journey.title')}
         backAction={journeyBackAction}
-        kicker={t('journey.stepTrack')}
+        step={2}
         title={t('journey.trackChoiceTitle')}
         help={t('journey.trackChoiceHelp')}
       >
@@ -398,6 +436,52 @@ const styles = StyleSheet.create({
   },
   optionBody: {
     maxWidth: '96%',
+  },
+  optionCardPrimary: {
+    borderColor: colours.primary,
+    borderWidth: 1.5,
+  },
+  optionIconPrimary: {
+    backgroundColor: colours.primary,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colours.border,
+  },
+  progressDotActive: {
+    width: 22,
+    backgroundColor: colours.primary,
+  },
+  progressDotDone: {
+    backgroundColor: colours.primarySoft,
+  },
+  footerHintWrap: {
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  footerHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.pill,
+    backgroundColor: colours.warningSurface,
+    borderWidth: 1,
+    borderColor: colours.honeySoft,
+  },
+  footerHintText: {
+    flexShrink: 1,
+    color: colours.warning,
   },
   pageIntro: {
     marginBottom: spacing.lg,
