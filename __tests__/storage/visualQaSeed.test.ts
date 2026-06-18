@@ -12,34 +12,37 @@ describe('visual QA seed data', () => {
 
     expect(loans).toHaveLength(9);
     expect(loans.map(loan => loan.id)).toEqual([
-      'visual-qa-mortgage-current',
-      'visual-qa-remortgage-chain',
-      'visual-qa-bank-higher',
-      'visual-qa-bank-lower',
-      'visual-qa-bank-matched',
-      'visual-qa-bank-stale',
-      'visual-qa-pln-overpayment',
-      'visual-qa-payment-mode',
-      'visual-qa-interest-only-holiday',
+      'demo-family-home',
+      'demo-riverside-remortgage',
+      'demo-holiday-let',
+      'demo-kitchen-renovation',
+      'demo-electric-car',
+      'demo-road-bike',
+      'demo-motorbike',
+      'demo-education',
+      'demo-photo-studio',
     ]);
     expect(loans.some(loan => loan.currency === 'PLN')).toBe(true);
+    expect(loans.some(loan => loan.currency === 'USD')).toBe(true);
     expect(loans.some(loan => loan.category === 'loan' && (loan.formSnapshot.additionalMonthlyPayment ?? 0) > 0)).toBe(true);
+    expect(loans.filter(loan => loan.category === 'loan').map(loan => loan.loanPurpose)).toEqual(
+      expect.arrayContaining(['homeImprovement', 'car', 'bike', 'motorbike', 'education', 'business']),
+    );
     expect(loans.some(loan => loan.deals.some(deal => deal.status === 'draft'))).toBe(true);
     expect(loans.some(loan => loan.deals.some(deal => deal.repaymentType === 'interestOnly'))).toBe(true);
     expect(loans.some(loan => loan.events.some(event => event.type === 'paymentHoliday'))).toBe(true);
     expect(loans.filter(loan => loan.pinnedToDashboard).map(loan => loan.id)).toEqual([
-      'visual-qa-mortgage-current',
-      'visual-qa-remortgage-chain',
+      'demo-family-home',
+      'demo-riverside-remortgage',
     ]);
 
     const bankCheckpoints = loans
       .flatMap(loan => loan.events)
       .filter(event => event.type === 'balanceCheckpoint' && event.reconciliationVariance !== undefined);
     expect(bankCheckpoints.map(event => event.reconciliationVariance)).toEqual(
-      expect.arrayContaining([2500, -2500, 0, 1500]),
+      expect.arrayContaining([2500, -800, 0]),
     );
     expect(bankCheckpoints.some(event => event.varianceReason === 'missedPayment')).toBe(true);
-    expect(bankCheckpoints.some(event => event.varianceReason === 'unloggedOverpayment')).toBe(true);
     expect(bankCheckpoints.some(event => event.varianceReason === 'lenderTiming')).toBe(true);
     expect(bankCheckpoints.some(event => event.reconciliationVariance === 0 && event.varianceReason === undefined)).toBe(true);
     const today = new Date().toISOString().split('T')[0];
@@ -51,15 +54,15 @@ describe('visual QA seed data', () => {
 
     const loans = savedLoansStorage.getAll();
     expect(loans.map(loan => loan.id)).toEqual([
-      'visual-qa-mortgage-current',
-      'visual-qa-remortgage-chain',
-      'visual-qa-bank-higher',
-      'visual-qa-bank-lower',
-      'visual-qa-bank-matched',
-      'visual-qa-bank-stale',
-      'visual-qa-pln-overpayment',
-      'visual-qa-payment-mode',
-      'visual-qa-interest-only-holiday',
+      'demo-family-home',
+      'demo-riverside-remortgage',
+      'demo-holiday-let',
+      'demo-kitchen-renovation',
+      'demo-electric-car',
+      'demo-road-bike',
+      'demo-motorbike',
+      'demo-education',
+      'demo-photo-studio',
     ]);
     expect(loans[0].dashboardOrder).toBe(1);
     expect(loans[1].dashboardOrder).toBe(2);
