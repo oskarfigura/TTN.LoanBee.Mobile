@@ -260,7 +260,7 @@ export default function SettingsScreen() {
         <Card style={styles.section} padding={layout.cardPadding}>
           <TouchableOpacity
             style={styles.linkRow}
-            onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
+            onPress={() => WebBrowser.openBrowserAsync('https://www.loanamortisationcalculator.com/terms-conditions')}
           >
             <AppText variant="bodyMd" tone="accent">{t('settings.termsAndConditions')}</AppText>
             <AppText variant="title2" tone="muted">›</AppText>
@@ -268,7 +268,7 @@ export default function SettingsScreen() {
           <View style={styles.divider} />
           <TouchableOpacity
             style={styles.linkRow}
-            onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/privacy')}
+            onPress={() => WebBrowser.openBrowserAsync('https://www.loanamortisationcalculator.com/privacy-policy')}
           >
             <AppText variant="bodyMd" tone="accent">{t('settings.privacyPolicy')}</AppText>
             <AppText variant="title2" tone="muted">›</AppText>
@@ -344,7 +344,7 @@ export default function SettingsScreen() {
         <View style={styles.footer}>
           <AppText variant="helper" tone="muted" style={styles.footerText}>{t('settings.copyright')}</AppText>
           <TouchableOpacity
-            onPress={() => WebBrowser.openBrowserAsync('https://thetechnarrative.com/terms')}
+            onPress={() => WebBrowser.openBrowserAsync('https://www.loanamortisationcalculator.com/terms-conditions')}
           >
             <AppText variant="labelSm" tone="accent">{t('settings.termsAndConditions').toUpperCase()}</AppText>
           </TouchableOpacity>
