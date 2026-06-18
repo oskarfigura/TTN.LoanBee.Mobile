@@ -369,8 +369,8 @@ const styles = StyleSheet.create({
   dashboardMetricHelper: {
     ...fontFaces.body.medium,
     marginTop: spacing.xxxs,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 18,
     color: colours.textSecondary,
   },
   editBubble: {

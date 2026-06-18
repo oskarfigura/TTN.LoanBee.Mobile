@@ -189,7 +189,7 @@ const LoanProfileCardComponent = ({
                     </AppText>
                   </View>
                   {displayDetails.lender ? (
-                    <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.metaText}>
+                    <AppText variant="helper" tone="muted" numberOfLines={1} style={[styles.metaText, styles.smallLabel]}>
                       {displayDetails.lender}
                     </AppText>
                   ) : null}
@@ -217,7 +217,7 @@ const LoanProfileCardComponent = ({
 
           <View style={styles.balanceBlock}>
             <View style={styles.balanceCopy}>
-              <AppText variant="helper" tone="muted" numberOfLines={1}>
+              <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.smallLabel}>
                 {t(primaryMetric.labelKey)}
               </AppText>
               <AppText variant="metricMd" tone="accent" numberOfLines={1} adjustsFontSizeToFit>
@@ -233,7 +233,7 @@ const LoanProfileCardComponent = ({
           <View style={styles.metricRow}>
             {supportingMetrics.map(metric => (
               <View key={metric.labelKey} style={styles.metricPill}>
-                <AppText variant="helper" tone="muted" numberOfLines={1}>
+                <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.smallLabel}>
                   {t(metric.labelKey)}
                 </AppText>
                 <AppText variant="labelMd" tone="default" numberOfLines={1} adjustsFontSizeToFit>
@@ -244,7 +244,7 @@ const LoanProfileCardComponent = ({
           </View>
 
           <View style={styles.footer}>
-            <AppText variant="helper" tone="muted" numberOfLines={1} style={styles.footerMeta}>
+            <AppText variant="helper" tone="muted" numberOfLines={1} style={[styles.footerMeta, styles.smallLabel]}>
               {t('saved.startedOn', { date: startedDate })}
             </AppText>
             {overpaymentSavings ? (
@@ -346,6 +346,12 @@ const styles = StyleSheet.create({
   metaText: {
     flex: 1,
     minWidth: 0,
+  },
+  // Nudge the muted descriptor labels (helper variant is 11px in the shared
+  // package) up a touch without changing the package that the web app shares.
+  smallLabel: {
+    fontSize: 12.5,
+    lineHeight: 17,
   },
   categoryLabel: {
     alignSelf: 'flex-start',

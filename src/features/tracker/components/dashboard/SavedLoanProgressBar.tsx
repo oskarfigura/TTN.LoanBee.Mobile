@@ -86,10 +86,14 @@ const styles = StyleSheet.create({
   progressLabel: {
     flex: 1,
     minWidth: 0,
+    fontSize: 12.5,
+    lineHeight: 17,
   },
   remainingLabel: {
     flexShrink: 0,
     maxWidth: '50%',
     textAlign: 'right',
+    fontSize: 12.5,
+    lineHeight: 17,
   },
 });

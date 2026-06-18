@@ -146,7 +146,8 @@ export const styles = StyleSheet.create({
   },
   summaryFactLabel: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: 12.5,
+    lineHeight: 17,
     color: colours.textSecondary,
     marginBottom: spacing.xxxs,
   },

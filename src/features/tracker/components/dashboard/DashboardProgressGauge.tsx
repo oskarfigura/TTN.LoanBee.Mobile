@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
     maxWidth: 160,
     marginTop: spacing.xxs,
     textAlign: 'center',
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 21,
     color: colours.textSecondary,
   },
   gaugeCaption: {
@@ -158,8 +158,8 @@ const styles = StyleSheet.create({
     maxWidth: '92%',
     marginTop: spacing.xs,
     textAlign: 'center',
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 21,
     color: colours.textMuted,
   },
 });
