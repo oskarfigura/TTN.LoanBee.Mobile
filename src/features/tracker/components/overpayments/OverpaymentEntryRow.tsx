@@ -51,6 +51,7 @@ export const OverpaymentEntryRow = ({
               <AppTextInput
                 value={formatFriendlyDate(row.date, i18n.language)}
                 editable={false}
+                pointerEvents="none"
                 placeholder=""
                 style={styles.dateText}
               />

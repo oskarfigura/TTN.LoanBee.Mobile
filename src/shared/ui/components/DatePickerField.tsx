@@ -69,11 +69,14 @@ export const DatePickerField = forwardRef<DatePickerFieldHandle, Props>(({
             onPress={() => setPickerVisible(current => !current)}
             activeOpacity={0.84}
             accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityValue={{ text: displayValue }}
           >
             <InputSurface>
               <AppTextInput
                 value={displayValue}
                 editable={false}
+                pointerEvents="none"
                 placeholder={label}
                 style={styles.dateText}
               />
