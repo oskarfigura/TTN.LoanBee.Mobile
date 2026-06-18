@@ -429,7 +429,8 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
     marginBottom: spacing.xxs,
   },
@@ -443,7 +444,8 @@ const styles = StyleSheet.create({
   },
   calculationMetricLabel: {
     ...fontFaces.body.medium,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textMuted,
     marginBottom: spacing.xxxs,
   },

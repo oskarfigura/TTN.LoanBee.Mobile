@@ -6,7 +6,7 @@ import { ProgressBar } from '@oskarfigura/ui-native';
 import { LoanInsightSummary } from '@/shared/domain/loans/loanInsightSummary';
 import { LoanResult } from '@/shared/domain/results/loanResultRoute';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
-import { colours, spacing } from '@/shared/ui/theme';
+import { colours, fontSizes, spacing } from '@/shared/ui/theme';
 import { monthsBetween } from '@/shared/lib/utils/date';
 
 interface Props {
@@ -86,14 +86,14 @@ const styles = StyleSheet.create({
   progressLabel: {
     flex: 1,
     minWidth: 0,
-    fontSize: 12.5,
+    fontSize: fontSizes.sm,
     lineHeight: 17,
   },
   remainingLabel: {
     flexShrink: 0,
     maxWidth: '50%',
     textAlign: 'right',
-    fontSize: 12.5,
+    fontSize: fontSizes.sm,
     lineHeight: 17,
   },
 });

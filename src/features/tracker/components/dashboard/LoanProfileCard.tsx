@@ -10,7 +10,7 @@ import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric 
 import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
-import { colours, radii, spacing } from '@/shared/ui/theme';
+import { colours, fontSizes, radii, spacing } from '@/shared/ui/theme';
 import { formatFriendlyDate } from '@/shared/lib/utils/date';
 
 interface Props {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   // Nudge the muted descriptor labels (helper variant is 11px in the shared
   // package) up a touch without changing the package that the web app shares.
   smallLabel: {
-    fontSize: 12.5,
+    fontSize: fontSizes.sm,
     lineHeight: 17,
   },
   categoryLabel: {

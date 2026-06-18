@@ -470,7 +470,8 @@ const styles = StyleSheet.create({
   },
   quickActionsHelper: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
   loanQuickActionsRow: {
@@ -612,8 +613,8 @@ const styles = StyleSheet.create({
   },
   drawerOptionDescription: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
 });

@@ -90,8 +90,8 @@ export const styles = StyleSheet.create({
   summaryMetricHelper: {
     ...fontFaces.body.medium,
     marginTop: spacing.xxxs,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
   futureStartHelp: {
@@ -123,7 +123,8 @@ export const styles = StyleSheet.create({
   },
   summarySectionMeta: {
     ...fontFaces.body.medium,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
     marginTop: spacing.xxs,
   },
@@ -146,14 +147,15 @@ export const styles = StyleSheet.create({
   },
   summaryFactLabel: {
     ...fontFaces.body.regular,
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: fontSizes.base,
+    lineHeight: 20,
     color: colours.textSecondary,
     marginBottom: spacing.xxxs,
   },
   summaryFactValue: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.md,
+    lineHeight: 22,
     color: colours.textPrimary,
   },
   summarySourceRow: {
@@ -193,7 +195,7 @@ export const styles = StyleSheet.create({
   },
   reconciliationHelp: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
     lineHeight: 17,
     color: colours.textSecondary,
     marginTop: spacing.xxxs,
@@ -278,7 +280,8 @@ export const styles = StyleSheet.create({
   },
   quickActionsHelper: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
   quickActionButton: {
@@ -303,7 +306,8 @@ export const styles = StyleSheet.create({
   },
   quickActionLabel: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textPrimary,
     textAlign: 'center',
   },
@@ -448,8 +452,8 @@ export const styles = StyleSheet.create({
   },
   drawerOptionDescription: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
   chartCard: {
@@ -625,7 +629,8 @@ export const styles = StyleSheet.create({
   },
   eventDate: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
     marginLeft: spacing.sm,
     maxWidth: 92,

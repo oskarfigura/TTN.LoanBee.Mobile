@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
   summaryMetricHelper: {
     ...fontFaces.body.medium,
     marginTop: spacing.xxxs,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
   },
   summarySectionHeader: {
@@ -374,13 +374,15 @@ const styles = StyleSheet.create({
   },
   summaryFactLabel: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.base,
+    lineHeight: 20,
     color: colours.textSecondary,
     marginBottom: spacing.xxxs,
   },
   summaryFactValue: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.md,
+    lineHeight: 22,
     color: colours.textPrimary,
   },
   savingsCard: {
@@ -423,7 +425,8 @@ const styles = StyleSheet.create({
   },
   savingsManageText: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.secondary,
   },
   nudgeCard: {
@@ -444,7 +447,8 @@ const styles = StyleSheet.create({
   },
   nudgeBody: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.textSecondary,
     textAlign: 'center',
   },
@@ -453,7 +457,8 @@ const styles = StyleSheet.create({
   },
   nudgeCtaText: {
     ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
+    lineHeight: 17,
     color: colours.primary,
   },
   quickActionsCard: {
