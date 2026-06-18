@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let capturedLineProps: Record<string, any> | null = null;
+let lineChartMountCount = 0;
 
 jest.mock('react-native', () => {
   const React = require('react');
@@ -18,6 +19,10 @@ jest.mock('react-native', () => {
 
 jest.mock('react-native-gifted-charts', () => ({
   LineChart: (props: Record<string, any>) => {
+    const React = require('react');
+    React.useEffect(() => {
+      lineChartMountCount += 1;
+    }, []);
     capturedLineProps = props;
     return null;
   },
@@ -45,6 +50,7 @@ const textContent = (node: any): string => {
 
 beforeEach(() => {
   capturedLineProps = null;
+  lineChartMountCount = 0;
 });
 
 afterEach(() => {
@@ -105,6 +111,32 @@ describe('CumulativeAreaChart', () => {
     expect(capturedLineProps?.spacing).toBeCloseTo((294 - 20) / intervals);
     expect(intervals * capturedLineProps!.spacing + 20).toBeCloseTo(294);
     expect(capturedLineProps?.disableScroll).toBe(true);
+  });
+
+  it('remounts after measuring the container so animated paths use the tablet width', () => {
+    const { monthly, interest, remaining } = buildArrays();
+    let renderer!: ReturnType<typeof create>;
+
+    act(() => {
+      renderer = create(React.createElement(CumulativeAreaChart, {
+        monthlyArray: monthly,
+        interestArray: interest,
+        remainingArray: remaining,
+        currency: 'GBP',
+        fitToWidth: true,
+      }));
+    });
+
+    const layoutNode = renderer.root.findAll(node => (
+      String(node.type) === 'View' && typeof node.props.onLayout === 'function'
+    ))[0];
+
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 1024 } } });
+    });
+
+    expect(lineChartMountCount).toBe(2);
+    expect(capturedLineProps?.width).toBe(958);
   });
 
   it('stretches the series close to the right edge with only a small trailing pad', () => {

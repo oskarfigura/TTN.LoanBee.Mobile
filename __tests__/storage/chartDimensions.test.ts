@@ -132,6 +132,44 @@ describe('getProjectionChartLayout', () => {
     expect(3 * layout.pointSpacing + 20).toBeCloseTo(294);
   });
 
+  it('fills a wide viewport for a non-fitted chart that does not need to scroll', () => {
+    // The fullscreen modal renders charts in scroll mode (fitToWidth false). A short loan
+    // on a tablet (or in landscape) fits without scrolling, so the series must still stretch
+    // to fill the width instead of hugging the left under empty trailing gridlines.
+    const layout = getProjectionChartLayout({
+      containerWidth: 1024,
+      pointCount: 5,
+      perPointWidth: 44,
+      edgeSpacing: 20,
+      spacingMode: 'intervals',
+      fillAvailableWidth: true,
+    });
+
+    expect(layout.viewportWidth).toBe(958);
+    expect(layout.scrollEnabled).toBe(false);
+    expect(layout.chartWidth).toBe(958);
+    // 4 intervals stretch well past the natural 44px so the final point reaches the edge.
+    expect(layout.pointSpacing).toBeGreaterThan(44);
+    expect(4 * layout.pointSpacing + 20).toBeCloseTo(958);
+  });
+
+  it('still scrolls a non-fitted long timeline instead of compressing it to fill', () => {
+    // The fill redistribution must never collapse a scrollable chart: a long timeline still
+    // overflows and scrolls at its natural per-point spacing.
+    const layout = getProjectionChartLayout({
+      containerWidth: 360,
+      pointCount: 30,
+      perPointWidth: 44,
+      edgeSpacing: 20,
+      spacingMode: 'intervals',
+      fillAvailableWidth: true,
+    });
+
+    expect(layout.scrollEnabled).toBe(true);
+    expect(layout.pointSpacing).toBe(44);
+    expect(layout.chartWidth).toBe(29 * 44 + 20);
+  });
+
   it('fitToWidth never stretches a short timeline past its natural spacing', () => {
     const layout = getProjectionChartLayout({
       containerWidth: 360,

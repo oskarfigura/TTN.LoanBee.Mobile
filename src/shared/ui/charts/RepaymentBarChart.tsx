@@ -24,6 +24,7 @@ const END_SPACING = 16;
 const MIN_BAR_SLOT = 10;
 const MIN_LABEL_GAP = 34;
 const X_LABEL_WIDTH = 34;
+const MAX_FITTED_BAR_WIDTH = 28;
 
 type StackSegment = {
   value: number;
@@ -106,14 +107,21 @@ export const RepaymentBarChart = ({
     edgeSpacing: INITIAL_SPACING + END_SPACING,
     fitToWidth,
     minPerPointWidth: MIN_BAR_SLOT,
+    fillAvailableWidth: fitToWidth,
   });
   const barSlot = fitToWidth ? pointSpacing : BAR_WIDTH + BAR_SPACING;
   const barWidth = fitToWidth
-    ? Math.max(6, Math.min(BAR_WIDTH, Math.floor(barSlot * 0.58)))
+    ? Math.max(6, Math.min(MAX_FITTED_BAR_WIDTH, Math.floor(barSlot * 0.58)))
     : BAR_WIDTH;
-  const spacing = fitToWidth
-    ? Math.max(3, barSlot - barWidth)
-    : BAR_SPACING;
+  const fittedSpacing = rawYearlyData.length > 1 && !scrollEnabled
+    ? (
+      chartWidth
+      - INITIAL_SPACING
+      - END_SPACING
+      - rawYearlyData.length * barWidth
+    ) / (rawYearlyData.length - 1)
+    : barSlot - barWidth;
+  const spacing = fitToWidth ? Math.max(3, fittedSpacing) : BAR_SPACING;
   const labelEvery = fitToWidth
     ? Math.max(1, Math.ceil(MIN_LABEL_GAP / pointSpacing))
     : 1;
@@ -137,6 +145,7 @@ export const RepaymentBarChart = ({
         showsHorizontalScrollIndicator={scrollEnabled}
       >
         <BarChart
+          key={`repayment-${Math.round(containerWidth)}`}
           stackData={yearlyData}
           width={chartWidth}
           height={height}

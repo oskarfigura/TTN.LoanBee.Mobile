@@ -344,6 +344,7 @@ export const LoanCalculationView = ({
                 monthlyArray={result.loanChartMonthlyArray}
                 interestArray={result.loanChartInterestArray}
                 currency={currency}
+                fitToWidth
               />
             </Card>
           </Pressable>
@@ -376,6 +377,7 @@ export const LoanCalculationView = ({
                 interestArray={result.loanChartInterestArray}
                 remainingArray={result.loanChartRemainingArray}
                 currency={currency}
+                fitToWidth
               />
             </Card>
           </Pressable>

@@ -87,12 +87,14 @@ export const getProjectionChartLayout = ({
   const scrollEnabled = contentWidth > viewportWidth;
 
   // A fill-to-width chart hands the full viewport to the chart library so the gridlines
-  // reach the card edge. The fitted spacing above is floored (and capped at perPointWidth),
-  // so the final point can stop several pixels short of that width — the series then ends
-  // under empty trailing gridlines. When such a chart isn't scrolling, redistribute the
-  // spacing as an exact fraction so the points span the whole width and the last point
-  // (the end of the mortgage term) lands right at the trailing edge margin.
-  if (fitToWidth && fillAvailableWidth && !scrollEnabled && spacingUnits > 0) {
+  // reach the card edge. Whenever such a chart isn't scrolling — whether it was fitted, or
+  // it's a fixed-spacing chart whose short timeline simply doesn't fill a wide screen (e.g.
+  // a 5-year loan on a tablet or in the fullscreen modal) — the series would otherwise stop
+  // short under empty trailing gridlines on the left. Redistribute the spacing as an exact
+  // fraction so the points span the whole width and the last point (the end of the term)
+  // lands right at the trailing edge margin. Long timelines that overflow still scroll, so
+  // this only ever expands dead space, never compresses a scrollable chart.
+  if (fillAvailableWidth && !scrollEnabled && spacingUnits > 0) {
     pointSpacing = (viewportWidth - edgeSpacing) / spacingUnits;
   }
 

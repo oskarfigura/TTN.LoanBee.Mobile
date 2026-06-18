@@ -165,6 +165,7 @@ export const CumulativeAreaChart = ({
         showsHorizontalScrollIndicator={scrollEnabled}
       >
         <LineChart
+          key={`cumulative-${Math.round(containerWidth)}`}
           data={remainingData}
           data2={totalData}
           data3={interestData}

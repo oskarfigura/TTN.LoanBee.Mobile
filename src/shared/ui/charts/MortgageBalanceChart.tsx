@@ -195,6 +195,7 @@ export const MortgageBalanceChart = ({
         showsHorizontalScrollIndicator={scrollEnabled}
       >
         <LineChart
+          key={`balance-${Math.round(containerWidth)}`}
           data={baselineData ?? scenarioData}
           {...(baselineData ? { data2: scenarioData } : {})}
           width={chartWidth}

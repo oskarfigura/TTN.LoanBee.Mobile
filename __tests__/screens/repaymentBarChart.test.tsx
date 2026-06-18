@@ -13,6 +13,7 @@ type StackDatum = {
 };
 let capturedStackData: StackDatum[] | null = null;
 let capturedBarProps: Record<string, any> | null = null;
+let barChartMountCount = 0;
 
 jest.mock('react-native', () => {
   const React = require('react');
@@ -26,6 +27,10 @@ jest.mock('react-native', () => {
 
 jest.mock('react-native-gifted-charts', () => ({
   BarChart: (props: Record<string, any> & { stackData: StackDatum[] }) => {
+    const React = require('react');
+    React.useEffect(() => {
+      barChartMountCount += 1;
+    }, []);
     capturedStackData = props.stackData;
     capturedBarProps = props;
     return null;
@@ -76,6 +81,7 @@ const labelsOf = () => (capturedStackData ?? []).map(item => item.label);
 beforeEach(() => {
   capturedStackData = null;
   capturedBarProps = null;
+  barChartMountCount = 0;
 });
 
 afterEach(() => {
@@ -133,6 +139,41 @@ describe('RepaymentBarChart principal and interest handling', () => {
     expect(capturedStackData!.some(item => item.label === '')).toBe(true);
     expect(capturedStackData!.filter(item => item.label !== '').every(item => item.labelWidth === 34)).toBe(true);
     expect(capturedStackData![capturedStackData!.length - 1].label).not.toBe('');
+  });
+
+  it('distributes fitted bars across a tablet viewport and remounts at the measured width', () => {
+    const { monthly, interest } = buildCleanArrays(19 * 12);
+    let renderer!: ReturnType<typeof create>;
+
+    act(() => {
+      renderer = create(React.createElement(RepaymentBarChart, {
+        monthlyArray: monthly,
+        interestArray: interest,
+        currency: 'GBP',
+        fitToWidth: true,
+      }));
+    });
+
+    const layoutNode = renderer.root.findAll(node => (
+      String(node.type) === 'View' && typeof node.props.onLayout === 'function'
+    ))[0];
+
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 1024 } } });
+    });
+
+    const barCount = capturedStackData!.length;
+    const plottedWidth = (
+      capturedBarProps!.initialSpacing
+      + barCount * capturedBarProps!.barWidth
+      + (barCount - 1) * capturedBarProps!.spacing
+      + capturedBarProps!.endSpacing
+    );
+
+    expect(barChartMountCount).toBe(2);
+    expect(capturedBarProps?.width).toBe(958);
+    expect(capturedBarProps?.barWidth).toBeGreaterThan(18);
+    expect(plottedWidth).toBeCloseTo(capturedBarProps!.width);
   });
 });
 
