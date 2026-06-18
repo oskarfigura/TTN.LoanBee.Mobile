@@ -175,6 +175,42 @@ describe('RepaymentBarChart principal and interest handling', () => {
     expect(capturedBarProps?.barWidth).toBeGreaterThan(18);
     expect(plottedWidth).toBeCloseTo(capturedBarProps!.width);
   });
+
+  it('centres a short timeline on a wide viewport instead of spreading thin bars across it', () => {
+    const { monthly, interest } = buildCleanArrays(4 * 12);
+    let renderer!: ReturnType<typeof create>;
+
+    act(() => {
+      renderer = create(React.createElement(RepaymentBarChart, {
+        monthlyArray: monthly,
+        interestArray: interest,
+        currency: 'GBP',
+        fitToWidth: true,
+      }));
+    });
+
+    const layoutNode = renderer.root.findAll(node => (
+      String(node.type) === 'View' && typeof node.props.onLayout === 'function'
+    ))[0];
+
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 1024 } } });
+    });
+
+    const barCount = capturedStackData!.length;
+    const barsRegion = barCount * capturedBarProps!.barWidth + (barCount - 1) * capturedBarProps!.spacing;
+    const leftPad = capturedBarProps!.initialSpacing;
+    const rightPad = capturedBarProps!.width - leftPad - barsRegion;
+
+    expect(barCount).toBe(4);
+    // The gap is clamped rather than ballooning to fill the width.
+    expect(capturedBarProps?.spacing).toBe(56);
+    // The cluster is pushed off the y-axis and sits centred (equal pads either side).
+    expect(capturedBarProps!.initialSpacing).toBeGreaterThan(8);
+    expect(leftPad).toBeCloseTo(rightPad);
+    // It must not fill the full width — there is a real gutter on each side.
+    expect(barsRegion).toBeLessThan(capturedBarProps!.width * 0.6);
+  });
 });
 
 describe('RepaymentBarChart yearly downsampling', () => {

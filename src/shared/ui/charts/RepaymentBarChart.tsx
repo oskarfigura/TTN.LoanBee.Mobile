@@ -6,6 +6,7 @@ import { colours, fontFaces, fontSizes } from '@/shared/ui/theme';
 import { formatCurrencyCompact } from '@/shared/domain/currency/format';
 import { CurrencyCode } from '@/shared/domain/currency/currencies';
 import { getProjectionChartLayout } from './dimensions';
+import { useFirstMeasureAnimation } from './useFirstMeasureAnimation';
 import { ChartEmptyState } from './ChartEmptyState';
 
 interface Props {
@@ -25,6 +26,10 @@ const MIN_BAR_SLOT = 10;
 const MIN_LABEL_GAP = 34;
 const X_LABEL_WIDTH = 34;
 const MAX_FITTED_BAR_WIDTH = 28;
+// Cap the gap between fitted bars (~2× the widest bar). Without this, a handful of bars on a
+// wide tablet would distribute across the whole width, leaving thin bars marooned by huge
+// gaps; once the gap is clamped the cluster no longer fills the width and is centred instead.
+const MAX_FITTED_BAR_SPACING = 56;
 
 type StackSegment = {
   value: number;
@@ -44,6 +49,7 @@ export const RepaymentBarChart = ({
 }: Props) => {
   const { t } = useTranslation();
   const [containerWidth, setContainerWidth] = useState(0);
+  const shouldAnimate = useFirstMeasureAnimation(containerWidth);
 
   // Bucket the cumulative arrays into years. The final bucket can be a partial year
   // (e.g. an 18-month loan ends on a half-year); clamp its end to the last index so
@@ -121,7 +127,16 @@ export const RepaymentBarChart = ({
       - rawYearlyData.length * barWidth
     ) / (rawYearlyData.length - 1)
     : barSlot - barWidth;
-  const spacing = fitToWidth ? Math.max(3, fittedSpacing) : BAR_SPACING;
+  const spacing = fitToWidth
+    ? Math.min(Math.max(3, fittedSpacing), MAX_FITTED_BAR_SPACING)
+    : BAR_SPACING;
+  // When the clamped cluster no longer fills the width (few bars on a wide screen), centre it
+  // so it reads as a balanced group beneath the full-width gridlines rather than hugging the
+  // y-axis with a wide empty gutter on the right.
+  const barsRegion = rawYearlyData.length * barWidth + (rawYearlyData.length - 1) * spacing;
+  const initialSpacing = fitToWidth && barsRegion + INITIAL_SPACING + END_SPACING < chartWidth
+    ? Math.round((chartWidth - barsRegion) / 2)
+    : INITIAL_SPACING;
   const labelEvery = fitToWidth
     ? Math.max(1, Math.ceil(MIN_LABEL_GAP / pointSpacing))
     : 1;
@@ -151,7 +166,7 @@ export const RepaymentBarChart = ({
           height={height}
           barWidth={barWidth}
           spacing={spacing}
-          initialSpacing={INITIAL_SPACING}
+          initialSpacing={initialSpacing}
           endSpacing={END_SPACING}
           noOfSections={4}
           yAxisTextStyle={styles.axisText}
@@ -169,8 +184,8 @@ export const RepaymentBarChart = ({
           showXAxisIndices={false}
           formatYLabel={v => formatCurrencyCompact(+v, currency)}
           disableScroll={!scrollEnabled}
-          adjustToWidth={!scrollEnabled}
-          isAnimated
+          adjustToWidth={!scrollEnabled && !fitToWidth}
+          isAnimated={shouldAnimate}
         />
       </ScrollView>
       <View style={styles.legend}>

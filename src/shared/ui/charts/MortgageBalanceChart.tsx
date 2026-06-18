@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { colours, fontFaces, fontSizes } from '@/shared/ui/theme';
 import { CurrencyCode, CURRENCIES } from '@/shared/domain/currency/currencies';
 import { getNiceChartMaxValue, getProjectionChartLayout } from './dimensions';
+import { useFirstMeasureAnimation } from './useFirstMeasureAnimation';
 import { ChartEmptyState } from './ChartEmptyState';
 
 interface Props {
@@ -61,6 +62,7 @@ export const MortgageBalanceChart = ({
 }: Props) => {
   const { t } = useTranslation();
   const [containerWidth, setContainerWidth] = useState(0);
+  const shouldAnimate = useFirstMeasureAnimation(containerWidth);
   const symbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
   const hasBaseline = Boolean(baselineRemaining && baselineRemaining.length > 1);
 
@@ -235,6 +237,7 @@ export const MortgageBalanceChart = ({
           disableScroll={!scrollEnabled}
           curved
           curvature={0.08}
+          isAnimated={shouldAnimate}
         />
       </ScrollView>
       {legendItems.length > 0 ? (

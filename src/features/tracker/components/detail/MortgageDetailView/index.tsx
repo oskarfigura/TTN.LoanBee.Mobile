@@ -5,7 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { AmortisationTable } from '@/features/calculator/components/AmortisationTable';
 import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/shared/ui/charts/ChartHelp';
@@ -79,6 +79,7 @@ export const MortgageDetailView = ({
   footerActions,
 }: Props) => {
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   const [activeTab, setActiveTab] = useState<MortgageDetailTab>('overview');
@@ -279,6 +280,7 @@ export const MortgageDetailView = ({
           interestArray={projection.loanChartInterestArray}
           currency={loan.currency}
           height={320}
+          fitToWidth
         />
       );
     }
@@ -291,6 +293,7 @@ export const MortgageDetailView = ({
           remainingArray={projection.loanChartRemainingArray}
           currency={loan.currency}
           height={320}
+          fitToWidth
         />
       );
     }
@@ -484,7 +487,7 @@ export const MortgageDetailView = ({
         supportedOrientations={['portrait', 'landscape', 'landscape-left', 'landscape-right']}
         onRequestClose={closeProjectionPreview}
       >
-        <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
+        <View style={[styles.fullscreenSafe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.previewTitle}>{getProjectionPreviewTitle()}</AppText>
             {projectionPreviewHelpId ? (
@@ -511,7 +514,15 @@ export const MortgageDetailView = ({
           >
             {renderProjectionPreview()}
           </ScrollView>
-        </SafeAreaView>
+          {/* Nested inside the fullscreen modal so the help sheet stacks above it — a second
+              top-level modal can't present over an already-presented one. */}
+          <ChartHelpDrawer
+            visible={chartHelp !== null}
+            content={chartHelpContent}
+            closeLabel={t('common.close')}
+            onClose={closeChartHelp}
+          />
+        </View>
       </Modal>
       <QuickActionsDrawer
         title={t('mortgage.add')}
@@ -540,7 +551,7 @@ export const MortgageDetailView = ({
         onNewCalculation={goToNewCalculation}
       />
       <ChartHelpDrawer
-        visible={chartHelp !== null}
+        visible={chartHelp !== null && !isProjectionPreviewOpen}
         content={chartHelpContent}
         closeLabel={t('common.close')}
         onClose={closeChartHelp}

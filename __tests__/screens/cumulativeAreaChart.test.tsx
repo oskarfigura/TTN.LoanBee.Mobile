@@ -139,6 +139,38 @@ describe('CumulativeAreaChart', () => {
     expect(capturedLineProps?.width).toBe(958);
   });
 
+  it('animates in on the first measurement but not on later width changes', () => {
+    const { monthly, interest, remaining } = buildArrays();
+    let renderer!: ReturnType<typeof create>;
+
+    act(() => {
+      renderer = create(React.createElement(CumulativeAreaChart, {
+        monthlyArray: monthly,
+        interestArray: interest,
+        remainingArray: remaining,
+        currency: 'GBP',
+        fitToWidth: true,
+      }));
+    });
+
+    const layoutNode = renderer.root.findAll(node => (
+      String(node.type) === 'View' && typeof node.props.onLayout === 'function'
+    ))[0];
+
+    // First real measurement → the entrance animation plays.
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 768 } } });
+    });
+    expect(capturedLineProps?.isAnimated).toBe(true);
+
+    // A later width change (e.g. device rotation) remounts to fix geometry but must not
+    // replay the animation.
+    act(() => {
+      layoutNode.props.onLayout({ nativeEvent: { layout: { width: 1024 } } });
+    });
+    expect(capturedLineProps?.isAnimated).toBe(false);
+  });
+
   it('stretches the series close to the right edge with only a small trailing pad', () => {
     const { monthly, interest, remaining } = buildArrays();
     let renderer!: ReturnType<typeof create>;

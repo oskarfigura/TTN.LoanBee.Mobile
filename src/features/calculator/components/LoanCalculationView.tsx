@@ -14,7 +14,7 @@ import {
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { CumulativeAreaChart, hasCumulativeChartData } from '@/shared/ui/charts/CumulativeAreaChart';
 import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/shared/ui/charts/ChartHelp';
@@ -74,6 +74,7 @@ export const LoanCalculationView = ({
   scrollContentStyle,
 }: Props) => {
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<CalculationTab>('summary');
   const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [fullscreenPreview, setFullscreenPreview] = useState<FullscreenPreview | null>(null);
@@ -253,6 +254,7 @@ export const LoanCalculationView = ({
           interestArray={result.loanChartInterestArray}
           currency={currency}
           height={320}
+          fitToWidth
         />
       );
     }
@@ -276,6 +278,7 @@ export const LoanCalculationView = ({
           remainingArray={result.loanChartRemainingArray}
           currency={currency}
           height={320}
+          fitToWidth
         />
       );
     }
@@ -443,7 +446,7 @@ export const LoanCalculationView = ({
         supportedOrientations={['portrait', 'landscape', 'landscape-left', 'landscape-right']}
         onRequestClose={closeFullscreenPreview}
       >
-        <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
+        <View style={[styles.fullscreenSafe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.scheduleTitle}>{getFullscreenTitle()}</AppText>
             {fullscreenHelpId ? (
@@ -470,10 +473,18 @@ export const LoanCalculationView = ({
           >
             {renderFullscreenPreview()}
           </ScrollView>
-        </SafeAreaView>
+          {/* Nested inside the fullscreen modal so the help sheet stacks above it — a second
+              top-level modal can't present over an already-presented one. */}
+          <ChartHelpDrawer
+            visible={chartHelp !== null}
+            content={chartHelpContent}
+            closeLabel={t('common.close')}
+            onClose={closeChartHelp}
+          />
+        </View>
       </Modal>
       <ChartHelpDrawer
-        visible={chartHelp !== null}
+        visible={chartHelp !== null && !isPreviewOpen}
         content={chartHelpContent}
         closeLabel={t('common.close')}
         onClose={closeChartHelp}

@@ -4,7 +4,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 import { formatCurrency } from '@/shared/domain/currency/format';
 import { OverpaymentImpact, OverpaymentScope } from '@/shared/domain/loans/overpaymentScope';
@@ -31,6 +31,7 @@ interface Props {
 
 export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) => {
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
@@ -338,7 +339,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         supportedOrientations={['portrait', 'landscape', 'landscape-left', 'landscape-right']}
         onRequestClose={closeFullscreen}
       >
-        <SafeAreaView style={styles.fullscreenSafe} edges={['top', 'bottom']}>
+        <View style={[styles.fullscreenSafe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
           <View style={styles.fullscreenHeader}>
             <AppText variant="title3" style={styles.previewTitle}>{t('overpayments.balanceChart')}</AppText>
             <ChartHelpButton
@@ -359,10 +360,18 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
               />
             ) : null}
           </ScrollView>
-        </SafeAreaView>
+          {/* Nested inside the fullscreen modal so the help sheet stacks above it — a second
+              top-level modal can't present over an already-presented one. */}
+          <ChartHelpDrawer
+            visible={chartHelpVisible}
+            content={balanceChartHelp}
+            closeLabel={t('common.close')}
+            onClose={() => setChartHelpVisible(false)}
+          />
+        </View>
       </Modal>
       <ChartHelpDrawer
-        visible={chartHelpVisible}
+        visible={chartHelpVisible && !chartFullscreen}
         content={balanceChartHelp}
         closeLabel={t('common.close')}
         onClose={() => setChartHelpVisible(false)}
