@@ -606,3 +606,10 @@ When you need to trace where an action lives:
 
 - Start with [`docs/developer-action-map.md`](./docs/developer-action-map.md) for route ownership and app-shell behaviour.
 - Use [`docs/saved-mortgage-journeys.md`](./docs/saved-mortgage-journeys.md) for mortgage-specific lifecycle rules.
+
+## Uninstalling
+
+### ios
+```bash
+xcrun simctl uninstall booted com.thetechnarrative.loanbee
+```

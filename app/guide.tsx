@@ -7,6 +7,7 @@ import { AppText } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { markGuideSeen } from '@/shared/lib/services/onboarding/guideState';
+import { markOnboardingDismissed } from '@/shared/lib/services/onboarding/onboardingGate';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 
 interface GuideStep {
@@ -26,11 +27,30 @@ export default function GuideScreen() {
   const params = useLocalSearchParams<{ firstRun?: string }>();
   const isFirstRun = params.firstRun === '1';
 
+  // Mark the guide seen on dismissal, not on mount. AdProvider gates the iOS ATT
+  // prompt on `hasSeenGuide()`; marking on mount would flip the flag while the
+  // guide is still on screen, letting the system prompt fire before onboarding.
+  // On first launch, leaving onboarding also releases the gated ATT/consent flow
+  // in AdProvider — call it before navigating so the prompt isn't left waiting on
+  // the gate's timeout fallback.
+  // Safety net for the iOS swipe-back gesture (and any other dismissal that
+  // bypasses the buttons): releasing the ATT gate on unmount guarantees the
+  // gate never hangs, since there is no timeout fallback. No-op once settled.
   useEffect(() => {
+    return () => {
+      if (isFirstRun) markOnboardingDismissed();
+    };
+  }, [isFirstRun]);
+
+  const finishOnboarding = () => {
     markGuideSeen();
-  }, []);
+    if (isFirstRun) {
+      markOnboardingDismissed();
+    }
+  };
 
   const closeGuide = () => {
+    finishOnboarding();
     if (isFirstRun) {
       router.replace('/');
       return;
@@ -40,6 +60,7 @@ export default function GuideScreen() {
   };
 
   const startCalculating = () => {
+    finishOnboarding();
     router.replace('/?calculator=1');
   };
 
@@ -68,6 +89,18 @@ export default function GuideScreen() {
           <AppText variant="bodyLg" tone="muted" style={styles.body}>{t('guide.body')}</AppText>
         </View>
 
+        {isFirstRun ? (
+          <View style={styles.trackingCard}>
+            <View style={styles.trackingIconWrap}>
+              <Icon icon={IconName.HeartHandIcon} color={colours.primary} size={20} strokeWidth={2} />
+            </View>
+            <View style={styles.trackingCopy}>
+              <AppText variant="labelMd" style={styles.trackingTitle}>{t('guide.trackingNoteTitle')}</AppText>
+              <AppText variant="bodySm" tone="muted">{t('guide.trackingNoteBody')}</AppText>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.stepsCard}>
           {GUIDE_STEPS.map((step, index) => {
             const isLast = index === GUIDE_STEPS.length - 1;
@@ -93,10 +126,12 @@ export default function GuideScreen() {
           })}
         </View>
 
-        <View style={styles.inviteCard}>
-          <AppText variant="title3" style={styles.inviteTitle}>{t('guide.inviteTitle')}</AppText>
-          <AppText variant="bodySm" tone="muted" style={styles.inviteBody}>{t('guide.inviteBody')}</AppText>
-        </View>
+        {!isFirstRun ? (
+          <View style={styles.inviteCard}>
+            <AppText variant="title3" style={styles.inviteTitle}>{t('guide.inviteTitle')}</AppText>
+            <AppText variant="bodySm" tone="muted" style={styles.inviteBody}>{t('guide.inviteBody')}</AppText>
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -136,8 +171,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   hero: {
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   eyebrow: {
     color: colours.primary,
@@ -161,7 +196,8 @@ const styles = StyleSheet.create({
   stepRow: {
     flexDirection: 'row',
     gap: spacing.md,
-    padding: layout.cardPadding,
+    paddingHorizontal: layout.cardPadding,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colours.border,
   },
@@ -202,6 +238,32 @@ const styles = StyleSheet.create({
   },
   inviteBody: {
     maxWidth: '96%',
+  },
+  trackingCard: {
+    marginBottom: spacing.md,
+    padding: layout.cardPadding,
+    borderRadius: radii.card,
+    backgroundColor: colours.surfaceAccent,
+    borderWidth: 1,
+    borderColor: colours.primarySoft,
+    flexDirection: 'row',
+    gap: spacing.md,
+    alignItems: 'flex-start',
+  },
+  trackingIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceRaised,
+  },
+  trackingCopy: {
+    flex: 1,
+  },
+  trackingTitle: {
+    color: colours.primary,
+    marginBottom: spacing.xxs,
   },
   footer: {
     paddingHorizontal: layout.screenPadding,

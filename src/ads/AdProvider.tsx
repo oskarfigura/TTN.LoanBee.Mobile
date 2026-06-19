@@ -3,7 +3,10 @@ import { AppState, Platform } from 'react-native';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import MobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { markConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
+import { whenOnboardingDismissed } from '@/shared/lib/services/onboarding/onboardingGate';
+import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
 import { InterstitialGate } from './InterstitialGate';
+import { ADS_ENABLED } from './adsConfig';
 
 interface Props {
   children: React.ReactNode;
@@ -29,6 +32,13 @@ const waitForActiveState = (): Promise<void> =>
 
 export const AdProvider = ({ children }: Props) => {
   useEffect(() => {
+    if (!ADS_ENABLED) {
+      // Release any first-run UI waiting for the consent flow. No ATT, UMP, or
+      // Mobile Ads SDK calls are made while advertising is disabled.
+      markConsentFlowComplete();
+      return;
+    }
+
     (async () => {
       try {
         // iOS only: the native App Tracking Transparency prompt must resolve before
@@ -38,6 +48,14 @@ export const AdProvider = ({ children }: Props) => {
         // prompt is presented rather than silently auto-denied during launch.
         if (Platform.OS === 'ios') {
           await waitForActiveState();
+          // On first launch hold the system ATT prompt until the onboarding guide
+          // (which carries the tracking rationale) has been dismissed, so the
+          // priming context is shown before the system dialog. Returning users —
+          // who have already seen onboarding — proceed straight to the prompt,
+          // which is itself a no-op once the ATT status is determined.
+          if (!hasSeenGuide()) {
+            await whenOnboardingDismissed();
+          }
           await requestTrackingPermissionsAsync();
         }
 
@@ -60,7 +78,7 @@ export const AdProvider = ({ children }: Props) => {
   return (
     <>
       {children}
-      <InterstitialGate />
+      {ADS_ENABLED ? <InterstitialGate /> : null}
     </>
   );
 };

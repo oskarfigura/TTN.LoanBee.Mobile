@@ -1,4 +1,8 @@
-import { withGradleProperties, withAndroidManifest } from '@expo/config-plugins';
+import {
+  withAndroidManifest,
+  withGradleProperties,
+  withInfoPlist,
+} from '@expo/config-plugins';
 
 const androidSizeGradleProperties = {
   'android.enableMinifyInReleaseBuilds': 'true',
@@ -48,16 +52,32 @@ const withoutSystemAlertWindow = config => withAndroidManifest(config, androidCo
   return androidConfig;
 });
 
+// Incremental prebuilds preserve existing Info.plist values. Explicitly remove
+// the tracking purpose string while iOS ads are disabled so a previously
+// generated native project cannot accidentally retain the ATT declaration.
+const withoutIosTrackingUsageDescription = config => withInfoPlist(config, iosConfig => {
+  delete iosConfig.modResults.NSUserTrackingUsageDescription;
+  return iosConfig;
+});
+
 // AdMob unit IDs flow in via env vars (see src/ads/adUnits.ts). When unset the app
 // falls back to Google's *test* unit IDs — fine for dev/preview, but shipping them to
 // production is an AdMob policy violation and earns zero revenue. Fail the production
 // build loudly rather than silently shipping test ads.
-const PRODUCTION_AD_ENV_KEYS = [
+// Keep iOS ads disabled until the App Store listing and production AdMob app are
+// ready. Set ADMOB_IOS_ENABLED=true for a future build to restore the full iOS
+// ATT, consent, banner, and interstitial flow.
+const IOS_ADS_ENABLED = process.env.ADMOB_IOS_ENABLED === 'true';
+
+const ANDROID_PRODUCTION_AD_ENV_KEYS = [
   'ADMOB_ANDROID_ID',
-  'ADMOB_IOS_ID',
   'ADMOB_BANNER_ANDROID_ID',
-  'ADMOB_BANNER_IOS_ID',
   'ADMOB_INTERSTITIAL_ANDROID_ID',
+];
+
+const IOS_PRODUCTION_AD_ENV_KEYS = [
+  'ADMOB_IOS_ID',
+  'ADMOB_BANNER_IOS_ID',
   'ADMOB_INTERSTITIAL_IOS_ID',
 ];
 
@@ -68,7 +88,11 @@ const assertProductionAdUnitsConfigured = () => {
   // this config locally (for fingerprinting) where those values are not yet resolved —
   // throwing there would abort the build before it ever reaches the Expo vars.
   if (!process.env.EAS_BUILD) return;
-  const missing = PRODUCTION_AD_ENV_KEYS.filter(key => !process.env[key]);
+  const requiredKeys =
+    process.env.EAS_BUILD_PLATFORM === 'ios'
+      ? (IOS_ADS_ENABLED ? IOS_PRODUCTION_AD_ENV_KEYS : [])
+      : ANDROID_PRODUCTION_AD_ENV_KEYS;
+  const missing = requiredKeys.filter(key => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(
       `Production build aborted: missing AdMob env vars [${missing.join(', ')}]. ` +
@@ -100,6 +124,7 @@ export default () => ({
       admobBannerIos: process.env.ADMOB_BANNER_IOS_ID ?? null,
       admobInterstitialAndroid: process.env.ADMOB_INTERSTITIAL_ANDROID_ID ?? null,
       admobInterstitialIos: process.env.ADMOB_INTERSTITIAL_IOS_ID ?? null,
+      admobIosEnabled: IOS_ADS_ENABLED,
     },
     ios: {
       supportsTablet: true,
@@ -149,17 +174,17 @@ export default () => ({
       ],
       '@react-native-community/datetimepicker',
       'expo-web-browser',
-      // Native iOS App Tracking Transparency prompt. AdProvider calls
-      // requestTrackingPermissionsAsync before initialising ads so AdMob/UMP can read
-      // the IDFA when allowed. The config writes NSUserTrackingUsageDescription, so the
-      // ATT flow is self-contained regardless of the AdMob plugin's own description.
-      [
-        'expo-tracking-transparency',
-        {
-          userTrackingPermission:
-            'This identifier will be used to deliver personalised ads to you.',
-        },
-      ],
+      // Add the ATT capability only when iOS advertising is deliberately enabled.
+      // With iOS ads disabled the app neither declares nor presents the tracking prompt.
+      ...(IOS_ADS_ENABLED
+        ? [[
+            'expo-tracking-transparency',
+            {
+              userTrackingPermission:
+                'LoanBee uses this device identifier to show personalised ads and measure advertising performance. Saved loan and mortgage information is not used for ad personalisation.',
+            },
+          ]]
+        : []),
       [
         'react-native-google-mobile-ads',
         {
@@ -169,13 +194,16 @@ export default () => ({
           iosAppId:
             process.env.ADMOB_IOS_ID ??
             'ca-app-pub-3940256099942544~1458002511',
-          // Writes NSUserTrackingUsageDescription into the iOS Info.plist. Required for
-          // App Store review because the app presents the UMP consent form and serves
-          // AdMob; the plugin also injects Google's SKAdNetwork identifier automatically.
-          userTrackingUsageDescription:
-            'This identifier will be used to deliver personalised ads to you.',
+          // Only write NSUserTrackingUsageDescription when iOS ads are enabled.
+          ...(IOS_ADS_ENABLED
+            ? {
+                userTrackingUsageDescription:
+                  'LoanBee uses this device identifier to show personalised ads and measure advertising performance. Saved loan and mortgage information is not used for ad personalisation.',
+              }
+            : {}),
         },
       ],
+      ...(!IOS_ADS_ENABLED ? [withoutIosTrackingUsageDescription] : []),
     ],
     experiments: {
       typedRoutes: true,
