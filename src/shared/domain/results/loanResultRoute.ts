@@ -85,7 +85,7 @@ export const buildSavedLoanResultParams = (loan: SavedLoan) => ({
 });
 
 // Opens a fresh calculation result: persists it twice — an ephemeral draft session
-// (for the unsaved-result flow) and a durable Recent Calculations entry — then returns
+// for resilient route transport and a durable Recent Calculations entry — then returns
 // the route params that point at them. Unlike the sibling `build*Params` helpers this
 // is not pure; the name signals the writes. Every calculator submit or shared-link open
 // records one Recent entry (capped at MAX_RECENT_CALCULATIONS).
@@ -100,6 +100,7 @@ export const beginDraftResult = (
     result,
     formValues,
     currency,
+    category: formValues.category,
   }).id,
   currency,
 });
@@ -115,7 +116,12 @@ export const buildRecentResultParams = (recentId: string) => ({
 export const buildEditCalculatorParams = (
   formValues: LoanCalculatorFormValues,
   currency: CurrencyCode,
+  returnResultParams?: Record<string, string | undefined>,
 ) => ({
   editValues: JSON.stringify(formValues),
   currency,
+  fromResult: '1',
+  returnResultParams: returnResultParams
+    ? JSON.stringify(returnResultParams)
+    : undefined,
 });

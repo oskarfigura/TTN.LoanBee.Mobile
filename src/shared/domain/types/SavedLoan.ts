@@ -24,6 +24,14 @@ export type LoanPurpose =
   | 'education'
   | 'bike'
   | 'motorbike'
+  | 'adventure'
+  | 'wellness'
+  | 'creditCard'
+  | 'farming'
+  | 'gardening'
+  | 'landscaping'
+  | 'home'
+  | 'fashion'
   | 'other';
 export type LoanGroupStatus = 'draft' | 'tracked';
 export type LoanDealStatus = 'draft' | 'active' | 'completed';

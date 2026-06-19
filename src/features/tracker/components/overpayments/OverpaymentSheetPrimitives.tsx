@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleProp,
   StyleSheet,
+  TouchableOpacity,
   View,
   ViewStyle,
   useWindowDimensions,
@@ -13,6 +14,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@oskarfigura/ui-native';
 import { FieldLabel } from '@oskarfigura/ui-native';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 
 export type ImpactRow = { label: string; value: string };
@@ -32,6 +34,7 @@ interface OverpaymentSheetModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxHeightRatio?: number;
+  closeLabel?: string;
 }
 
 export const OverpaymentSheetModal = ({
@@ -41,6 +44,7 @@ export const OverpaymentSheetModal = ({
   children,
   footer,
   maxHeightRatio,
+  closeLabel,
 }: OverpaymentSheetModalProps) => {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -57,9 +61,22 @@ export const OverpaymentSheetModal = ({
             ]}
           >
             <View style={styles.handle} />
-            <AppText variant="title2" style={styles.heading}>
-              {title}
-            </AppText>
+            <View style={styles.header}>
+              <AppText variant="title2" style={styles.heading}>
+                {title}
+              </AppText>
+              {closeLabel ? (
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={closeLabel}
+                >
+                  <Icon icon={IconName.XCloseIcon} size={19} color={colours.primary} strokeWidth={2} />
+                </TouchableOpacity>
+              ) : null}
+            </View>
             <ScrollView
               style={styles.scroll}
               contentContainerStyle={styles.content}
@@ -156,7 +173,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   heading: {
+    flex: 1,
+  },
+  header: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.lg,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radii.full,
+    backgroundColor: colours.surfaceMuted,
   },
   content: {
     gap: spacing.sm,

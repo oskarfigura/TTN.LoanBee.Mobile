@@ -5,7 +5,7 @@ This document is the source of truth for how a saved mortgage behaves end-to-end
 ## Product principles
 
 - **Keep it lean.** Resist feature drift toward LTV/ERC/property/tracker-product complexity. The product is a tracker for a single mortgage account, not a full financial dashboard.
-- **Auto-populate from the calculator or Track form.** The user types figures once; the saved mortgage is fully populated and tracked from the first save with no re-entry.
+- **Separate calculation history from tracking.** Results are kept automatically in Recent Calculations. Tracking is an explicit action, then the calculated/current figures are reused without re-entry.
 - **Show the value of overpaying.** "Interest saved" and "extra principal repaid" are surfaced per-deal so the user can see what their overpayments are doing.
 - **Drafts are planning aids only.** A draft is excluded from every live figure (balance, charts, totals, payoff date, savings) until it is activated.
 - **Trust the bank.** Lender-confirmed closing balances and balance checkpoints override projections. The projection fills the gaps.
@@ -31,10 +31,11 @@ This document is the source of truth for how a saved mortgage behaves end-to-end
 
 ## Journeys
 
-### J1. Save a mortgage from the calculator
+### J1. Track a calculated mortgage
 
-- **Entry:** Calculator → Calculate → Result screen → **Save**
-- **Form:** nickname (required), category (mortgage / loan), lender (free text), currency. Loan/Mortgage is chosen here, not before the calculator.
+- **Entry:** Calculator → Calculate → Result screen → **Track**
+- **Before this:** the result already exists in Recent Calculations and has not created a `LoanGroup`.
+- **Form:** category (mortgage / loan), plus optional nickname, lender, and currency override.
 - **What happens behind the scenes:**
   - A `LoanGroup` is created.
   - **One initial deal is auto-built** from the form snapshot (rate, opening balance, monthly payment, regular overpayment, term — all pre-filled). Status `active`.
@@ -42,20 +43,18 @@ This document is the source of truth for how a saved mortgage behaves end-to-end
 - **Exit:** lands on the mortgage detail screen with one active deal and the home dashboard updated.
 - **Edge case — legacy data:** mortgages saved before the deal model existed are migrated on load: a single migrated `active` deal is built from `formSnapshot` so the user lands in the same state as a fresh save.
 
-### J2. Track a mortgage from the unified Track form
+### J2. Track a mortgage from current lender facts
 
 - **Entry:** Home → **Track one I have** → choose **Mortgage** inside `/saved/track`.
-- **Form:** nickname, lender, currency, Loan/Mortgage toggle, deal start date, balance, interest rate, repayment type, term, optional deal end, optional overpayments.
-- **Date semantics:**
-  - Deal start date defaults to today and has no minimum date.
-  - Today means current balance + remaining term.
-  - A future date means starting balance + term length for an upcoming deal.
-  - A past date means starting balance + original term for an older/original deal.
+- **Required form:** current balance, interest rate, repayment type, and either:
+  - the actual scheduled monthly payment shown by the lender, or
+  - the remaining term.
+- **Optional disclosures:** nickname, lender, currency override, known deal-end date, regular overpayment, and one-off overpayments.
 - **What happens behind the scenes:**
-  - A `LoanGroup` is created with one `active` deal anchored at the chosen deal start date.
-  - Past-dated mortgages intentionally start as a single historic active deal. The user then uses the existing **Complete current deal** → **Add next deal** lifecycle to chain forward through later deals.
+  - A `LoanGroup` is created with one `active` deal anchored today.
+  - When the user supplies the lender's real payment, that value is preserved on the deal rather than replaced with a model-derived payment.
   - The mortgage is auto-pinned to the home dashboard with `dashboardOrder = max(existing) + 1`.
-- **Exit:** lands on the mortgage detail screen. There is no separate mortgage-history setup route.
+- **Exit:** lands on the mortgage detail screen.
 
 ### J3. Update opening balance for an already-running mortgage
 
@@ -172,7 +171,7 @@ To keep the product lean, the following are intentionally **not** modelled:
 - Tax reports, annual statements, HMRC-aligned exports
 - Insurance reminders, document attachments
 - Multiple drafts, scenario comparison
-- Separate mortgage-history setup screens. Historical setup is handled by choosing an earlier deal start date in `/saved/track`, then chaining forward with Complete current deal → Add next deal.
+- Historical origination setup in the conversion-critical first form. The default tracking journey starts from the trustworthy current state; deal lifecycle tools remain available after creation.
 
 If a user asks for these, the answer is "by design — the calculator + saved tracker pair stays simple."
 
@@ -224,7 +223,7 @@ The projection uses **monthly interest**, the standard model for amortization ca
 These are the invariants tests must keep guarding:
 
 - Saving a calculation produces a mortgage with one auto-built `active` deal and `pinnedToDashboard: true`.
-- Tracking a mortgage from `/saved/track` produces one `active` deal anchored at the selected deal start date; past dates are allowed.
+- Tracking a mortgage from `/saved/track` produces one today-anchored `active` deal and preserves a supplied lender-confirmed monthly payment.
 - A draft never contributes to balance, principal paid, interest paid, savings, payoff date, charts, or the amortisation table.
 - A draft's events do not appear in `recentEvents` on the detail screen.
 - `getDealOverpaymentImpact` returns 0 for a deal with no overpayments.

@@ -7,6 +7,7 @@ import { whenOnboardingDismissed } from '@/shared/lib/services/onboarding/onboar
 import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
 import { InterstitialGate } from './InterstitialGate';
 import { ADS_ENABLED } from './adsConfig';
+import { setAdConsentResolved } from './consentState';
 
 interface Props {
   children: React.ReactNode;
@@ -40,12 +41,17 @@ export const AdProvider = ({ children }: Props) => {
     }
 
     (async () => {
+      // Default to the privacy-safe outcome. Every gate below has to actively
+      // grant personalisation; any early throw leaves us serving non-personalised
+      // ads, which is always allowed.
+      let personalizedAdsAllowed = false;
       try {
         // iOS only: the native App Tracking Transparency prompt must resolve before
         // ads initialise so AdMob/UMP can read the IDFA when the user allows it.
         // Apple rejects builds that serve personalised ads without it. No-op on
         // Android, where there is no IDFA/ATT. Gate on the active state so the
         // prompt is presented rather than silently auto-denied during launch.
+        let attAllowsPersonalization = Platform.OS !== 'ios';
         if (Platform.OS === 'ios') {
           await waitForActiveState();
           // On first launch hold the system ATT prompt until the onboarding guide
@@ -56,7 +62,8 @@ export const AdProvider = ({ children }: Props) => {
           if (!hasSeenGuide()) {
             await whenOnboardingDismissed();
           }
-          await requestTrackingPermissionsAsync();
+          const { granted } = await requestTrackingPermissionsAsync();
+          attAllowsPersonalization = granted;
         }
 
         const consentInfo = await AdsConsent.requestInfoUpdate();
@@ -66,10 +73,23 @@ export const AdProvider = ({ children }: Props) => {
         ) {
           await AdsConsent.showForm();
         }
+
+        // Where GDPR applies, personalisation also requires the user's TCF consent
+        // for "select personalised ads". Outside the EEA this gate is open.
+        let gdprAllowsPersonalization = true;
+        if (await AdsConsent.getGdprApplies()) {
+          const choices = await AdsConsent.getUserChoices();
+          gdprAllowsPersonalization = choices.selectPersonalisedAds;
+        }
+
+        // Serve personalised ads only when every applicable gate permits it.
+        personalizedAdsAllowed = attAllowsPersonalization && gdprAllowsPersonalization;
+
         await MobileAds().initialize();
       } catch {
-        // silently fail so ads don't block the app
+        // silently fail so ads don't block the app; keep the non-personalised default
       } finally {
+        setAdConsentResolved(personalizedAdsAllowed);
         markConsentFlowComplete();
       }
     })();

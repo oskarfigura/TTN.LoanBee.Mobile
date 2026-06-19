@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Modal,
   View,
   StyleSheet,
 } from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { LoanCalculationView } from '@/features/calculator/components/LoanCalculationView';
 import { AppText } from '@oskarfigura/ui-native';
@@ -28,13 +29,14 @@ import { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorFo
 import { getDraftResultSession } from '@/shared/domain/results/draftResultStore';
 import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
-import { setResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
 import { useStoreReview } from '@/shared/lib/services/review';
 import { shareCalculation } from '@/features/sharing/shareCalculation';
-import { UnsavedResultModal } from '@/features/calculator/components/UnsavedResultModal';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LoanSummaryPanel } from '@/features/calculator/components/LoanSummaryPanel';
+import { ScenarioComparison } from '@/features/calculator/components/ScenarioComparison';
 import { buildDraftLoanPreview, RawFormValues } from '@/shared/domain/loans/loanGroupFactory';
+import { createLoanOverpaymentScope } from '@/shared/domain/loans/overpaymentScope';
+import { OverpaymentsView } from '@/features/tracker/components/overpayments/OverpaymentsView';
 
 type ResultParams = {
   draftId?: string;
@@ -59,10 +61,7 @@ const parseJson = <T,>(value?: string): T | null => {
 export default function ResultScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const navigation = useNavigation();
   const params = useLocalSearchParams<ResultParams>();
-  const allowLeaveRef = useRef(false);
-  const pendingLeaveRef = useRef<(() => void) | null>(null);
   const recordedReviewActionRef = useRef(false);
   const { recordUsefulAction, requestReview } = useStoreReview();
 
@@ -75,8 +74,6 @@ export default function ResultScreen() {
     params.recentId ? recentCalculationsStorage.getById(params.recentId) ?? null : null
   ), [params.recentId]);
   const isSavedMode = params.mode === 'saved' && savedLoan !== null;
-  const isRecentMode = params.mode === 'recent' && recentCalculation !== null;
-  const shouldGuardUnsavedResult = !isSavedMode && !isRecentMode;
   const draftSession = useMemo(() => getDraftResultSession(params.draftId), [params.draftId]);
 
   const result = useMemo(() => {
@@ -118,8 +115,23 @@ export default function ResultScreen() {
       : null),
     [currency, formValues, isSavedMode, result],
   );
-  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showOverpayments, setShowOverpayments] = useState(false);
+  const [draftOverpaymentLoan, setDraftOverpaymentLoan] = useState<SavedLoan | null>(null);
+  const activeDraftLoan = draftOverpaymentLoan ?? draftLoan;
+  const draftOverpaymentScope = useMemo(
+    () => (activeDraftLoan ? createLoanOverpaymentScope(activeDraftLoan) : null),
+    [activeDraftLoan],
+  );
+  const createPreviewOverpaymentScope = useCallback(
+    (loan: SavedLoan) => createLoanOverpaymentScope(loan),
+    [],
+  );
   const shareIcon = useMemo(() => <Icon icon={IconName.ShareIcon} color={colours.primary} />, []);
+
+  useEffect(() => {
+    setDraftOverpaymentLoan(null);
+  }, [params.draftId, params.formValues, params.recentId, params.result]);
 
   useEffect(() => {
     if (isSavedMode || !result || recordedReviewActionRef.current) return;
@@ -130,19 +142,7 @@ export default function ResultScreen() {
       .catch(() => undefined);
   }, [isSavedMode, recordUsefulAction, requestReview, result]);
 
-  const continueWithoutGuard = useCallback((continueNavigation: () => void) => {
-    // Bypass both leave guards (the tab-press guard and the beforeRemove listener)
-    // for this single navigation. allowLeaveRef is re-armed deterministically when
-    // the result screen regains focus (see the useFocusEffect below) rather than on
-    // a racy setTimeout(0) — that timer could reset the flag before an async
-    // beforeRemove re-fired, which re-triggered the guard and produced a duplicate
-    // "unsaved changes" prompt (or a stuck modal).
-    allowLeaveRef.current = true;
-    setResultLeaveGuard(null);
-    continueNavigation();
-  }, []);
-
-  const openSave = useCallback(() => {
+  const openTrack = useCallback(() => {
     if (!result || !formValues) return;
 
     router.push({
@@ -153,7 +153,6 @@ export default function ResultScreen() {
         draftId: params.draftId,
         recentId: params.recentId,
         currency,
-        returnToResult: '1',
       },
     });
   }, [currency, formValues, params.draftId, params.formValues, params.recentId, params.result, result, router]);
@@ -176,65 +175,33 @@ export default function ResultScreen() {
 
   const handleEdit = useCallback(() => {
     if (!formValues) return;
-    // Editing means reopening the calculator with these inputs pre-filled. Bypass the
-    // unsaved-result guard (the user is deliberately leaving the result), and replace
-    // the result in the stack so editing supersedes it. Works whether this result came
-    // from the calculator (draft) or the Recent list — both carry the form values.
-    continueWithoutGuard(() => router.replace({
+    // The result screen rehydrates from a draft session, a recent entry, or a saved
+    // loan when any of those ids are present. Only carry the heavy raw result/formValues
+    // (the full amortisation table) as a last resort when there is nothing else to
+    // rebuild from — otherwise it would be serialised twice into navigation state.
+    const canRehydrate = Boolean(
+      params.draftId || params.recentId || params.savedLoanId || params.savedLoan,
+    );
+    router.push({
       pathname: '/calculate' as never,
-      params: buildEditCalculatorParams(formValues as unknown as LoanCalculatorFormValues, currency),
-    }));
-  }, [continueWithoutGuard, currency, formValues, router]);
-
-  const confirmLeave = useCallback((continueNavigation: () => void) => {
-    pendingLeaveRef.current = continueNavigation;
-    setShowUnsavedModal(true);
-  }, []);
-
-  const keepEditing = useCallback(() => {
-    pendingLeaveRef.current = null;
-    setShowUnsavedModal(false);
-  }, []);
-
-  const saveBeforeLeaving = useCallback(() => {
-    pendingLeaveRef.current = null;
-    setShowUnsavedModal(false);
-    openSave();
-  }, [openSave]);
-
-  const discardAndLeave = useCallback(() => {
-    const pending = pendingLeaveRef.current;
-    pendingLeaveRef.current = null;
-    setShowUnsavedModal(false);
-    if (pending) {
-      continueWithoutGuard(pending);
-    }
-  }, [continueWithoutGuard]);
-
-  useFocusEffect(
-    useCallback(() => {
-      // The result tab stays mounted, so re-arm the guard each time it regains focus
-      // (a deterministic reset, replacing the old setTimeout race). This restores
-      // guarding after the user leaves via "discard" and later navigates back.
-      allowLeaveRef.current = false;
-      if (!shouldGuardUnsavedResult) return undefined;
-      setResultLeaveGuard(confirmLeave);
-      return () => setResultLeaveGuard(null);
-    }, [confirmLeave, shouldGuardUnsavedResult]),
-  );
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', event => {
-      if (!shouldGuardUnsavedResult || allowLeaveRef.current) return;
-
-      event.preventDefault();
-      confirmLeave(() => {
-        continueWithoutGuard(() => navigation.dispatch(event.data.action));
-      });
+      params: buildEditCalculatorParams(
+        formValues as unknown as LoanCalculatorFormValues,
+        currency,
+        {
+          draftId: params.draftId,
+          currency,
+          mode: params.mode,
+          recentId: params.recentId,
+          savedLoan: params.savedLoan,
+          savedLoanId: params.savedLoanId,
+          ...(canRehydrate ? {} : {
+            result: params.result,
+            formValues: params.formValues,
+          }),
+        },
+      ),
     });
-
-    return unsubscribe;
-  }, [confirmLeave, continueWithoutGuard, navigation, shouldGuardUnsavedResult]);
+  }, [currency, formValues, params, router]);
 
   if (!result || !formValues) {
     return (
@@ -264,10 +231,10 @@ export default function ResultScreen() {
           </HeaderIconButton>
         ) : (
           <HeaderIconButton
-            onPress={openSave}
-            accessibilityLabel={t('common.save')}
+            onPress={handleEdit}
+            accessibilityLabel={t('saved.edit')}
           >
-            <Icon icon={IconName.SaveIcon} color={colours.primary} size={20} />
+            <Icon icon={IconName.EditIcon} color={colours.primary} size={18} strokeWidth={1.8} />
           </HeaderIconButton>
         )}
         showBottomBorder={false}
@@ -286,25 +253,49 @@ export default function ResultScreen() {
         tabStyle="underline"
         showFinancialDisclaimer
         ownsScroll
-        summaryContent={!isSavedMode && draftLoan ? (
+        summaryContent={!isSavedMode && activeDraftLoan ? (
           <LoanSummaryPanel
-            loan={draftLoan}
+            loan={activeDraftLoan}
             result={result}
             mode="draft"
-            onSave={openSave}
+            onCompare={() => setShowComparison(true)}
+            onTryOverpayments={() => setShowOverpayments(true)}
+            onTrack={openTrack}
             onShare={handleShare}
-            onEdit={handleEdit}
+            overpaymentImpact={draftOverpaymentScope?.bannerImpact ?? undefined}
           />
         ) : undefined}
       />
 
+      {!isSavedMode ? (
+        <ScenarioComparison
+          visible={showComparison}
+          baseline={result}
+          formValues={formValues as unknown as LoanCalculatorFormValues}
+          currency={currency}
+          onClose={() => setShowComparison(false)}
+        />
+      ) : null}
+
+      {!isSavedMode && activeDraftLoan ? (
+        <Modal
+          visible={showOverpayments}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowOverpayments(false)}
+        >
+          <OverpaymentsView
+            id={activeDraftLoan.id}
+            notFoundTitleKey="overpayments.title"
+            createScope={createPreviewOverpaymentScope}
+            controlledLoan={activeDraftLoan}
+            onLoanChange={setDraftOverpaymentLoan}
+            onClose={() => setShowOverpayments(false)}
+          />
+        </Modal>
+      ) : null}
+
       <BannerAd />
-      <UnsavedResultModal
-        visible={showUnsavedModal}
-        onKeepEditing={keepEditing}
-        onSave={saveBeforeLeaving}
-        onDiscard={discardAndLeave}
-      />
     </SafeAreaView>
   );
 }

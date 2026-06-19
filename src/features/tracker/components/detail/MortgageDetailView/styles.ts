@@ -235,11 +235,22 @@ export const styles = StyleSheet.create({
   summaryTimelineCopy: {
     minWidth: 0,
   },
+  summaryTimelineLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
   summaryTimelineLabel: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
     textTransform: 'uppercase',
+  },
+  summaryTimelineDates: {
+    ...fontFaces.body.medium,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   summaryTimelineTitle: {
     ...fontFaces.heading.bold,
@@ -278,12 +289,6 @@ export const styles = StyleSheet.create({
     color: colours.textSecondary,
     textTransform: 'uppercase',
   },
-  quickActionsHelper: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    lineHeight: 17,
-    color: colours.textSecondary,
-  },
   quickActionButton: {
     flex: 1,
     minWidth: 0,
@@ -311,38 +316,6 @@ export const styles = StyleSheet.create({
     color: colours.textPrimary,
     textAlign: 'center',
   },
-  projectionBasisCard: {
-    marginBottom: spacing.sm,
-  },
-  contextHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  contextHeaderCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  contextKicker: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    textTransform: 'uppercase',
-  },
-  contextTitle: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.md,
-    color: colours.textPrimary,
-    marginTop: spacing.xxs,
-  },
-  projectionAssumptionText: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
-    color: colours.textSecondary,
-  },
   futurePreviewNode: {
     borderColor: colours.border,
   },
@@ -352,6 +325,40 @@ export const styles = StyleSheet.create({
   },
   startPreviewNode: {
     borderColor: colours.border,
+  },
+  timelineAlertBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colours.warningSurface,
+    borderRadius: radii.input,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  timelineAlertIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.white,
+  },
+  timelineAlertCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  timelineAlertTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.warning,
+  },
+  timelineAlertBody: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   viewTimelineLink: {
     minHeight: 44,

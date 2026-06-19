@@ -116,6 +116,36 @@ export const formatFriendlyMonthYear = (dateString: string | undefined, locale?:
   });
 };
 
+export const formatShortMonthYear = (dateString: string | undefined, locale?: string) => {
+  if (!dateString) return '';
+
+  const date = parseDateLabelValue(dateString);
+  if (!date) return dateString;
+
+  if (!locale || locale.startsWith('en')) {
+    return `${ENGLISH_SHORT_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  return date.toLocaleDateString(getDateLocale(locale), {
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+export const formatShortMonthYearRange = (
+  startDate: string | undefined,
+  endDate: string | undefined,
+  locale?: string,
+) => {
+  const start = formatShortMonthYear(startDate, locale);
+  const end = formatShortMonthYear(endDate, locale);
+
+  if (!start) return end;
+  if (!end) return start;
+
+  return `${start} - ${end}`;
+};
+
 export const formatFriendlyDateRange = (
   startDate: string | undefined,
   endDate: string | undefined,

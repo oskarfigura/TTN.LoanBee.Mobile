@@ -65,33 +65,9 @@ const JourneyOption = ({ title, body, meta, icon, onPress, primary }: JourneyOpt
   </TouchableOpacity>
 );
 
-// The branching journey is at most three steps deep (intent → choose → form).
-// A constant total keeps the indicator consistent across the steps that show it.
-const JOURNEY_TOTAL_STEPS = 3;
-
-const JourneyProgress = ({ step, total }: { step: number; total: number }) => (
-  <View
-    style={styles.progressRow}
-    accessibilityRole="progressbar"
-    accessibilityValue={{ min: 1, max: total, now: step }}
-  >
-    {Array.from({ length: total }).map((_, index) => (
-      <View
-        key={index}
-        style={[
-          styles.progressDot,
-          index === step - 1 && styles.progressDotActive,
-          index < step - 1 && styles.progressDotDone,
-        ]}
-      />
-    ))}
-  </View>
-);
-
 interface JourneyStepScreenProps {
   headerTitle: string;
   backAction?: React.ReactNode;
-  step: number;
   title: string;
   help: string;
   children: React.ReactNode;
@@ -100,12 +76,11 @@ interface JourneyStepScreenProps {
 
 // Shared chrome for each journey step (header, intro, option list) so the
 // intent and track-choice steps stay in sync.
-const JourneyStepScreen = ({ headerTitle, backAction, step, title, help, children, footerHint }: JourneyStepScreenProps) => (
+const JourneyStepScreen = ({ headerTitle, backAction, title, help, children, footerHint }: JourneyStepScreenProps) => (
   <SafeAreaView style={styles.safe} edges={[]}>
     <ScreenHeader title={headerTitle} variant="top-level" leftAction={backAction} />
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.journeyIntro}>
-        <JourneyProgress step={step} total={JOURNEY_TOTAL_STEPS} />
         <AppText variant="title1" style={styles.journeyTitle}>
           {title}
         </AppText>
@@ -140,12 +115,24 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     calculator?: string;
     dashboard?: string;
     editValues?: string;
+    fromTracked?: string;
+    fromResult?: string;
+    returnResultParams?: string;
+    returnTo?: string;
   }>();
   const isCalculateTab = mode === 'calculate';
-  const form = useLoanCalculatorForm();
+  const initialEditValues = useMemo(() => {
+    if (!params.editValues) return undefined;
+    try {
+      return JSON.parse(params.editValues) as Partial<LoanCalculatorFormValues>;
+    } catch {
+      return undefined;
+    }
+  }, [params.editValues]);
+  const form = useLoanCalculatorForm({ initialValues: initialEditValues });
   const consumedEditRef = useRef<string | null>(null);
   const { loans, refresh } = useSavedLoans();
-  const [journeyStep, setJourneyStep] = useState<JourneyStep>('intent');
+  const [journeyStep, setJourneyStep] = useState<JourneyStep>(isCalculateTab ? 'form' : 'intent');
   const [showCalculator, setShowCalculator] = useState(isCalculateTab);
   const firstRunChecked = useRef(false);
 
@@ -174,7 +161,12 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   }, [router]);
 
   useEffect(() => {
-    if (isCalculateTab || params.calculator) {
+    if (isCalculateTab) {
+      setShowCalculator(true);
+      setJourneyStep('form');
+      return;
+    }
+    if (params.calculator) {
       setShowCalculator(true);
       setJourneyStep('intent');
     }
@@ -228,7 +220,13 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   );
 
   const openCalculator = useCallback(() => {
-    router.push('/calculate' as never);
+    router.push({
+      pathname: '/calculate' as never,
+      params: {
+        fromTracked: '1',
+        returnTo: '/',
+      },
+    });
   }, [router]);
 
   const returnToDashboard = useCallback(() => {
@@ -241,13 +239,42 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   }, [isCalculateTab]);
 
   const handleJourneyBack = useCallback(() => {
+    if (isCalculateTab && params.fromResult === '1') {
+      try {
+        const returnParams = params.returnResultParams
+          ? JSON.parse(params.returnResultParams) as Record<string, string>
+          : {};
+        router.replace({
+          pathname: '/result' as never,
+          params: returnParams,
+        });
+      } catch {
+        router.replace('/result' as never);
+      }
+      return;
+    }
+
+    if (isCalculateTab && params.fromTracked === '1' && params.returnTo) {
+      router.replace(params.returnTo as never);
+      return;
+    }
+
     if (journeyStep === 'intent') {
       returnToDashboard();
       return;
     }
 
     setJourneyStep('intent');
-  }, [journeyStep, returnToDashboard]);
+  }, [
+    isCalculateTab,
+    journeyStep,
+    params.fromResult,
+    params.fromTracked,
+    params.returnResultParams,
+    params.returnTo,
+    returnToDashboard,
+    router,
+  ]);
 
   const openPlanForm = useCallback(() => {
     setJourneyStep('form');
@@ -285,7 +312,14 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     });
   };
 
-  const canGoBackInJourney = journeyStep !== 'intent' || (!isCalculateTab && pinnedLoans.length > 0);
+  const canReturnToTracked = isCalculateTab
+    && params.fromTracked === '1'
+    && Boolean(params.returnTo);
+  const canReturnToResult = isCalculateTab && params.fromResult === '1';
+  const isEditingCalculation = canReturnToResult;
+  const canGoBackInJourney = canReturnToResult || canReturnToTracked || (
+    !isCalculateTab && (journeyStep !== 'intent' || pinnedLoans.length > 0)
+  );
   const journeyBackAction = canGoBackInJourney ? (
     <HeaderBackAction onPress={handleJourneyBack} />
   ) : undefined;
@@ -303,7 +337,6 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       <JourneyStepScreen
         headerTitle={t('journey.title')}
         backAction={journeyBackAction}
-        step={1}
         title={t('journey.intentTitle')}
         help={t('journey.intentHelp')}
         footerHint={t('journey.intentHint')}
@@ -320,7 +353,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
           meta={t('journey.trackTag')}
           title={t('journey.trackTitle')}
           body={t('journey.trackIntentHelp')}
-          icon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
+          icon={<Icon icon={IconName.SaveIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={openTrackBorrowing}
         />
       </JourneyStepScreen>
@@ -332,7 +365,6 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       <JourneyStepScreen
         headerTitle={t('journey.title')}
         backAction={journeyBackAction}
-        step={2}
         title={t('journey.trackChoiceTitle')}
         help={t('journey.trackChoiceHelp')}
       >
@@ -356,17 +388,18 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
-        title={t('tabs.calculator')}
+        title={t(isEditingCalculation ? 'calculator.editTitle' : 'tabs.calculator')}
         variant="top-level"
         leftAction={journeyBackAction}
       />
       <LoanForm
         form={form}
         onSubmit={handleSubmit}
+        submitLabel={isEditingCalculation ? t('calculator.updateResult') : undefined}
         topContent={(
           <View style={styles.pageIntro}>
             <AppText variant="bodyLg" tone="muted" style={styles.pageSubtitle}>
-              {t('calculator.subtitle')}
+              {t(isEditingCalculation ? 'calculator.editSubtitle' : 'calculator.subtitle')}
             </AppText>
           </View>
         )}
@@ -443,24 +476,6 @@ const styles = StyleSheet.create({
   },
   optionIconPrimary: {
     backgroundColor: colours.primary,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xxs,
-  },
-  progressDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colours.border,
-  },
-  progressDotActive: {
-    width: 22,
-    backgroundColor: colours.primary,
-  },
-  progressDotDone: {
-    backgroundColor: colours.primarySoft,
   },
   footerHintWrap: {
     paddingHorizontal: layout.screenPadding,

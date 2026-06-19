@@ -74,6 +74,7 @@ const sortByDate = (events: MortgageEvent[]): MortgageEvent[] =>
 export const createLoanOverpaymentScope = (loan: SavedLoan): OverpaymentScope => {
   const form = loan.formSnapshot;
   const currency = loan.currency;
+  const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
   const monthlyAmount = form.additionalMonthlyPayment ?? 0;
 
   const calcType = form.calculationType.toLowerCase() as LoanCalculationType;
@@ -128,6 +129,7 @@ export const createLoanOverpaymentScope = (loan: SavedLoan): OverpaymentScope =>
       monthlyEditKey: 'overpayments.monthlyEdit',
       lumpSectionKey: 'overpayments.lumpSumSection',
       lumpEmptyKey: 'overpayments.lumpSumEmpty',
+      monthlyCurrencySymbol: currencySymbol,
     },
     currency,
     monthlyAmount,

@@ -99,6 +99,7 @@ export const LumpSumSheet = ({
       visible={visible}
       title={isEditing ? t('overpayments.lumpSumSection') : t('overpayments.lumpSumAdd')}
       onClose={onClose}
+      closeLabel={t('common.close')}
       maxHeightRatio={0.92}
       footer={(
         <OverpaymentSheetActions

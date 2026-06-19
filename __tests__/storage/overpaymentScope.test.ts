@@ -145,6 +145,7 @@ describe('createLoanOverpaymentScope', () => {
     expect(scope.lumpEvents.map(e => e.id)).toEqual(['lump-loan']);
     expect(scope.currency).toBe('GBP');
     expect(scope.labels.titleKey).toBe('overpayments.title');
+    expect(scope.labels.monthlyCurrencySymbol).toBe('£');
   });
 
   it('excludes deal-scoped lumps from a loan scope', () => {

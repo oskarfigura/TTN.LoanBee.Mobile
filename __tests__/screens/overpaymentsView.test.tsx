@@ -186,7 +186,9 @@ const textContent = (node: ReactTestInstance | string | number | null | undefine
   return node.children.map(child => textContent(child as ReactTestInstance | string | number)).join('');
 };
 
-const renderOverpayments = async (): Promise<ReactTestRenderer> => {
+const renderOverpayments = async (
+  props: Record<string, unknown> = {},
+): Promise<ReactTestRenderer> => {
   const { OverpaymentsView } = await import('@/features/tracker/components/overpayments/OverpaymentsView');
   let renderer: ReactTestRenderer | undefined;
 
@@ -195,6 +197,7 @@ const renderOverpayments = async (): Promise<ReactTestRenderer> => {
       id: 'loan-1',
       notFoundTitleKey: 'saved.notFound',
       createScope: () => mockScope,
+      ...props,
     }));
   });
 
@@ -221,6 +224,34 @@ afterEach(() => {
 });
 
 describe('OverpaymentsView', () => {
+  it('uses controlled loan updates without writing to saved storage', async () => {
+    const onLoanChange = jest.fn();
+    const onClose = jest.fn();
+    const renderer = await renderOverpayments({
+      controlledLoan: mockLoan,
+      onLoanChange,
+      onClose,
+    });
+
+    await act(async () => {
+      getButton(renderer, 'overpayments.monthlyNotSet').props.onPress();
+    });
+    const monthlySheet = renderer.root.find(node => String(node.type) === 'MonthlyOverpaymentSheet');
+
+    await act(async () => {
+      monthlySheet.props.onSave(250);
+    });
+
+    expect(onLoanChange).toHaveBeenCalledWith({ id: 'monthly-saved' });
+    expect(mockStorageUpdate).not.toHaveBeenCalled();
+
+    const header = renderer.root.find(node => String(node.type) === 'ScreenHeader');
+    await act(async () => {
+      header.props.leftAction.props.onPress();
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('opens the monthly sheet and wires save/remove through the scope adapter', async () => {
     const renderer = await renderOverpayments();
 

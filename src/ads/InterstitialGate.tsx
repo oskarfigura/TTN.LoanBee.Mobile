@@ -1,138 +1,120 @@
 import { useGlobalSearchParams, useSegments } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AdEventType, InterstitialAd } from 'react-native-google-mobile-ads';
-import { whenConsentFlowComplete } from '@/shared/lib/services/onboarding/firstRunGate';
-import { AD_UNITS } from './adUnits';
+import { useEffect, useMemo, useRef } from 'react';
 import {
-  isInterstitialEligible,
-  markInterstitialShown,
-  recordInterstitialCalculation,
-} from './interstitialPolicy';
+  initInterstitial,
+  presentInterstitial,
+  primeInterstitial,
+} from './interstitialController';
+import { recordInterstitialAction } from './interstitialPolicy';
 
 type ResultRouteParams = {
   draftId?: string | string[];
   mode?: string | string[];
 };
 
-const interstitialAd = InterstitialAd.createForAdRequest(AD_UNITS.interstitial, {
-  requestNonPersonalizedAdsOnly: true,
-});
+// How a route counts toward the interstitial policy:
+//  - 'action' — active engagement (a fresh calculation, or any tracker screen).
+//    Entering one records an action toward the next eligible interstitial.
+//  - 'break'  — a calm landing tab (home, saved list). Arriving here from
+//    engagement is the natural pause where we may show an interstitial, rather
+//    than interrupting the user mid-task on the result screen.
+//  - 'neutral' — everything else (onboarding, share, the calculate entry, and
+//    Settings): does not count and does not trigger.
+type RouteClass = 'action' | 'break' | 'neutral';
 
 const getSingleParam = (value?: string | string[]) => (
   Array.isArray(value) ? value[0] : value
 );
 
+const classifyRoute = (segments: string[], mode?: string): RouteClass => {
+  const leaf = segments[segments.length - 1];
+
+  if (segments[0] === '(tabs)') {
+    if (leaf === 'index' || leaf === 'saved') {
+      return 'break';
+    }
+    // Settings is deliberately neutral, not a break: users open it to change
+    // language, find a future "remove ads" option, or report a problem — a
+    // low-patience / high-intent moment where an interstitial would frustrate.
+    if (leaf === 'settings') {
+      return 'neutral';
+    }
+    if (leaf === 'result') {
+      // Viewing a previously-saved loan's result is not a fresh action.
+      return mode === 'saved' ? 'neutral' : 'action';
+    }
+    return 'neutral';
+  }
+
+  // The saved/* stack (loan detail, tracking form, deals, overpayments, events)
+  // is the tracker — active engagement. `recent` is just a list, so it stays neutral.
+  if (segments[0] === 'saved' && leaf !== 'recent') {
+    return 'action';
+  }
+
+  return 'neutral';
+};
+
 export const InterstitialGate = () => {
-  const ad = interstitialAd;
   const segments = useSegments();
   const params = useGlobalSearchParams<ResultRouteParams>();
-  const [isLoaded, setIsLoaded] = useState(false);
-  const isLoadedRef = useRef(false);
-  const isLoadingRef = useRef(false);
-  const seenDraftIdsRef = useRef(new Set<string>());
-  const pendingDraftIdRef = useRef<string | null>(null);
-  const isResultRoute = useMemo(() => segments[segments.length - 1] === 'result', [segments]);
   const draftId = getSingleParam(params.draftId);
   const mode = getSingleParam(params.mode);
 
-  const updateLoaded = useCallback((nextValue: boolean) => {
-    isLoadedRef.current = nextValue;
-    setIsLoaded(nextValue);
+  const seenDraftIdsRef = useRef(new Set<string>());
+  const lastCountedKeyRef = useRef<string | null>(null);
+  const prevClassRef = useRef<RouteClass | null>(null);
+
+  const isResult = useMemo(
+    () => segments[0] === '(tabs)' && segments[segments.length - 1] === 'result',
+    [segments],
+  );
+
+  // Set up the shared interstitial instance once. It is also used by imperative
+  // triggers (e.g. CSV export); init is idempotent and waits for consent itself.
+  useEffect(() => {
+    initInterstitial();
   }, []);
 
-  const ensureLoaded = useCallback(() => {
-    if (isLoadedRef.current || isLoadingRef.current) {
-      return;
-    }
-
-    isLoadingRef.current = true;
-    ad.load();
-  }, [ad]);
-
-  const showPendingInterstitial = useCallback(() => {
-    const pendingDraftId = pendingDraftIdRef.current;
-    if (!isResultRoute || mode === 'saved' || !pendingDraftId || !isLoadedRef.current) {
-      return;
-    }
-
-    try {
-      ad.show();
-      markInterstitialShown();
-      pendingDraftIdRef.current = null;
-      updateLoaded(false);
-    } catch {
-      ensureLoaded();
-    }
-  }, [ad, ensureLoaded, isResultRoute, mode, updateLoaded]);
-
+  // Count actions on entry to engagement routes, and show at the next break.
   useEffect(() => {
-    let isMounted = true;
+    const currentClass = classifyRoute(segments, mode);
 
-    const unsubscribeLoaded = ad.addAdEventListener(AdEventType.LOADED, () => {
-      isLoadingRef.current = false;
-      if (!isMounted) {
-        return;
+    if (currentClass === 'action') {
+      if (isResult) {
+        // Dedupe by draftId so the same calculation never counts twice, even
+        // across back/forward navigation.
+        if (draftId && !seenDraftIdsRef.current.has(draftId)) {
+          seenDraftIdsRef.current.add(draftId);
+          recordInterstitialAction();
+        }
+      } else {
+        // Dedupe re-renders of the same tracker route; a different route (or
+        // returning here after a break) counts as a new action.
+        const key = segments.join('/');
+        if (lastCountedKeyRef.current !== key) {
+          lastCountedKeyRef.current = key;
+          recordInterstitialAction();
+        }
       }
-
-      updateLoaded(true);
-    });
-
-    const unsubscribeClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
-      updateLoaded(false);
-      isLoadingRef.current = false;
-      ensureLoaded();
-    });
-
-    const unsubscribeError = ad.addAdEventListener(AdEventType.ERROR, () => {
-      isLoadingRef.current = false;
-      updateLoaded(false);
-    });
-
-    whenConsentFlowComplete().then(() => {
-      if (isMounted) {
-        ensureLoaded();
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribeLoaded();
-      unsubscribeClosed();
-      unsubscribeError();
-    };
-  }, [ad, ensureLoaded, updateLoaded]);
-
-  useEffect(() => {
-    if (!isResultRoute || mode === 'saved') {
-      pendingDraftIdRef.current = null;
-      return;
+      primeInterstitial();
+    } else {
+      lastCountedKeyRef.current = null;
     }
 
-    if (!draftId || seenDraftIdsRef.current.has(draftId)) {
-      return;
+    // Arriving at a calm tab from non-break context is the natural break point.
+    // The null guard avoids firing on the launch screen. presentInterstitial is
+    // a no-op unless the ad is loaded and the frequency policy permits it.
+    if (
+      currentClass === 'break' &&
+      prevClassRef.current !== null &&
+      prevClassRef.current !== 'break'
+    ) {
+      void presentInterstitial();
     }
 
-    seenDraftIdsRef.current.add(draftId);
-    const nextPolicyState = recordInterstitialCalculation();
-    if (!isInterstitialEligible(nextPolicyState)) {
-      pendingDraftIdRef.current = null;
-      return;
-    }
-
-    pendingDraftIdRef.current = draftId;
-    if (isLoaded) {
-      showPendingInterstitial();
-      return;
-    }
-
-    ensureLoaded();
-  }, [draftId, ensureLoaded, isLoaded, isResultRoute, mode, showPendingInterstitial]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      showPendingInterstitial();
-    }
-  }, [isLoaded, showPendingInterstitial]);
+    prevClassRef.current = currentClass;
+  }, [segments, mode, draftId, isResult]);
 
   return null;
 };

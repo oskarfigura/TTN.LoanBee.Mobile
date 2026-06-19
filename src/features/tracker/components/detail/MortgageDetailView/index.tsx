@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 import { AmortisationTable } from '@/features/calculator/components/AmortisationTable';
 import { ChartHelpButton, ChartHelpDrawer, type ChartHelpContent } from '@/shared/ui/charts/ChartHelp';
 import { CumulativeAreaChart, hasCumulativeChartData } from '@/shared/ui/charts/CumulativeAreaChart';
+import { LoanBreakdownDonut } from '@/shared/ui/charts/LoanBreakdownDonut';
 import { MortgageBalanceChart } from '@/shared/ui/charts/MortgageBalanceChart';
 import { RepaymentBarChart } from '@/shared/ui/charts/RepaymentBarChart';
 import { DashboardProgressGauge } from '@/features/tracker/components/dashboard/DashboardProgressGauge';
 import { DashboardPinButton } from '@/features/tracker/components/dashboard/DashboardPinButton';
-import { MortgageTimelineView, MortgageWarningBanners } from '@/features/tracker/components/detail/MortgageTimelineView';
+import { MortgageTimelineView } from '@/features/tracker/components/detail/MortgageTimelineView';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
@@ -45,19 +46,36 @@ import {
   getDealOverpaymentImpact,
   getMortgageTrackerSummary,
   getPublishedDeals,
+  getTimelineWarnings,
   loanHasOverpayments,
+  TimelineWarningType,
 } from '@/shared/domain/mortgage/tracker';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
 import { LoanDeal, SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours } from '@/shared/ui/theme';
-import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate } from '@/shared/lib/utils/date';
+import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate, formatShortMonthYearRange } from '@/shared/lib/utils/date';
 
 type MortgageDetailTab = 'overview' | 'projection' | 'timeline';
-type ProjectionPreview = 'balance' | 'repayment' | 'cumulative' | 'schedule';
-type ProjectionRenderStage = 0 | 1 | 2 | 3 | 4;
-type ChartHelpId = 'mortgageBalanceProjection' | 'repaymentProjection' | 'cumulativePayments';
+type ProjectionPreview = 'breakdown' | 'balance' | 'repayment' | 'cumulative' | 'schedule';
+type ProjectionRenderStage = 0 | 1 | 2 | 3 | 4 | 5;
+type ChartHelpId = 'loanBreakdown' | 'mortgageBalanceProjection' | 'repaymentProjection' | 'cumulativePayments';
 
-const PROJECTION_RENDER_STAGES: ProjectionRenderStage[] = [1, 2, 3, 4];
+const PROJECTION_RENDER_STAGES: ProjectionRenderStage[] = [1, 2, 3, 4, 5];
+
+// Only the single highest-priority warning is surfaced in the timeline card, most urgent first.
+const TIMELINE_WARNING_PRIORITY: TimelineWarningType[] = [
+  'incompleteActiveDeal',
+  'overlap',
+  'gap',
+  'draftBlocked',
+];
+
+interface TimelineAlert {
+  icon: IconName;
+  title: string;
+  message: string;
+  onPress: () => void;
+}
 
 const SUMMARY_METRIC_KEYS = [
   'mortgage.currentBalance',
@@ -98,6 +116,7 @@ export const MortgageDetailView = ({
   const isProjectionPreviewOpen = projectionPreview !== null;
   const asOf = useMemo(() => new Date(), [loan]);
   const result = useMemo(() => getResultForSavedLoan(loan), [loan]);
+  const principalAmount = result.amount - result.downPayment;
   const projection = useMemo(() => buildMortgageProjection(loan, asOf), [asOf, loan]);
   // Single source of truth for the comparison: the baseline series, but only when the loan
   // actually has overpayments and there are enough points to plot (the chart needs ≥2 yearly
@@ -125,6 +144,16 @@ export const MortgageDetailView = ({
   // Borrowing that hasn't started yet has no real history to record or complete, so
   // the timeline tab and the event/history/completion actions are hidden until it begins.
   const isFutureStart = Boolean(activeDeal && activeDeal.startDate > todayIso);
+  // Timeline warnings are no longer shown as red top-of-page alerts. We surface a single,
+  // subtle, tappable hint inside the timeline card — the highest-priority warning only.
+  const topWarning = useMemo(() => {
+    const warnings = getTimelineWarnings(loan, asOf);
+    for (const type of TIMELINE_WARNING_PRIORITY) {
+      const match = warnings.find(warning => warning.type === type);
+      if (match) return match;
+    }
+    return undefined;
+  }, [asOf, loan]);
   const tabs: Array<{ value: MortgageDetailTab; label: string }> = [
     { value: 'overview', label: t('mortgage.overview') },
     { value: 'projection', label: t('mortgage.projection') },
@@ -142,6 +171,19 @@ export const MortgageDetailView = ({
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     });
   }, [activeTab, projectionRenderKey]);
+
+  const timelineAlert: TimelineAlert | undefined = useMemo(() => {
+    if (!topWarning) return undefined;
+    const isCompletion = topWarning.type === 'incompleteActiveDeal';
+    return {
+      icon: isCompletion ? IconName.ClockCheckIcon : IconName.AlertTriangleIcon,
+      title: t(topWarning.title),
+      message: t(topWarning.message),
+      onPress: isCompletion
+        ? () => router.push(`/saved/${loan.id}/complete-current`)
+        : () => switchTab('timeline'),
+    };
+  }, [loan.id, router, switchTab, t, topWarning]);
 
   useEffect(() => {
     if (activeTab !== 'projection') return undefined;
@@ -210,7 +252,13 @@ export const MortgageDetailView = ({
   const goToNewCalculation = () => {
     setAddDrawerVisible(false);
     setActionDrawerVisible(false);
-    router.push('/calculate' as never);
+    router.push({
+      pathname: '/calculate' as never,
+      params: {
+        fromTracked: '1',
+        returnTo: `/saved/${loan.id}`,
+      },
+    });
   };
   const openProjectionPreview = useCallback((preview: ProjectionPreview) => {
     setProjectionPreview(preview);
@@ -227,12 +275,19 @@ export const MortgageDetailView = ({
     setChartHelp(null);
   }, []);
   const getProjectionPreviewTitle = () => {
+    if (projectionPreview === 'breakdown') return t('results.loanBreakdown');
     if (projectionPreview === 'balance') return t('mortgage.balanceProjection');
     if (projectionPreview === 'repayment') return t('results.repaymentBreakdown');
     if (projectionPreview === 'cumulative') return t('results.cumulativePayments');
     return t('mortgage.trackedSchedule');
   };
   const getChartHelpContent = (helpId: ChartHelpId): ChartHelpContent => {
+    if (helpId === 'loanBreakdown') {
+      return {
+        title: t('chartHelp.loanBreakdownTitle'),
+        body: t('chartHelp.loanBreakdownBody'),
+      };
+    }
     if (helpId === 'mortgageBalanceProjection') {
       return {
         title: t('chartHelp.mortgageBalanceProjectionTitle'),
@@ -252,12 +307,24 @@ export const MortgageDetailView = ({
     };
   };
   const getProjectionPreviewHelpId = (): ChartHelpId | null => {
+    if (projectionPreview === 'breakdown') return 'loanBreakdown';
     if (projectionPreview === 'balance') return 'mortgageBalanceProjection';
     if (projectionPreview === 'repayment') return 'repaymentProjection';
     if (projectionPreview === 'cumulative') return 'cumulativePayments';
     return null;
   };
   const renderProjectionPreview = () => {
+    if (projectionPreview === 'breakdown') {
+      return (
+        <LoanBreakdownDonut
+          principal={principalAmount}
+          totalInterest={result.totalInterestPaid}
+          currency={loan.currency}
+          radius={118}
+        />
+      );
+    }
+
     if (projectionPreview === 'balance') {
       return (
         <MortgageBalanceChart
@@ -346,7 +413,6 @@ export const MortgageDetailView = ({
       keyboardShouldPersistTaps="handled"
     >
       <FinancialDisclaimer dismissible style={styles.financialDisclaimer} />
-      <MortgageWarningBanners loan={loan} />
 
       {activeTab === 'overview' ? (
         <View style={styles.tabPanel}>
@@ -361,6 +427,7 @@ export const MortgageDetailView = ({
             asOf={asOf}
             isFutureStart={isFutureStart}
             overpaymentDeal={overpaymentDeal}
+            timelineAlert={timelineAlert}
             onTogglePinned={onTogglePinned}
             onAddDeal={() => router.push(`/saved/${loan.id}/deals/new`)}
             onOpenTimeline={() => switchTab('timeline')}
@@ -378,10 +445,24 @@ export const MortgageDetailView = ({
 
       {activeTab === 'projection' ? (
         <View style={styles.tabPanel}>
-          <ProjectionBasisCard
-            currentDeal={currentDeal}
-          />
           {projectionRenderStage >= 1 ? (
+            <ProjectionChartCard
+              title={t('results.loanBreakdown')}
+              accessibilityLabel={`${t('results.loanBreakdown')} ${t('results.fullScreen')}`}
+              helpAccessibilityLabel={t('chartHelp.open', { title: t('results.loanBreakdown') })}
+              onPress={() => openProjectionPreview('breakdown')}
+              onHelpPress={() => openChartHelp('loanBreakdown')}
+            >
+              <LoanBreakdownDonut
+                principal={principalAmount}
+                totalInterest={result.totalInterestPaid}
+                currency={loan.currency}
+              />
+            </ProjectionChartCard>
+          ) : (
+            <ProjectionSkeletonCard title={t('results.loanBreakdown')} />
+          )}
+          {projectionRenderStage >= 2 ? (
             <ProjectionChartCard
               title={t('mortgage.balanceProjection')}
               accessibilityLabel={`${t('mortgage.balanceProjection')} ${t('results.fullScreen')}`}
@@ -402,7 +483,7 @@ export const MortgageDetailView = ({
           ) : (
             <ProjectionSkeletonCard title={t('mortgage.balanceProjection')} />
           )}
-          {projectionRenderStage >= 2 ? (
+          {projectionRenderStage >= 3 ? (
             <ProjectionChartCard
               title={t('results.repaymentBreakdown')}
               accessibilityLabel={`${t('results.repaymentBreakdown')} ${t('results.fullScreen')}`}
@@ -420,7 +501,7 @@ export const MortgageDetailView = ({
           ) : (
             <ProjectionSkeletonCard title={t('results.repaymentBreakdown')} />
           )}
-          {projectionRenderStage >= 3 ? (
+          {projectionRenderStage >= 4 ? (
             <ProjectionChartCard
               title={t('results.cumulativePayments')}
               accessibilityLabel={`${t('results.cumulativePayments')} ${t('results.fullScreen')}`}
@@ -440,7 +521,7 @@ export const MortgageDetailView = ({
           ) : (
             <ProjectionSkeletonCard title={t('results.cumulativePayments')} />
           )}
-          {projectionRenderStage >= 4 ? (
+          {projectionRenderStage >= 5 ? (
             <Card style={[styles.chartCard, styles.scheduleCard]}>
               <View style={styles.chartHeader}>
                 <AppText variant="title3">{t('mortgage.trackedSchedule')}</AppText>
@@ -463,6 +544,7 @@ export const MortgageDetailView = ({
           ) : (
             <ProjectionSkeletonCard title={t('mortgage.trackedSchedule')} schedule />
           )}
+
         </View>
       ) : null}
 
@@ -623,6 +705,7 @@ const MortgageSummaryPanel = ({
   asOf,
   isFutureStart,
   overpaymentDeal,
+  timelineAlert,
   onTogglePinned,
   onAddDeal,
   onOpenTimeline,
@@ -637,6 +720,7 @@ const MortgageSummaryPanel = ({
   asOf: Date;
   isFutureStart: boolean;
   overpaymentDeal?: LoanDeal;
+  timelineAlert?: TimelineAlert;
   onTogglePinned: () => void;
   onAddDeal: () => void;
   onOpenTimeline: () => void;
@@ -682,6 +766,7 @@ const MortgageSummaryPanel = ({
           currentDeal={currentDeal}
           publishedDeals={publishedDeals}
           projection={projection}
+          timelineAlert={timelineAlert}
           onAddDeal={onAddDeal}
           onOpenTimeline={onOpenTimeline}
         />
@@ -958,6 +1043,7 @@ const CompactTimelineSummary = ({
   currentDeal,
   publishedDeals,
   projection,
+  timelineAlert,
   onAddDeal,
   onOpenTimeline,
 }: {
@@ -965,6 +1051,7 @@ const CompactTimelineSummary = ({
   currentDeal?: LoanDeal;
   publishedDeals: LoanDeal[];
   projection: MortgageProjection;
+  timelineAlert?: TimelineAlert;
   onAddDeal: () => void;
   onOpenTimeline: () => void;
 }) => {
@@ -979,6 +1066,7 @@ const CompactTimelineSummary = ({
     label: string;
     title: string;
     meta: string;
+    dates?: string;
   }> = [
     {
       key: 'saved-start',
@@ -997,6 +1085,9 @@ const CompactTimelineSummary = ({
       meta: currentDeal
         ? `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(currentDeal.interestRate)} · ${formatDealDuration(currentDeal, i18n.language)}`
         : `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(loan.formSnapshot.interest)}`,
+      dates: currentDeal
+        ? formatShortMonthYearRange(currentDeal.startDate, currentDeal.endDate, i18n.language)
+        : undefined,
     },
     {
       key: 'projected-end',
@@ -1026,6 +1117,26 @@ const CompactTimelineSummary = ({
           />
         ) : null}
       </View>
+      {timelineAlert ? (
+        <TouchableOpacity
+          style={styles.timelineAlertBubble}
+          onPress={timelineAlert.onPress}
+          activeOpacity={0.84}
+          accessibilityRole="button"
+          accessibilityLabel={timelineAlert.title}
+        >
+          <View style={styles.timelineAlertIcon}>
+            <Icon icon={timelineAlert.icon} size={16} color={colours.warning} strokeWidth={1.9} />
+          </View>
+          <View style={styles.timelineAlertCopy}>
+            <Text style={styles.timelineAlertTitle}>{timelineAlert.title}</Text>
+            <Text style={styles.timelineAlertBody} numberOfLines={2}>
+              {timelineAlert.message}
+            </Text>
+          </View>
+          <Icon icon={IconName.ChevronRightIcon} size={14} color={colours.warning} />
+        </TouchableOpacity>
+      ) : null}
       {!firstDeal ? (
         <Text style={styles.summaryBodyText}>
           {t('mortgage.noDealChangesBody')}
@@ -1050,8 +1161,16 @@ const CompactTimelineSummary = ({
               ]}
             />
             <View style={styles.summaryTimelineCopy}>
-              <Text style={styles.summaryTimelineLabel}>{item.label}</Text>
+              <View style={styles.summaryTimelineLabelRow}>
+                <Text style={styles.summaryTimelineLabel}>{item.label}</Text>
+                {item.marker === 'future' ? (
+                  <Icon icon={IconName.FlagIcon} size={13} color={colours.textSecondary} strokeWidth={1.9} />
+                ) : null}
+              </View>
               <Text style={styles.summaryTimelineTitle} numberOfLines={1}>{item.title}</Text>
+              {item.dates ? (
+                <Text style={styles.summaryTimelineDates} numberOfLines={1}>{item.dates}</Text>
+              ) : null}
               <Text style={styles.summaryTimelineMeta} numberOfLines={1}>{item.meta}</Text>
             </View>
           </TouchableOpacity>
@@ -1088,7 +1207,6 @@ const MortgageQuickActionsRow = ({
     <View style={styles.quickActionsCard}>
       <View style={styles.quickActionsHeader}>
         <Text style={styles.quickActionsTitle}>{t('mortgage.quickActions')}</Text>
-        <Text style={styles.quickActionsHelper}>{t('mortgage.quickActionsHelp')}</Text>
       </View>
       <View style={styles.quickActionsRow}>
         {hasActiveDeal ? (
@@ -1142,31 +1260,6 @@ const SummaryQuickAction = ({
   </TouchableOpacity>
 );
 
-const ProjectionBasisCard = ({
-  currentDeal,
-}: {
-  currentDeal?: LoanDeal;
-}) => {
-  const { t } = useTranslation();
-
-  return (
-    <Card style={styles.projectionBasisCard}>
-      <View style={styles.contextHeader}>
-        <View style={styles.contextHeaderCopy}>
-          <Text style={styles.contextKicker}>{t('mortgage.projectionBasis')}</Text>
-          <Text style={styles.contextTitle} numberOfLines={2}>
-            {t('mortgage.overallMortgageProjection')}
-          </Text>
-        </View>
-      </View>
-      <Text style={styles.projectionAssumptionText}>
-        {currentDeal
-          ? t('mortgage.overallMortgageProjectionBody')
-          : t('mortgage.currentStateProjectionBody')}
-      </Text>
-    </Card>
-  );
-};
 
 const ProjectionChartCard = ({
   title,

@@ -17,7 +17,7 @@ interface GuideStep {
 
 const GUIDE_STEPS: GuideStep[] = [
   { key: 'details', icon: IconName.GridIcon },
-  { key: 'compare', icon: IconName.TrendUpIcon },
+  { key: 'compare', icon: IconName.ScaleIcon },
   { key: 'save', icon: IconName.SaveIcon },
 ];
 

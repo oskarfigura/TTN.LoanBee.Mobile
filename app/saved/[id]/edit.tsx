@@ -80,6 +80,17 @@ export default function EditLoanScreen() {
               onChangeText={setNickname}
               placeholder={t('save.nicknamePlaceholder')}
             />
+            {nickname.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => setNickname('')}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.clear')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.clearButton}
+              >
+                <Icon icon={IconName.XCloseIcon} size={16} color={colours.textSecondary} strokeWidth={2} />
+              </TouchableOpacity>
+            ) : null}
           </InputSurface>
         </View>
 
@@ -101,7 +112,13 @@ export default function EditLoanScreen() {
           </AppText>
           <Button
             label={t('saved.createNewCalculation')}
-            onPress={() => router.push('/calculate' as never)}
+            onPress={() => router.push({
+              pathname: '/calculate' as never,
+              params: {
+                fromTracked: '1',
+                returnTo: `/saved/${id}`,
+              },
+            })}
             variant={ButtonVariant.Secondary}
             style={styles.stackAction}
           />
@@ -158,6 +175,11 @@ const styles = StyleSheet.create({
   notFound: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   notFoundText: { marginBottom: spacing.md },
   field: { marginTop: spacing.md },
+  clearButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: spacing.xs,
+  },
   lockedSnapshotCard: { marginTop: spacing.md },
   snapshotHeader: {
     flexDirection: 'row',

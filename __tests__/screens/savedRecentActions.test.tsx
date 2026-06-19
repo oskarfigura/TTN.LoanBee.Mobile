@@ -58,6 +58,12 @@ jest.mock('react-native', () => {
         confirm?.onPress?.();
       },
     },
+    Modal: ({ visible, children, ...props }: { visible?: boolean; children?: React.ReactNode }) => (
+      visible ? React.createElement('Modal', props, children) : null
+    ),
+    Pressable: ({ children, ...props }: { children?: React.ReactNode }) => (
+      React.createElement('Pressable', props, children)
+    ),
     TouchableOpacity: ({ children, ...props }: { children?: React.ReactNode }) => (
       React.createElement('TouchableOpacity', props, children)
     ),
