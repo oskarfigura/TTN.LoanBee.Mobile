@@ -31,6 +31,7 @@ import { LoanResult } from '@/shared/domain/results/loanResultRoute';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { buildAmortisationCsv } from '@oskarfigura/amortisation';
+import { presentInterstitial } from '@/ads/interstitialController';
 import { AmortisationTable } from './AmortisationTable';
 import { LoanSummaryOverview } from './LoanSummaryOverview';
 
@@ -116,6 +117,11 @@ export const LoanCalculationView = ({
     setIsExportingCsv(true);
 
     try {
+      // CSV export is a premium feature gated behind an ad: always show an
+      // interstitial first, bypassing the frequency policy. Resolves even if no
+      // ad could be shown (offline/no-fill), so the export is never blocked.
+      await presentInterstitial({ force: true });
+
       const csvContent = buildAmortisationCsv({
         items: result.tableItems,
         startDate,

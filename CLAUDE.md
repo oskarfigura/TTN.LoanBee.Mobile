@@ -43,7 +43,7 @@ Decision rule for `shared/`: **visual → `ui`, loan/finance → `domain`, gener
 - **All colours must use `colours.*`** from `src/shared/ui/theme/colours.ts`. Never write a hex literal in a component or screen.
 - **All font families must use `fonts.body` or `fonts.heading`** from `src/shared/ui/theme/typography.ts`. Never write `fontFamily: 'Inter'` inline.
 - **All font weights must use `fontWeights.*`** from `src/shared/ui/theme/typography.ts`. Never write `fontWeight: '700'` inline.
-- **Ads are fully isolated in `src/ads/`**. No ad import should appear outside that directory except `<AdProvider>` in `app/_layout.tsx` and `<BannerAd>` placements in screens.
+- **Ads are fully isolated in `src/ads/`**. The `react-native-google-mobile-ads` SDK must never be imported outside `src/ads/`. Screens may only touch ads through the thin, SDK-free entry points: `<AdProvider>` in `app/_layout.tsx`, `<BannerAd>` placements, and imperative interstitial triggers via `presentInterstitial()` from `src/ads/interstitialController.ts` (e.g. before CSV export). All three keep the ad SDK behind `src/ads/`.
 - **MMKV storage key names are versioned** (`saved_loans_v2`, `guide_seen_v1`, etc. in `src/shared/lib/storage/keys.ts`). If the `SavedLoan` schema changes in a breaking way, increment the key version and add a migration function in `src/shared/lib/storage/savedLoans.ts`.
 - **Never pin a tappable header with `stickyHeaderIndices`.** On RN's new architecture the sticky header's touch target does not follow its visual translation, so once the user scrolls, taps on the pinned element fall through silently (this broke the tab strips in both `LoanCalculationView` and `MortgageDetailView`). Render interactive headers — tab strips, segmented controls — as a fixed sibling `View` ABOVE the `ScrollView`, not inside it with `stickyHeaderIndices`. The guard test `__tests__/design-system/sticky-tabs.test.ts` fails the build if `stickyHeaderIndices` reappears in `app/` or `src/`.
 
@@ -106,6 +106,8 @@ Production unit IDs flow via environment variables:
 3. `ADMOB_INTERSTITIAL_ANDROID_ID` / `ADMOB_INTERSTITIAL_IOS_ID` → `app.config.js` `extra` → `expo-constants` → `src/ads/adUnits.ts`
 
 Google test IDs are used automatically when env vars are unset or `__DEV__` is true. The GDPR consent check in `AdProvider.tsx` fires once on first launch for EU users.
+
+For the full ad strategy — formats, platform gating, consent/personalisation, and the interstitial frequency policy (new-user grace period, action threshold, cooldown, daily cap) — see [docs/ads-strategy.md](docs/ads-strategy.md).
 
 ## Local Development
 
