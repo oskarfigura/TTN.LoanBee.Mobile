@@ -4,6 +4,10 @@ export type ComparisonInsight = {
   monthsSaved?: number;
 };
 
+// A one-month difference is noise (it routinely falls out of rounding when a single
+// overpayment nudges the final period); only surface a time saving from two months up.
+const MEANINGFUL_MONTHS_THRESHOLD = 2;
+
 export const getComparisonInsight = ({
   currentInterest,
   comparedInterest,
@@ -24,8 +28,12 @@ export const getComparisonInsight = ({
   const currentInterestSaving = -interestDifference >= meaningfulInterestThreshold
     ? -interestDifference
     : undefined;
-  const comparedMonthsSaving = monthsDifference > 0 ? monthsDifference : undefined;
-  const currentMonthsSaving = monthsDifference < 0 ? -monthsDifference : undefined;
+  const comparedMonthsSaving = monthsDifference >= MEANINGFUL_MONTHS_THRESHOLD
+    ? monthsDifference
+    : undefined;
+  const currentMonthsSaving = -monthsDifference >= MEANINGFUL_MONTHS_THRESHOLD
+    ? -monthsDifference
+    : undefined;
 
   if (comparedInterestSaving || comparedMonthsSaving) {
     return {

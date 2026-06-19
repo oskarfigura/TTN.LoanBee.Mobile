@@ -60,11 +60,14 @@ export const ScenarioComparison = ({ visible, baseline, formValues, currency, on
   const enteredTotalMonths = (
     Number(formValues.termInYears) * 12
   ) + Number(formValues.termInMonths);
+  // The baseline's resolved payoff term — for a payment-based calculation the entered
+  // term is meaningless, so the actual schedule length (tableItems) is the truth.
+  const baselineTotalMonths = baseline.tableItems.length
+    || (baseline.termInYears * 12) + baseline.termInMonths;
+  const isPaymentBaseline = String(formValues.calculationType).toLowerCase() === 'payment';
   const initialTotalMonths = Math.max(
     1,
-    enteredTotalMonths
-      || (baseline.termInYears * 12) + baseline.termInMonths
-      || baseline.tableItems.length,
+    (isPaymentBaseline ? baselineTotalMonths : enteredTotalMonths) || baselineTotalMonths,
   );
   const [rate, setRate] = useState(numberText(formValues.interest));
   const [termYears, setTermYears] = useState(String(Math.floor(initialTotalMonths / 12)));

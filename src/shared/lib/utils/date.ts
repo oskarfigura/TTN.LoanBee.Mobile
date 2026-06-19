@@ -143,7 +143,7 @@ export const formatShortMonthYearRange = (
   if (!start) return end;
   if (!end) return start;
 
-  return `${start} – ${end}`;
+  return `${start} - ${end}`;
 };
 
 export const formatFriendlyDateRange = (

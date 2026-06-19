@@ -175,6 +175,13 @@ export default function ResultScreen() {
 
   const handleEdit = useCallback(() => {
     if (!formValues) return;
+    // The result screen rehydrates from a draft session, a recent entry, or a saved
+    // loan when any of those ids are present. Only carry the heavy raw result/formValues
+    // (the full amortisation table) as a last resort when there is nothing else to
+    // rebuild from — otherwise it would be serialised twice into navigation state.
+    const canRehydrate = Boolean(
+      params.draftId || params.recentId || params.savedLoanId || params.savedLoan,
+    );
     router.push({
       pathname: '/calculate' as never,
       params: buildEditCalculatorParams(
@@ -182,13 +189,15 @@ export default function ResultScreen() {
         currency,
         {
           draftId: params.draftId,
-          result: params.result,
-          formValues: params.formValues,
           currency,
           mode: params.mode,
           recentId: params.recentId,
           savedLoan: params.savedLoan,
           savedLoanId: params.savedLoanId,
+          ...(canRehydrate ? {} : {
+            result: params.result,
+            formValues: params.formValues,
+          }),
         },
       ),
     });
