@@ -493,6 +493,24 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  scheduleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  exportButton: {
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: radii.button,
+    backgroundColor: colours.surface,
+    borderWidth: 1,
+    borderColor: colours.border,
+  },
+  exportButtonDisabled: {
+    opacity: 0.6,
+  },
   fullscreenButton: {
     minHeight: 36,
     flexDirection: 'row',
