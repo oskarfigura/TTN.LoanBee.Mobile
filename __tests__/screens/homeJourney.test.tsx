@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 
 const mockRouter = {
   push: jest.fn(),
+  replace: jest.fn(),
+  setParams: jest.fn(),
 };
 const mockRefresh = jest.fn();
 const mockSetValue = jest.fn();
@@ -128,6 +130,17 @@ const renderHome = async (): Promise<ReactTestRenderer> => {
   return renderer as ReactTestRenderer;
 };
 
+const renderCalculate = async (): Promise<ReactTestRenderer> => {
+  const { BorrowingJourneyScreen } = await import('../../app/(tabs)/index');
+  let renderer: ReactTestRenderer | undefined;
+
+  await act(async () => {
+    renderer = create(React.createElement(BorrowingJourneyScreen, { mode: 'calculate' }));
+  });
+
+  return renderer as ReactTestRenderer;
+};
+
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation((message?: unknown, ...args: unknown[]) => {
     if (typeof message === 'string' && message.includes('react-test-renderer is deprecated')) {
@@ -145,6 +158,33 @@ afterEach(() => {
 });
 
 describe('Home intent journey', () => {
+  it('opens the Calculate tab directly on the calculator form', async () => {
+    const renderer = await renderCalculate();
+    const header = findAllByMockType(renderer, 'ScreenHeader')[0];
+
+    expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(1);
+    expect(textContent(renderer.root)).not.toContain('journey.intentTitle');
+    expect(header.props.leftAction).toBeUndefined();
+  });
+
+  it('shows an explicit return action when Calculate was opened from a tracked view', async () => {
+    mockParams = {
+      fromTracked: '1',
+      returnTo: '/saved/loan-1',
+    };
+    const renderer = await renderCalculate();
+    const header = findAllByMockType(renderer, 'ScreenHeader')[0];
+    const backAction = header.props.leftAction as React.ReactElement<{ onPress: () => void }>;
+
+    expect(backAction).toBeDefined();
+
+    await act(async () => {
+      backAction.props.onPress();
+    });
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/saved/loan-1');
+  });
+
   it('keeps the upfront choice intent-first and opens the calculator form only for planning', async () => {
     const renderer = await renderHome();
 

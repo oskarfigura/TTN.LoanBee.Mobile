@@ -235,11 +235,22 @@ export const styles = StyleSheet.create({
   summaryTimelineCopy: {
     minWidth: 0,
   },
+  summaryTimelineLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+  },
   summaryTimelineLabel: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.xs,
     color: colours.textSecondary,
     textTransform: 'uppercase',
+  },
+  summaryTimelineDates: {
+    ...fontFaces.body.medium,
+    fontSize: fontSizes.xs,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   summaryTimelineTitle: {
     ...fontFaces.heading.bold,
@@ -352,6 +363,40 @@ export const styles = StyleSheet.create({
   },
   startPreviewNode: {
     borderColor: colours.border,
+  },
+  completeHintBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colours.warningSurface,
+    borderRadius: radii.input,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  completeHintIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.white,
+  },
+  completeHintCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  completeHintTitle: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.warning,
+  },
+  completeHintBody: {
+    ...fontFaces.body.regular,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
+    color: colours.textSecondary,
+    marginTop: spacing.xxxs,
   },
   viewTimelineLink: {
     minHeight: 44,

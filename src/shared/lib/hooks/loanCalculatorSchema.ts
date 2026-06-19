@@ -8,6 +8,7 @@ import { MAX_LOAN_AMOUNT, MAX_MONTHLY_PAYMENT } from '@oskarfigura/amortisation/
 // node Jest project without native-module shims. useLoanCalculatorForm wires it
 // up with react-hook-form and supplies the locale-derived default currency.
 export const loanCalculatorSchema = z.object({
+  category: z.enum(['mortgage', 'loan']).optional(),
   loanAmount: z.coerce
     .number({ message: 'errors.loanAmount' })
     .min(1, { message: 'errors.loanAmount' })

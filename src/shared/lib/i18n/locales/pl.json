@@ -1,7 +1,11 @@
 {
   "calculator": {
     "title": "Kalkulacja Kredytu",
-    "subtitle": "Wprowadź szczegóły kredytu i wybierz sposób obliczenia spłaty",
+    "subtitle": "Zacznij od kilku danych, które najbardziej wpływają na ratę",
+    "borrowingType": "Co chcesz obliczyć?",
+    "propertyPrice": "Cena nieruchomości",
+    "amountBorrowed": "Pożyczana kwota",
+    "deposit": "Wkład własny",
     "loanAmount": "Kwota Kredytu",
     "loanAmountPlaceholder": "np. 300000",
     "interestRate": "Oprocentowanie",
@@ -17,11 +21,18 @@
     "desiredPayment": "Żądana Płatność Miesięczna",
     "desiredPaymentPlaceholder": "np. 2000",
     "calculationType": "Tryb obliczeń",
+    "goal": "Co chcesz sprawdzić?",
+    "findMonthlyPayment": "Miesięczną ratę",
+    "findPayoffTime": "Czas spłaty",
     "byTerm": "Według okresu",
     "byPayment": "Według płatności",
     "modeTermHelp": "Wprowadź okres kredytu, aby obliczyć miesięczną ratę",
     "modePaymentHelp": "Wprowadź żądaną miesięczną ratę, aby obliczyć czas spłaty",
     "generate": "Oblicz",
+    "moreOptions": "Więcej opcji",
+    "moreOptionsHelp": "Data rozpoczęcia, nadpłaty i waluta",
+    "additionalPaymentHelp": "Opcjonalnie — porównaj efekt po wyświetleniu wyniku.",
+    "startDateHelp": "Opcjonalnie — służy do oszacowania daty spłaty i harmonogramu.",
     "currency": "Waluta",
     "cash": "Gotówka",
     "percent": "Procent"
@@ -98,11 +109,11 @@
     "exportErrorMessage": "Spróbuj ponownie wyeksportować harmonogram spłat."
   },
   "saved": {
-    "title": "Zapisane",
+    "title": "Śledzone",
     "loanDetail": "Szczegóły Kredytu",
     "editLoan": "Zarządzaj zapisanym kredytem",
     "empty": "Nic jeszcze nie zapisano",
-    "emptySubtitle": "Śledź zobowiązanie albo zapisz scenariusz, aby zobaczyć go tutaj.",
+    "emptySubtitle": "Śledź hipotekę lub kredyt, aby zobaczyć je tutaj. Obliczenia pozostają dostępne w ostatnich obliczeniach.",
     "delete": "Usuń",
     "edit": "Edytuj",
     "view": "Podgląd",
@@ -165,11 +176,12 @@
   },
   "recent": {
     "title": "Ostatnie obliczenia",
-    "intro": "Ostatnie obliczenia są oddzielone od śledzonych zobowiązań, dopóki ich nie zapiszesz.",
+    "intro": "Najnowsze obliczenia zapisują się automatycznie, aby można było je otworzyć, porównać lub zacząć śledzić.",
     "calculation": "Obliczenie",
     "empty": "Brak ostatnich obliczeń",
     "emptySubtitle": "Wykonaj obliczenie hipoteki lub kredytu, a pojawi się tutaj.",
     "created": "Obliczono {{date}}",
+    "savedAutomatically": "Zapisano automatycznie w ostatnich obliczeniach.",
     "reopen": "Otwórz",
     "track": "Śledź",
     "selectedCount": "Zaznaczono: {{count}}",
@@ -177,17 +189,24 @@
     "deselectAll": "Odznacz wszystko",
     "deleteSelected": "Usuń zaznaczone",
     "deleteTitle": "Usunąć obliczenie?",
-    "deleteMessage": "To obliczenie zostanie usunięte z listy ostatnich.",
+    "deleteMessage": "To obliczenie zostanie usunięte z biblioteki.",
     "deleteSelectedTitle": "Usunąć zaznaczone?",
-    "deleteSelectedMessage_one": "{{count}} obliczenie zostanie usunięte z listy ostatnich.",
-    "deleteSelectedMessage_few": "{{count}} obliczenia zostaną usunięte z listy ostatnich.",
-    "deleteSelectedMessage_many": "{{count}} obliczeń zostanie usuniętych z listy ostatnich.",
-    "deleteSelectedMessage_other": "{{count}} obliczeń zostanie usuniętych z listy ostatnich."
+    "deleteSelectedMessage_one": "{{count}} obliczenie zostanie usunięte z biblioteki.",
+    "deleteSelectedMessage_few": "{{count}} obliczenia zostaną usunięte z biblioteki.",
+    "deleteSelectedMessage_many": "{{count}} obliczeń zostanie usuniętych z biblioteki.",
+    "deleteSelectedMessage_other": "{{count}} obliczeń zostanie usuniętych z biblioteki."
   },
   "save": {
     "title": "Zapisz Kredyt",
     "titleMortgage": "Zapisz Hipotekę",
     "titleLoan": "Zapisz Kredyt",
+    "trackMortgageTitle": "Śledź tę hipotekę",
+    "trackLoanTitle": "Śledź ten kredyt",
+    "trackSubtitle": "Zamień obliczenie w zobowiązanie, które możesz obserwować w czasie.",
+    "trackCalculationTitle": "Użyj obliczonych danych",
+    "trackCalculationHelp": "Wybierz rodzaj zobowiązania. Nazwę i kredytodawcę możesz dodać później.",
+    "optionalDetails": "Dane opcjonalne",
+    "optionalDetailsHelp": "Nazwa, kredytodawca i zmiana waluty",
     "subtitleMortgage": "Zapisz ten wynik jako hipotekę, którą chcesz śledzić od teraz.",
     "subtitleLoan": "Zapisz ten wynik jako kredyt, który chcesz śledzić od teraz.",
     "nickname": "Nazwa",
@@ -279,8 +298,8 @@
         "body": "Zobacz ratę miesięczną i wpływ nadpłat."
       },
       "save": {
-        "title": "Zapisz i wróć później",
-        "body": "Zachowaj kredyt, aktualizuj go i śledź postęp."
+        "title": "Wróć lub zacznij śledzić",
+        "body": "Obliczenia zapisują się automatycznie. Śledź tylko zobowiązania, które chcesz obserwować w czasie."
       }
     },
     "inviteTitle": "Nie musisz mieć wszystkiego od razu",
@@ -822,12 +841,29 @@
   "tabs": {
     "home": "Start",
     "calculator": "Oblicz",
-    "saved": "Zapisane",
+    "saved": "Śledzone",
     "about": "O Aplikacji",
     "settings": "Ustawienia"
   },
   "track": {
     "title": "Śledź zobowiązanie",
+    "titleMortgage": "Śledź moją hipotekę",
+    "titleLoan": "Śledź mój kredyt",
+    "currentStateSubtitle": "Użyj danych z ostatniego wyciągu lub aplikacji bankowej.",
+    "currentStateTitle": "Ile jesteś winien dziś",
+    "currentStateHelp": "Saldo, oprocentowanie oraz rzeczywista rata lub pozostały okres wystarczą, aby zacząć.",
+    "whatDoYouKnow": "Którą wartość znasz?",
+    "whatDoYouKnowHelp": "Jeśli możesz, użyj rzeczywistej raty pobieranej przez bank. W przeciwnym razie podaj pozostały okres.",
+    "actualPayment": "Miesięczna rata",
+    "actualMonthlyPayment": "Rzeczywista miesięczna rata",
+    "actualMonthlyPaymentHint": "Planowana rata pobierana przez bank, bez dobrowolnych nadpłat.",
+    "paymentTooLow": "Podaj co najmniej {{amount}}, aby saldo malało.",
+    "optionalDetails": "Opcjonalne dane rachunku",
+    "optionalDetailsHelp": "Nazwa, kredytodawca, waluta i przypomnienie o końcu oferty",
+    "hasDealEnd": "Moje obecne oprocentowanie ma datę końcową",
+    "hasDealEndHelp": "Dodaj ją tylko wtedy, gdy znasz ją z dokumentów hipotecznych.",
+    "defaultMortgageName": "Moja hipoteka",
+    "defaultLoanName": "Mój kredyt",
     "subtitle": "Skonfiguruj je od daty rozpoczęcia tej umowy.",
     "cta": "Śledź zobowiązanie",
     "save": "Rozpocznij śledzenie",
@@ -882,5 +918,13 @@
     "summaryPayoff": "Spłacony do",
     "draftUntitled": "Kredyt bez nazwy",
     "draftBadge": "Wersja robocza · dokończ konfigurację"
+  },
+  "compare": {
+    "title": "Porównaj inną opcję",
+    "short": "Porównaj",
+    "body": "Zmień oprocentowanie, okres lub nadpłatę i zobacz efekt obok bieżącego wyniku.",
+    "current": "Bieżący",
+    "newScenario": "Porównany",
+    "invalid": "Podaj poprawne oprocentowanie, okres i nadpłatę."
   }
 }

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { colours, elevation, fontFaces, fontSizes, radii } from '@/shared/ui/theme';
-import { confirmResultLeave, hasResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
 
 type TabIconName = 'home' | 'calculate' | 'saved' | 'settings';
 
@@ -31,8 +30,6 @@ export default function TabLayout() {
     <Tabs
       screenListeners={({ navigation, route }) => ({
         tabPress: event => {
-          const state = navigation.getState();
-          const currentRoute = state.routes[state.index];
           const navigateToTab = () => {
             if (route.name === 'index') {
               navigation.navigate('index', { dashboard: String(Date.now()) });
@@ -40,18 +37,16 @@ export default function TabLayout() {
             }
 
             if (route.name === 'calculate') {
-              navigation.navigate('calculate', { calculator: String(Date.now()) });
+              navigation.navigate('calculate', {
+                calculator: String(Date.now()),
+                fromTracked: '',
+                returnTo: '',
+              });
               return;
             }
 
             navigation.navigate(route.name);
           };
-
-          if (currentRoute?.name === 'result' && route.name !== 'result' && hasResultLeaveGuard()) {
-            event.preventDefault();
-            confirmResultLeave(navigateToTab);
-            return;
-          }
 
           if (route.name === 'index' || route.name === 'calculate') {
             event.preventDefault();

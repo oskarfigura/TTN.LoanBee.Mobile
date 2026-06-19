@@ -9,7 +9,7 @@ const mockRouter = {
   canGoBack: jest.fn(() => false),
   replace: jest.fn(),
 };
-// Mutable route params — category is now passed in from the intent step.
+// Mutable route params — category is passed in from the intent step.
 let mockParams: Record<string, string> = {};
 const mockAdd = jest.fn();
 const mockUpdate = jest.fn();
@@ -118,19 +118,16 @@ const renderTrack = async (params: Record<string, string> = {}): Promise<ReactTe
   return renderer as ReactTestRenderer;
 };
 
-const getStartDateField = (renderer: ReactTestRenderer): ReactTestInstance => (
-  renderer.root.findAll(node => String(node.type) === 'DatePickerField').find(node => node.props.label === 'track.dealStartDate')!
-);
-
 const hasMortgageRepaymentToggle = (renderer: ReactTestRenderer): boolean => (
   renderer.root.findAll(node => String(node.type) === 'SegmentedControl').some(node => (
     (node.props.options as Array<{ value: string }>).some(option => option.value === 'interestOnly')
   ))
 );
 
-const findModeToggle = (renderer: ReactTestRenderer): ReactTestInstance | undefined => (
+const findPaymentBasisToggle = (renderer: ReactTestRenderer): ReactTestInstance | undefined => (
   renderer.root.findAll(node => String(node.type) === 'SegmentedControl').find(node => (
-    (node.props.options as Array<{ value: string }>).some(option => option.value === 'beginning')
+    (node.props.options as Array<{ value: string }>).some(option => option.value === 'payment')
+    && (node.props.options as Array<{ value: string }>).some(option => option.value === 'term')
   ))
 );
 
@@ -180,25 +177,14 @@ afterEach(() => {
 });
 
 describe('Track form journey', () => {
-  it('uses one start-date field with category-aware hint copy and no minimum date', async () => {
+  it('starts from current lender-confirmed facts and keeps enrichment closed', async () => {
     const renderer = await renderTrack();
-    const startDateField = getStartDateField(renderer);
 
-    expect(startDateField.props.hint).toBe('track.dealStartDateHint');
-    expect(startDateField.props.minimumDate).toBeUndefined();
     expect(textContent(renderer.root)).toContain('track.currentBalance');
-    expect(textContent(renderer.root)).toContain('track.remainingTerm');
-
-    await act(async () => {
-      startDateField.props.onChange('2019-01-01');
-    });
-
-    expect(textContent(renderer.root)).toContain('track.startingBalance');
-    expect(textContent(renderer.root)).toContain('track.originalTerm');
-
-    // Loan category (passed in from the intent step) uses loan-specific hint copy.
-    const loanRenderer = await renderTrack({ category: 'loan' });
-    expect(getStartDateField(loanRenderer).props.hint).toBe('track.dealStartDateHintLoan');
+    expect(textContent(renderer.root)).toContain('track.actualMonthlyPayment');
+    expect(textContent(renderer.root)).toContain('track.optionalDetails');
+    expect(textContent(renderer.root)).not.toContain('track.nickname');
+    expect(renderer.root.findAll(node => String(node.type) === 'DatePickerField')).toHaveLength(0);
   });
 
   it('keeps loans on the single-deal path by hiding mortgage-only controls', async () => {
@@ -210,86 +196,65 @@ describe('Track form journey', () => {
     expect(loanRenderer.root.findAll(node => String(node.type) === 'DatePickerField').some(node => node.props.label === 'track.dealEndDate')).toBe(false);
   });
 
-  it('reveals price + deposit and hides the balance field when tracking from the beginning', async () => {
+  it('lets users enter a remaining term instead of an actual payment', async () => {
     const renderer = await renderTrack();
 
-    // Default mortgage mode is "from today": balance field, no price/deposit.
-    expect(textContent(renderer.root)).toContain('track.currentBalance');
-    expect(textContent(renderer.root)).not.toContain('track.propertyPrice');
-
     await act(async () => {
-      findModeToggle(renderer)!.props.onChange('beginning');
+      findPaymentBasisToggle(renderer)!.props.onChange('term');
     });
 
     const text = textContent(renderer.root);
-    expect(text).toContain('track.propertyPrice');
-    expect(text).toContain('track.deposit');
-    expect(text).not.toContain('track.currentBalance');
-    expect(text).not.toContain('track.startingBalance');
+    expect(text).toContain('track.remainingTerm');
+    expect(text).not.toContain('track.actualMonthlyPaymentHint');
   });
 
-  it('saves the derived borrowed balance and records the deposit', async () => {
+  it('saves with the actual lender payment and a generated name', async () => {
     const renderer = await renderTrack();
 
     await act(async () => {
-      findModeToggle(renderer)!.props.onChange('beginning');
-    });
-    await act(async () => {
-      inputForLabel(renderer, 'track.nickname').props.onChangeText('Family home');
-    });
-    await act(async () => {
-      inputForLabel(renderer, 'track.propertyPrice').props.onChangeText('300000');
-    });
-    await act(async () => {
-      inputForLabel(renderer, 'track.deposit').props.onChangeText('60000');
+      inputForLabel(renderer, 'track.currentBalance').props.onChangeText('240000');
     });
     await act(async () => {
       inputForLabel(renderer, 'track.rate').props.onChangeText('4.5');
     });
     await act(async () => {
-      // First input in the (original) term group is the years field.
-      inputForLabel(renderer, 'track.originalTerm').props.onChangeText('25');
+      inputForLabel(renderer, 'track.actualMonthlyPayment').props.onChangeText('1500');
     });
 
     await pressSave(renderer);
 
     expect(mockAdd).toHaveBeenCalledTimes(1);
     const saved = mockAdd.mock.calls[0][0] as {
-      deals: Array<{ openingBalance: number }>;
-      formSnapshot: { loanAmount: number; downPayment: number };
+      nickname: string;
+      deals: Array<{ openingBalance: number; monthlyPayment: number }>;
     };
     expect(saved.deals[0].openingBalance).toBe(240000);
-    expect(saved.formSnapshot.loanAmount).toBe(300000);
-    expect(saved.formSnapshot.downPayment).toBe(60000);
+    expect(saved.deals[0].monthlyPayment).toBe(1500);
+    expect(saved.nickname).toBe('track.defaultMortgageName');
   });
 
-  it('hides the from-today / from-the-beginning toggle for loans', async () => {
-    const mortgageRenderer = await renderTrack({ category: 'mortgage' });
-    expect(findModeToggle(mortgageRenderer)).toBeDefined();
-
-    const loanRenderer = await renderTrack({ category: 'loan' });
-    expect(findModeToggle(loanRenderer)).toBeUndefined();
-  });
-
-  it('caps the purchase date at today and clamps a future date when switching to from-the-beginning', async () => {
+  it('only asks for a deal end date after the user opts in', async () => {
     const renderer = await renderTrack();
 
-    // Pick a future start date while still in from-today mode…
     await act(async () => {
-      getStartDateField(renderer).props.onChange('2999-01-01');
+      renderer.root.find(node => (
+        String(node.type) === 'TouchableOpacity'
+        && textContent(node).includes('track.optionalDetails')
+      )).props.onPress();
     });
-    // …then switch to from-the-beginning.
+    expect(textContent(renderer.root)).toContain('track.nickname');
+    expect(renderer.root.findAll(node => String(node.type) === 'DatePickerField')).toHaveLength(0);
+
     await act(async () => {
-      findModeToggle(renderer)!.props.onChange('beginning');
+      renderer.root.find(node => (
+        String(node.type) === 'TouchableOpacity'
+        && textContent(node).includes('track.hasDealEnd')
+      )).props.onPress();
     });
 
-    const purchaseField = renderer.root
+    const dealEndField = renderer.root
       .findAll(node => String(node.type) === 'DatePickerField')
-      .find(node => node.props.label === 'track.purchaseDate')!;
-
-    // Future date is clamped (a historical purchase can't be in the future)…
-    expect(purchaseField.props.value).not.toBe('2999-01-01');
-    // …and the picker is capped so the user can't reselect a future date.
-    expect(purchaseField.props.maximumDate).toBeDefined();
+      .find(node => node.props.label === 'track.dealEndDate');
+    expect(dealEndField).toBeDefined();
   });
 });

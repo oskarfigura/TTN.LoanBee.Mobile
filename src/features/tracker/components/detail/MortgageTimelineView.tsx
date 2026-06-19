@@ -37,7 +37,12 @@ interface Props {
 
 export const MortgageWarningBanners = ({ loan }: { loan: SavedLoan }) => {
   const { t } = useTranslation();
-  const warnings = useMemo(() => getTimelineWarnings(loan), [loan]);
+  // The "complete current deal" prompt is surfaced as an inline, tappable hint inside the
+  // Mortgage timeline card instead of a top-of-screen alert, so it is filtered out here.
+  const warnings = useMemo(
+    () => getTimelineWarnings(loan).filter(warning => warning.type !== 'incompleteActiveDeal'),
+    [loan],
+  );
 
   if (warnings.length === 0) return null;
 

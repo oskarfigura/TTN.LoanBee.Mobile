@@ -215,7 +215,13 @@ export default function SavedScreen() {
                 <View style={styles.headerButtons}>
                   <Button
                     label={t('saved.createNewCalculation')}
-                    onPress={() => router.push('/calculate' as never)}
+                    onPress={() => router.push({
+                      pathname: '/calculate' as never,
+                      params: {
+                        fromTracked: '1',
+                        returnTo: '/saved',
+                      },
+                    })}
                     variant={ButtonVariant.Secondary}
                     style={styles.headerButton}
                   />

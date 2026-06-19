@@ -6,6 +6,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { Controller, UseFormReturn } from 'react-hook-form';
@@ -19,7 +20,7 @@ import {
 import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
 import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
 import { CURRENCIES } from '@/shared/domain/currency/currencies';
-import { layout, spacing } from '@/shared/ui/theme';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { Button } from '@oskarfigura/ui-native';
 import {
   AppTextInput,
@@ -33,6 +34,7 @@ import {
 } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/shared/ui/components/DatePickerField';
 import { DownPaymentToggle } from './DownPaymentToggle';
+import { CurrencyPicker } from './CurrencyPicker';
 
 interface Props {
   form: UseFormReturn<LoanCalculatorFormInputValues, undefined, LoanCalculatorFormValues>;
@@ -63,11 +65,13 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
   const insets = useSafeAreaInsets();
   const { control, handleSubmit, watch, setValue, formState: { errors } } = form;
   const calculationType = watch('calculationType');
+  const category = watch('category') ?? 'mortgage';
   const downPaymentType = watch('downPaymentType') as DownPaymentType;
   const currency = watch('currency');
   const currencySymbol = CURRENCIES.find(c => c.code === currency)?.symbol ?? '£';
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const startDateStr = watch('startDate');
   const downPaymentAffix = downPaymentType === DownPaymentType.CASH ? currencySymbol : '%';
@@ -147,6 +151,15 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
     };
   }, [focusedField, scrollFieldIntoView]);
 
+  useEffect(() => {
+    if (category !== 'loan') return;
+    setValue('downPayment', 0, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: true,
+    });
+  }, [category, setValue]);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -171,8 +184,26 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
       >
         {topContent}
         <FormSection style={styles.section}>
+          <View style={styles.fieldGroup}>
+            <FieldLabel>{t('calculator.borrowingType')}</FieldLabel>
+            <SegmentedControl
+              value={category}
+              onChange={value => setValue('category', value, {
+                shouldDirty: true,
+                shouldTouch: true,
+                shouldValidate: true,
+              })}
+              options={[
+                { label: t('save.mortgage'), value: 'mortgage' },
+                { label: t('save.loan'), value: 'loan' },
+              ]}
+            />
+          </View>
+
           <View ref={registerFieldRef('loanAmount')} style={styles.fieldGroup}>
-            <FieldLabel>{t('calculator.loanAmount')}</FieldLabel>
+            <FieldLabel>
+              {t(category === 'mortgage' ? 'calculator.propertyPrice' : 'calculator.amountBorrowed')}
+            </FieldLabel>
             <Controller
               control={control}
               name="loanAmount"
@@ -195,6 +226,50 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
             />
             <FieldError message={errorMessage(errors.loanAmount?.message)} />
           </View>
+
+          {category === 'mortgage' ? (
+            <View ref={registerFieldRef('downPayment')} style={styles.fieldGroup}>
+              <FieldLabel>{t('calculator.deposit')}</FieldLabel>
+              <View style={styles.downPaymentRow}>
+                <View style={styles.downPaymentInput}>
+                  <Controller
+                    control={control}
+                    name="downPayment"
+                    render={({ field }) => (
+                      <InputSurface error={Boolean(errors.downPayment)}>
+                        {downPaymentType === DownPaymentType.CASH ? <InputAffix>{downPaymentAffix}</InputAffix> : null}
+                        <AppTextInput
+                          keyboardType="decimal-pad"
+                          placeholder={t('calculator.downPaymentPlaceholder')}
+                          value={displayNumberValue(
+                            field.value,
+                            downPaymentType === DownPaymentType.CASH && focusedField !== 'downPayment',
+                          )}
+                          onChangeText={value => field.onChange(sanitiseNumberText(value))}
+                          onFocus={() => handleFieldFocus('downPayment')}
+                          onBlur={() => {
+                            setFocusedField(null);
+                            field.onBlur();
+                          }}
+                        />
+                        {downPaymentType === DownPaymentType.PERCENT ? <InputAffix trailing>{downPaymentAffix}</InputAffix> : null}
+                      </InputSurface>
+                    )}
+                  />
+                </View>
+                <DownPaymentToggle
+                  value={downPaymentType}
+                  currencySymbol={currencySymbol}
+                  onChange={v => setValue('downPaymentType', v, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  })}
+                />
+              </View>
+              <FieldError message={errorMessage(errors.downPayment?.message)} />
+            </View>
+          ) : null}
 
           <View ref={registerFieldRef('interest')} style={styles.fieldGroup}>
             <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
@@ -221,69 +296,14 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
             <FieldError message={errorMessage(errors.interest?.message)} />
           </View>
 
-          <View ref={registerFieldRef('downPayment')} style={styles.fieldGroup}>
-            <FieldLabel>{t('calculator.downPayment')}</FieldLabel>
-            <View style={styles.downPaymentRow}>
-              <View style={styles.downPaymentInput}>
-                <Controller
-                  control={control}
-                  name="downPayment"
-                  render={({ field }) => (
-                    <InputSurface error={Boolean(errors.downPayment)}>
-                      {downPaymentType === DownPaymentType.CASH ? <InputAffix>{downPaymentAffix}</InputAffix> : null}
-                      <AppTextInput
-                        keyboardType="decimal-pad"
-                        placeholder={t('calculator.downPaymentPlaceholder')}
-                        value={displayNumberValue(
-                          field.value,
-                          downPaymentType === DownPaymentType.CASH && focusedField !== 'downPayment',
-                        )}
-                        onChangeText={value => field.onChange(sanitiseNumberText(value))}
-                        onFocus={() => handleFieldFocus('downPayment')}
-                        onBlur={() => {
-                          setFocusedField(null);
-                          field.onBlur();
-                        }}
-                      />
-                      {downPaymentType === DownPaymentType.PERCENT ? <InputAffix trailing>{downPaymentAffix}</InputAffix> : null}
-                    </InputSurface>
-                  )}
-                />
-              </View>
-              <DownPaymentToggle
-                value={downPaymentType}
-                currencySymbol={currencySymbol}
-                onChange={v => setValue('downPaymentType', v, {
-                  shouldDirty: true,
-                  shouldTouch: true,
-                  shouldValidate: true,
-                })}
-              />
-            </View>
-            <FieldError message={errorMessage(errors.downPayment?.message)} />
-          </View>
-
-          <View ref={registerFieldRef('startDate')} style={styles.fieldGroup}>
-            <DatePickerField
-              label={t('calculator.startDate')}
-              value={startDateStr}
-              onChange={value => setValue('startDate', value, {
-                shouldDirty: true,
-                shouldTouch: true,
-                shouldValidate: true,
-              })}
-              hint={t('mortgage.dateFormatHint')}
-            />
-          </View>
-
           <View ref={registerFieldRef('calculationType')} style={styles.fieldGroup}>
-            <FieldLabel>{t('calculator.calculationType')}</FieldLabel>
+            <FieldLabel>{t('calculator.goal')}</FieldLabel>
             <SegmentedControl
               value={calculationType}
               onChange={mode => setValue('calculationType', mode)}
               options={[
-                { label: t('calculator.byTerm'), value: LoanCalculationType.TERM },
-                { label: t('calculator.byPayment'), value: LoanCalculationType.PAYMENT },
+                { label: t('calculator.findMonthlyPayment'), value: LoanCalculationType.TERM },
+                { label: t('calculator.findPayoffTime'), value: LoanCalculationType.PAYMENT },
               ]}
             />
             <FieldHint>
@@ -337,30 +357,6 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
               </View>
               <FieldError message={errorMessage(errors.termInYears?.message || errors.termInMonths?.message)} />
 
-              <View ref={registerFieldRef('additionalMonthlyPayment')} style={styles.fieldGroup}>
-                <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
-                <Controller
-                  control={control}
-                  name="additionalMonthlyPayment"
-                  render={({ field }) => (
-                    <InputSurface error={Boolean(errors.additionalMonthlyPayment)}>
-                      <InputAffix>{currencySymbol}</InputAffix>
-                      <AppTextInput
-                        keyboardType="decimal-pad"
-                        placeholder={t('calculator.additionalPaymentPlaceholder')}
-                        value={displayNumberValue(field.value, focusedField !== 'additionalMonthlyPayment')}
-                        onChangeText={value => field.onChange(sanitiseNumberText(value))}
-                        onFocus={() => handleFieldFocus('additionalMonthlyPayment')}
-                        onBlur={() => {
-                          setFocusedField(null);
-                          field.onBlur();
-                        }}
-                      />
-                    </InputSurface>
-                  )}
-                />
-                <FieldError message={errorMessage(errors.additionalMonthlyPayment?.message)} />
-              </View>
             </>
           ) : (
             <View ref={registerFieldRef('desiredMonthlyPayment')} style={styles.fieldGroup}>
@@ -388,6 +384,77 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
               <FieldError message={errorMessage(errors.desiredMonthlyPayment?.message)} />
             </View>
           )}
+
+          <TouchableOpacity
+            style={styles.advancedToggle}
+            onPress={() => setAdvancedOpen(open => !open)}
+            activeOpacity={0.82}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: advancedOpen }}
+          >
+            <View style={styles.advancedCopy}>
+              <FieldLabel>{t('calculator.moreOptions')}</FieldLabel>
+              <FieldHint>{t('calculator.moreOptionsHelp')}</FieldHint>
+            </View>
+            <FieldLabel>{advancedOpen ? '−' : '+'}</FieldLabel>
+          </TouchableOpacity>
+
+          {advancedOpen ? (
+            <View style={styles.advancedBody}>
+              {calculationType === LoanCalculationType.TERM ? (
+                <View ref={registerFieldRef('additionalMonthlyPayment')} style={styles.fieldGroup}>
+                  <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
+                  <Controller
+                    control={control}
+                    name="additionalMonthlyPayment"
+                    render={({ field }) => (
+                      <InputSurface error={Boolean(errors.additionalMonthlyPayment)}>
+                        <InputAffix>{currencySymbol}</InputAffix>
+                        <AppTextInput
+                          keyboardType="decimal-pad"
+                          placeholder={t('calculator.additionalPaymentPlaceholder')}
+                          value={displayNumberValue(field.value, focusedField !== 'additionalMonthlyPayment')}
+                          onChangeText={value => field.onChange(sanitiseNumberText(value))}
+                          onFocus={() => handleFieldFocus('additionalMonthlyPayment')}
+                          onBlur={() => {
+                            setFocusedField(null);
+                            field.onBlur();
+                          }}
+                        />
+                      </InputSurface>
+                    )}
+                  />
+                  <FieldHint>{t('calculator.additionalPaymentHelp')}</FieldHint>
+                  <FieldError message={errorMessage(errors.additionalMonthlyPayment?.message)} />
+                </View>
+              ) : null}
+
+              <View ref={registerFieldRef('startDate')} style={styles.fieldGroup}>
+                <DatePickerField
+                  label={t('calculator.startDate')}
+                  value={startDateStr}
+                  onChange={value => setValue('startDate', value, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  })}
+                  hint={t('calculator.startDateHelp')}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <FieldLabel>{t('calculator.currency')}</FieldLabel>
+                <CurrencyPicker
+                  value={currency as (typeof CURRENCIES)[number]['code']}
+                  onChange={value => setValue('currency', value, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                    shouldValidate: true,
+                  })}
+                />
+              </View>
+            </View>
+          ) : null}
 
           <Button
             label={t('calculator.generate')}
@@ -429,6 +496,25 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   termField: { flex: 1 },
+  advancedToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    backgroundColor: colours.surfaceMuted,
+  },
+  advancedCopy: {
+    flex: 1,
+    gap: spacing.xxs,
+  },
+  advancedBody: {
+    gap: spacing.md,
+    paddingTop: spacing.xs,
+  },
   submitButton: {
     marginTop: spacing.sm,
   },

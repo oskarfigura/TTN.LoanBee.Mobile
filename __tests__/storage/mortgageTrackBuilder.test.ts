@@ -50,6 +50,14 @@ describe('buildTrackedMortgageFromForm', () => {
     expect(loan.formSnapshot.loanAmount).toBe(180000);
   });
 
+  it('uses a lender-confirmed monthly payment when supplied', () => {
+    const loan = buildTrackedMortgageFromForm(baseValues({ monthlyPayment: 1325 }));
+
+    expect(loan.deals[0].monthlyPayment).toBe(1325);
+    expect(loan.resultSnapshot.monthlyPayments).toBe(1325);
+    expect(deriveTrackSeedFromLoan(loan, '2026-06-01').monthlyPayment).toBe(1325);
+  });
+
   it('amortises an interest-only deal as balance * monthly rate', () => {
     const loan = buildTrackedMortgageFromForm(baseValues({ repaymentType: 'interestOnly' }));
     const expected = +(180000 * (4.5 / 100 / 12)).toFixed(2);

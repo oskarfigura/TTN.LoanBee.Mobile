@@ -23,12 +23,13 @@ export const getDefaultCurrency = (): CurrencyCode => {
   return languageToCurrency(locale);
 };
 
-const defaultValues: LoanCalculatorFormValues = {
-  loanAmount: 300000,
-  interest: 3,
-  termInYears: 10,
+const defaultValues: LoanCalculatorFormInputValues = {
+  category: 'mortgage',
+  loanAmount: '',
+  interest: '',
+  termInYears: '',
   termInMonths: 0,
-  downPayment: 10,
+  downPayment: '',
   downPaymentType: DownPaymentType.PERCENT,
   desiredMonthlyPayment: 0,
   additionalMonthlyPayment: 0,

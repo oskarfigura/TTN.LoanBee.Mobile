@@ -1,17 +1,13 @@
 import React from 'react';
 import { act, create, ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { confirmResultLeave, setResultLeaveGuard } from '@/shared/lib/services/navigation/resultLeaveGuard';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockRouter = {
   back: jest.fn(),
   push: jest.fn(),
-};
-const mockNavigation = {
-  addListener: jest.fn(() => jest.fn()),
-  dispatch: jest.fn(),
+  replace: jest.fn(),
 };
 let mockParams: Record<string, string | undefined> = {};
 const mockRecordUsefulAction = jest.fn(() => Promise.resolve());
@@ -30,11 +26,7 @@ jest.mock('react-native', () => {
 });
 
 jest.mock('expo-router', () => ({
-  useFocusEffect: (callback: () => void | (() => void)) => {
-    React.useEffect(() => callback(), [callback]);
-  },
   useLocalSearchParams: () => mockParams,
-  useNavigation: () => mockNavigation,
   useRouter: () => mockRouter,
 }));
 
@@ -57,7 +49,11 @@ jest.mock('@/ads/BannerAd', () => ({
 }));
 
 jest.mock('@/features/calculator/components/LoanSummaryPanel', () => ({
-  LoanSummaryPanel: () => React.createElement('LoanSummaryPanel'),
+  LoanSummaryPanel: (props: Record<string, unknown>) => React.createElement('LoanSummaryPanel', props),
+}));
+
+jest.mock('@/features/calculator/components/ScenarioComparison', () => ({
+  ScenarioComparison: (props: Record<string, unknown>) => React.createElement('ScenarioComparison', props),
 }));
 
 jest.mock('@/shared/domain/loans/loanGroupFactory', () => ({
@@ -69,14 +65,6 @@ jest.mock('@/features/calculator/components/LoanCalculationView', () => ({
     React.createElement('LoanCalculationView', null, summaryContent)
   ),
 }));
-
-jest.mock('@/features/calculator/components/UnsavedResultModal', () => ({
-  UnsavedResultModal: (props: Record<string, unknown>) => (
-    React.createElement('UnsavedResultModal', props)
-  ),
-}));
-
-
 
 jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
@@ -141,10 +129,18 @@ const result = {
 };
 
 const formValues = {
+  category: 'mortgage',
   currency: 'GBP',
   loanAmount: 300000,
+  interest: 4.5,
+  termInYears: 25,
+  termInMonths: 0,
+  downPayment: 10,
+  downPaymentType: 'percent',
+  desiredMonthlyPayment: 0,
   additionalMonthlyPayment: 0,
   startDate: '2026-01-01',
+  calculationType: 'term',
 };
 
 const renderResultScreen = async (): Promise<ReactTestRenderer> => {
@@ -168,14 +164,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  setResultLeaveGuard(null);
   mockParams = {};
   jest.restoreAllMocks();
   jest.clearAllMocks();
 });
 
 describe('ResultScreen', () => {
-  it('shows a save action in the result header for unsaved calculations', async () => {
+  it('uses the result header to edit the calculation instead of duplicating save', async () => {
     mockParams = {
       mode: 'draft',
       result: JSON.stringify(result),
@@ -189,68 +184,72 @@ describe('ResultScreen', () => {
       onPress: () => void;
     }>;
 
-    expect(rightAction.props.accessibilityLabel).toBe('common.save');
+    expect(rightAction.props.accessibilityLabel).toBe('saved.edit');
 
     await act(async () => {
       rightAction.props.onPress();
     });
 
-    expect(mockRouter.push).toHaveBeenCalledWith({
-      pathname: '/saved/new',
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/calculate',
       params: expect.objectContaining({
-        result: mockParams.result,
-        formValues: mockParams.formValues,
         currency: 'GBP',
-        returnToResult: '1',
       }),
     });
   });
 
-  it('guards unsaved draft results and routes save-before-leaving to the save screen', async () => {
+  it('does not offer a second save concept because the calculation is already recent', async () => {
+    mockParams = {
+      mode: 'draft',
+      recentId: 'recent-1',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+    };
+    const renderer = await renderResultScreen();
+    const panel = renderer.root.find(node => String(node.type) === 'LoanSummaryPanel');
+
+    expect(panel.props.onSaveScenario).toBeUndefined();
+    expect(panel.props.onCompare).toEqual(expect.any(Function));
+    expect(panel.props.onTrack).toEqual(expect.any(Function));
+    expect(mockRecordUsefulAction).toHaveBeenCalledTimes(1);
+    expect(mockRequestReview).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render a leave-without-saving interruption', async () => {
     mockParams = {
       mode: 'draft',
       result: JSON.stringify(result),
       formValues: JSON.stringify(formValues),
       currency: 'GBP',
     };
+
     const renderer = await renderResultScreen();
-    const continueNavigation = jest.fn();
+
+    expect(renderer.root.findAll(node => String(node.type) === 'UnsavedResultModal')).toHaveLength(0);
+  });
+
+  it('promotes a calculation into tracking only when the user chooses Track', async () => {
+    mockParams = {
+      mode: 'draft',
+      recentId: 'recent-1',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+    };
+    const renderer = await renderResultScreen();
+    const panel = renderer.root.find(node => String(node.type) === 'LoanSummaryPanel');
 
     await act(async () => {
-      expect(confirmResultLeave(continueNavigation)).toBe(true);
-    });
-
-    const modal = renderer.root.find(node => String(node.type) === 'UnsavedResultModal');
-    expect(modal.props.visible).toBe(true);
-    expect(continueNavigation).not.toHaveBeenCalled();
-
-    await act(async () => {
-      modal.props.onSave();
+      panel.props.onTrack();
     });
 
     expect(mockRouter.push).toHaveBeenCalledWith({
       pathname: '/saved/new',
-      params: {
-        result: mockParams.result,
-        formValues: mockParams.formValues,
-        draftId: undefined,
+      params: expect.objectContaining({
+        recentId: 'recent-1',
         currency: 'GBP',
-        returnToResult: '1',
-      },
+      }),
     });
-    expect(mockRecordUsefulAction).toHaveBeenCalledTimes(1);
-    expect(mockRequestReview).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not guard stored recent calculations when leaving', async () => {
-    mockParams = {
-      mode: 'recent',
-      recentId: 'recent-1',
-      currency: 'GBP',
-    };
-
-    await renderResultScreen();
-
-    expect(confirmResultLeave(jest.fn())).toBe(false);
   });
 });

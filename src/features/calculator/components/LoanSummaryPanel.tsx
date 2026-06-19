@@ -27,10 +27,10 @@ interface Props {
    * calculation includes an additional payment.
    */
   mode?: 'saved' | 'draft';
-  /** Draft-mode quick actions (save / share / edit the calculation). */
-  onSave?: () => void;
+  /** Draft-mode actions: calculations already persist automatically in Recent. */
+  onCompare?: () => void;
+  onTrack?: () => void;
   onShare?: () => void;
-  onEdit?: () => void;
 }
 
 const getRemainingTermCaptionKey = (monthsRemaining: number) => {
@@ -72,9 +72,9 @@ export const LoanSummaryPanel = ({
   onTogglePinned,
   onTryOverpayments,
   mode = 'saved',
-  onSave,
+  onCompare,
+  onTrack,
   onShare,
-  onEdit,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const isDraft = mode === 'draft';
@@ -249,34 +249,41 @@ export const LoanSummaryPanel = ({
         </View>
       </View>
 
-      {/* Quick actions — save, share, or edit the calculation (draft only). The
-          saved view manages these from its own header / quick-action card. */}
+      {/* Calculations are already in Recent. The only explicit commitment here is
+          promoting one into tracked borrowing. */}
       {isDraft ? (
         <View style={styles.quickActionsCard}>
-          <Text style={styles.quickActionsTitle}>{t('loan.quickActions')}</Text>
+          <View style={styles.recentNotice}>
+            <Icon icon={IconName.ClockIcon} size={17} color={colours.secondary} strokeWidth={1.9} />
+            <Text style={styles.recentNoticeText}>{t('recent.savedAutomatically')}</Text>
+          </View>
           <View style={styles.quickActionsRow}>
-            {onSave ? (
+            {onCompare ? (
               <QuickActionTile
-                label={t('common.save')}
-                icon={<Icon icon={IconName.SaveIcon} size={21} color={colours.primary} />}
-                onPress={onSave}
+                label={t('compare.short')}
+                icon={<Icon icon={IconName.TrendUpIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
+                onPress={onCompare}
               />
             ) : null}
-            {onShare ? (
+            {onTrack ? (
               <QuickActionTile
-                label={t('share.short')}
-                icon={<Icon icon={IconName.ShareIcon} size={21} color={colours.primary} strokeWidth={1.9} />}
-                onPress={onShare}
-              />
-            ) : null}
-            {onEdit ? (
-              <QuickActionTile
-                label={t('saved.edit')}
-                icon={<Icon icon={IconName.EditIcon} size={21} color={colours.primary} strokeWidth={1.8} />}
-                onPress={onEdit}
+                label={t('recent.track')}
+                icon={<Icon icon={IconName.ArrowTrendingDownIcon} size={21} color={colours.primary} strokeWidth={1.8} />}
+                onPress={onTrack}
               />
             ) : null}
           </View>
+          {onShare ? (
+            <TouchableOpacity
+              onPress={onShare}
+              accessibilityRole="button"
+              activeOpacity={0.82}
+              style={styles.shareScenario}
+            >
+              <Icon icon={IconName.ShareIcon} size={17} color={colours.primary} strokeWidth={1.9} />
+              <Text style={styles.shareScenarioText}>{t('share.short')}</Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       ) : null}
     </View>
@@ -480,5 +487,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.xs,
+  },
+  recentNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  recentNoticeText: {
+    ...fontFaces.body.medium,
+    flex: 1,
+    fontSize: fontSizes.sm,
+    lineHeight: 18,
+    color: colours.textSecondary,
+  },
+  shareScenario: {
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  shareScenarioText: {
+    ...fontFaces.heading.semibold,
+    fontSize: fontSizes.sm,
+    color: colours.primary,
   },
 });

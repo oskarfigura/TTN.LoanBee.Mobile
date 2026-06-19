@@ -9,6 +9,7 @@ import { getEffectiveLoanAmount as computeEffectiveLoanAmount } from '@/shared/l
 import { advanceMonthsClamped, formatIsoDate } from '@/shared/lib/utils/date';
 
 export type RawFormValues = {
+  category?: 'mortgage' | 'loan';
   loanAmount: number;
   interest: number;
   termInYears?: number | null;
@@ -149,8 +150,9 @@ export const buildDraftLoanPreview = (
   const now = new Date().toISOString();
   const formSnapshot = normaliseFormSnapshot(formValues, currency);
   const resultSnapshot = buildResultSnapshot(result, baseline.totalInterestPaid);
+  const category = formValues.category ?? 'mortgage';
   const base = {
-    category: 'loan' as const,
+    category,
     lender: undefined,
     createdAt: now,
     updatedAt: now,
@@ -158,7 +160,9 @@ export const buildDraftLoanPreview = (
     formSnapshot,
     resultSnapshot,
   };
-  const initialDeal = buildInitialDeal('draft-deal', base);
+  const initialDeal = buildInitialDeal('draft-deal', base, {
+    source: category === 'mortgage' ? 'estimate' : undefined,
+  });
 
   return {
     schemaVersion: LOAN_GROUP_SCHEMA_VERSION,
@@ -167,8 +171,8 @@ export const buildDraftLoanPreview = (
     updatedAt: now,
     nickname: '',
     lender: undefined,
-    category: 'loan',
-    loanPurpose: DEFAULT_LOAN_PURPOSE,
+    category,
+    loanPurpose: category === 'loan' ? DEFAULT_LOAN_PURPOSE : undefined,
     currency,
     status: 'draft',
     pinnedToDashboard: false,

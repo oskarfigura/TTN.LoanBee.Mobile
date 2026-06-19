@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
@@ -12,7 +12,6 @@ import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
 import { CurrencyCode } from '@/shared/domain/currency/currencies';
 import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
 import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
-import { LoanPurposePicker } from '@/features/tracker/components/editing/LoanPurposePicker';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import {
@@ -26,7 +25,7 @@ import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
 import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { createLocalId } from '@/shared/lib/utils/id';
-import { colours, layout, spacing } from '@/shared/ui/theme';
+import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { useStoreReview } from '@/shared/lib/services/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
@@ -36,7 +35,6 @@ import {
   buildResultSnapshot,
   normaliseFormSnapshot,
 } from '@/shared/domain/loans/loanGroupFactory';
-import { DEFAULT_LOAN_PURPOSE } from '@/shared/domain/loans/loanPurpose';
 import { getDraftResultSession } from '@/shared/domain/results/draftResultStore';
 
 type LoanResult = ReturnType<typeof getLoanCalculations>;
@@ -89,17 +87,18 @@ export default function SaveNewLoanScreen() {
     : 12;
   const [nickname, setNickname] = useState('');
   const [lender, setLender] = useState('');
-  const [category, setCategory] = useState<LoanCategory>(recentCalculation?.category ?? 'loan');
-  const [loanPurpose, setLoanPurpose] = useState(DEFAULT_LOAN_PURPOSE);
+  const [category, setCategory] = useState<LoanCategory>(
+    recentCalculation?.category ?? formValues?.category ?? 'mortgage',
+  );
   const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? recentCalculation?.currency ?? 'GBP');
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const isMortgage = category === 'mortgage';
-  const screenTitle = isMortgage ? t('save.titleMortgage') : t('save.titleLoan');
-  const screenSubtitle = isMortgage ? t('save.subtitleMortgage') : t('save.subtitleLoan');
+  const screenTitle = isMortgage ? t('save.trackMortgageTitle') : t('save.trackLoanTitle');
+  const screenSubtitle = t('save.trackSubtitle');
 
   const handleSave = () => {
     if (!result || !formValues) return;
-    if (!nickname.trim()) return;
 
     const baseline = getLoanCalculations(
       formValues.loanAmount,
@@ -130,14 +129,16 @@ export default function SaveNewLoanScreen() {
       name: category === 'loan' ? t('mortgage.defaultFixedLoan') : t('mortgage.savedMortgageEstimate'),
       source: isMortgage ? 'estimate' : undefined,
     });
+    const generatedNickname = nickname.trim() || (
+      category === 'mortgage' ? t('track.defaultMortgageName') : t('track.defaultLoanName')
+    );
     const loan: SavedLoan = {
       id: createLocalId(),
       createdAt: now,
       updatedAt: now,
-      nickname: nickname.trim(),
+      nickname: generatedNickname,
       lender: lender || undefined,
       category,
-      loanPurpose: category === 'loan' ? loanPurpose : undefined,
       currency,
       mortgageTermInMonths,
       status: 'tracked',
@@ -187,18 +188,7 @@ export default function SaveNewLoanScreen() {
         leftAction={<HeaderCloseAction onPress={() => router.back()} />}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <FormSection title={screenTitle} accent>
-          <View style={styles.fieldGroup}>
-            <FieldLabel>{t('save.nickname')}</FieldLabel>
-            <InputSurface>
-              <AppTextInput
-                placeholder={t('save.nicknamePlaceholder')}
-                value={nickname}
-                onChangeText={setNickname}
-              />
-            </InputSurface>
-          </View>
-
+        <FormSection title={t('save.trackCalculationTitle')} accent>
           <View style={styles.fieldGroup}>
             <FieldLabel>{t('save.category')}</FieldLabel>
             <SegmentedControl
@@ -211,33 +201,54 @@ export default function SaveNewLoanScreen() {
             />
           </View>
 
-          {category === 'loan' ? (
-            <View style={styles.fieldGroup}>
-              <FieldLabel>{t('save.loanPurpose')}</FieldLabel>
-              <LoanPurposePicker value={loanPurpose} onChange={setLoanPurpose} />
-            </View>
-          ) : null}
-
-          <View style={styles.fieldGroup}>
-            <FieldLabel>{t('save.lender')}</FieldLabel>
-            <LenderTextInput value={lender} onChange={setLender} />
-          </View>
-
-          <View style={styles.fieldGroup}>
-            <FieldLabel>{t('save.currency')}</FieldLabel>
-            <CurrencyPicker value={currency} onChange={setCurrency} />
-          </View>
-
           <AppText variant="bodySm" tone="muted">
-            {isMortgage ? t('save.mortgageSnapshotHelp') : t('save.loanSnapshotHelp')}
+            {t('save.trackCalculationHelp')}
           </AppText>
         </FormSection>
 
+        <TouchableOpacity
+          style={styles.detailsToggle}
+          onPress={() => setDetailsOpen(open => !open)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: detailsOpen }}
+          activeOpacity={0.82}
+        >
+          <View style={styles.detailsCopy}>
+            <AppText variant="labelMd">{t('save.optionalDetails')}</AppText>
+            <AppText variant="bodySm" tone="muted">{t('save.optionalDetailsHelp')}</AppText>
+          </View>
+          <AppText variant="title3" tone="accent">{detailsOpen ? '−' : '+'}</AppText>
+        </TouchableOpacity>
+
+        {detailsOpen ? (
+          <FormSection>
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('save.nickname')}</FieldLabel>
+              <InputSurface>
+                <AppTextInput
+                  placeholder={isMortgage ? t('track.defaultMortgageName') : t('track.defaultLoanName')}
+                  value={nickname}
+                  onChangeText={setNickname}
+                />
+              </InputSurface>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('save.lender')}</FieldLabel>
+              <LenderTextInput value={lender} onChange={setLender} />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <FieldLabel>{t('save.currency')}</FieldLabel>
+              <CurrencyPicker value={currency} onChange={setCurrency} />
+            </View>
+          </FormSection>
+        ) : null}
+
         <Button
-          label={t('save.save')}
+          label={t('track.save')}
           onPress={handleSave}
-          disabled={!nickname.trim()}
-          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} />}
+          leftIcon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.white} size={18} />}
           style={styles.saveBtn}
         />
         <Button
@@ -265,6 +276,19 @@ const styles = StyleSheet.create({
   },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
   fieldGroup: { gap: spacing.xs },
+  detailsToggle: {
+    marginTop: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    padding: layout.cardPadding,
+    borderRadius: radii.card,
+    borderWidth: 1,
+    borderColor: colours.borderSoft,
+    backgroundColor: colours.surfaceMuted,
+  },
+  detailsCopy: { flex: 1, gap: spacing.xxs },
   saveBtn: { marginTop: spacing.lg },
   cancelBtn: { marginTop: spacing.xs },
 });

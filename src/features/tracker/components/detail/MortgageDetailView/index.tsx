@@ -50,7 +50,7 @@ import {
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
 import { LoanDeal, SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours } from '@/shared/ui/theme';
-import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate } from '@/shared/lib/utils/date';
+import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate, formatShortMonthYearRange } from '@/shared/lib/utils/date';
 
 type MortgageDetailTab = 'overview' | 'projection' | 'timeline';
 type ProjectionPreview = 'balance' | 'repayment' | 'cumulative' | 'schedule';
@@ -125,6 +125,11 @@ export const MortgageDetailView = ({
   // Borrowing that hasn't started yet has no real history to record or complete, so
   // the timeline tab and the event/history/completion actions are hidden until it begins.
   const isFutureStart = Boolean(activeDeal && activeDeal.startDate > todayIso);
+  // The active deal's fixed term has lapsed but no lender-confirmed closing balance has been
+  // entered yet — surfaced as a tappable hint in the timeline card (was a top-of-screen alert).
+  const needsDealCompletion = Boolean(
+    activeDeal && activeDeal.endDate < todayIso && !activeDeal.completion,
+  );
   const tabs: Array<{ value: MortgageDetailTab; label: string }> = [
     { value: 'overview', label: t('mortgage.overview') },
     { value: 'projection', label: t('mortgage.projection') },
@@ -210,7 +215,13 @@ export const MortgageDetailView = ({
   const goToNewCalculation = () => {
     setAddDrawerVisible(false);
     setActionDrawerVisible(false);
-    router.push('/calculate' as never);
+    router.push({
+      pathname: '/calculate' as never,
+      params: {
+        fromTracked: '1',
+        returnTo: `/saved/${loan.id}`,
+      },
+    });
   };
   const openProjectionPreview = useCallback((preview: ProjectionPreview) => {
     setProjectionPreview(preview);
@@ -361,9 +372,11 @@ export const MortgageDetailView = ({
             asOf={asOf}
             isFutureStart={isFutureStart}
             overpaymentDeal={overpaymentDeal}
+            needsDealCompletion={needsDealCompletion}
             onTogglePinned={onTogglePinned}
             onAddDeal={() => router.push(`/saved/${loan.id}/deals/new`)}
             onOpenTimeline={() => switchTab('timeline')}
+            onCompleteDeal={() => router.push(`/saved/${loan.id}/complete-current`)}
           />
 
           <MortgageQuickActionsRow
@@ -623,9 +636,11 @@ const MortgageSummaryPanel = ({
   asOf,
   isFutureStart,
   overpaymentDeal,
+  needsDealCompletion,
   onTogglePinned,
   onAddDeal,
   onOpenTimeline,
+  onCompleteDeal,
 }: {
   loan: SavedLoan;
   summary: LoanInsightSummary;
@@ -637,9 +652,11 @@ const MortgageSummaryPanel = ({
   asOf: Date;
   isFutureStart: boolean;
   overpaymentDeal?: LoanDeal;
+  needsDealCompletion: boolean;
   onTogglePinned: () => void;
   onAddDeal: () => void;
   onOpenTimeline: () => void;
+  onCompleteDeal: () => void;
 }) => {
   const { t } = useTranslation();
 
@@ -682,8 +699,10 @@ const MortgageSummaryPanel = ({
           currentDeal={currentDeal}
           publishedDeals={publishedDeals}
           projection={projection}
+          needsDealCompletion={needsDealCompletion}
           onAddDeal={onAddDeal}
           onOpenTimeline={onOpenTimeline}
+          onCompleteDeal={onCompleteDeal}
         />
       ) : null}
     </View>
@@ -958,15 +977,19 @@ const CompactTimelineSummary = ({
   currentDeal,
   publishedDeals,
   projection,
+  needsDealCompletion,
   onAddDeal,
   onOpenTimeline,
+  onCompleteDeal,
 }: {
   loan: SavedLoan;
   currentDeal?: LoanDeal;
   publishedDeals: LoanDeal[];
   projection: MortgageProjection;
+  needsDealCompletion: boolean;
   onAddDeal: () => void;
   onOpenTimeline: () => void;
+  onCompleteDeal: () => void;
 }) => {
   const { t, i18n } = useTranslation();
   const firstDeal = publishedDeals[0];
@@ -979,6 +1002,7 @@ const CompactTimelineSummary = ({
     label: string;
     title: string;
     meta: string;
+    dates?: string;
   }> = [
     {
       key: 'saved-start',
@@ -997,6 +1021,9 @@ const CompactTimelineSummary = ({
       meta: currentDeal
         ? `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(currentDeal.interestRate)} · ${formatDealDuration(currentDeal, i18n.language)}`
         : `${formatCurrency(projection.currentBalance, loan.currency)} · ${formatRate(loan.formSnapshot.interest)}`,
+      dates: currentDeal
+        ? formatShortMonthYearRange(currentDeal.startDate, currentDeal.endDate, i18n.language)
+        : undefined,
     },
     {
       key: 'projected-end',
@@ -1026,6 +1053,26 @@ const CompactTimelineSummary = ({
           />
         ) : null}
       </View>
+      {needsDealCompletion ? (
+        <TouchableOpacity
+          style={styles.completeHintBubble}
+          onPress={onCompleteDeal}
+          activeOpacity={0.84}
+          accessibilityRole="button"
+          accessibilityLabel={t('mortgage.completeCurrentDeal')}
+        >
+          <View style={styles.completeHintIcon}>
+            <Icon icon={IconName.ClockCheckIcon} size={16} color={colours.warning} strokeWidth={1.9} />
+          </View>
+          <View style={styles.completeHintCopy}>
+            <Text style={styles.completeHintTitle}>{t('mortgage.completeCurrentDeal')}</Text>
+            <Text style={styles.completeHintBody} numberOfLines={2}>
+              {t('mortgage.warningIncompleteActiveDealMessage')}
+            </Text>
+          </View>
+          <Icon icon={IconName.ChevronRightIcon} size={14} color={colours.warning} />
+        </TouchableOpacity>
+      ) : null}
       {!firstDeal ? (
         <Text style={styles.summaryBodyText}>
           {t('mortgage.noDealChangesBody')}
@@ -1050,8 +1097,16 @@ const CompactTimelineSummary = ({
               ]}
             />
             <View style={styles.summaryTimelineCopy}>
-              <Text style={styles.summaryTimelineLabel}>{item.label}</Text>
+              <View style={styles.summaryTimelineLabelRow}>
+                <Text style={styles.summaryTimelineLabel}>{item.label}</Text>
+                {item.marker === 'future' ? (
+                  <Icon icon={IconName.FlagIcon} size={13} color={colours.textSecondary} strokeWidth={1.9} />
+                ) : null}
+              </View>
               <Text style={styles.summaryTimelineTitle} numberOfLines={1}>{item.title}</Text>
+              {item.dates ? (
+                <Text style={styles.summaryTimelineDates} numberOfLines={1}>{item.dates}</Text>
+              ) : null}
               <Text style={styles.summaryTimelineMeta} numberOfLines={1}>{item.meta}</Text>
             </View>
           </TouchableOpacity>

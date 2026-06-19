@@ -56,6 +56,8 @@ export interface TrackMortgageFormValues {
   repaymentType: MortgageRepaymentType;
   /** Months from the selected start date until the borrowing is fully repaid. */
   remainingTermInMonths: number;
+  /** Lender-confirmed scheduled payment, when the user knows it. */
+  monthlyPayment?: number;
   /** When the current fixed/tracker deal ends. Optional; powers the remortgage reminder. */
   dealEndDate?: string;
   /** Optional enrichment: a recurring monthly overpayment already in place. */
@@ -112,12 +114,14 @@ export const buildTrackedMortgageFromForm = (
   );
   const dealDuration = splitMonths(dealDurationMonths);
   const endDate = addMonthsToIsoDate(startDate, dealDurationMonths);
-  const monthlyPayment = calculateDealMonthlyPayment(
-    values.currentBalance,
-    values.interestRate,
-    remainingTermInMonths,
-    values.repaymentType,
-  );
+  const monthlyPayment = values.monthlyPayment && values.monthlyPayment > 0
+    ? values.monthlyPayment
+    : calculateDealMonthlyPayment(
+      values.currentBalance,
+      values.interestRate,
+      remainingTermInMonths,
+      values.repaymentType,
+    );
 
   const dealId = createLocalId('deal');
   const deal: LoanDeal = {
@@ -221,6 +225,7 @@ export interface TrackMortgageSeed {
   currentBalance: number;
   interestRate: number;
   repaymentType: MortgageRepaymentType;
+  monthlyPayment: number;
   remainingTermInMonths: number;
   dealEndDate?: string;
   regularOverpayment: number;
@@ -273,6 +278,7 @@ export const deriveTrackSeedFromLoan = (loan: LoanGroup, asOfIso: string): Track
     currentBalance,
     interestRate: currentDeal?.interestRate ?? loan.formSnapshot.interest,
     repaymentType: currentDeal?.repaymentType ?? 'repayment',
+    monthlyPayment: currentDeal?.monthlyPayment ?? loan.resultSnapshot.monthlyPayments,
     remainingTermInMonths,
     // Only surface a still-future deal end; a past one is no longer the current deal.
     dealEndDate: currentDeal && currentDeal.endDate > asOfIso ? currentDeal.endDate : undefined,

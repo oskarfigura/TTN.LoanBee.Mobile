@@ -1,5 +1,10 @@
 # Plan — Unified journeys + one start-date-driven mortgage tracking flow
 
+> Historical planning note. The June 2026 conversion-focused implementation
+> subsequently separated automatic recent calculations from tracked borrowing and
+> simplified `/saved/track` around current balance, rate, and actual payment or
+> remaining term. See `developer-action-map.md` for the current behaviour.
+
 **Target worktree:** Codex's `codex/loanbee-journeys` (which already holds intent-first
 realignment groundwork, Recent Calculations, and About-in-Settings). This plan supersedes
 both `docs/PLAN-unified-add-tracking.md` and `docs/PLAN-realign-intent-first.md`.

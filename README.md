@@ -64,7 +64,8 @@ Most developers will want one of these first:
 - **Three charts** — yearly stacked bar (principal vs interest), donut breakdown, cumulative area
 - **Four currencies** — GBP, PLN, EUR, USD; per-loan selection, language-defaulted global setting
 - **Tracked borrowing** — MMKV-backed saved loans and mortgages, dashboard pinning, deal chains, events, and progress views
-- **Recent calculations** — automatic calculation history kept separate from tracked borrowing until the user saves it
+- **Recent calculations** — the latest calculations are saved automatically and kept separate from tracked borrowing
+- **Inline comparison** — adjust rate, term, or overpayment beside the current result without creating a tracked account
 - **Pinned home dashboard** — carousel of pinned loans and mortgages on the Home tab when the user has tracked borrowing
 - **Shareable calculations** — Results and saved-detail views share the same web URL format, with native deep link entry through `/calculator/share`
 - **Bilingual** — English and Polish, device-detected with manual override
@@ -96,10 +97,10 @@ The app shell is file-based Expo Router, but the current action surface is broad
 
 | Area | Primary routes | Notes |
 |---|---|---|
-| Visible tabs | `/(tabs)/index`, `/(tabs)/saved`, `/(tabs)/settings` | Bottom-nav destinations |
+| Visible tabs | `/(tabs)/index`, `/(tabs)/saved`, `/(tabs)/calculate`, `/(tabs)/settings` | Bottom-nav destinations; Calculate opens directly on the form |
 | Hidden tab route | `/(tabs)/result` | Results screen is inside the tab navigator but hidden from the tab bar |
 | Onboarding / deep link / about | `/guide`, `/calculator/share`, `/about` | First-run flow, shared-calculation entrypoint, and Settings-entered formula/about content |
-| Saved loan routes | `/saved/new`, `/saved/track`, `/saved/[id]`, `/saved/[id]/edit`, `/saved/[id]/overpayments` | Save, start tracking, review, edit, and overpayment flows |
+| Saved loan routes | `/saved/new`, `/saved/track`, `/saved/[id]`, `/saved/[id]/edit`, `/saved/[id]/overpayments` | Promote a calculation to tracking, start from current lender facts, review, edit, and manage overpayments |
 | Mortgage tracking routes | `/saved/[id]/deals/new`, `/saved/[id]/deals/[dealId]`, `/saved/[id]/events/new`, `/saved/[id]/events/[eventId]`, `/saved/[id]/complete-current` | Deal lifecycle, event logging, and completion flows |
 
 ## Home Tab Modes
@@ -108,8 +109,9 @@ The Home tab is stateful:
 
 - If the guide has not been seen yet, the app waits for the consent gate and pushes `/guide?firstRun=1`.
 - If at least one saved loan is pinned and `calculator=1` is not present, Home shows the pinned borrowing dashboard.
-- Otherwise Home shows the unified intent chooser: **Plan a new one** opens the type-agnostic calculator, while **Track one I have** opens the start-date-driven Track form.
-- Loan/Mortgage is not chosen up front. It is selected later in `/saved/new` for saved calculations, or inside `/saved/track` for tracked borrowing.
+- Otherwise Home shows the intent chooser: **Plan a new one** opens the calculator, while **Track one I have** asks Loan/Mortgage and opens the current-state Track form.
+- The dedicated Calculate tab bypasses the chooser and opens the form immediately.
+- Results already live in Recent Calculations. `/saved/new` is only used when the user explicitly promotes a calculation into tracked borrowing.
 - Pressing the Home tab again intentionally returns the user to dashboard mode via a route param reset.
 
 ## Project Structure
@@ -120,14 +122,14 @@ app/
   about.tsx                # Formula/about content entered from Settings
   (tabs)/
     index.tsx              # Home tab: guide gate, dashboard mode, intent chooser, calculator mode
-    result.tsx             # Hidden results route with save/share + leave guard
-    saved.tsx              # Tracked borrowing list plus Recent calculations
+    result.tsx             # Hidden results route with compare, track, and share actions
+    saved.tsx              # Tracked borrowing list plus Recent calculations entry
     settings.tsx           # Language, currency, guide/about, version
   guide.tsx                # First-run guide
   calculator/share.tsx     # Deep link / shared calculation entrypoint
   saved/
     new.tsx                # Save a calculation as a named profile
-    track.tsx              # Track loan/mortgage from a past, current, or future deal start date
+    track.tsx              # Track current borrowing from balance, rate, and payment or remaining term
     [id].tsx               # View saved loan detail
     [id]/edit.tsx          # Edit nickname / lender / category / currency
     [id]/overpayments/     # Simple saved-loan overpayment editor
