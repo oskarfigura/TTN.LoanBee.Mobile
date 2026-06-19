@@ -335,6 +335,8 @@
     "about": "O LoanBee",
     "howItWorksBody": "Zobacz krótki przewodnik po planowaniu, śledzeniu i nadpłatach.",
     "aboutBody": "Zobacz wzór, zastrzeżenie i szczegóły aplikacji.",
+    "contact": "Kontakt",
+    "contactBody": "Uzyskaj pomoc lub wyślij opinię, zapytanie handlowe albo pytanie.",
     "devDataTitle": "Portfolio demonstracyjne",
     "devDataHelp": "Tylko w trybie deweloperskim. Przykładowe kredyty na dom, samochód, rower i codzienne cele.",
     "devDataLoad": "Wczytaj portfolio demonstracyjne",
@@ -380,6 +382,40 @@
     "dataImportError_invalidShape": "Ten plik nie jest prawidłową kopią zapasową LoanBee.",
     "dataImportError_empty": "Ta kopia zapasowa nie zawiera żadnych zapisanych kredytów.",
     "copyright": "Copyright © 2026 THE TECH NARRATIVE LTD. All rights reserved."
+  },
+  "contact": {
+    "title": "Kontakt",
+    "introTitle": "Chętnie Cię wysłuchamy",
+    "intro": "Wybierz temat poniżej, a Twoja aplikacja pocztowa otworzy się z gotową wiadomością. Czytamy każdy e-mail.",
+    "sentTo": "Twój e-mail trafi na adres",
+    "fallbackTitle": "Nie znaleziono aplikacji pocztowej",
+    "fallbackMessage": "Nie udało się otworzyć aplikacji pocztowej na tym urządzeniu. Możesz napisać do nas bezpośrednio na adres:",
+    "categories": {
+      "support": {
+        "label": "Pomoc",
+        "body": "Coś nie działa? Uzyskaj pomoc.",
+        "subject": "[LoanBee] Pomoc",
+        "prompt": "Opisz napotkany problem:"
+      },
+      "feedback": {
+        "label": "Opinia",
+        "body": "Podziel się pomysłami na ulepszenie LoanBee.",
+        "subject": "[LoanBee] Opinia",
+        "prompt": "Chętnie poznamy Twoją opinię:"
+      },
+      "sales": {
+        "label": "Zapytanie handlowe",
+        "body": "Współpraca i zapytania biznesowe.",
+        "subject": "[LoanBee] Zapytanie handlowe",
+        "prompt": "Opisz swoje zapytanie:"
+      },
+      "question": {
+        "label": "Pytanie",
+        "body": "Zapytaj nas o cokolwiek dotyczącego aplikacji.",
+        "subject": "[LoanBee] Pytanie",
+        "prompt": "Co chciałbyś wiedzieć?"
+      }
+    }
   },
   "disclaimer": {
     "label": "Zastrzeżenie:",
