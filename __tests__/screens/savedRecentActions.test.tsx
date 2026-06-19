@@ -155,7 +155,7 @@ jest.mock('@/shared/ui/components/Icon', () => ({
 }));
 
 const renderRecent = async (): Promise<ReactTestRenderer> => {
-  const RecentScreen = (await import('../../app/saved/recent')).default;
+  const RecentScreen = (await import('../../app/(tabs)/saved/recent')).default;
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
@@ -237,8 +237,12 @@ describe('Recent calculations page', () => {
     });
 
     expect(mockRouter.push).toHaveBeenCalledWith({
-      pathname: '/result',
-      params: { mode: 'recent', recentId: 'recent-1' },
+      pathname: '/calculate/result',
+      params: {
+        mode: 'recent',
+        recentId: 'recent-1',
+        returnTo: '/saved/recent',
+      },
     });
 
     await act(async () => {
@@ -300,8 +304,12 @@ describe('Recent calculations page', () => {
     });
 
     expect(mockRouter.push).not.toHaveBeenCalledWith({
-      pathname: '/result',
-      params: { mode: 'recent', recentId: 'recent-1' },
+      pathname: '/calculate/result',
+      params: {
+        mode: 'recent',
+        recentId: 'recent-1',
+        returnTo: '/saved/recent',
+      },
     });
   });
 

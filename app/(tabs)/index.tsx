@@ -121,6 +121,17 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     returnTo?: string;
   }>();
   const isCalculateTab = mode === 'calculate';
+  const resultReturnTo = useMemo(() => {
+    if (!isCalculateTab) return '/';
+    if (params.fromResult !== '1' || !params.returnResultParams) return undefined;
+
+    try {
+      const returnParams = JSON.parse(params.returnResultParams) as { returnTo?: string };
+      return returnParams.returnTo;
+    } catch {
+      return undefined;
+    }
+  }, [isCalculateTab, params.fromResult, params.returnResultParams]);
   const initialEditValues = useMemo(() => {
     if (!params.editValues) return undefined;
     try {
@@ -245,11 +256,11 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
           ? JSON.parse(params.returnResultParams) as Record<string, string>
           : {};
         router.replace({
-          pathname: '/result' as never,
+          pathname: '/calculate/result' as never,
           params: returnParams,
         });
       } catch {
-        router.replace('/result' as never);
+        router.replace('/calculate/result' as never);
       }
       return;
     }
@@ -307,8 +318,11 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     );
 
     router.push({
-      pathname: '/result' as never,
-      params: beginDraftResult(result, values, values.currency as CurrencyCode),
+      pathname: '/calculate/result' as never,
+      params: {
+        ...beginDraftResult(result, values, values.currency as CurrencyCode),
+        ...(resultReturnTo ? { returnTo: resultReturnTo } : {}),
+      },
     });
   };
 

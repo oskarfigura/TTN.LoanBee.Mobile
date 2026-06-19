@@ -71,16 +71,14 @@ export default function RootLayout() {
               <AdProvider>
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="about" />
                   <Stack.Screen name="guide" />
+                  <Stack.Screen name="calculator/share" />
                   <Stack.Screen
                     name="saved/new"
                     options={{
                       presentation: 'modal',
                     }}
                   />
-                  <Stack.Screen name="saved/[id]" />
-                  <Stack.Screen name="saved/recent" />
                   <Stack.Screen
                     name="saved/track"
                     options={{
@@ -92,6 +90,7 @@ export default function RootLayout() {
                   />
                   <Stack.Screen name="saved/[id]/edit" />
                   <Stack.Screen name="saved/[id]/overpayments/index" />
+                  <Stack.Screen name="saved/[id]/lump-sum/new" />
                   <Stack.Screen
                     name="saved/[id]/deals/new"
                     options={{
@@ -99,6 +98,7 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen name="saved/[id]/deals/[dealId]" />
+                  <Stack.Screen name="saved/[id]/deals/[dealId]/overpayments" />
                   <Stack.Screen
                     name="saved/[id]/events/new"
                     options={{

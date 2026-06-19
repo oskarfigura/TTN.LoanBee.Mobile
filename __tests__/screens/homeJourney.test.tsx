@@ -122,6 +122,21 @@ const findAllByMockType = (renderer: ReactTestRenderer, type: string): ReactTest
   renderer.root.findAll(node => String(node.type) === type)
 );
 
+const formValues = {
+  category: 'mortgage',
+  currency: 'GBP',
+  loanAmount: 300000,
+  interest: 4.5,
+  termInYears: 25,
+  termInMonths: 0,
+  downPayment: 10,
+  downPaymentType: 'percent',
+  desiredMonthlyPayment: 0,
+  additionalMonthlyPayment: 0,
+  startDate: '2026-01-01',
+  calculationType: 'term',
+};
+
 const renderHome = async (): Promise<ReactTestRenderer> => {
   const HomeScreen = (await import('../../app/(tabs)/index')).default;
   let renderer: ReactTestRenderer | undefined;
@@ -168,6 +183,20 @@ describe('Home intent journey', () => {
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(1);
     expect(textContent(renderer.root)).not.toContain('journey.intentTitle');
     expect(header.props.leftAction).toBeUndefined();
+  });
+
+  it('keeps direct Calculate results in the Calculate stack', async () => {
+    const renderer = await renderCalculate();
+    const loanForm = findAllByMockType(renderer, 'LoanForm')[0];
+
+    await act(async () => {
+      loanForm.props.onSubmit(formValues);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/calculate/result',
+      params: expect.not.objectContaining({ returnTo: expect.anything() }),
+    });
   });
 
   it('shows an explicit return action when Calculate was opened from a tracked view', async () => {
@@ -222,12 +251,37 @@ describe('Home intent journey', () => {
     });
 
     expect(mockRouter.replace).toHaveBeenCalledWith({
-      pathname: '/result',
+      pathname: '/calculate/result',
       params: {
         mode: 'draft',
         draftId: 'draft-1',
         currency: 'GBP',
       },
+    });
+  });
+
+  it('preserves a result return target after recalculating edited inputs', async () => {
+    mockParams = {
+      fromResult: '1',
+      editValues: JSON.stringify(formValues),
+      returnResultParams: JSON.stringify({
+        mode: 'recent',
+        recentId: 'recent-1',
+        returnTo: '/saved/recent',
+      }),
+    };
+    const renderer = await renderCalculate();
+    const loanForm = findAllByMockType(renderer, 'LoanForm')[0];
+
+    await act(async () => {
+      loanForm.props.onSubmit(formValues);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/calculate/result',
+      params: expect.objectContaining({
+        returnTo: '/saved/recent',
+      }),
     });
   });
 
@@ -246,6 +300,24 @@ describe('Home intent journey', () => {
 
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(1);
     expect(mockRouter.push).not.toHaveBeenCalled();
+  });
+
+  it('returns Home-originated results to Home', async () => {
+    const renderer = await renderHome();
+
+    await act(async () => {
+      findTouchableByText(renderer, 'journey.calculateTitle').props.onPress();
+    });
+    const loanForm = findAllByMockType(renderer, 'LoanForm')[0];
+
+    await act(async () => {
+      loanForm.props.onSubmit(formValues);
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/calculate/result',
+      params: expect.objectContaining({ returnTo: '/' }),
+    });
   });
 
   it('routes through the track step 2 to the category-specific form', async () => {

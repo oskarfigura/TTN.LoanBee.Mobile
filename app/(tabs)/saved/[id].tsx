@@ -141,7 +141,7 @@ export default function LoanDetailScreen() {
 
   if (!loan || !result) {
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <SafeAreaView style={styles.safe} edges={[]}>
         <ScreenHeader
           title={t('saved.loanDetail')}
           variant="detail"
@@ -237,7 +237,7 @@ export default function LoanDetailScreen() {
     );
 
     return (
-      <SafeAreaView style={styles.safe} edges={['bottom']}>
+      <SafeAreaView style={styles.safe} edges={[]}>
         <ScreenHeader
           title={t('mortgage.summaryTitle')}
           variant="detail"
@@ -323,7 +323,7 @@ export default function LoanDetailScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('loan.summaryTitle')}
         variant="detail"

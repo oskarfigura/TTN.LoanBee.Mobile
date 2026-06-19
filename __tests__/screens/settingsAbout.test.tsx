@@ -139,7 +139,7 @@ const textContent = (node: ReactTestInstance | string | number | null | undefine
 };
 
 const renderSettings = async (): Promise<ReactTestRenderer> => {
-  const SettingsScreen = (await import('../../app/(tabs)/settings')).default;
+  const SettingsScreen = (await import('../../app/(tabs)/settings/index')).default;
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
@@ -201,7 +201,7 @@ describe('Settings About route', () => {
       aboutRow.props.onPress();
     });
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/about');
+    expect(mockRouter.push).toHaveBeenCalledWith('/settings/about');
   });
 
   it('keeps About out of the visible tab layout', () => {

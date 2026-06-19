@@ -12,15 +12,17 @@ For detailed mortgage-tracker behaviour, validation, and edge cases, also read [
 | Route | Purpose | Main actions |
 |---|---|---|
 | `/(tabs)/index` | Home tab | Show the pinned borrowing dashboard, or open the guided calculator/tracking setup |
-| `/(tabs)/result` | Hidden result tab | Review, compare, share, or deliberately start tracking an automatically saved recent calculation |
-| `/(tabs)/saved` | Tracked list + Recent entry | Open tracked borrowing or the separate Recent Calculations history |
-| `/(tabs)/settings` | Settings tab | Change language/currency, reopen guide/about, manage data |
-| `/about` | Formula/about route | Read product explanation, FAQ, and disclaimer from Settings |
+| `/(tabs)/calculate/index` | Calculate tab | Open the calculator form |
+| `/(tabs)/calculate/result` | Calculate result | Review, compare, share, or deliberately start tracking an automatically saved recent calculation |
+| `/(tabs)/saved/index` | Tracked tab | Open tracked borrowing or the separate Recent Calculations history |
+| `/(tabs)/saved/recent` | Recent calculations | Reopen, track, or delete recent calculations |
+| `/(tabs)/saved/[id]` | Saved loan detail | Review loan or mortgage, share, rename, delete, pin, open child flows |
+| `/(tabs)/settings/index` | Settings tab | Change language/currency, reopen guide/about, manage data |
+| `/(tabs)/settings/about` | Formula/about route | Read product explanation, FAQ, and disclaimer from Settings |
 | `/guide` | Onboarding walkthrough | Mark guide seen, jump into calculator |
 | `/calculator/share` | Shared-calculation entrypoint | Parse deep link / share URL and route into Result |
 | `/saved/new` | Promote calculation to tracking | Choose Loan/Mortgage and optionally add a name/lender before creating tracked borrowing |
 | `/saved/track` | Current-state tracking setup | Start from current balance, rate, and actual payment or remaining term |
-| `/saved/[id]` | Saved loan detail | Review loan or mortgage, share, rename, delete, pin, open child flows |
 | `/saved/[id]/edit` | Saved loan editor | Edit metadata and jump back to calculator for recalculation |
 | `/saved/[id]/overpayments` | Loan overpayment editor | Adjust simple saved-loan overpayment inputs |
 | `/saved/[id]/deals/new` | Mortgage deal creator | Start first/current/next deal draft |
@@ -31,12 +33,14 @@ For detailed mortgage-tracker behaviour, validation, and edge cases, also read [
 
 ## Root navigation wiring
 
-`app/_layout.tsx` owns the root stack and registers the non-tab routes. The current stack shape matters because several actions rely on modal presentation or hidden routes:
+`app/_layout.tsx` owns the focused-task stack above the four-tab shell. Each browsing tab that has child pages owns a nested stack:
 
 - `saved/new`, `saved/track`, `saved/[id]/deals/new`, `saved/[id]/events/new`, and `saved/[id]/complete-current` open as modals.
-- The Results screen lives inside the tab navigator as `/(tabs)/result`, but it is hidden from the tab bar with `href: null`.
-- `/about` sits above the tab shell and is entered from Settings.
-- `guide` and all `saved/*` detail routes sit above the tab shell and can be entered from multiple tabs.
+- Calculate owns `/calculate` and `/calculate/result`, so Results always select Calculate.
+- Tracked owns `/saved`, `/saved/recent`, and `/saved/[id]`, so browsing durable borrowing content keeps the bottom nav visible.
+- Settings owns `/settings` and `/settings/about`.
+- Guide, shared-link handoff, save/track setup, and all edit/deal/event/overpayment/completion routes sit above the tab shell and hide the bottom nav.
+- Results carry an optional `returnTo` destination for Home-, Recent-, and shared-link-originated flows. Header and hardware Back both honour it.
 
 ## Home tab modes
 
@@ -70,10 +74,10 @@ Related behaviours:
 ### 2. Plan a new one -> review/compare -> track if useful
 
 - Entry: Home tab → Plan a new one
-- Files: `app/(tabs)/index.tsx`, `app/(tabs)/result.tsx`, `app/(tabs)/saved.tsx`, `app/saved/new.tsx`
+- Files: `app/(tabs)/index.tsx`, `app/(tabs)/calculate/result.tsx`, `app/(tabs)/saved/index.tsx`, `app/saved/new.tsx`
 - State changes:
   - calculator submits pure-TS `getLoanCalculations(...)`
-  - draft result params are passed into the hidden Result route and a `RecentCalculation` is persisted
+  - draft result params are passed into `/calculate/result` and a `RecentCalculation` is persisted
   - Result can compare rate/term/overpayment changes inline
   - every result is already stored automatically in Recent Calculations
   - **Track** opens `/saved/new` and explicitly promotes the calculated figures into tracked borrowing
@@ -108,7 +112,7 @@ Related behaviours:
 ### 5. Review and manage a saved loan
 
 - Entry: Tracked tab, or post-save redirect
-- Files: `app/saved/[id].tsx`, `src/features/tracker/components/detail/MortgageDetailView/index.tsx`
+- Files: `app/(tabs)/saved/[id].tsx`, `src/features/tracker/components/detail/MortgageDetailView/index.tsx`
 - Shared actions:
   - share the original calculation URL with loan/mortgage-specific share copy
   - rename

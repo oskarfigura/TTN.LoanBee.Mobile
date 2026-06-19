@@ -46,8 +46,11 @@ export default function SharedCalculationScreen() {
     );
 
     router.replace({
-      pathname: '/result' as never,
-      params: beginDraftResult(result, values as LoanCalculatorFormValues, values.currency as CurrencyCode),
+      pathname: '/calculate/result' as never,
+      params: {
+        ...beginDraftResult(result, values as LoanCalculatorFormValues, values.currency as CurrencyCode),
+        returnTo: '/',
+      },
     });
   }, [params, router]);
 
