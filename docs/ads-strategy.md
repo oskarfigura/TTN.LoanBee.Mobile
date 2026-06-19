@@ -8,6 +8,23 @@ The guiding principle: **monetise calm moments, never interrupt a user mid-task.
 New users and engaged tracker users are the cohorts that drive growth, so the
 policy deliberately under-shows to them.
 
+## TL;DR
+
+- **Banners** — passive, bottom of the result screen. Show from launch (once
+  consent resolves). No frequency limits.
+- **Interstitials (organic)** — full-screen, shown only when you *land on a calm
+  tab* (Home/Saved) after doing engagement work. Never mid-task. Gated by: past
+  the new-user grace period (≥5 lifetime actions **and** ≥24h), ≥4 actions since
+  the last one, a 10-min cooldown, and ≤5/day.
+- **Interstitial (CSV export)** — CSV export is a **premium feature**, so it
+  **always** shows an ad first, ignoring all the limits above. If no ad can load
+  it proceeds anyway (never blocks the export).
+- **Where ads never appear**: the result screen (interstitial), Settings,
+  onboarding, share, and for brand-new users (organic interstitials only).
+- **Personalisation** — off by default; only personalised with the user's consent
+  (iOS ATT + GDPR/UMP). **iOS** ads are off entirely until `admobIosEnabled` is set.
+- **Future**: a **PRO (ad-free) tier** will remove all ads, including the CSV gate.
+
 ## Ad formats
 
 | Format | Where it renders | Intrusiveness | Gate |
