@@ -108,7 +108,9 @@ jest.mock('@/features/calculator/components/CurrencyPicker', () => ({
   CurrencyPicker: (props: Record<string, unknown>) => React.createElement('CurrencyPicker', props),
 }));
 
-
+jest.mock('@/shared/ui/components/ChoiceTabs', () => ({
+  ChoiceTabs: (props: Record<string, unknown>) => React.createElement('ChoiceTabs', props),
+}));
 
 
 jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
@@ -162,6 +164,33 @@ afterEach(() => {
 });
 
 describe('Settings About route', () => {
+  it('uses one card treatment for every Settings section', async () => {
+    const renderer = await renderSettings();
+    const cards = renderer.root.findAll(node => String(node.type) === 'Card');
+
+    expect(cards).toHaveLength(5);
+    cards.forEach(card => {
+      expect(card.props.variant).toBeUndefined();
+    });
+  });
+
+  it('uses the shared calculator-style tabs for language selection', async () => {
+    const renderer = await renderSettings();
+    const languageTabs = renderer.root.find(node => String(node.type) === 'ChoiceTabs');
+
+    expect(languageTabs.props.value).toBe('en');
+    expect(languageTabs.props.options).toEqual([
+      { label: 'English', value: 'en' },
+      { label: 'Polski', value: 'pl' },
+    ]);
+
+    await act(async () => {
+      languageTabs.props.onChange('pl');
+    });
+
+    expect(mockSetLanguage).toHaveBeenCalledWith('pl');
+  });
+
   it('opens About from Settings', async () => {
     const renderer = await renderSettings();
     const aboutRow = renderer.root.find(node => (

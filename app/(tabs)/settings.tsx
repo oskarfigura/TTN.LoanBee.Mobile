@@ -11,7 +11,7 @@ import { useLocale } from '@/shared/lib/hooks/useLocale';
 import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
 import { AppText } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
-import { SegmentedControl } from '@oskarfigura/ui-native';
+import { ChoiceTabs } from '@/shared/ui/components/ChoiceTabs';
 import { HeaderBackAction } from '@/shared/ui/components/HeaderBackAction';
 import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
@@ -225,9 +225,9 @@ export default function SettingsScreen() {
         ) : undefined}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <Card style={styles.section} variant="accent" padding={layout.cardPadding}>
+        <Card style={styles.section} padding={layout.cardPadding}>
           <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>{t('settings.language')}</AppText>
-          <SegmentedControl
+          <ChoiceTabs
             value={language}
             onChange={setLanguage}
             options={LANGUAGES.map(lang => ({ label: lang.label, value: lang.code }))}
@@ -239,7 +239,7 @@ export default function SettingsScreen() {
           <CurrencyPicker value={currency} onChange={setCurrency} />
         </Card>
 
-        <View style={styles.learningPanel}>
+        <Card style={styles.section} padding={0}>
           <SettingsCallout
             title={t('guide.settingsEntry')}
             body={t('settings.howItWorksBody')}
@@ -255,7 +255,7 @@ export default function SettingsScreen() {
             icon={<Icon icon={IconName.InfoCircleIcon} size={20} color={colours.tealDeep} strokeWidth={2} />}
             onPress={() => router.push('/about')}
           />
-        </View>
+        </Card>
 
         <Card style={styles.section} padding={layout.cardPadding}>
           <TouchableOpacity
@@ -275,7 +275,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </Card>
 
-        <Card style={[styles.section, styles.utilitySection]} padding={layout.cardPadding}>
+        <Card style={styles.section} padding={layout.cardPadding}>
           <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>
             {t('settings.dataTitle')}
           </AppText>
@@ -302,7 +302,7 @@ export default function SettingsScreen() {
         </Card>
 
         {__DEV__ ? (
-          <Card style={styles.section} variant="accent" padding={layout.cardPadding}>
+          <Card style={styles.section} padding={layout.cardPadding}>
             <AppText variant="labelSm" tone="muted" style={styles.sectionLabel}>
               {t('settings.devDataTitle')}
             </AppText>
@@ -358,23 +358,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colours.background },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
   section: { marginBottom: spacing.md },
-  utilitySection: {
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 0,
-  },
   sectionLabel: {
     textTransform: 'uppercase',
     marginBottom: spacing.sm,
-  },
-  learningPanel: {
-    marginBottom: spacing.md,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surfaceRaised,
-    overflow: 'hidden',
   },
   callout: {
     flexDirection: 'row',

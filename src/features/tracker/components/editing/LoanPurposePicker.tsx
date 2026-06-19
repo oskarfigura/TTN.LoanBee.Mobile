@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { AppText } from '@oskarfigura/ui-native';
+import { AppText, AppTextInput, InputSurface } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LOAN_PURPOSES } from '@/shared/domain/loans/loanPurpose';
 import type { LoanPurpose } from '@/shared/domain/types/SavedLoan';
@@ -65,6 +65,22 @@ export const LoanPurposeIcon = ({ purpose, size = 22, color = colours.primary }:
       return <Icon icon={IconName.Truck01Icon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'education':
       return <Icon icon={IconName.GraduationHatIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'adventure':
+      return <Icon icon={IconName.TentIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'wellness':
+      return <Icon icon={IconName.ContentFaceIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'creditCard':
+      return <Icon icon={IconName.CreditCardIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'farming':
+      return <Icon icon={IconName.TractorIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'gardening':
+      return <Icon icon={IconName.SproutIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'landscaping':
+      return <Icon icon={IconName.TreesIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'home':
+      return <Icon icon={IconName.HomeIcon} size={size} color={color} strokeWidth={strokeWidth} />;
+    case 'fashion':
+      return <Icon icon={IconName.ShirtIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'other':
       return <Icon icon={IconName.ListIcon} size={size} color={color} strokeWidth={strokeWidth} />;
     case 'personal':
@@ -99,18 +115,34 @@ export const LoanPurposeIconTile = ({
 export const LoanPurposePicker = ({ value, onChange }: PickerProps) => {
   const { t } = useTranslation();
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [query, setQuery] = useState('');
   const selectedLabel = t(`loanPurpose.${value}`);
+
+  const normalisedQuery = query.trim().toLowerCase();
+  const filteredPurposes = normalisedQuery
+    ? LOAN_PURPOSES.filter(purpose => t(`loanPurpose.${purpose}`).toLowerCase().includes(normalisedQuery))
+    : LOAN_PURPOSES;
+
+  const openDrawer = () => {
+    setQuery('');
+    setDrawerVisible(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerVisible(false);
+    setQuery('');
+  };
 
   const handleSelect = (purpose: LoanPurpose) => {
     onChange(purpose);
-    setDrawerVisible(false);
+    closeDrawer();
   };
 
   return (
     <>
       <TouchableOpacity
         style={styles.select}
-        onPress={() => setDrawerVisible(true)}
+        onPress={openDrawer}
         activeOpacity={0.84}
         accessibilityRole="button"
         accessibilityLabel={t('save.loanPurpose')}
@@ -128,26 +160,53 @@ export const LoanPurposePicker = ({ value, onChange }: PickerProps) => {
         transparent
         visible={drawerVisible}
         animationType="slide"
-        onRequestClose={() => setDrawerVisible(false)}
+        onRequestClose={closeDrawer}
       >
-        <Pressable style={styles.drawerScrim} onPress={() => setDrawerVisible(false)}>
+        <Pressable style={styles.drawerScrim} onPress={closeDrawer}>
           <Pressable style={styles.drawer} accessibilityViewIsModal>
             <View style={styles.drawerHandle} />
             <View style={styles.drawerHeader}>
               <AppText variant="title3">{t('save.loanPurpose')}</AppText>
-              <TouchableOpacity onPress={() => setDrawerVisible(false)} activeOpacity={0.84}>
+              <TouchableOpacity onPress={closeDrawer} activeOpacity={0.84}>
                 <AppText variant="labelMd" tone="accent">
                   {t('common.close')}
                 </AppText>
               </TouchableOpacity>
             </View>
 
+            <InputSurface style={styles.searchSurface}>
+              <Icon icon={IconName.SearchIcon} size={18} color={colours.textSecondary} strokeWidth={1.9} />
+              <AppTextInput
+                placeholder={t('common.search')}
+                value={query}
+                onChangeText={setQuery}
+                autoCorrect={false}
+                returnKeyType="search"
+              />
+              {query.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => setQuery('')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.clear')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Icon icon={IconName.XCloseIcon} size={16} color={colours.textSecondary} strokeWidth={2} />
+                </TouchableOpacity>
+              ) : null}
+            </InputSurface>
+
             <ScrollView
               style={styles.optionScroller}
               contentContainerStyle={styles.optionList}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
-              {LOAN_PURPOSES.map(purpose => {
+              {filteredPurposes.length === 0 ? (
+                <AppText variant="bodySm" tone="muted" style={styles.noResults}>
+                  {t('common.noResults')}
+                </AppText>
+              ) : null}
+              {filteredPurposes.map(purpose => {
                 const selected = value === purpose;
                 return (
                   <TouchableOpacity
@@ -199,7 +258,8 @@ const styles = StyleSheet.create({
     backgroundColor: colours.modalScrim,
   },
   drawer: {
-    maxHeight: '82%',
+    // Fixed height (not maxHeight) so the sheet doesn't resize as the filtered list shrinks.
+    height: '82%',
     borderTopLeftRadius: radii.card,
     borderTopRightRadius: radii.card,
     backgroundColor: colours.surfaceRaised,
@@ -223,12 +283,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
+  searchSurface: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  noResults: {
+    textAlign: 'center',
+    paddingVertical: spacing.md,
+  },
   optionList: {
     gap: spacing.xs,
     paddingBottom: spacing.xs,
   },
   optionScroller: {
-    flexGrow: 0,
+    flex: 1,
   },
   option: {
     minHeight: 56,

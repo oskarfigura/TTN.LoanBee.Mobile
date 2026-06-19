@@ -27,14 +27,25 @@ interface Props {
   id: string;
   notFoundTitleKey: string;
   createScope: (loan: SavedLoan) => OverpaymentScope | null;
+  controlledLoan?: SavedLoan;
+  onLoanChange?: (loan: SavedLoan) => void;
+  onClose?: () => void;
 }
 
-export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) => {
+export const OverpaymentsView = ({
+  id,
+  notFoundTitleKey,
+  createScope,
+  controlledLoan,
+  onLoanChange,
+  onClose,
+}: Props) => {
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [loan, setLoan] = useState(() => savedLoansStorage.getById(id));
+  const [storedLoan, setStoredLoan] = useState(() => savedLoansStorage.getById(id));
+  const loan = controlledLoan ?? storedLoan;
   const [monthlySheetVisible, setMonthlySheetVisible] = useState(false);
   const [lumpSumSheetVisible, setLumpSumSheetVisible] = useState(false);
   const [editingEvent, setEditingEvent] = useState<MortgageEvent | null>(null);
@@ -56,12 +67,28 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
   }, []);
 
   const refresh = useCallback(() => {
-    setLoan(savedLoansStorage.getById(id));
-  }, [id]);
+    if (controlledLoan) return;
+    setStoredLoan(savedLoansStorage.getById(id));
+  }, [controlledLoan, id]);
 
   useFocusEffect(refresh);
 
   const scope = useMemo(() => (loan ? createScope(loan) : null), [loan, createScope]);
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    router.back();
+  }, [onClose, router]);
+  const applyLoan = useCallback((updated: SavedLoan) => {
+    if (controlledLoan) {
+      onLoanChange?.(updated);
+      return;
+    }
+    savedLoansStorage.update(updated);
+    refresh();
+  }, [controlledLoan, onLoanChange, refresh]);
 
   const yrs = t('results.years');
   const mo = t('results.months');
@@ -104,33 +131,29 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
 
   const handleSaveMonthly = useCallback((amount: number) => {
     if (!scope) return;
-    savedLoansStorage.update(scope.applySaveMonthly(amount));
+    applyLoan(scope.applySaveMonthly(amount));
     setMonthlySheetVisible(false);
-    refresh();
-  }, [scope, refresh]);
+  }, [applyLoan, scope]);
 
   const handleRemoveMonthly = useCallback(() => {
     if (!scope) return;
-    savedLoansStorage.update(scope.applyRemoveMonthly());
+    applyLoan(scope.applyRemoveMonthly());
     setMonthlySheetVisible(false);
-    refresh();
-  }, [scope, refresh]);
+  }, [applyLoan, scope]);
 
   const handleSaveLump = useCallback((date: string, amount: number) => {
     if (!scope) return;
-    savedLoansStorage.update(scope.applySaveLump(date, amount, editingEvent));
+    applyLoan(scope.applySaveLump(date, amount, editingEvent));
     setLumpSumSheetVisible(false);
     setEditingEvent(null);
-    refresh();
-  }, [scope, editingEvent, refresh]);
+  }, [applyLoan, scope, editingEvent]);
 
   const handleDeleteLump = useCallback((eventId: string) => {
     if (!scope) return;
-    savedLoansStorage.update(scope.applyDeleteLump(eventId));
+    applyLoan(scope.applyDeleteLump(eventId));
     setLumpSumSheetVisible(false);
     setEditingEvent(null);
-    refresh();
-  }, [scope, refresh]);
+  }, [applyLoan, scope]);
 
   const openAddLumpSum = () => {
     setEditingEvent(null);
@@ -148,11 +171,11 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         <ScreenHeader
           title={t(notFoundTitleKey)}
           variant="editor"
-          leftAction={<HeaderBackAction onPress={() => router.back()} />}
+          leftAction={<HeaderBackAction onPress={handleClose} />}
         />
         <View style={styles.centred}>
           <AppText variant="title3">{t('saved.notFound')}</AppText>
-          <Button label={t('common.goBack')} onPress={() => router.back()} style={styles.notFoundBtn} />
+          <Button label={t('common.goBack')} onPress={handleClose} style={styles.notFoundBtn} />
         </View>
       </SafeAreaView>
     );
@@ -172,7 +195,7 @@ export const OverpaymentsView = ({ id, notFoundTitleKey, createScope }: Props) =
         subtitle={labels.subtitle}
         subtitleVariant={labels.subtitle ? 'context' : undefined}
         variant="editor"
-        leftAction={<HeaderBackAction onPress={() => router.back()} />}
+        leftAction={<HeaderBackAction onPress={handleClose} />}
       />
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 

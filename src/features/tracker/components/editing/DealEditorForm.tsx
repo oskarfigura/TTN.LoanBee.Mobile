@@ -13,9 +13,9 @@ import {
   FormSection,
   InputAffix,
   InputSurface,
-  SegmentedControl,
 } from '@oskarfigura/ui-native';
 import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { ChoiceTabs } from '@/shared/ui/components/ChoiceTabs';
 import { CURRENCIES, CurrencyCode } from '@/shared/domain/currency/currencies';
 import { formatCurrency } from '@/shared/domain/currency/format';
 import { calculateDealMonthlyPayment, generateDefaultDealName } from '@/shared/domain/mortgage/tracker';
@@ -449,7 +449,7 @@ export const DealEditorForm = ({
 
       <View style={styles.fieldGroup}>
         <FieldLabel>{t('mortgage.repaymentType')}</FieldLabel>
-        <SegmentedControl
+        <ChoiceTabs
           value={repaymentType}
           onChange={setRepaymentType}
           options={[

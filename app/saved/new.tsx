@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,9 @@ import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
 import { CurrencyCode } from '@/shared/domain/currency/currencies';
 import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
 import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { LoanPurposePicker } from '@/features/tracker/components/editing/LoanPurposePicker';
+import { DEFAULT_LOAN_PURPOSE } from '@/shared/domain/loans/loanPurpose';
+import type { LoanPurpose } from '@/shared/domain/types/SavedLoan';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import {
@@ -19,7 +22,6 @@ import {
   FieldLabel,
   FormSection,
   InputSurface,
-  SegmentedControl,
 } from '@oskarfigura/ui-native';
 import { HeaderCloseAction } from '@/shared/ui/components/HeaderCloseAction';
 import { ScreenHeader } from '@/shared/ui/components/ScreenHeader';
@@ -29,7 +31,10 @@ import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { useStoreReview } from '@/shared/lib/services/review';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
-import { getResultForFormValues } from '@/shared/domain/results/loanResultRoute';
+import {
+  buildEditCalculatorParams,
+  getResultForFormValues,
+} from '@/shared/domain/results/loanResultRoute';
 import {
   buildInitialDeal,
   buildResultSnapshot,
@@ -85,17 +90,40 @@ export default function SaveNewLoanScreen() {
   const mortgageTermInMonths = result && formValues
     ? getResultTermInMonths(result, formValues)
     : 12;
-  const [nickname, setNickname] = useState('');
-  const [lender, setLender] = useState('');
-  const [category, setCategory] = useState<LoanCategory>(
-    recentCalculation?.category ?? formValues?.category ?? 'mortgage',
-  );
-  const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? recentCalculation?.currency ?? 'GBP');
-  const [detailsOpen, setDetailsOpen] = useState(false);
-
+  const category: LoanCategory = formValues?.category ?? recentCalculation?.category ?? 'mortgage';
   const isMortgage = category === 'mortgage';
+  const defaultNickname = useMemo(
+    () => (isMortgage ? t('track.defaultMortgageName') : t('track.defaultLoanName')),
+    [isMortgage, t],
+  );
+  const [nickname, setNickname] = useState(defaultNickname);
+  const [lender, setLender] = useState('');
+  const [loanPurpose, setLoanPurpose] = useState<LoanPurpose>(DEFAULT_LOAN_PURPOSE);
+  const [currency, setCurrency] = useState<CurrencyCode>((params.currency as CurrencyCode) ?? recentCalculation?.currency ?? 'GBP');
+  // Optional details live in the same card, collapsed by default — the title is
+  // auto-filled and everything here is optional and changeable later.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const screenTitle = isMortgage ? t('save.trackMortgageTitle') : t('save.trackLoanTitle');
   const screenSubtitle = t('save.trackSubtitle');
+  const handleChangeCalculation = () => {
+    if (!formValues) return;
+
+    router.push({
+      pathname: '/calculate' as never,
+      params: buildEditCalculatorParams(
+        { ...formValues, category, currency },
+        currency,
+        {
+          draftId: params.draftId,
+          result: params.result,
+          formValues: params.formValues,
+          currency,
+          mode: params.recentId ? 'recent' : 'draft',
+          recentId: params.recentId,
+        },
+      ),
+    });
+  };
 
   const handleSave = () => {
     if (!result || !formValues) return;
@@ -139,6 +167,7 @@ export default function SaveNewLoanScreen() {
       nickname: generatedNickname,
       lender: lender || undefined,
       category,
+      loanPurpose: category === 'loan' ? loanPurpose : undefined,
       currency,
       mortgageTermInMonths,
       status: 'tracked',
@@ -189,66 +218,118 @@ export default function SaveNewLoanScreen() {
       />
       <ScrollView contentContainerStyle={styles.container}>
         <FormSection title={t('save.trackCalculationTitle')} accent>
-          <View style={styles.fieldGroup}>
-            <FieldLabel>{t('save.category')}</FieldLabel>
-            <SegmentedControl
-              value={category}
-              onChange={setCategory}
-              options={[
-                { label: t('save.loan'), value: 'loan' },
-                { label: t('save.mortgage'), value: 'mortgage' },
-              ]}
-            />
+          <View style={styles.categorySummary}>
+            <View style={styles.categoryIcon}>
+              <Icon
+                icon={isMortgage ? IconName.HomeLineIcon : IconName.CoinsIcon}
+                size={21}
+                color={colours.primary}
+                strokeWidth={1.9}
+              />
+            </View>
+            <View style={styles.categoryCopy}>
+              <AppText variant="labelMd">
+                {t(isMortgage ? 'save.mortgage' : 'save.loan')}
+              </AppText>
+              <AppText variant="bodySm" tone="muted">
+                {t('save.selectedInCalculation')}
+              </AppText>
+            </View>
+            <TouchableOpacity
+              onPress={handleChangeCalculation}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('save.changeCalculation')}
+              style={styles.changeCalculation}
+            >
+              <AppText variant="labelSm" tone="accent">
+                {t('save.change')}
+              </AppText>
+            </TouchableOpacity>
           </View>
 
-          <AppText variant="bodySm" tone="muted">
-            {t('save.trackCalculationHelp')}
-          </AppText>
+          <View style={styles.divider} />
+
+          <TouchableOpacity
+            style={styles.optionalToggle}
+            onPress={() => setDetailsOpen(open => !open)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: detailsOpen }}
+            activeOpacity={0.82}
+          >
+            <View style={styles.optionalToggleCopy}>
+              <AppText variant="labelMd">{t('save.optionalDetails')}</AppText>
+              <AppText variant="bodySm" tone="muted">{t('save.optionalDetailsHelp')}</AppText>
+            </View>
+            <View style={styles.optionalToggleChevron}>
+              <Icon
+                icon={detailsOpen ? IconName.ChevronUpIcon : IconName.ChevronDownIcon}
+                size={18}
+                color={colours.primary}
+                strokeWidth={2}
+              />
+            </View>
+          </TouchableOpacity>
+
+          {detailsOpen ? (
+            <View style={styles.optionalFields}>
+              <View style={styles.fieldGroup}>
+                <FieldLabel>{t('save.nickname')}</FieldLabel>
+                <InputSurface>
+                  <AppTextInput
+                    placeholder={defaultNickname}
+                    value={nickname}
+                    onChangeText={setNickname}
+                  />
+                  {nickname.length > 0 ? (
+                    <TouchableOpacity
+                      onPress={() => setNickname('')}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.clear')}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={styles.clearButton}
+                    >
+                      <Icon icon={IconName.XCloseIcon} size={16} color={colours.textSecondary} strokeWidth={2} />
+                    </TouchableOpacity>
+                  ) : null}
+                </InputSurface>
+              </View>
+
+              {!isMortgage ? (
+                <View style={styles.fieldGroup}>
+                  <FieldLabel>{t('save.loanPurpose')}</FieldLabel>
+                  <LoanPurposePicker value={loanPurpose} onChange={setLoanPurpose} />
+                </View>
+              ) : null}
+
+              {!isMortgage ? (
+                <View style={styles.fieldGroup}>
+                  <FieldLabel>{t('save.lender')}</FieldLabel>
+                  <LenderTextInput value={lender} onChange={setLender} />
+                </View>
+              ) : null}
+
+              <View style={styles.fieldGroup}>
+                <FieldLabel>{t('save.currency')}</FieldLabel>
+                <CurrencyPicker value={currency} onChange={setCurrency} />
+              </View>
+            </View>
+          ) : null}
         </FormSection>
 
-        <TouchableOpacity
-          style={styles.detailsToggle}
-          onPress={() => setDetailsOpen(open => !open)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: detailsOpen }}
-          activeOpacity={0.82}
-        >
-          <View style={styles.detailsCopy}>
-            <AppText variant="labelMd">{t('save.optionalDetails')}</AppText>
-            <AppText variant="bodySm" tone="muted">{t('save.optionalDetailsHelp')}</AppText>
+        {isMortgage ? (
+          <View style={styles.mortgageHint}>
+            <Icon icon={IconName.InfoCircleIcon} size={16} color={colours.primary} strokeWidth={1.9} />
+            <AppText variant="bodySm" tone="muted" style={styles.mortgageHintText}>
+              {t('save.mortgageLaterHint')}
+            </AppText>
           </View>
-          <AppText variant="title3" tone="accent">{detailsOpen ? '−' : '+'}</AppText>
-        </TouchableOpacity>
-
-        {detailsOpen ? (
-          <FormSection>
-            <View style={styles.fieldGroup}>
-              <FieldLabel>{t('save.nickname')}</FieldLabel>
-              <InputSurface>
-                <AppTextInput
-                  placeholder={isMortgage ? t('track.defaultMortgageName') : t('track.defaultLoanName')}
-                  value={nickname}
-                  onChangeText={setNickname}
-                />
-              </InputSurface>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <FieldLabel>{t('save.lender')}</FieldLabel>
-              <LenderTextInput value={lender} onChange={setLender} />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <FieldLabel>{t('save.currency')}</FieldLabel>
-              <CurrencyPicker value={currency} onChange={setCurrency} />
-            </View>
-          </FormSection>
         ) : null}
 
         <Button
           label={t('track.save')}
           onPress={handleSave}
-          leftIcon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.white} size={18} />}
+          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} strokeWidth={1.9} />}
           style={styles.saveBtn}
         />
         <Button
@@ -276,19 +357,72 @@ const styles = StyleSheet.create({
   },
   container: { padding: layout.screenPadding, paddingBottom: 40 },
   fieldGroup: { gap: spacing.xs },
-  detailsToggle: {
-    marginTop: spacing.md,
+  categorySummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 64,
+    padding: spacing.sm,
+    borderRadius: radii.input,
+    backgroundColor: colours.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colours.surfaceStrong,
+  },
+  categoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceAccent,
+  },
+  categoryCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.xxxs,
+  },
+  changeCalculation: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  mortgageHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radii.input,
+    backgroundColor: colours.surfaceMuted,
+  },
+  mortgageHintText: { flex: 1 },
+  divider: {
+    height: 1,
+    backgroundColor: colours.borderSoft,
+    marginVertical: spacing.md,
+  },
+  optionalToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    padding: layout.cardPadding,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
-    backgroundColor: colours.surfaceMuted,
   },
-  detailsCopy: { flex: 1, gap: spacing.xxs },
+  optionalToggleCopy: { flex: 1, gap: spacing.xxs },
+  optionalToggleChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceAccent,
+  },
+  optionalFields: { gap: spacing.md, marginTop: spacing.md },
+  clearButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: spacing.xs,
+  },
   saveBtn: { marginTop: spacing.lg },
   cancelBtn: { marginTop: spacing.xs },
 });

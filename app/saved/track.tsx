@@ -11,7 +11,6 @@ import {
   FormSection,
   InputAffix,
   InputSurface,
-  SegmentedControl,
 } from '@oskarfigura/ui-native';
 import { CURRENCIES, CurrencyCode } from '@/shared/domain/currency/currencies';
 import { formatCurrency } from '@/shared/domain/currency/format';
@@ -38,6 +37,7 @@ import { storage } from '@/shared/lib/storage/mmkv';
 import { STORAGE_KEYS } from '@/shared/lib/storage/keys';
 import { CurrencyPicker } from '@/features/calculator/components/CurrencyPicker';
 import { LenderTextInput } from '@/features/tracker/components/editing/LenderTextInput';
+import { ChoiceTabs } from '@/shared/ui/components/ChoiceTabs';
 import { OverpaymentEntryRow, OverpaymentRow } from '@/features/tracker/components/overpayments/OverpaymentEntryRow';
 import { DatePickerField } from '@/shared/ui/components/DatePickerField';
 import { KeyboardAwareFormScreen } from '@/shared/ui/components/KeyboardAwareFormScreen';
@@ -288,7 +288,7 @@ export default function TrackMortgageScreen() {
           label={t('track.save')}
           onPress={handleSave}
           disabled={!canSave}
-          leftIcon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.white} size={18} />}
+          leftIcon={<Icon icon={IconName.SaveIcon} color={colours.white} size={18} strokeWidth={1.9} />}
           style={styles.saveButton}
         />
       )}
@@ -325,7 +325,7 @@ export default function TrackMortgageScreen() {
         {isMortgage ? (
           <View style={styles.fieldGroup}>
             <FieldLabel>{t('track.repaymentType')}</FieldLabel>
-            <SegmentedControl
+            <ChoiceTabs
               value={repaymentType}
               onChange={setRepaymentType}
               options={[
@@ -338,7 +338,7 @@ export default function TrackMortgageScreen() {
 
         <View style={styles.fieldGroup}>
           <FieldLabel>{t('track.whatDoYouKnow')}</FieldLabel>
-          <SegmentedControl
+          <ChoiceTabs
             value={paymentBasis}
             onChange={setPaymentBasis}
             options={[

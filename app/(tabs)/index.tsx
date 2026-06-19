@@ -116,10 +116,20 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     dashboard?: string;
     editValues?: string;
     fromTracked?: string;
+    fromResult?: string;
+    returnResultParams?: string;
     returnTo?: string;
   }>();
   const isCalculateTab = mode === 'calculate';
-  const form = useLoanCalculatorForm();
+  const initialEditValues = useMemo(() => {
+    if (!params.editValues) return undefined;
+    try {
+      return JSON.parse(params.editValues) as Partial<LoanCalculatorFormValues>;
+    } catch {
+      return undefined;
+    }
+  }, [params.editValues]);
+  const form = useLoanCalculatorForm({ initialValues: initialEditValues });
   const consumedEditRef = useRef<string | null>(null);
   const { loans, refresh } = useSavedLoans();
   const [journeyStep, setJourneyStep] = useState<JourneyStep>(isCalculateTab ? 'form' : 'intent');
@@ -229,6 +239,21 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   }, [isCalculateTab]);
 
   const handleJourneyBack = useCallback(() => {
+    if (isCalculateTab && params.fromResult === '1') {
+      try {
+        const returnParams = params.returnResultParams
+          ? JSON.parse(params.returnResultParams) as Record<string, string>
+          : {};
+        router.replace({
+          pathname: '/result' as never,
+          params: returnParams,
+        });
+      } catch {
+        router.replace('/result' as never);
+      }
+      return;
+    }
+
     if (isCalculateTab && params.fromTracked === '1' && params.returnTo) {
       router.replace(params.returnTo as never);
       return;
@@ -240,7 +265,16 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     }
 
     setJourneyStep('intent');
-  }, [isCalculateTab, journeyStep, params.fromTracked, params.returnTo, returnToDashboard, router]);
+  }, [
+    isCalculateTab,
+    journeyStep,
+    params.fromResult,
+    params.fromTracked,
+    params.returnResultParams,
+    params.returnTo,
+    returnToDashboard,
+    router,
+  ]);
 
   const openPlanForm = useCallback(() => {
     setJourneyStep('form');
@@ -281,7 +315,9 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   const canReturnToTracked = isCalculateTab
     && params.fromTracked === '1'
     && Boolean(params.returnTo);
-  const canGoBackInJourney = canReturnToTracked || (
+  const canReturnToResult = isCalculateTab && params.fromResult === '1';
+  const isEditingCalculation = canReturnToResult;
+  const canGoBackInJourney = canReturnToResult || canReturnToTracked || (
     !isCalculateTab && (journeyStep !== 'intent' || pinnedLoans.length > 0)
   );
   const journeyBackAction = canGoBackInJourney ? (
@@ -317,7 +353,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
           meta={t('journey.trackTag')}
           title={t('journey.trackTitle')}
           body={t('journey.trackIntentHelp')}
-          icon={<Icon icon={IconName.ArrowTrendingDownIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
+          icon={<Icon icon={IconName.SaveIcon} color={colours.primary} size={24} strokeWidth={1.8} />}
           onPress={openTrackBorrowing}
         />
       </JourneyStepScreen>
@@ -352,17 +388,18 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     // No 'bottom' edge: this screen sits above the tab bar, which owns the bottom inset.
     <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
-        title={t('tabs.calculator')}
+        title={t(isEditingCalculation ? 'calculator.editTitle' : 'tabs.calculator')}
         variant="top-level"
         leftAction={journeyBackAction}
       />
       <LoanForm
         form={form}
         onSubmit={handleSubmit}
+        submitLabel={isEditingCalculation ? t('calculator.updateResult') : undefined}
         topContent={(
           <View style={styles.pageIntro}>
             <AppText variant="bodyLg" tone="muted" style={styles.pageSubtitle}>
-              {t('calculator.subtitle')}
+              {t(isEditingCalculation ? 'calculator.editSubtitle' : 'calculator.subtitle')}
             </AppText>
           </View>
         )}

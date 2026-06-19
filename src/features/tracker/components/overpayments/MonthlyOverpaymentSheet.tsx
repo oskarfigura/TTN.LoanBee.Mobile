@@ -71,6 +71,7 @@ export const MonthlyOverpaymentSheet = ({
       visible={visible}
       title={title}
       onClose={onClose}
+      closeLabel={t('common.close')}
       footer={(
         <OverpaymentSheetActions
           leadingAction={canRemove ? (

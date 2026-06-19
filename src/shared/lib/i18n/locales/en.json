@@ -2,6 +2,9 @@
   "calculator": {
     "title": "Loan Calculation",
     "subtitle": "Start with the few details that shape your repayment",
+    "editTitle": "Edit calculation",
+    "editSubtitle": "Update the figures below, then recalculate your result",
+    "updateResult": "Update result",
     "borrowingType": "What are you calculating?",
     "propertyPrice": "Property price",
     "amountBorrowed": "Amount borrowed",
@@ -172,6 +175,14 @@
     "education": "Education",
     "bike": "Bike",
     "motorbike": "Motorbike",
+    "adventure": "Adventure",
+    "wellness": "Wellness",
+    "creditCard": "Credit card",
+    "farming": "Farming",
+    "gardening": "Gardening",
+    "landscaping": "Landscaping",
+    "home": "Home",
+    "fashion": "Fashion",
     "other": "Other"
   },
   "recent": {
@@ -203,10 +214,13 @@
     "trackMortgageTitle": "Track this mortgage",
     "trackLoanTitle": "Track this loan",
     "trackSubtitle": "Turn this calculation into borrowing you can follow over time.",
-    "trackCalculationTitle": "Use these calculated figures",
-    "trackCalculationHelp": "Choose the borrowing type. A name and lender are optional and can be added later.",
+    "trackCalculationTitle": "Borrowing type",
+    "selectedInCalculation": "Selected in your calculation",
+    "change": "Change",
+    "changeCalculation": "Change calculation type",
     "optionalDetails": "Optional details",
-    "optionalDetailsHelp": "Name, lender and currency override",
+    "optionalDetailsHelp": "Add more or change anytime.",
+    "mortgageLaterHint": "You can add deals, rate changes and other details anytime later.",
     "subtitleMortgage": "Save this result as the mortgage you want to track from now.",
     "subtitleLoan": "Save this result as the loan you want to track from now.",
     "nickname": "Nickname",
@@ -220,7 +234,7 @@
     "category": "Category",
     "loanPurpose": "What is it for?",
     "mortgage": "Mortgage",
-    "loan": "Personal Loan",
+    "loan": "Loan",
     "currency": "Currency",
     "mortgageSnapshotHelp": "Save the mortgage from the figures you entered. Past deals are not needed; add planned rate, term, or payment changes later only if you want to model them.",
     "loanSnapshotHelp": "Saving preserves this calculation snapshot for your dashboard and saved list.",
@@ -413,7 +427,10 @@
     "viewAll": "View all",
     "save": "Save",
     "cancel": "Cancel",
-    "delete": "Delete"
+    "delete": "Delete",
+    "clear": "Clear",
+    "search": "Search",
+    "noResults": "No matches"
   },
   "chartHelp": {
     "open": "About {{title}}",
@@ -455,6 +472,10 @@
     "addLumpSum": "Add lump sum",
     "addLumpSumHelp": "Make a one-off payment to reduce your balance",
     "overpaymentSavings": "Overpayment savings",
+    "overpaymentCouldSave": "Could save {{amount}} in interest",
+    "overpaymentEachMonth": "{{amount}} extra each month",
+    "overpaymentOneOff": "{{amount}} one-off payment",
+    "overpaymentSooner": "{{duration}} sooner",
     "nudgeTitle": "Could you pay it off sooner?",
     "nudgeBody": "Enter a monthly overpayment or a one-off lump sum to see how much interest you could save."
   },
@@ -556,7 +577,6 @@
     "projectedEnd": "Projected end",
     "nextBestActions": "Next best actions",
     "quickActions": "Quick actions",
-    "quickActionsHelp": "Mortgage shortcuts",
     "newCalculationHelp": "Start a fresh calculation on the home screen.",
     "logActivity": "Log activity",
     "manageDeal": "Manage deal",
@@ -811,6 +831,7 @@
   },
   "overpayments": {
     "title": "Overpayments",
+    "adjustPreview": "Adjust overpayments",
     "manage": "Manage overpayments",
     "noImpact": "Add an overpayment below to see how much you could save.",
     "interestSaved": "Interest saved",
@@ -925,6 +946,12 @@
     "body": "Change the rate, term or overpayment and see the effect beside your current result.",
     "current": "Current",
     "newScenario": "Compared",
-    "invalid": "Enter a valid rate, term and overpayment to compare."
+    "invalid": "Enter a valid rate, term and overpayment to compare.",
+    "savings": "Save {{amount}} in interest",
+    "timeSaving": "Finish {{term}} sooner",
+    "savingsAndTime": "Save {{amount}} and finish {{term}} sooner",
+    "currentSavings": "Your current option saves {{amount}} in interest",
+    "currentTimeSaving": "Your current option finishes {{term}} sooner",
+    "currentSavingsAndTime": "Your current option saves {{amount}} and finishes {{term}} sooner"
   }
 }

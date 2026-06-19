@@ -4,19 +4,21 @@ import { useTranslation } from 'react-i18next';
 import {
   AppText,
   AppTextInput,
-  Button,
-  ButtonVariant,
   FieldLabel,
   InputAffix,
   InputSurface,
 } from '@oskarfigura/ui-native';
+import { OverpaymentSheetModal } from '@/features/tracker/components/overpayments/OverpaymentSheetPrimitives';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { CURRENCIES, CurrencyCode } from '@/shared/domain/currency/currencies';
 import { formatCurrency } from '@/shared/domain/currency/format';
+import { getComparisonInsight } from '@/shared/domain/loans/comparisonInsight';
 import { getResultForFormValues, LoanResult } from '@/shared/domain/results/loanResultRoute';
 import { LoanCalculatorFormValues } from '@/shared/lib/hooks/useLoanCalculatorForm';
-import { colours, layout, radii, spacing } from '@/shared/ui/theme';
+import { colours, radii, spacing } from '@/shared/ui/theme';
 
 interface Props {
+  visible: boolean;
   baseline: LoanResult;
   formValues: LoanCalculatorFormValues;
   currency: CurrencyCode;
@@ -41,19 +43,28 @@ const Metric = ({ label, baseline, compared }: {
   compared: string;
 }) => (
   <View style={styles.metricRow}>
-    <AppText variant="bodySm" tone="muted" style={styles.metricLabel}>{label}</AppText>
-    <AppText variant="labelMd" style={styles.metricValue}>{baseline}</AppText>
-    <AppText variant="labelMd" tone="accent" style={styles.metricValue}>{compared}</AppText>
+    <View style={styles.metricLabelCell}>
+      <AppText variant="labelMd">{label}</AppText>
+    </View>
+    <View style={styles.metricCell}>
+      <AppText variant="bodySm" tone="muted" style={styles.metricValue}>{baseline}</AppText>
+    </View>
+    <View style={styles.metricCell}>
+      <AppText variant="labelMd" tone="accent" style={styles.metricValue}>{compared}</AppText>
+    </View>
   </View>
 );
 
-export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: Props) => {
+export const ScenarioComparison = ({ visible, baseline, formValues, currency, onClose }: Props) => {
   const { t } = useTranslation();
+  const enteredTotalMonths = (
+    Number(formValues.termInYears) * 12
+  ) + Number(formValues.termInMonths);
   const initialTotalMonths = Math.max(
     1,
-    baseline.tableItems.length
+    enteredTotalMonths
       || (baseline.termInYears * 12) + baseline.termInMonths
-      || (Number(formValues.termInYears) * 12) + Number(formValues.termInMonths),
+      || baseline.tableItems.length,
   );
   const [rate, setRate] = useState(numberText(formValues.interest));
   const [termYears, setTermYears] = useState(String(Math.floor(initialTotalMonths / 12)));
@@ -70,9 +81,11 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
     if (
       !Number.isFinite(numericRate)
       || numericRate <= 0
+      || numericRate > 100
       || !Number.isInteger(years)
       || !Number.isInteger(months)
       || years < 0
+      || years > 100
       || months < 0
       || months > 11
       || totalMonths <= 0
@@ -93,24 +106,86 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
     });
   }, [formValues, overpayment, rate, termMonths, termYears]);
 
-  const baselineMonths = initialTotalMonths;
+  const baselineMonths = baseline.tableItems.length || initialTotalMonths;
   const comparedMonths = compared?.tableItems.length ?? 0;
+  const insight = useMemo(() => {
+    if (!compared) return null;
+
+    const comparisonInsight = getComparisonInsight({
+      currentInterest: baseline.totalInterestPaid,
+      comparedInterest: compared.totalInterestPaid,
+      currentMonths: baselineMonths,
+      comparedMonths,
+    });
+    if (!comparisonInsight) return null;
+
+    const amount = comparisonInsight.interestSaved
+      ? formatCurrency(comparisonInsight.interestSaved, currency)
+      : undefined;
+    const term = comparisonInsight.monthsSaved
+      ? termLabel(
+        comparisonInsight.monthsSaved,
+        t('results.years'),
+        t('results.months'),
+      )
+      : undefined;
+
+    if (comparisonInsight.winner === 'current') {
+      if (amount && term) {
+        return {
+          winner: comparisonInsight.winner,
+          text: t('compare.currentSavingsAndTime', { amount, term }),
+        };
+      }
+      if (amount) {
+        return {
+          winner: comparisonInsight.winner,
+          text: t('compare.currentSavings', { amount }),
+        };
+      }
+      return term ? {
+        winner: comparisonInsight.winner,
+        text: t('compare.currentTimeSaving', { term }),
+      } : null;
+    }
+
+    if (amount && term) {
+      return {
+        winner: comparisonInsight.winner,
+        text: t('compare.savingsAndTime', { amount, term }),
+      };
+    }
+    if (amount) {
+      return {
+        winner: comparisonInsight.winner,
+        text: t('compare.savings', { amount }),
+      };
+    }
+    return term ? {
+      winner: comparisonInsight.winner,
+      text: t('compare.timeSaving', { term }),
+    } : null;
+  }, [baseline.totalInterestPaid, baselineMonths, compared, comparedMonths, currency, t]);
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <AppText variant="title2">{t('compare.title')}</AppText>
-          <AppText variant="bodySm" tone="muted">{t('compare.body')}</AppText>
-        </View>
-        <Button label={t('common.close')} onPress={onClose} variant={ButtonVariant.Ghost} />
-      </View>
-
+    <OverpaymentSheetModal
+      visible={visible}
+      title={t('compare.title')}
+      onClose={onClose}
+      maxHeightRatio={0.92}
+      closeLabel={t('common.close')}
+    >
+      <AppText variant="bodySm" tone="muted" style={styles.intro}>{t('compare.body')}</AppText>
       <View style={styles.fields}>
         <View style={styles.field}>
           <FieldLabel>{t('calculator.interestRate')}</FieldLabel>
           <InputSurface>
-            <AppTextInput value={rate} onChangeText={setRate} keyboardType="decimal-pad" />
+            <AppTextInput
+              value={rate}
+              onChangeText={setRate}
+              keyboardType="decimal-pad"
+              selectTextOnFocus
+            />
             <InputAffix trailing>%</InputAffix>
           </InputSurface>
         </View>
@@ -118,13 +193,23 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
           <View style={styles.termField}>
             <FieldLabel>{t('calculator.termYears')}</FieldLabel>
             <InputSurface>
-              <AppTextInput value={termYears} onChangeText={setTermYears} keyboardType="number-pad" />
+              <AppTextInput
+                value={termYears}
+                onChangeText={setTermYears}
+                keyboardType="number-pad"
+                selectTextOnFocus
+              />
             </InputSurface>
           </View>
           <View style={styles.termField}>
             <FieldLabel>{t('calculator.termMonths')}</FieldLabel>
             <InputSurface>
-              <AppTextInput value={termMonths} onChangeText={setTermMonths} keyboardType="number-pad" />
+              <AppTextInput
+                value={termMonths}
+                onChangeText={setTermMonths}
+                keyboardType="number-pad"
+                selectTextOnFocus
+              />
             </InputSurface>
           </View>
         </View>
@@ -132,7 +217,12 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
           <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
           <InputSurface>
             <InputAffix>{currencySymbol}</InputAffix>
-            <AppTextInput value={overpayment} onChangeText={setOverpayment} keyboardType="decimal-pad" />
+            <AppTextInput
+              value={overpayment}
+              onChangeText={setOverpayment}
+              keyboardType="decimal-pad"
+              selectTextOnFocus
+            />
           </InputSurface>
           <View style={styles.quickOptions}>
             {[50, 100, 250].map(amount => (
@@ -152,9 +242,13 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
       {compared ? (
         <View style={styles.comparison}>
           <View style={styles.columnHeader}>
-            <AppText variant="labelSm" tone="muted" style={styles.metricLabel} />
-            <AppText variant="labelSm" style={styles.metricValue}>{t('compare.current')}</AppText>
-            <AppText variant="labelSm" tone="accent" style={styles.metricValue}>{t('compare.newScenario')}</AppText>
+            <View style={styles.metricLabelCell} />
+            <View style={styles.metricCell}>
+              <AppText variant="labelSm" tone="muted" style={styles.metricValue}>{t('compare.current')}</AppText>
+            </View>
+            <View style={styles.metricCell}>
+              <AppText variant="labelSm" tone="accent" style={styles.metricValue}>{t('compare.newScenario')}</AppText>
+            </View>
           </View>
           <Metric
             label={t('results.monthlyPayment')}
@@ -171,33 +265,37 @@ export const ScenarioComparison = ({ baseline, formValues, currency, onClose }: 
             baseline={termLabel(baselineMonths, t('results.years'), t('results.months'))}
             compared={termLabel(comparedMonths, t('results.years'), t('results.months'))}
           />
+          {insight ? (
+            <View style={[
+              styles.insight,
+              insight.winner === 'current' && styles.currentInsight,
+            ]}>
+              <Icon
+                icon={IconName.CoinsStackedIcon}
+                size={18}
+                color={insight.winner === 'current' ? colours.primary : colours.success}
+                strokeWidth={1.9}
+              />
+              <AppText
+                variant="labelMd"
+                tone={insight.winner === 'current' ? 'accent' : 'success'}
+                style={styles.insightText}
+              >
+                {insight.text}
+              </AppText>
+            </View>
+          ) : null}
         </View>
       ) : (
         <AppText variant="bodySm" style={styles.errorText}>{t('compare.invalid')}</AppText>
       )}
-    </View>
+    </OverpaymentSheetModal>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    marginHorizontal: spacing.sm,
-    marginBottom: spacing.lg,
-    padding: layout.cardPadding,
-    gap: spacing.lg,
-    borderRadius: radii.card,
-    borderWidth: 1,
-    borderColor: colours.primaryMuted,
-    backgroundColor: colours.surfaceAccent,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  headerCopy: {
-    flex: 1,
-    gap: spacing.xxs,
+  intro: {
+    marginBottom: spacing.xs,
   },
   fields: {
     gap: spacing.md,
@@ -234,24 +332,48 @@ const styles = StyleSheet.create({
   },
   columnHeader: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
     backgroundColor: colours.surfaceMuted,
   },
   metricRow: {
     flexDirection: 'row',
+    minHeight: 44,
     alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colours.border,
+  },
+  metricLabelCell: {
+    flex: 1.15,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  metricCell: {
+    flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  metricValue: {
+    textAlign: 'center',
+  },
+  insight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: colours.borderSoft,
+    borderTopColor: colours.successBorder,
+    backgroundColor: colours.successSurface,
   },
-  metricLabel: {
-    flex: 1.25,
+  currentInsight: {
+    borderTopColor: colours.surfaceStrong,
+    backgroundColor: colours.surfaceMuted,
   },
-  metricValue: {
+  insightText: {
     flex: 1,
-    textAlign: 'right',
   },
   errorText: {
     color: colours.error,

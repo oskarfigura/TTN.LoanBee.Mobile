@@ -20,7 +20,6 @@ import {
   getDealOverpaymentImpact,
   getDraftDealsNewestFirst,
   getPublishedDeals,
-  getTimelineWarnings,
   projectDeal,
   removeLatestDealAndEvents,
 } from '@/shared/domain/mortgage/tracker';
@@ -34,29 +33,6 @@ interface Props {
   showFooterAction?: boolean;
   onLoanUpdated?: (loan: SavedLoan) => void;
 }
-
-export const MortgageWarningBanners = ({ loan }: { loan: SavedLoan }) => {
-  const { t } = useTranslation();
-  // The "complete current deal" prompt is surfaced as an inline, tappable hint inside the
-  // Mortgage timeline card instead of a top-of-screen alert, so it is filtered out here.
-  const warnings = useMemo(
-    () => getTimelineWarnings(loan).filter(warning => warning.type !== 'incompleteActiveDeal'),
-    [loan],
-  );
-
-  if (warnings.length === 0) return null;
-
-  return (
-    <View style={styles.warningList}>
-      {warnings.map(warning => (
-        <Card key={`${warning.type}-${warning.dealId ?? 'group'}`} style={styles.warningCard}>
-          <Text style={styles.warningTitle}>{t(warning.title)}</Text>
-          <Text style={styles.warningText}>{t(warning.message)}</Text>
-        </Card>
-      ))}
-    </View>
-  );
-};
 
 const statusIcon = (variant: 'neutral' | 'active' | 'success') => {
   if (variant === 'success') return <Icon icon={IconName.TickIcon} color={colours.success} size={12} strokeWidth={2.4} />;
@@ -478,11 +454,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: spacing.lg,
   },
-  warningList: {
-    gap: spacing.xs,
-    paddingTop: spacing.sm,
-    marginBottom: spacing.sm,
-  },
   nodeMuted: {
     position: 'absolute',
     left: -42,
@@ -697,22 +668,6 @@ const styles = StyleSheet.create({
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     textAlign: 'center',
-  },
-  warningCard: {
-    borderColor: colours.error,
-    borderWidth: 1,
-  },
-  warningTitle: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.base,
-    color: colours.error,
-  },
-  warningText: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    color: colours.textPrimary,
-    marginTop: 6,
-    lineHeight: 20,
   },
   completedActions: {
     flexDirection: 'row',

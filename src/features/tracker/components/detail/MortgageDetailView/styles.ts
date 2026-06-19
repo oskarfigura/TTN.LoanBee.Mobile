@@ -289,12 +289,6 @@ export const styles = StyleSheet.create({
     color: colours.textSecondary,
     textTransform: 'uppercase',
   },
-  quickActionsHelper: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    lineHeight: 17,
-    color: colours.textSecondary,
-  },
   quickActionButton: {
     flex: 1,
     minWidth: 0,
@@ -322,38 +316,6 @@ export const styles = StyleSheet.create({
     color: colours.textPrimary,
     textAlign: 'center',
   },
-  projectionBasisCard: {
-    marginBottom: spacing.sm,
-  },
-  contextHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  contextHeaderCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  contextKicker: {
-    ...fontFaces.heading.semibold,
-    fontSize: fontSizes.xs,
-    color: colours.textSecondary,
-    textTransform: 'uppercase',
-  },
-  contextTitle: {
-    ...fontFaces.heading.bold,
-    fontSize: fontSizes.md,
-    color: colours.textPrimary,
-    marginTop: spacing.xxs,
-  },
-  projectionAssumptionText: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
-    color: colours.textSecondary,
-  },
   futurePreviewNode: {
     borderColor: colours.border,
   },
@@ -364,7 +326,7 @@ export const styles = StyleSheet.create({
   startPreviewNode: {
     borderColor: colours.border,
   },
-  completeHintBubble: {
+  timelineAlertBubble: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -374,7 +336,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     marginTop: spacing.sm,
   },
-  completeHintIcon: {
+  timelineAlertIcon: {
     width: 30,
     height: 30,
     borderRadius: radii.full,
@@ -382,16 +344,16 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colours.white,
   },
-  completeHintCopy: {
+  timelineAlertCopy: {
     flex: 1,
     minWidth: 0,
   },
-  completeHintTitle: {
+  timelineAlertTitle: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     color: colours.warning,
   },
-  completeHintBody: {
+  timelineAlertBody: {
     ...fontFaces.body.regular,
     fontSize: fontSizes.xs,
     lineHeight: 16,

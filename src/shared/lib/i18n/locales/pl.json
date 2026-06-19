@@ -2,6 +2,9 @@
   "calculator": {
     "title": "Kalkulacja Kredytu",
     "subtitle": "Zacznij od kilku danych, które najbardziej wpływają na ratę",
+    "editTitle": "Edytuj obliczenie",
+    "editSubtitle": "Zmień dane poniżej, a następnie przelicz wynik",
+    "updateResult": "Aktualizuj wynik",
     "borrowingType": "Co chcesz obliczyć?",
     "propertyPrice": "Cena nieruchomości",
     "amountBorrowed": "Pożyczana kwota",
@@ -172,6 +175,14 @@
     "education": "Edukacja",
     "bike": "Rower",
     "motorbike": "Motocykl",
+    "adventure": "Przygoda",
+    "wellness": "Wellness",
+    "creditCard": "Karta kredytowa",
+    "farming": "Rolnictwo",
+    "gardening": "Ogrodnictwo",
+    "landscaping": "Architektura krajobrazu",
+    "home": "Dom",
+    "fashion": "Moda",
     "other": "Inne"
   },
   "recent": {
@@ -203,10 +214,13 @@
     "trackMortgageTitle": "Śledź tę hipotekę",
     "trackLoanTitle": "Śledź ten kredyt",
     "trackSubtitle": "Zamień obliczenie w zobowiązanie, które możesz obserwować w czasie.",
-    "trackCalculationTitle": "Użyj obliczonych danych",
-    "trackCalculationHelp": "Wybierz rodzaj zobowiązania. Nazwę i kredytodawcę możesz dodać później.",
+    "trackCalculationTitle": "Rodzaj zobowiązania",
+    "selectedInCalculation": "Wybrano podczas obliczenia",
+    "change": "Zmień",
+    "changeCalculation": "Zmień rodzaj obliczenia",
     "optionalDetails": "Dane opcjonalne",
-    "optionalDetailsHelp": "Nazwa, kredytodawca i zmiana waluty",
+    "optionalDetailsHelp": "Dodaj więcej lub zmień w każdej chwili.",
+    "mortgageLaterHint": "Oferty, zmiany oprocentowania i inne szczegóły możesz dodać w każdej chwili później.",
     "subtitleMortgage": "Zapisz ten wynik jako hipotekę, którą chcesz śledzić od teraz.",
     "subtitleLoan": "Zapisz ten wynik jako kredyt, który chcesz śledzić od teraz.",
     "nickname": "Nazwa",
@@ -220,7 +234,7 @@
     "category": "Kategoria",
     "loanPurpose": "Na co jest kredyt?",
     "mortgage": "Hipoteka",
-    "loan": "Kredyt Osobisty",
+    "loan": "Kredyt",
     "currency": "Waluta",
     "mortgageSnapshotHelp": "Zapisz hipotekę z danych, które wpisujesz. Poprzednie umowy nie są potrzebne; dodaj planowane zmiany oprocentowania, okresu lub raty później tylko wtedy, gdy chcesz je uwzględnić.",
     "loanSnapshotHelp": "Zapis zachowuje migawkę obliczenia dla panelu i listy zapisanych pozycji.",
@@ -413,7 +427,10 @@
     "viewAll": "Zobacz wszystko",
     "save": "Zapisz",
     "cancel": "Anuluj",
-    "delete": "Usuń"
+    "delete": "Usuń",
+    "clear": "Wyczyść",
+    "search": "Szukaj",
+    "noResults": "Brak wyników"
   },
   "chartHelp": {
     "open": "O wykresie: {{title}}",
@@ -455,6 +472,10 @@
     "addLumpSum": "Dodaj spłatę jednorazową",
     "addLumpSumHelp": "Dokonaj jednorazowej wpłaty, aby zmniejszyć saldo",
     "overpaymentSavings": "Oszczędności z nadpłat",
+    "overpaymentCouldSave": "Możesz zaoszczędzić {{amount}} na odsetkach",
+    "overpaymentEachMonth": "{{amount}} dodatkowo co miesiąc",
+    "overpaymentOneOff": "Jednorazowa wpłata {{amount}}",
+    "overpaymentSooner": "{{duration}} wcześniej",
     "nudgeTitle": "Czy możesz spłacić szybciej?",
     "nudgeBody": "Podaj nadpłatę miesięczną lub jednorazową, aby sprawdzić ile odsetek możesz zaoszczędzić."
   },
@@ -556,7 +577,6 @@
     "projectedEnd": "Prognozowany koniec",
     "nextBestActions": "Najważniejsze działania",
     "quickActions": "Szybkie działania",
-    "quickActionsHelp": "Skróty hipoteki",
     "newCalculationHelp": "Rozpocznij nowe obliczenie na ekranie głównym.",
     "logActivity": "Zapisz aktywność",
     "manageDeal": "Zarządzaj umową",
@@ -811,6 +831,7 @@
   },
   "overpayments": {
     "title": "Nadpłaty",
+    "adjustPreview": "Zmień nadpłaty",
     "manage": "Zarządzaj nadpłatami",
     "noImpact": "Dodaj nadpłatę poniżej, aby zobaczyć ile możesz zaoszczędzić.",
     "interestSaved": "Oszczędzone odsetki",
@@ -925,6 +946,12 @@
     "body": "Zmień oprocentowanie, okres lub nadpłatę i zobacz efekt obok bieżącego wyniku.",
     "current": "Bieżący",
     "newScenario": "Porównany",
-    "invalid": "Podaj poprawne oprocentowanie, okres i nadpłatę."
+    "invalid": "Podaj poprawne oprocentowanie, okres i nadpłatę.",
+    "savings": "Oszczędź {{amount}} na odsetkach",
+    "timeSaving": "Spłać {{term}} wcześniej",
+    "savingsAndTime": "Oszczędź {{amount}} i spłać {{term}} wcześniej",
+    "currentSavings": "Twój obecny wariant oszczędza {{amount}} na odsetkach",
+    "currentTimeSaving": "Twój obecny wariant kończy się {{term}} wcześniej",
+    "currentSavingsAndTime": "Twój obecny wariant oszczędza {{amount}} i kończy się {{term}} wcześniej"
   }
 }

@@ -23,6 +23,7 @@ import { CURRENCIES } from '@/shared/domain/currency/currencies';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { Button } from '@oskarfigura/ui-native';
 import {
+  AppText,
   AppTextInput,
   FieldError,
   FieldHint,
@@ -30,9 +31,10 @@ import {
   FormSection,
   InputAffix,
   InputSurface,
-  SegmentedControl,
 } from '@oskarfigura/ui-native';
 import { DatePickerField } from '@/shared/ui/components/DatePickerField';
+import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { ChoiceTabs } from '@/shared/ui/components/ChoiceTabs';
 import { DownPaymentToggle } from './DownPaymentToggle';
 import { CurrencyPicker } from './CurrencyPicker';
 
@@ -40,6 +42,7 @@ interface Props {
   form: UseFormReturn<LoanCalculatorFormInputValues, undefined, LoanCalculatorFormValues>;
   onSubmit: (values: LoanCalculatorFormValues) => void;
   topContent?: React.ReactNode;
+  submitLabel?: string;
 }
 
 const fieldValue = (value: unknown) => (
@@ -60,7 +63,7 @@ const displayNumberValue = (value: unknown, formatted: boolean) => {
   });
 };
 
-export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
+export const LoanForm = ({ form, onSubmit, topContent, submitLabel }: Props) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { control, handleSubmit, watch, setValue, formState: { errors } } = form;
@@ -184,9 +187,9 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
       >
         {topContent}
         <FormSection style={styles.section}>
-          <View style={styles.fieldGroup}>
+          <View style={styles.choiceGroup}>
             <FieldLabel>{t('calculator.borrowingType')}</FieldLabel>
-            <SegmentedControl
+            <ChoiceTabs
               value={category}
               onChange={value => setValue('category', value, {
                 shouldDirty: true,
@@ -296,9 +299,9 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
             <FieldError message={errorMessage(errors.interest?.message)} />
           </View>
 
-          <View ref={registerFieldRef('calculationType')} style={styles.fieldGroup}>
+          <View ref={registerFieldRef('calculationType')} style={styles.choiceGroup}>
             <FieldLabel>{t('calculator.goal')}</FieldLabel>
-            <SegmentedControl
+            <ChoiceTabs
               value={calculationType}
               onChange={mode => setValue('calculationType', mode)}
               options={[
@@ -385,79 +388,93 @@ export const LoanForm = ({ form, onSubmit, topContent }: Props) => {
             </View>
           )}
 
-          <TouchableOpacity
-            style={styles.advancedToggle}
-            onPress={() => setAdvancedOpen(open => !open)}
-            activeOpacity={0.82}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: advancedOpen }}
-          >
-            <View style={styles.advancedCopy}>
-              <FieldLabel>{t('calculator.moreOptions')}</FieldLabel>
-              <FieldHint>{t('calculator.moreOptionsHelp')}</FieldHint>
-            </View>
-            <FieldLabel>{advancedOpen ? '−' : '+'}</FieldLabel>
-          </TouchableOpacity>
+          <View style={styles.advancedSection}>
+            <TouchableOpacity
+              style={[
+                styles.advancedToggle,
+                advancedOpen && styles.advancedToggleOpen,
+              ]}
+              onPress={() => setAdvancedOpen(open => !open)}
+              activeOpacity={0.82}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: advancedOpen }}
+            >
+              <View style={styles.advancedCopy}>
+                <FieldLabel>{t('calculator.moreOptions')}</FieldLabel>
+                <AppText variant="bodySm" tone="muted">
+                  {t('calculator.moreOptionsHelp')}
+                </AppText>
+              </View>
+              <View style={styles.advancedChevron}>
+                <Icon
+                  icon={advancedOpen ? IconName.ChevronUpIcon : IconName.ChevronDownIcon}
+                  size={18}
+                  color={colours.primary}
+                  strokeWidth={2}
+                />
+              </View>
+            </TouchableOpacity>
 
-          {advancedOpen ? (
-            <View style={styles.advancedBody}>
-              {calculationType === LoanCalculationType.TERM ? (
-                <View ref={registerFieldRef('additionalMonthlyPayment')} style={styles.fieldGroup}>
-                  <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
-                  <Controller
-                    control={control}
-                    name="additionalMonthlyPayment"
-                    render={({ field }) => (
-                      <InputSurface error={Boolean(errors.additionalMonthlyPayment)}>
-                        <InputAffix>{currencySymbol}</InputAffix>
-                        <AppTextInput
-                          keyboardType="decimal-pad"
-                          placeholder={t('calculator.additionalPaymentPlaceholder')}
-                          value={displayNumberValue(field.value, focusedField !== 'additionalMonthlyPayment')}
-                          onChangeText={value => field.onChange(sanitiseNumberText(value))}
-                          onFocus={() => handleFieldFocus('additionalMonthlyPayment')}
-                          onBlur={() => {
-                            setFocusedField(null);
-                            field.onBlur();
-                          }}
-                        />
-                      </InputSurface>
-                    )}
+            {advancedOpen ? (
+              <View style={styles.advancedBody}>
+                {calculationType === LoanCalculationType.TERM ? (
+                  <View ref={registerFieldRef('additionalMonthlyPayment')} style={styles.fieldGroup}>
+                    <FieldLabel>{t('calculator.additionalPayment')}</FieldLabel>
+                    <Controller
+                      control={control}
+                      name="additionalMonthlyPayment"
+                      render={({ field }) => (
+                        <InputSurface error={Boolean(errors.additionalMonthlyPayment)}>
+                          <InputAffix>{currencySymbol}</InputAffix>
+                          <AppTextInput
+                            keyboardType="decimal-pad"
+                            placeholder={t('calculator.additionalPaymentPlaceholder')}
+                            value={displayNumberValue(field.value, focusedField !== 'additionalMonthlyPayment')}
+                            onChangeText={value => field.onChange(sanitiseNumberText(value))}
+                            onFocus={() => handleFieldFocus('additionalMonthlyPayment')}
+                            onBlur={() => {
+                              setFocusedField(null);
+                              field.onBlur();
+                            }}
+                          />
+                        </InputSurface>
+                      )}
+                    />
+                    <FieldHint>{t('calculator.additionalPaymentHelp')}</FieldHint>
+                    <FieldError message={errorMessage(errors.additionalMonthlyPayment?.message)} />
+                  </View>
+                ) : null}
+
+                <View ref={registerFieldRef('startDate')} style={styles.fieldGroup}>
+                  <DatePickerField
+                    label={t('calculator.startDate')}
+                    value={startDateStr}
+                    onChange={value => setValue('startDate', value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })}
+                    hint={t('calculator.startDateHelp')}
                   />
-                  <FieldHint>{t('calculator.additionalPaymentHelp')}</FieldHint>
-                  <FieldError message={errorMessage(errors.additionalMonthlyPayment?.message)} />
                 </View>
-              ) : null}
 
-              <View ref={registerFieldRef('startDate')} style={styles.fieldGroup}>
-                <DatePickerField
-                  label={t('calculator.startDate')}
-                  value={startDateStr}
-                  onChange={value => setValue('startDate', value, {
-                    shouldDirty: true,
-                    shouldTouch: true,
-                    shouldValidate: true,
-                  })}
-                  hint={t('calculator.startDateHelp')}
-                />
+                <View style={styles.fieldGroup}>
+                  <FieldLabel>{t('calculator.currency')}</FieldLabel>
+                  <CurrencyPicker
+                    value={currency as (typeof CURRENCIES)[number]['code']}
+                    onChange={value => setValue('currency', value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })}
+                  />
+                </View>
               </View>
-
-              <View style={styles.fieldGroup}>
-                <FieldLabel>{t('calculator.currency')}</FieldLabel>
-                <CurrencyPicker
-                  value={currency as (typeof CURRENCIES)[number]['code']}
-                  onChange={value => setValue('currency', value, {
-                    shouldDirty: true,
-                    shouldTouch: true,
-                    shouldValidate: true,
-                  })}
-                />
-              </View>
-            </View>
-          ) : null}
+            ) : null}
+          </View>
 
           <Button
-            label={t('calculator.generate')}
+            label={submitLabel ?? t('calculator.generate')}
             onPress={handleSubmit(onSubmit)}
             style={styles.submitButton}
           />
@@ -491,29 +508,43 @@ const styles = StyleSheet.create({
   fieldGroup: {
     gap: spacing.xs,
   },
+  choiceGroup: {
+    gap: spacing.xxs,
+  },
   termRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
   termField: { flex: 1 },
+  advancedSection: {
+    marginTop: spacing.xs,
+  },
   advancedToggle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radii.input,
-    borderWidth: 1,
-    borderColor: colours.borderSoft,
-    backgroundColor: colours.surfaceMuted,
+    paddingVertical: spacing.sm,
+  },
+  advancedToggleOpen: {
+    borderBottomWidth: 1,
+    borderBottomColor: colours.border,
   },
   advancedCopy: {
     flex: 1,
     gap: spacing.xxs,
   },
+  advancedChevron: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colours.surfaceAccent,
+  },
   advancedBody: {
     gap: spacing.md,
-    paddingTop: spacing.xs,
+    paddingTop: spacing.md,
   },
   submitButton: {
     marginTop: spacing.sm,

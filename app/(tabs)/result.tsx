@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Modal,
   View,
   StyleSheet,
 } from 'react-native';
@@ -34,6 +35,8 @@ import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LoanSummaryPanel } from '@/features/calculator/components/LoanSummaryPanel';
 import { ScenarioComparison } from '@/features/calculator/components/ScenarioComparison';
 import { buildDraftLoanPreview, RawFormValues } from '@/shared/domain/loans/loanGroupFactory';
+import { createLoanOverpaymentScope } from '@/shared/domain/loans/overpaymentScope';
+import { OverpaymentsView } from '@/features/tracker/components/overpayments/OverpaymentsView';
 
 type ResultParams = {
   draftId?: string;
@@ -113,7 +116,22 @@ export default function ResultScreen() {
     [currency, formValues, isSavedMode, result],
   );
   const [showComparison, setShowComparison] = useState(false);
+  const [showOverpayments, setShowOverpayments] = useState(false);
+  const [draftOverpaymentLoan, setDraftOverpaymentLoan] = useState<SavedLoan | null>(null);
+  const activeDraftLoan = draftOverpaymentLoan ?? draftLoan;
+  const draftOverpaymentScope = useMemo(
+    () => (activeDraftLoan ? createLoanOverpaymentScope(activeDraftLoan) : null),
+    [activeDraftLoan],
+  );
+  const createPreviewOverpaymentScope = useCallback(
+    (loan: SavedLoan) => createLoanOverpaymentScope(loan),
+    [],
+  );
   const shareIcon = useMemo(() => <Icon icon={IconName.ShareIcon} color={colours.primary} />, []);
+
+  useEffect(() => {
+    setDraftOverpaymentLoan(null);
+  }, [params.draftId, params.formValues, params.recentId, params.result]);
 
   useEffect(() => {
     if (isSavedMode || !result || recordedReviewActionRef.current) return;
@@ -157,11 +175,24 @@ export default function ResultScreen() {
 
   const handleEdit = useCallback(() => {
     if (!formValues) return;
-    router.replace({
+    router.push({
       pathname: '/calculate' as never,
-      params: buildEditCalculatorParams(formValues as unknown as LoanCalculatorFormValues, currency),
+      params: buildEditCalculatorParams(
+        formValues as unknown as LoanCalculatorFormValues,
+        currency,
+        {
+          draftId: params.draftId,
+          result: params.result,
+          formValues: params.formValues,
+          currency,
+          mode: params.mode,
+          recentId: params.recentId,
+          savedLoan: params.savedLoan,
+          savedLoanId: params.savedLoanId,
+        },
+      ),
     });
-  }, [currency, formValues, router]);
+  }, [currency, formValues, params, router]);
 
   if (!result || !formValues) {
     return (
@@ -213,27 +244,47 @@ export default function ResultScreen() {
         tabStyle="underline"
         showFinancialDisclaimer
         ownsScroll
-        summaryContent={!isSavedMode && draftLoan ? (
-          <>
-            <LoanSummaryPanel
-              loan={draftLoan}
-              result={result}
-              mode="draft"
-              onCompare={() => setShowComparison(true)}
-              onTrack={openTrack}
-              onShare={handleShare}
-            />
-            {showComparison ? (
-              <ScenarioComparison
-                baseline={result}
-                formValues={formValues as unknown as LoanCalculatorFormValues}
-                currency={currency}
-                onClose={() => setShowComparison(false)}
-              />
-            ) : null}
-          </>
+        summaryContent={!isSavedMode && activeDraftLoan ? (
+          <LoanSummaryPanel
+            loan={activeDraftLoan}
+            result={result}
+            mode="draft"
+            onCompare={() => setShowComparison(true)}
+            onTryOverpayments={() => setShowOverpayments(true)}
+            onTrack={openTrack}
+            onShare={handleShare}
+            overpaymentImpact={draftOverpaymentScope?.bannerImpact ?? undefined}
+          />
         ) : undefined}
       />
+
+      {!isSavedMode ? (
+        <ScenarioComparison
+          visible={showComparison}
+          baseline={result}
+          formValues={formValues as unknown as LoanCalculatorFormValues}
+          currency={currency}
+          onClose={() => setShowComparison(false)}
+        />
+      ) : null}
+
+      {!isSavedMode && activeDraftLoan ? (
+        <Modal
+          visible={showOverpayments}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowOverpayments(false)}
+        >
+          <OverpaymentsView
+            id={activeDraftLoan.id}
+            notFoundTitleKey="overpayments.title"
+            createScope={createPreviewOverpaymentScope}
+            controlledLoan={activeDraftLoan}
+            onLoanChange={setDraftOverpaymentLoan}
+            onClose={() => setShowOverpayments(false)}
+          />
+        </Modal>
+      ) : null}
 
       <BannerAd />
     </SafeAreaView>

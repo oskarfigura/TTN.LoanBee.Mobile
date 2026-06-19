@@ -5,18 +5,21 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const mockRouter = {
+  back: jest.fn(),
   push: jest.fn(),
   replace: jest.fn(),
   setParams: jest.fn(),
 };
 const mockRefresh = jest.fn();
 const mockSetValue = jest.fn();
+const mockReset = jest.fn();
 // Stable form reference: react-hook-form returns a stable object, so the focus
 // effect's callback identity stays constant and the effect runs on focus, not
 // on every render. A fresh object each render would re-fire it spuriously.
 // getValues returns undefined (≠ the mocked 'GBP' default) so the focus effect's
 // "only write when changed" guard still triggers setValue, matching prior behaviour.
-const mockForm = { setValue: mockSetValue, getValues: () => undefined };
+const mockForm = { setValue: mockSetValue, getValues: () => undefined, reset: mockReset };
+const mockUseLoanCalculatorForm = jest.fn((_options?: unknown) => mockForm);
 let mockParams: Record<string, string | undefined> = {};
 let mockLoans: unknown[] = [];
 const originalConsoleError = console.error;
@@ -64,7 +67,7 @@ jest.mock('react-native-safe-area-context', () => ({
 
 jest.mock('@/shared/lib/hooks/useLoanCalculatorForm', () => ({
   getDefaultCurrency: () => 'GBP',
-  useLoanCalculatorForm: () => mockForm,
+  useLoanCalculatorForm: (options?: unknown) => mockUseLoanCalculatorForm(options),
 }));
 
 jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({
@@ -183,6 +186,49 @@ describe('Home intent journey', () => {
     });
 
     expect(mockRouter.replace).toHaveBeenCalledWith('/saved/loan-1');
+  });
+
+  it('returns to Results when the calculator was opened for editing', async () => {
+    const editValues = {
+      calculationType: 'term',
+      termInYears: 20,
+      termInMonths: 0,
+    };
+    mockParams = {
+      fromResult: '1',
+      editValues: JSON.stringify(editValues),
+      returnResultParams: JSON.stringify({
+        mode: 'draft',
+        draftId: 'draft-1',
+        currency: 'GBP',
+      }),
+    };
+    const renderer = await renderCalculate();
+    const header = findAllByMockType(renderer, 'ScreenHeader')[0];
+    const backAction = header.props.leftAction as React.ReactElement<{ onPress: () => void }>;
+    const loanForm = findAllByMockType(renderer, 'LoanForm')[0];
+
+    expect(backAction).toBeDefined();
+    expect(header.props.title).toBe('calculator.editTitle');
+    expect(loanForm.props.submitLabel).toBe('calculator.updateResult');
+    expect(mockUseLoanCalculatorForm).toHaveBeenCalledWith({ initialValues: editValues });
+    const topContent = loanForm.props.topContent as React.ReactElement<{
+      children: React.ReactElement<{ children: string }>;
+    }>;
+    expect(topContent.props.children.props.children).toBe('calculator.editSubtitle');
+
+    await act(async () => {
+      backAction.props.onPress();
+    });
+
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/result',
+      params: {
+        mode: 'draft',
+        draftId: 'draft-1',
+        currency: 'GBP',
+      },
+    });
   });
 
   it('keeps the upfront choice intent-first and opens the calculator form only for planning', async () => {

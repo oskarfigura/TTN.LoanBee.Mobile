@@ -19,6 +19,9 @@ jest.mock('react-native', () => {
 
   return {
     Alert: { alert: jest.fn() },
+    Modal: ({ children, visible, ...props }: { children?: React.ReactNode; visible?: boolean }) => (
+      React.createElement('Modal', { ...props, visible }, visible ? children : null)
+    ),
     Share: { share: jest.fn(() => Promise.resolve({ action: 'sharedAction' })) },
     StyleSheet: { create: (styles: unknown) => styles },
     View: ({ children, ...props }: { children?: React.ReactNode }) => React.createElement('View', props, children),
@@ -52,12 +55,37 @@ jest.mock('@/features/calculator/components/LoanSummaryPanel', () => ({
   LoanSummaryPanel: (props: Record<string, unknown>) => React.createElement('LoanSummaryPanel', props),
 }));
 
+jest.mock('@/features/tracker/components/overpayments/OverpaymentsView', () => ({
+  OverpaymentsView: (props: Record<string, unknown>) => (
+    React.createElement('OverpaymentsView', props)
+  ),
+}));
+
 jest.mock('@/features/calculator/components/ScenarioComparison', () => ({
   ScenarioComparison: (props: Record<string, unknown>) => React.createElement('ScenarioComparison', props),
 }));
 
 jest.mock('@/shared/domain/loans/loanGroupFactory', () => ({
-  buildDraftLoanPreview: () => ({ id: 'draft-preview' }),
+  buildDraftLoanPreview: () => ({
+    id: 'draft-preview',
+    formSnapshot: {
+      loanAmount: 300000,
+      interest: 4.5,
+      termInYears: 25,
+      termInMonths: 0,
+      downPayment: 10,
+      downPaymentType: 'PERCENT',
+      desiredMonthlyPayment: 0,
+      additionalMonthlyPayment: 0,
+      startDate: '2026-01-01',
+      calculationType: 'TERM',
+      currency: 'GBP',
+    },
+  }),
+}));
+
+jest.mock('@/shared/domain/loans/overpaymentScope', () => ({
+  createLoanOverpaymentScope: () => ({ bannerImpact: null }),
 }));
 
 jest.mock('@/features/calculator/components/LoanCalculationView', () => ({
@@ -190,10 +218,11 @@ describe('ResultScreen', () => {
       rightAction.props.onPress();
     });
 
-    expect(mockRouter.replace).toHaveBeenCalledWith({
+    expect(mockRouter.push).toHaveBeenCalledWith({
       pathname: '/calculate',
       params: expect.objectContaining({
         currency: 'GBP',
+        fromResult: '1',
       }),
     });
   });
@@ -211,9 +240,31 @@ describe('ResultScreen', () => {
 
     expect(panel.props.onSaveScenario).toBeUndefined();
     expect(panel.props.onCompare).toEqual(expect.any(Function));
+    expect(panel.props.onTryOverpayments).toEqual(expect.any(Function));
     expect(panel.props.onTrack).toEqual(expect.any(Function));
     expect(mockRecordUsefulAction).toHaveBeenCalledTimes(1);
     expect(mockRequestReview).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the overpayment drawer from the result summary', async () => {
+    mockParams = {
+      mode: 'draft',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+    };
+    const renderer = await renderResultScreen();
+    const panel = renderer.root.find(node => String(node.type) === 'LoanSummaryPanel');
+
+    await act(async () => {
+      panel.props.onTryOverpayments();
+    });
+
+    const modal = renderer.root.find(node => String(node.type) === 'Modal');
+    const overpaymentsView = renderer.root.find(node => String(node.type) === 'OverpaymentsView');
+    expect(modal.props.visible).toBe(true);
+    expect(overpaymentsView.props.controlledLoan).toBeDefined();
+    expect(overpaymentsView.props.onLoanChange).toEqual(expect.any(Function));
   });
 
   it('does not render a leave-without-saving interruption', async () => {

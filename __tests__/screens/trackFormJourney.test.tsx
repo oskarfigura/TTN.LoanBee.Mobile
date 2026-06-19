@@ -82,7 +82,9 @@ jest.mock('@/features/tracker/components/overpayments/OverpaymentEntryRow', () =
   OverpaymentEntryRow: (props: Record<string, unknown>) => React.createElement('OverpaymentEntryRow', props),
 }));
 
-
+jest.mock('@/shared/ui/components/ChoiceTabs', () => ({
+  ChoiceTabs: (props: Record<string, unknown>) => React.createElement('ChoiceTabs', props),
+}));
 
 jest.mock('@/shared/ui/components/DatePickerField', () => ({
   DatePickerField: (props: Record<string, unknown>) => React.createElement('DatePickerField', props),
@@ -119,13 +121,13 @@ const renderTrack = async (params: Record<string, string> = {}): Promise<ReactTe
 };
 
 const hasMortgageRepaymentToggle = (renderer: ReactTestRenderer): boolean => (
-  renderer.root.findAll(node => String(node.type) === 'SegmentedControl').some(node => (
+  renderer.root.findAll(node => String(node.type) === 'ChoiceTabs').some(node => (
     (node.props.options as Array<{ value: string }>).some(option => option.value === 'interestOnly')
   ))
 );
 
 const findPaymentBasisToggle = (renderer: ReactTestRenderer): ReactTestInstance | undefined => (
-  renderer.root.findAll(node => String(node.type) === 'SegmentedControl').find(node => (
+  renderer.root.findAll(node => String(node.type) === 'ChoiceTabs').find(node => (
     (node.props.options as Array<{ value: string }>).some(option => option.value === 'payment')
     && (node.props.options as Array<{ value: string }>).some(option => option.value === 'term')
   ))

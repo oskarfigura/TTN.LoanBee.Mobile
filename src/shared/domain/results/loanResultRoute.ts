@@ -116,7 +116,12 @@ export const buildRecentResultParams = (recentId: string) => ({
 export const buildEditCalculatorParams = (
   formValues: LoanCalculatorFormValues,
   currency: CurrencyCode,
+  returnResultParams?: Record<string, string | undefined>,
 ) => ({
   editValues: JSON.stringify(formValues),
   currency,
+  fromResult: '1',
+  returnResultParams: returnResultParams
+    ? JSON.stringify(returnResultParams)
+    : undefined,
 });

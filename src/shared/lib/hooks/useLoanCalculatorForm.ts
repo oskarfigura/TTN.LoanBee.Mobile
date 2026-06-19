@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DownPaymentType } from '@/shared/domain/core/DownPaymentType';
@@ -51,16 +51,23 @@ export const useLoanCalculatorForm = ({ initialValues }: Props = {}) => {
   });
 
   const calculationType = form.watch('calculationType');
+  const previousCalculationType = useRef(calculationType);
 
   useEffect(() => {
-    if (calculationType === LoanCalculationType.TERM) {
+    const previous = previousCalculationType.current;
+    previousCalculationType.current = calculationType;
+
+    // Validate an empty term when the user actively switches back to term mode.
+    // Do not validate the default values on mount: edit routes hydrate the saved
+    // calculation immediately afterwards, which otherwise flashes a false error.
+    if (previous !== calculationType && calculationType === LoanCalculationType.TERM) {
       const years = Number(form.getValues('termInYears'));
       const months = Number(form.getValues('termInMonths'));
       if (years === 0 && months === 0) {
         form.trigger(['termInYears', 'termInMonths']);
       }
     }
-  }, [calculationType]);
+  }, [calculationType, form]);
 
   return form;
 };
