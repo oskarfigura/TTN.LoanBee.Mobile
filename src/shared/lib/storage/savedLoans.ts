@@ -262,14 +262,12 @@ export const savedLoansStorage = {
     const idx = loans.findIndex(l => l.id === id);
     if (idx === -1) return;
 
-    const now = new Date().toISOString();
     const maxOrder = loans.reduce((max, loan) => Math.max(max, loan.dashboardOrder ?? 0), 0);
     const pinnedToDashboard = !loans[idx].pinnedToDashboard;
     loans[idx] = {
       ...loans[idx],
       pinnedToDashboard,
       dashboardOrder: pinnedToDashboard ? maxOrder + 1 : undefined,
-      updatedAt: now,
     };
     saveAll(loans);
   },

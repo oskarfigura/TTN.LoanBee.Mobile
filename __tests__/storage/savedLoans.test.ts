@@ -136,15 +136,18 @@ describe('savedLoansStorage', () => {
   });
 
   it('toggles dashboard pin state and assigns dashboard order', () => {
-    savedLoansStorage.add(makeLoan());
+    const originalUpdatedAt = '2024-03-04T12:00:00.000Z';
+    savedLoansStorage.add(makeLoan({ updatedAt: originalUpdatedAt }));
     savedLoansStorage.togglePinned('test-id-1');
 
     const pinned = savedLoansStorage.getById('test-id-1');
     expect(pinned?.pinnedToDashboard).toBe(true);
     expect(pinned?.dashboardOrder).toBe(1);
+    expect(pinned?.updatedAt).toBe(originalUpdatedAt);
 
     savedLoansStorage.togglePinned('test-id-1');
     expect(savedLoansStorage.getById('test-id-1')?.pinnedToDashboard).toBe(false);
+    expect(savedLoansStorage.getById('test-id-1')?.updatedAt).toBe(originalUpdatedAt);
   });
 
   it('returns the highest dashboard order across pinned loans', () => {

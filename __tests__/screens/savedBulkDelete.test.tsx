@@ -13,7 +13,7 @@ const mockTogglePinned = jest.fn();
 const mockRemove = jest.fn((id: string) => {
   mockLoans = mockLoans.filter(loan => loan.id !== id);
 });
-let mockLoans: Array<{ id: string; status: string }> = [];
+let mockLoans: Array<Record<string, unknown> & { id: string; status: string }> = [];
 const originalConsoleError = console.error;
 
 jest.mock('react-native', () => {
@@ -57,6 +57,12 @@ jest.mock('react-native', () => {
         confirm?.onPress?.();
       },
     },
+    Modal: ({ visible, children, ...props }: { visible?: boolean; children?: React.ReactNode }) => (
+      visible ? React.createElement('Modal', props, children) : null
+    ),
+    Pressable: ({ children, ...props }: { children?: React.ReactNode }) => (
+      React.createElement('Pressable', props, children)
+    ),
     TouchableOpacity: ({ children, ...props }: { children?: React.ReactNode }) => (
       React.createElement('TouchableOpacity', props, children)
     ),
@@ -237,5 +243,43 @@ describe('Saved loans bulk delete', () => {
 
     expect(renderer.root.findAll(node => String(node.type) === 'Button').filter(node => node.props.label === 'common.delete')).toHaveLength(0);
     expect(mockRemove).not.toHaveBeenCalled();
+  });
+
+  it('opens the sort picker from the right of search and applies a new order', async () => {
+    mockLoans = [
+      {
+        id: 'loan-1',
+        status: 'active',
+        nickname: 'Zulu',
+        createdAt: '2026-06-02T00:00:00.000Z',
+        updatedAt: '2026-06-02T00:00:00.000Z',
+      },
+      {
+        id: 'loan-2',
+        status: 'active',
+        nickname: 'Alpha',
+        createdAt: '2026-06-01T00:00:00.000Z',
+        updatedAt: '2026-06-01T00:00:00.000Z',
+      },
+    ];
+    const renderer = await renderSaved();
+
+    expect(getCards(renderer).map(card => card.props.loan.id)).toEqual(['loan-1', 'loan-2']);
+
+    await act(async () => {
+      renderer.root.find(node => (
+        String(node.type) === 'TouchableOpacity'
+        && String(node.props.accessibilityLabel).startsWith('saved.sortLabel')
+      )).props.onPress();
+    });
+
+    await act(async () => {
+      renderer.root.find(node => (
+        String(node.type) === 'TouchableOpacity'
+        && node.props.accessibilityLabel === 'saved.sortNameAscending'
+      )).props.onPress();
+    });
+
+    expect(getCards(renderer).map(card => card.props.loan.id)).toEqual(['loan-2', 'loan-1']);
   });
 });
