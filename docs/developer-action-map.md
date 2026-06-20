@@ -147,10 +147,12 @@ Related behaviours:
 Important persistence rules:
 
 - `saved_loans_v2` is the current MMKV key.
+- `saved_loans_sort_v1` stores the Saved tab's selected ordering.
 - `recent_calculations_v1` stores up to 12 newest-first calculations.
 - `saved_loans_v1` is the legacy key still migrated by `savedLoansStorage`.
 - Legacy records are upgraded into the deal-based model on read.
 - `pinnedToDashboard` plus `dashboardOrder` controls the home dashboard carousel.
+- Pin changes do not affect `updatedAt` or Saved-tab ordering.
 - Each saved loan keeps its own `currency`; result and chart UI should format with the loan currency, not the global default.
 
 ## Where to look for mortgage-specific business rules

@@ -179,7 +179,8 @@
           "^@oskarfigura/ui-native$": "<rootDir>/src/__mocks__/ui-native.ts",
           "^@oskarfigura/ui-native/(.*)$": "<rootDir>/node_modules/@oskarfigura/ui-native/dist/$1.js",
           "^@/(.*)$": "<rootDir>/src/$1",
-          "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts"
+          "^react-native-mmkv$": "<rootDir>/src/__mocks__/react-native-mmkv.ts",
+          "^react-native-reanimated$": "<rootDir>/src/__mocks__/react-native-reanimated.ts"
         },
         "transform": {
           "^.+\\.tsx?$": [

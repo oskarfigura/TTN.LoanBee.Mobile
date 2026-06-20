@@ -7,6 +7,7 @@ import {
   useLoanCalculatorForm,
   LoanCalculatorFormValues,
 } from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { normaliseCalculatorFormValues } from '@/shared/lib/hooks/normaliseCalculatorFormValues';
 import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
 import { getLoanCalculations } from '@/shared/domain/core/amortisation';
 import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
@@ -55,13 +56,21 @@ export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
   const initialEditValues = useMemo(() => {
     if (!params.editValues) return undefined;
     try {
-      return JSON.parse(params.editValues) as Partial<LoanCalculatorFormValues>;
+      return normaliseCalculatorFormValues(JSON.parse(params.editValues));
     } catch {
       return undefined;
     }
   }, [params.editValues]);
   const form = useLoanCalculatorForm({ initialValues: initialEditValues });
   const consumedEditRef = useRef<string | null>(null);
+  // True while the form holds an edited calc that hasn't been recalculated yet.
+  // Hydrating an edit clears the editValues param (to dedupe), so the focus
+  // effect's `if (params.editValues) return` guard stops protecting the currency
+  // — both on the param-clear re-fire and on any later tab re-focus, where the
+  // param is gone entirely. Without this, the device-default currency would
+  // overwrite the edited calc's currency. handleSubmit clears it once the edit
+  // is recalculated, restoring normal default-currency behaviour.
+  const preserveEditedCurrencyRef = useRef(false);
   const { loans, refresh } = useSavedLoans();
   const firstRunChecked = useRef(false);
 
@@ -97,8 +106,9 @@ export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
     if (!editValues || consumedEditRef.current === editValues) return;
     consumedEditRef.current = editValues;
     try {
-      const parsed = JSON.parse(editValues) as Partial<LoanCalculatorFormValues>;
+      const parsed = normaliseCalculatorFormValues(JSON.parse(editValues));
       form.reset(parsed);
+      preserveEditedCurrencyRef.current = true;
     } catch {
       // Ignore a malformed edit payload — fall back to a normal calculator visit.
     }
@@ -111,6 +121,11 @@ export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
       if (!isCalculateTab) refresh();
       // Don't clobber an edited calc's currency while we're hydrating it.
       if (params.editValues) return;
+      // Keep preserving it after hydration clears the param — on the re-fire and
+      // on every later tab re-focus — until the edit is recalculated (handleSubmit
+      // clears the flag). Otherwise returning to the tab mid-edit would reset the
+      // currency to the device default.
+      if (preserveEditedCurrencyRef.current) return;
       // This effect runs on every focus (including returning from any pushed screen),
       // so only write the currency when the default actually differs — a same-value
       // setValue would still re-render the controlled currency field for nothing.
@@ -164,6 +179,9 @@ export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
   ]);
 
   const handleSubmit = (values: LoanCalculatorFormValues) => {
+    // Recalculating consumes the edit, so the tab no longer needs to preserve the
+    // edited currency — fresh focuses can default it again.
+    preserveEditedCurrencyRef.current = false;
     const result = getLoanCalculations(
       values.loanAmount,
       values.interest,

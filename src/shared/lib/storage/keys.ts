@@ -1,6 +1,7 @@
 export const STORAGE_KEYS = {
   SAVED_LOANS: 'saved_loans_v2',
   SAVED_LOANS_LEGACY: 'saved_loans_v1',
+  SAVED_LOANS_SORT: 'saved_loans_sort_v1',
   DRAFT_RESULTS: 'draft_results_v1',
   RECENT_CALCULATIONS: 'recent_calculations_v1',
   USER_LANGUAGE: 'user_language',

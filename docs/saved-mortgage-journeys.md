@@ -149,6 +149,7 @@ This document is the source of truth for how a saved mortgage behaves end-to-end
 
 - **Entry:** detail screen → pin button on the top card.
 - **Effect:** flips `pinnedToDashboard`; sets `dashboardOrder = max + 1` when pinning (newest at the end of the carousel). New saves and tracked mortgages are auto-pinned via the same rule (J1/J2).
+- **Tracked-list stability:** pinning does not change `updatedAt` or the item's position in the Saved tab. Saved-tab order is controlled only by the user's selected sort option.
 
 ### J15. Rename a mortgage
 

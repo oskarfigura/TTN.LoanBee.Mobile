@@ -1,5 +1,6 @@
 import React, { memo, useMemo, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
@@ -10,6 +11,7 @@ import { SavedLoanProgressBar } from '@/features/tracker/components/dashboard/Sa
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/shared/domain/loans/loanInsightSummary';
 import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
+import { usePinFeedback } from '@/shared/lib/hooks/usePinFeedback';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours, fontSizes, radii, spacing } from '@/shared/ui/theme';
 import { formatFriendlyDate } from '@/shared/lib/utils/date';
@@ -57,6 +59,7 @@ const LoanProfileCardComponent = ({
   onToggleSelected,
 }: Props) => {
   const { t, i18n } = useTranslation();
+  const pinAnimatedStyle = usePinFeedback(loan.pinnedToDashboard);
   const isDraft = loan.status === 'draft';
   const suppressPressRef = useRef(false);
   const handleLongPress = () => {
@@ -214,7 +217,15 @@ const LoanProfileCardComponent = ({
                 style={[styles.pinButton, loan.pinnedToDashboard && styles.pinButtonActive]}
                 activeOpacity={0.84}
               >
-                <Icon icon={IconName.PinIcon} color={loan.pinnedToDashboard ? colours.secondary : colours.primary} size={16} strokeWidth={1.8} />
+                <Animated.View style={pinAnimatedStyle}>
+                  <Icon
+                    icon={IconName.PinIcon}
+                    color={loan.pinnedToDashboard ? colours.secondary : colours.primary}
+                    fill={loan.pinnedToDashboard ? colours.secondary : undefined}
+                    size={16}
+                    strokeWidth={1.8}
+                  />
+                </Animated.View>
               </TouchableOpacity>
             )}
           </View>

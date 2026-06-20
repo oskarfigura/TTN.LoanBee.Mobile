@@ -1,5 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, ListRenderItem, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  ListRenderItem,
+  Modal,
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
@@ -16,11 +25,25 @@ import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
 import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
+import {
+  SAVED_LOAN_SORT_OPTIONS,
+  SavedLoanSortOption,
+  sortSavedLoans,
+} from '@/shared/domain/loans/savedLoanSort';
+import { savedLoanSortPreference } from '@/shared/lib/storage/savedLoanSortPreference';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+const sortLabelKeys: Record<SavedLoanSortOption, string> = {
+  recentlyAdded: 'saved.sortRecentlyAdded',
+  oldestAdded: 'saved.sortOldestAdded',
+  recentlyUpdated: 'saved.sortRecentlyUpdated',
+  nameAscending: 'saved.sortNameAscending',
+  nameDescending: 'saved.sortNameDescending',
+};
+
 export default function SavedScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ fromDashboard?: string }>();
@@ -28,6 +51,8 @@ export default function SavedScreen() {
   const openedFromDashboard = params.fromDashboard === '1';
 
   const [query, setQuery] = useState('');
+  const [sortOption, setSortOption] = useState<SavedLoanSortOption>(() => savedLoanSortPreference.get());
+  const [sortVisible, setSortVisible] = useState(false);
   const [hasRecent, setHasRecent] = useState(() => recentCalculationsStorage.getAll().length > 0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const selectionMode = selectedIds.size > 0;
@@ -45,15 +70,8 @@ export default function SavedScreen() {
       })
       : loans;
 
-    return [...filtered].sort((a, b) => {
-      // Pinned loans float to the top so the list order matches the prominence the
-      // pin implies; within each group fall back to most-recently-updated first.
-      if (a.pinnedToDashboard !== b.pinnedToDashboard) {
-        return a.pinnedToDashboard ? -1 : 1;
-      }
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-  }, [loans, query, t]);
+    return sortSavedLoans(filtered, sortOption, i18n.language);
+  }, [i18n.language, loans, query, sortOption, t]);
 
   const allSelected = visibleLoans.length > 0 && selectedIds.size === visibleLoans.length;
 
@@ -101,6 +119,12 @@ export default function SavedScreen() {
 
   const clearSelection = useCallback(() => {
     setSelectedIds(new Set());
+  }, []);
+
+  const selectSortOption = useCallback((option: SavedLoanSortOption) => {
+    savedLoanSortPreference.set(option);
+    setSortOption(option);
+    setSortVisible(false);
   }, []);
 
   const toggleSelectAll = useCallback(() => {
@@ -228,7 +252,7 @@ export default function SavedScreen() {
                 </View>
                 {loans.length > 0 ? (
                   <View style={styles.controls}>
-                    <InputSurface>
+                    <InputSurface style={styles.searchSurface}>
                       <Icon icon={IconName.SearchIcon} size={18} color={colours.textSecondary} strokeWidth={1.9} />
                       <AppTextInput
                         value={query}
@@ -237,6 +261,22 @@ export default function SavedScreen() {
                         returnKeyType="search"
                         style={styles.searchInput}
                       />
+                      <TouchableOpacity
+                        style={styles.sortButton}
+                        onPress={() => setSortVisible(true)}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t('saved.sortLabel')}: ${t(sortLabelKeys[sortOption])}`}
+                        accessibilityHint={t('saved.sortHint')}
+                        accessibilityState={{ expanded: sortVisible }}
+                      >
+                        <Icon
+                          icon={IconName.SwitchVertical01Icon}
+                          size={20}
+                          color={colours.primary}
+                          strokeWidth={2}
+                        />
+                      </TouchableOpacity>
                     </InputSurface>
                   </View>
                 ) : null}
@@ -253,6 +293,46 @@ export default function SavedScreen() {
         removeClippedSubviews
         ListFooterComponent={selectionMode ? null : recentFooter}
       />
+      <Modal
+        visible={sortVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSortVisible(false)}
+      >
+        <Pressable style={styles.sortScrim} onPress={() => setSortVisible(false)}>
+          <Pressable
+            style={[styles.sortSheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}
+          >
+            <View style={styles.sortHandle} />
+            <AppText variant="title2" style={styles.sortTitle}>
+              {t('saved.sortTitle')}
+            </AppText>
+            <View style={styles.sortOptions}>
+              {SAVED_LOAN_SORT_OPTIONS.map(option => {
+                const selected = option === sortOption;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[styles.sortOption, selected && styles.sortOptionSelected]}
+                    onPress={() => selectSortOption(option)}
+                    activeOpacity={0.8}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected }}
+                    accessibilityLabel={t(sortLabelKeys[option])}
+                  >
+                    <AppText variant="bodyMd" style={styles.sortOptionLabel}>
+                      {t(sortLabelKeys[option])}
+                    </AppText>
+                    {selected ? (
+                      <Icon icon={IconName.CheckIcon} size={20} color={colours.secondary} strokeWidth={2.2} />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
       {selectionMode ? (
         <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           <Button
@@ -340,8 +420,62 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: spacing.md,
   },
+  searchSurface: {
+    paddingRight: 0,
+    overflow: 'hidden',
+  },
   searchInput: {
+    flex: 1,
     marginLeft: spacing.xs,
+  },
+  sortButton: {
+    width: 50,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.xs,
+    borderLeftWidth: 1,
+    borderLeftColor: colours.border,
+    backgroundColor: colours.surfaceMuted,
+  },
+  sortScrim: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: colours.modalScrim,
+  },
+  sortSheet: {
+    borderTopLeftRadius: radii.card,
+    borderTopRightRadius: radii.card,
+    backgroundColor: colours.surfaceRaised,
+    paddingHorizontal: layout.screenPadding,
+    paddingTop: spacing.sm,
+  },
+  sortHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: radii.full,
+    backgroundColor: colours.borderSoft,
+  },
+  sortTitle: {
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  sortOptions: {
+    gap: spacing.xxs,
+  },
+  sortOption: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.input,
+  },
+  sortOptionSelected: {
+    backgroundColor: colours.surfaceAccent,
+  },
+  sortOptionLabel: {
+    flex: 1,
   },
   recentLink: {
     flexDirection: 'row',
