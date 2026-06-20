@@ -132,11 +132,11 @@ const renderHome = async (): Promise<ReactTestRenderer> => {
 };
 
 const renderCalculate = async (): Promise<ReactTestRenderer> => {
-  const { BorrowingJourneyScreen } = await import('../../app/(tabs)/index');
+  const { BorrowingScreen } = await import('../../app/(tabs)/index');
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
-    renderer = create(React.createElement(BorrowingJourneyScreen, { mode: 'calculate' }));
+    renderer = create(React.createElement(BorrowingScreen, { mode: 'calculate' }));
   });
 
   return renderer as ReactTestRenderer;

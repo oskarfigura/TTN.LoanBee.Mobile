@@ -9,7 +9,7 @@ const mockRouter = {
   canGoBack: jest.fn(() => false),
   replace: jest.fn(),
 };
-// Mutable route params — category is passed in from the intent step.
+// Mutable route params — category is supplied via the `?category=` route param.
 let mockParams: Record<string, string> = {};
 const mockAdd = jest.fn();
 const mockUpdate = jest.fn();

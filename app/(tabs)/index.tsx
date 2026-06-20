@@ -22,7 +22,7 @@ import { beginDraftResult } from '@/shared/domain/results/loanResultRoute';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { hasSeenGuide } from '@/shared/lib/services/onboarding/guideState';
 
-interface BorrowingJourneyScreenProps {
+interface BorrowingScreenProps {
   mode?: 'home' | 'calculate';
 }
 
@@ -30,7 +30,7 @@ interface BorrowingJourneyScreenProps {
 // renders the dashboard when the user has pinned loans; with none it falls straight
 // through to the form (same single calculation as the Calculate tab). The Calculate
 // tab also carries the edit/return-to-result flows via params.
-export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreenProps) {
+export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -228,7 +228,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
 }
 
 export default function HomeScreen() {
-  return <BorrowingJourneyScreen mode="home" />;
+  return <BorrowingScreen mode="home" />;
 }
 
 const styles = StyleSheet.create({
