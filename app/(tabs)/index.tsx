@@ -143,12 +143,14 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   }, [params.editValues]);
   const form = useLoanCalculatorForm({ initialValues: initialEditValues });
   const consumedEditRef = useRef<string | null>(null);
-  // Set when we hydrate an edited calc, so the focus effect below skips its
-  // default-currency write exactly once: clearing editValues re-fires that
-  // effect, and its `if (params.editValues) return` guard no longer holds
-  // (the param is now an empty string), which would otherwise overwrite the
-  // edited calc's currency with the device default.
-  const skipCurrencyDefaultRef = useRef(false);
+  // True while the form holds an edited calc that hasn't been recalculated yet.
+  // Hydrating an edit clears the editValues param (to dedupe), so the focus
+  // effect's `if (params.editValues) return` guard stops protecting the currency
+  // — both on the param-clear re-fire and on any later tab re-focus, where the
+  // param is gone entirely. Without this, the device-default currency would
+  // overwrite the edited calc's currency. handleSubmit clears it once the edit
+  // is recalculated, restoring normal default-currency behaviour.
+  const preserveEditedCurrencyRef = useRef(false);
   const { loans, refresh } = useSavedLoans();
   const [journeyStep, setJourneyStep] = useState<JourneyStep>(isCalculateTab ? 'form' : 'intent');
   const [showCalculator, setShowCalculator] = useState(isCalculateTab);
@@ -206,7 +208,7 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     try {
       const parsed = normaliseCalculatorFormValues(JSON.parse(editValues));
       form.reset(parsed);
-      skipCurrencyDefaultRef.current = true;
+      preserveEditedCurrencyRef.current = true;
       setShowCalculator(true);
       setJourneyStep('form');
     } catch {
@@ -224,13 +226,11 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       setJourneyStep(step => (step === 'trackChoice' ? 'intent' : step));
       // Don't clobber an edited calc's currency while we're hydrating it.
       if (params.editValues) return;
-      // Clearing editValues (above) re-fires this effect with an empty param, so
-      // honour the one-shot skip the hydration set — otherwise the edited calc's
-      // currency would be reset to the device default the moment it's opened.
-      if (skipCurrencyDefaultRef.current) {
-        skipCurrencyDefaultRef.current = false;
-        return;
-      }
+      // Keep preserving it after hydration clears the param — on the re-fire and
+      // on every later tab re-focus — until the edit is recalculated (handleSubmit
+      // clears the flag). Otherwise returning to the tab mid-edit would reset the
+      // currency to the device default.
+      if (preserveEditedCurrencyRef.current) return;
       // This effect runs on every focus (including returning from any pushed screen),
       // so only write the currency when the default actually differs — a same-value
       // setValue would still re-render the controlled currency field for nothing.
@@ -319,6 +319,9 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   }, [router]);
 
   const handleSubmit = (values: LoanCalculatorFormValues) => {
+    // Recalculating consumes the edit, so the tab no longer needs to preserve the
+    // edited currency — fresh focuses can default it again.
+    preserveEditedCurrencyRef.current = false;
     const result = getLoanCalculations(
       values.loanAmount,
       values.interest,

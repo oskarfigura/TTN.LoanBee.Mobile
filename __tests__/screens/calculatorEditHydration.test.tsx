@@ -37,19 +37,28 @@ jest.mock('react-native', () => {
   };
 });
 
+// Capture the latest focus callback so tests can simulate returning to the tab
+// (a real re-focus) without forcing a dependency change.
+let focusCallback: (() => void | (() => void)) | null = null;
 jest.mock('expo-router', () => {
   const R = require('react');
   return {
-    useFocusEffect: (cb: () => void | (() => void)) => { R.useEffect(() => cb(), [cb]); },
+    useFocusEffect: (cb: () => void | (() => void)) => {
+      focusCallback = cb;
+      R.useEffect(() => cb(), [cb]);
+    },
     useLocalSearchParams: () => mockParams,
     useRouter: () => mockRouter,
   };
 });
+const runFocus = () => { act(() => { focusCallback?.(); }); };
 
 // Device default currency resolves to GBP (no MMKV override, en locale), so a USD
 // calc makes any clobber observable.
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'en' }] }));
-jest.mock('@/shared/lib/storage/mmkv', () => ({ storage: { getString: () => undefined } }));
+jest.mock('@/shared/lib/storage/mmkv', () => ({
+  storage: { getString: () => undefined, set: () => undefined, remove: () => undefined },
+}));
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
 jest.mock('react-native-safe-area-context', () => {
@@ -60,11 +69,16 @@ jest.mock('@/shared/lib/hooks/useSavedLoans', () => ({ useSavedLoans: () => ({ l
 jest.mock('@/shared/lib/services/onboarding/guideState', () => ({ hasSeenGuide: () => true }));
 
 let capturedForm: { getValues: (name: string) => unknown };
+let capturedOnSubmit: (values: Record<string, unknown>) => void;
 jest.mock('@/features/calculator/components/LoanForm', () => {
   const R = require('react');
   return {
-    LoanForm: (props: { form: { getValues: (name: string) => unknown } }) => {
+    LoanForm: (props: {
+      form: { getValues: (name: string) => unknown };
+      onSubmit: (values: Record<string, unknown>) => void;
+    }) => {
       capturedForm = props.form;
+      capturedOnSubmit = props.onSubmit;
       return R.createElement('LoanForm', {});
     },
   };
@@ -125,6 +139,27 @@ describe('Calculator edit hydration', () => {
     expect(capturedForm.getValues('downPaymentType')).toBe('percent');
     // The bug: this used to come back as the device default 'GBP'.
     expect(capturedForm.getValues('currency')).toBe('USD');
+  });
+
+  it('keeps the edited currency across a mid-edit tab re-focus, then defaults again after recalculating', async () => {
+    const edit = {
+      category: 'mortgage', currency: 'USD', loanAmount: 300000, interest: 4.5,
+      termInYears: 25, termInMonths: 0, downPayment: 10, downPaymentType: 'percent',
+      desiredMonthlyPayment: 0, additionalMonthlyPayment: 0, startDate: '2026-01-01',
+      calculationType: 'term',
+    };
+    await renderEditing(edit);
+    expect(capturedForm.getValues('currency')).toBe('USD');
+
+    // Leaving and returning to the tab without recalculating must NOT reset the
+    // currency to the device default — the residual the skip-once guard missed.
+    runFocus();
+    expect(capturedForm.getValues('currency')).toBe('USD');
+
+    // Recalculating consumes the edit; a subsequent fresh focus defaults again.
+    act(() => { capturedOnSubmit(edit); });
+    runFocus();
+    expect(capturedForm.getValues('currency')).toBe('GBP');
   });
 
   it('lowercases UPPERCASE formSnapshot enums when hydrating', async () => {
