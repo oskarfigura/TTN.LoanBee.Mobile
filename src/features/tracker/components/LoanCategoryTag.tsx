@@ -47,7 +47,13 @@ export const LoanCategoryTag = ({
       ) : (
         <Icon icon={IconName.MortgageIcon} size={iconSize} color={color} strokeWidth={1.8} />
       )}
-      <AppText variant={variant} numberOfLines={numberOfLines} style={[{ color }, textStyle]}>
+      <AppText
+        variant={variant}
+        numberOfLines={numberOfLines}
+        // flexShrink lets a long localized label ellipsize within the row instead of
+        // widening the chip / overflowing the centered header.
+        style={[styles.label, { color }, textStyle]}
+      >
         {label}
       </AppText>
     </View>
@@ -60,5 +66,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xxs,
     minWidth: 0,
+  },
+  label: {
+    flexShrink: 1,
   },
 });
