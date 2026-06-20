@@ -188,19 +188,14 @@ const LoanProfileCardComponent = ({
                 <AppText variant="title3" tone="default" numberOfLines={1} adjustsFontSizeToFit>
                   {loan.nickname}
                 </AppText>
-                <View style={styles.metaRow}>
-                  <LoanCategoryTag
-                    loan={loan}
-                    showIcon={false}
-                    color={colours.primary}
-                    style={styles.categoryLabel}
-                  />
-                  {displayDetails.lender ? (
-                    <AppText variant="helper" tone="muted" numberOfLines={1} style={[styles.metaText, styles.smallLabel]}>
-                      {displayDetails.lender}
-                    </AppText>
-                  ) : null}
-                </View>
+                <LoanCategoryTag
+                  loan={loan}
+                  showIcon={false}
+                  lender={displayDetails.lender}
+                  color={colours.textSecondary}
+                  variant="bodySm"
+                  style={styles.categoryLabel}
+                />
               </View>
             </View>
             {selectionMode ? (
@@ -351,16 +346,7 @@ const styles = StyleSheet.create({
   titleBlock: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.xxs,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  metaText: {
-    flex: 1,
-    minWidth: 0,
+    gap: spacing.xxxs,
   },
   // Nudge the muted descriptor labels (helper variant is 11px in the shared
   // package) up a touch without changing the package that the web app shares.
@@ -370,12 +356,7 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     alignSelf: 'flex-start',
-    borderRadius: radii.chip,
-    borderWidth: 1,
-    borderColor: colours.border,
-    backgroundColor: colours.surfaceMuted,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.xxxs,
+    maxWidth: '100%',
   },
   pinButton: {
     width: 36,
@@ -398,10 +379,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     borderRadius: radii.input,
     borderWidth: 1,
-    borderColor: colours.surfaceStrong,
-    backgroundColor: colours.surfaceMuted,
+    borderColor: colours.border,
+    backgroundColor: colours.surface,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
   },
   balanceCopy: {
     flex: 1,

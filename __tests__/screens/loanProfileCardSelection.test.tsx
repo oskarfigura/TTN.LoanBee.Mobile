@@ -161,11 +161,15 @@ afterEach(() => {
 });
 
 describe('LoanProfileCard selection gesture', () => {
-  it('keeps the category badge text-only because the card already has an icon tile', async () => {
+  it('keeps the category as quiet text metadata because the card already has an icon tile', async () => {
     const renderer = await renderCard();
+    const textValues = renderer.root
+      .findAll(node => String(node.type) === 'AppText')
+      .map(node => node.children.join(''));
 
     expect(renderer.root.findAll(node => String(node.type) === 'LoanPurposeIcon')).toHaveLength(0);
     expect(renderer.root.findAll(node => String(node.type) === 'LoanPurposeIconTile')).toHaveLength(1);
+    expect(textValues).toContain('loanPurpose.car · LoanBee Bank');
   });
 
   it('suppresses the follow-up press fired after a long press', async () => {
