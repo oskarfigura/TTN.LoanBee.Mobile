@@ -11,7 +11,7 @@ For detailed mortgage-tracker behaviour, validation, and edge cases, also read [
 
 | Route | Purpose | Main actions |
 |---|---|---|
-| `/(tabs)/index` | Home tab | Show the pinned borrowing dashboard, or open the guided calculator/tracking setup |
+| `/(tabs)/index` | Home tab | Show the pinned borrowing dashboard, or the single calculator form when nothing is pinned |
 | `/(tabs)/calculate/index` | Calculate tab | Open the calculator form |
 | `/(tabs)/calculate/result` | Calculate result | Review, compare, share, or deliberately start tracking an automatically saved recent calculation |
 | `/(tabs)/saved/index` | Tracked tab | Open tracked borrowing or the separate Recent Calculations history |
@@ -44,19 +44,17 @@ For detailed mortgage-tracker behaviour, validation, and edge cases, also read [
 
 ## Home tab modes
 
-The first tab is Home. `app/(tabs)/index.tsx` restores the pinned dashboard as the default logged-in surface, then opens the guided calculator when requested:
+The first tab is Home. `app/(tabs)/index.tsx` shows the pinned dashboard when the user has pinned loans, and otherwise falls straight through to the single calculator form (the same surface as the Calculate tab — there is no multi-step intent/track journey):
 
 | Mode | Trigger | What the user sees |
 |---|---|---|
 | First-run onboarding | `guide_seen_v1` not set and the consent gate has completed | `/guide?firstRun=1` is pushed |
-| Dashboard mode | One or more loans are pinned and no calculator override is active | Home dashboard carousel with pinned tracked loans/mortgages |
-| Intent step | No pinned loans, dashboard CTA, or `calculator=1` param | Plan a new one vs Track one I have, with no Loan/Mortgage choice up front |
-| Plan mode | User chooses "Plan a new one" | Calculator form with an inline Mortgage / Personal Loan choice |
-| Track mode | User chooses "Track one I have" | Choose Mortgage / Personal Loan, then open the current-state `/saved/track` form |
+| Dashboard mode | One or more loans are pinned | Home dashboard carousel with pinned tracked loans/mortgages |
+| Calculator mode | No pinned loans | The single calculator form (Mortgage / Personal Loan chosen inline within the form) |
 
 Related behaviours:
 
-- Tapping the Home tab sends a fresh `dashboard` param so the calculator collapses back to the pinned dashboard when one exists.
+- New tracked borrowing is created by calculating then saving (`/calculate/result` → `/saved/new`); the dashboard's "New calculation" and the guide's "Start Calculating" both open `/calculate`.
 - Fresh results are already present in Recent Calculations, so leaving them is never blocked by a save/discard guard.
 - Returning from Tracked/Settings with `fromDashboard=1` should route back to `/`, not deeper into the navigation stack.
 
@@ -71,9 +69,9 @@ Related behaviours:
   - pushes `/guide?firstRun=1` if the guide has not been seen
   - sets `guide_seen_v1` when the guide screen mounts
 
-### 2. Plan a new one -> review/compare -> track if useful
+### 2. Calculate -> review/compare -> track if useful
 
-- Entry: Home tab → Plan a new one
+- Entry: Home tab calculator form (no pinned loans), the dashboard's "New calculation", or the Calculate tab
 - Files: `app/(tabs)/index.tsx`, `app/(tabs)/calculate/result.tsx`, `app/(tabs)/saved/index.tsx`, `app/saved/new.tsx`
 - State changes:
   - calculator submits pure-TS `getLoanCalculations(...)`
@@ -98,10 +96,10 @@ Related behaviours:
 
 ### 4. Track borrowing from current lender facts
 
-- Entry: Home → Track one I have
+- Entry: reopening a `draft` tracked item from the Tracked tab (`/saved/track?id=…`); there is no longer a from-scratch "Track one I have" entry on Home
 - Files: `app/saved/track.tsx`, `src/shared/domain/mortgage/trackBuilder.ts`, `src/shared/lib/storage/savedLoans.ts`
 - State changes:
-  - category is chosen in the preceding intent step
+  - category comes from the existing draft (`?category=` is still honoured for any direct entry)
   - required facts are current balance, interest rate, and either actual monthly payment or remaining term
   - nickname, lender, currency override, deal-end reminder, and overpayments are optional disclosures
   - the active deal is anchored today; a lender-confirmed payment is preserved instead of being recalculated

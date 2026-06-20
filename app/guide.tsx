@@ -61,7 +61,7 @@ export default function GuideScreen() {
 
   const startCalculating = () => {
     finishOnboarding();
-    router.replace('/?calculator=1');
+    router.replace('/calculate' as never);
   };
 
   return (

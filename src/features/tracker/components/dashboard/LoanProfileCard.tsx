@@ -5,6 +5,7 @@ import { AppText } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LoanPurposeIconTile } from '@/features/tracker/components/editing/LoanPurposePicker';
+import { LoanCategoryTag } from '@/features/tracker/components/LoanCategoryTag';
 import { SavedLoanProgressBar } from '@/features/tracker/components/dashboard/SavedLoanProgressBar';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/shared/domain/loans/loanInsightSummary';
 import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
@@ -37,9 +38,11 @@ const IdentityIcon = ({ loan }: { loan: SavedLoan }) => {
   const purpose = getLoanPurpose(loan);
   if (purpose) return <LoanPurposeIconTile purpose={purpose} size={40} />;
 
+  // Match LoanPurposeIconTile's chrome (size 40 → radius 14, icon 22) so the mortgage
+  // avatar reads identically to the loan-purpose avatars in the same list.
   return (
     <View style={styles.iconTile}>
-      <Icon icon={IconName.MortgageIcon} color={colours.primary} size={18} strokeWidth={1.8} />
+      <Icon icon={IconName.MortgageIcon} color={colours.primary} size={22} strokeWidth={1.85} />
     </View>
   );
 };
@@ -183,11 +186,12 @@ const LoanProfileCardComponent = ({
                   {loan.nickname}
                 </AppText>
                 <View style={styles.metaRow}>
-                  <View style={styles.categoryLabel}>
-                    <AppText variant="labelSm" tone="accent" numberOfLines={1}>
-                      {categoryLabel}
-                    </AppText>
-                  </View>
+                  <LoanCategoryTag
+                    loan={loan}
+                    color={colours.primary}
+                    iconSize={12}
+                    style={styles.categoryLabel}
+                  />
                   {displayDetails.lender ? (
                     <AppText variant="helper" tone="muted" numberOfLines={1} style={[styles.metaText, styles.smallLabel]}>
                       {displayDetails.lender}
@@ -329,9 +333,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colours.surfaceAccent,
+    backgroundColor: colours.surfaceMuted,
     borderWidth: 1,
-    borderColor: colours.surfaceStrong,
+    borderColor: colours.borderSoft,
   },
   titleBlock: {
     flex: 1,

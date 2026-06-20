@@ -40,24 +40,6 @@
     "cash": "Gotówka",
     "percent": "Procent"
   },
-  "journey": {
-    "title": "Nowe obliczenie",
-    "stepIntent": "Krok 1",
-    "intentTitle": "Co chcesz zrobić?",
-    "intentHelp": "Planujesz nowy kredyt, czy pilnujesz tego, który już masz?",
-    "intentHint": "Nie wiesz? Oba są dobre — w każdej chwili możesz się przełączyć.",
-    "calculateTag": "Planuję",
-    "calculateTitle": "Oblicz raty",
-    "calculateHelp": "Myślisz o kredycie? Najpierw zobacz miesięczne raty i całkowity koszt.",
-    "trackTag": "Już spłacam",
-    "trackTitle": "Śledź moje zobowiązania",
-    "trackIntentHelp": "Masz już kredyt lub hipotekę? Śledź je i patrz, jak maleje saldo.",
-    "stepTrack": "Krok 2",
-    "trackChoiceTitle": "Co chcesz śledzić?",
-    "trackChoiceHelp": "Wybierz typ, by dopasować szczegóły.",
-    "trackMortgageHelp": "Od dziś lub od zakupu.",
-    "trackLoanHelp": "Taki, który masz lub zaraz zaczniesz."
-  },
   "results": {
     "title": "Wyniki",
     "summary": "Podsumowanie",

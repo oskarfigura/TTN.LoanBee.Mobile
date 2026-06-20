@@ -102,11 +102,11 @@ jest.mock('@/shared/ui/components/ScreenHeader', () => {
 
 const renderEditing = async (editValues: Record<string, unknown>) => {
   mockParams = { fromResult: '1', editValues: JSON.stringify(editValues) };
-  const { BorrowingJourneyScreen } = await import('../../app/(tabs)/index');
+  const { BorrowingScreen } = await import('../../app/(tabs)/index');
   const Wrapper = () => {
     const [, setN] = React.useState(0);
     forceRerender = () => setN(n => n + 1);
-    return React.createElement(BorrowingJourneyScreen, { mode: 'calculate' });
+    return React.createElement(BorrowingScreen, { mode: 'calculate' });
   };
   await act(async () => { create(React.createElement(Wrapper)); });
   // Let the editValues-clearing setParams re-render settle.

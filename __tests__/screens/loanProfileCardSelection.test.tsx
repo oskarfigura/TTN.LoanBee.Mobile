@@ -39,6 +39,7 @@ jest.mock('@/shared/ui/components/Icon', () => ({
 
 jest.mock('@/features/tracker/components/editing/LoanPurposePicker', () => ({
   LoanPurposeIconTile: (props: Record<string, unknown>) => React.createElement('LoanPurposeIconTile', props),
+  LoanPurposeIcon: (props: Record<string, unknown>) => React.createElement('LoanPurposeIcon', props),
 }));
 
 jest.mock('@/features/tracker/components/dashboard/SavedLoanProgressBar', () => ({

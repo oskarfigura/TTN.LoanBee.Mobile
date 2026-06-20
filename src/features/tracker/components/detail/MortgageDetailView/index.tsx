@@ -16,6 +16,7 @@ import { RepaymentBarChart } from '@/shared/ui/charts/RepaymentBarChart';
 import { DashboardProgressGauge } from '@/features/tracker/components/dashboard/DashboardProgressGauge';
 import { DashboardPinButton } from '@/features/tracker/components/dashboard/DashboardPinButton';
 import { MortgageTimelineView } from '@/features/tracker/components/detail/MortgageTimelineView';
+import { LoanCategoryTag } from '@/features/tracker/components/LoanCategoryTag';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
@@ -757,6 +758,13 @@ const MortgageSummaryPanel = ({
           <Text style={styles.summarySubtitle} numberOfLines={1}>
             {lender || t('saved.category.mortgage')}
           </Text>
+          <LoanCategoryTag
+            loan={loan}
+            color={colours.textSecondary}
+            iconSize={15}
+            variant="bodySm"
+            style={styles.summaryCategoryTag}
+          />
         </View>
         <DashboardPinButton
           pinned={loan.pinnedToDashboard}
