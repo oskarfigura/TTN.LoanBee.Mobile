@@ -3,6 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'r
 import { useTranslation } from 'react-i18next';
 import { DashboardPinButton } from '@/features/tracker/components/dashboard/DashboardPinButton';
 import { DashboardProgressGauge } from '@/features/tracker/components/dashboard/DashboardProgressGauge';
+import { LoanCategoryTag } from '@/features/tracker/components/LoanCategoryTag';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { QuickActionTile } from '@oskarfigura/ui-native';
 import { formatCurrency } from '@/shared/domain/currency/format';
@@ -202,9 +203,13 @@ export const LoanSummaryPanel = ({
               >
                 {loan.nickname}
               </Text>
-              <Text style={styles.summarySubtitle} numberOfLines={1}>
-                {loan.lender || t('saved.category.loan')}
-              </Text>
+              <LoanCategoryTag
+                loan={loan}
+                lender={loan.lender}
+                color={colours.textSecondary}
+                variant="bodySm"
+                style={styles.summaryCategoryTag}
+              />
             </View>
             <DashboardPinButton
               pinned={loan.pinnedToDashboard}
@@ -540,11 +545,8 @@ const styles = StyleSheet.create({
     color: colours.primary,
     textAlign: 'center',
   },
-  summarySubtitle: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.md,
-    lineHeight: 22,
-    color: colours.textSecondary,
+  summaryCategoryTag: {
+    alignSelf: 'center',
     marginTop: spacing.xxxs,
   },
   summaryPinButton: {

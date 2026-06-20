@@ -46,6 +46,10 @@ jest.mock('@/features/tracker/components/dashboard/DashboardProgressGauge', () =
   DashboardProgressGauge: () => React.createElement('DashboardProgressGauge'),
 }));
 
+jest.mock('@/features/tracker/components/LoanCategoryTag', () => ({
+  LoanCategoryTag: (props: Record<string, unknown>) => React.createElement('LoanCategoryTag', props),
+}));
+
 jest.mock('@/shared/ui/components/Icon', () => ({
   Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
   IconName: new Proxy({}, { get: (_target, prop) => prop }),

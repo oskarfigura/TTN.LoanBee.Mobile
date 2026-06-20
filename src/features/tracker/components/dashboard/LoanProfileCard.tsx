@@ -191,8 +191,8 @@ const LoanProfileCardComponent = ({
                 <View style={styles.metaRow}>
                   <LoanCategoryTag
                     loan={loan}
+                    showIcon={false}
                     color={colours.primary}
-                    iconSize={12}
                     style={styles.categoryLabel}
                   />
                   {displayDetails.lender ? (

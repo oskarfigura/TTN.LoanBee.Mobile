@@ -8,7 +8,26 @@ import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
 import type { LoanGroup } from '@/shared/domain/types/SavedLoan';
 import { colours, spacing } from '@/shared/ui/theme';
 
-type AppTextVariant = React.ComponentProps<typeof AppText>['variant'];
+type AppTextVariant = NonNullable<React.ComponentProps<typeof AppText>['variant']>;
+
+// AppText variant → font size (mirrors @oskarfigura/ui-native getTextStyles). The glyph
+// defaults to the variant's font size so it always renders at the same size as the label
+// it sits beside and stays consistent across screens, rather than an arbitrary per-caller
+// value. alignItems: 'center' on the row keeps the two vertically centred.
+const VARIANT_FONT_SIZE: Record<AppTextVariant, number> = {
+  display: 30,
+  title1: 24,
+  title2: 20,
+  title3: 16,
+  bodyLg: 16,
+  bodyMd: 15,
+  bodySm: 13,
+  labelMd: 13,
+  labelSm: 11,
+  metricLg: 30,
+  metricMd: 20,
+  helper: 11,
+};
 
 interface Props {
   loan: Pick<LoanGroup, 'category' | 'loanPurpose'>;
@@ -16,9 +35,17 @@ interface Props {
   // weight as the text it sits beside. Callers pass whatever colour their context uses
   // (primary on the dashboard chip, textSecondary on the detail header).
   color?: string;
+  // Optional override; defaults to the variant's font size so the icon matches the text.
   iconSize?: number;
   variant?: AppTextVariant;
   numberOfLines?: number;
+  // Hide the leading glyph when the surrounding UI already shows a category icon
+  // (e.g. the saved-list card renders its own avatar tile), keeping just the label.
+  showIcon?: boolean;
+  // Optional lender appended inline after the category as "<label> · <lender>". Kept in
+  // the same AppText (not a sibling) so the existing flexShrink ellipsis truncates the
+  // whole "category · lender" string as one unit in a centred header.
+  lender?: string;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
@@ -30,23 +57,29 @@ interface Props {
 export const LoanCategoryTag = ({
   loan,
   color = colours.primary,
-  iconSize = 12,
+  iconSize,
   variant = 'labelSm',
   numberOfLines = 1,
+  showIcon = true,
+  lender,
   style,
   textStyle,
 }: Props) => {
   const { t } = useTranslation();
   const purpose = getLoanPurpose(loan);
-  const label = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
+  const glyphSize = iconSize ?? VARIANT_FONT_SIZE[variant];
+  const category = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
+  const label = lender ? `${category} · ${lender}` : category;
 
   return (
     <View style={[styles.row, style]}>
-      {purpose ? (
-        <LoanPurposeIcon purpose={purpose} size={iconSize} color={color} />
-      ) : (
-        <Icon icon={IconName.MortgageIcon} size={iconSize} color={color} strokeWidth={1.8} />
-      )}
+      {showIcon ? (
+        purpose ? (
+          <LoanPurposeIcon purpose={purpose} size={glyphSize} color={color} />
+        ) : (
+          <Icon icon={IconName.MortgageIcon} size={glyphSize} color={color} strokeWidth={1.8} />
+        )
+      ) : null}
       <AppText
         variant={variant}
         numberOfLines={numberOfLines}

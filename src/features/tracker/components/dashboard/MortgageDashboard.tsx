@@ -24,7 +24,7 @@ import {
   buildSavedLoanDisplayDetails,
 } from '@/shared/domain/loans/loanInsightSummary';
 import { UserVisibleMetric, buildSavedLoanDisplayContract } from '@/shared/domain/loans/loanDisplayContract';
-import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
+import { LoanCategoryTag } from '@/features/tracker/components/LoanCategoryTag';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours, elevation, fontFaces, fontSizes, layout, spacing } from '@/shared/ui/theme';
@@ -105,8 +105,8 @@ const LoanDashboardCard = React.memo(({
   width: number;
   onOpenDetails: (loanId: string) => void;
 }) => {
-  const { t, i18n } = useTranslation();
-  const { progress, dashboardMetrics, dealLender, purpose } = useMemo(() => {
+  const { i18n } = useTranslation();
+  const { progress, dashboardMetrics, dealLender } = useMemo(() => {
     const result = getResultForSavedLoan(loan);
     const asOf = new Date();
     const displayDetails = buildSavedLoanDisplayDetails(loan, asOf);
@@ -121,11 +121,8 @@ const LoanDashboardCard = React.memo(({
       progress: contract.dashboardProgress,
       dashboardMetrics: contract.dashboardMetrics,
       dealLender: displayDetails.lender,
-      purpose: getLoanPurpose(loan),
     };
   }, [i18n.language, loan]);
-  const categoryLabel = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
-  const subtitle = dealLender ? `${categoryLabel} · ${dealLender}` : categoryLabel;
 
   return (
     <View style={[styles.slide, { width }]}>
@@ -145,9 +142,13 @@ const LoanDashboardCard = React.memo(({
               >
                 {loan.nickname}
               </Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>
-                {subtitle}
-              </Text>
+              <LoanCategoryTag
+                loan={loan}
+                lender={dealLender}
+                color={colours.textSecondary}
+                variant="bodyLg"
+                style={styles.cardSubtitle}
+              />
             </View>
           </View>
 
@@ -321,10 +322,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   cardSubtitle: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.md,
-    lineHeight: 22,
-    color: colours.textSecondary,
+    // Wraps the LoanCategoryTag row: stretch to the header width and centre the
+    // icon + label so a long "category · lender" still truncates instead of overflowing.
+    alignSelf: 'stretch',
+    justifyContent: 'center',
     marginTop: spacing.xxxs,
   },
   cardTitle: {

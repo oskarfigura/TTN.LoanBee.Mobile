@@ -50,16 +50,9 @@ export const styles = StyleSheet.create({
     color: colours.primary,
     textAlign: 'center',
   },
-  summarySubtitle: {
-    ...fontFaces.body.regular,
-    fontSize: fontSizes.md,
-    lineHeight: 22,
-    color: colours.textSecondary,
-    marginTop: spacing.xxxs,
-  },
   summaryCategoryTag: {
     alignSelf: 'center',
-    marginTop: spacing.xs,
+    marginTop: spacing.xxxs,
   },
   summaryPinButton: {
     position: 'absolute',
