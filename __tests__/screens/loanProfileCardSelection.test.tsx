@@ -89,6 +89,7 @@ const loan: SavedLoan = {
   nickname: 'Car loan',
   lender: 'LoanBee Bank',
   category: 'loan',
+  loanPurpose: 'car',
   currency: 'GBP',
   status: 'tracked',
   pinnedToDashboard: false,
@@ -160,6 +161,13 @@ afterEach(() => {
 });
 
 describe('LoanProfileCard selection gesture', () => {
+  it('keeps the category badge text-only because the card already has an icon tile', async () => {
+    const renderer = await renderCard();
+
+    expect(renderer.root.findAll(node => String(node.type) === 'LoanPurposeIcon')).toHaveLength(0);
+    expect(renderer.root.findAll(node => String(node.type) === 'LoanPurposeIconTile')).toHaveLength(1);
+  });
+
   it('suppresses the follow-up press fired after a long press', async () => {
     const onPress = jest.fn();
     const onLongPress = jest.fn();
