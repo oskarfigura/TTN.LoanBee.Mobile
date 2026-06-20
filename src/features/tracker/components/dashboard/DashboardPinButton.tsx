@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
+import { usePinFeedback } from '@/shared/lib/hooks/usePinFeedback';
 import { colours } from '@/shared/ui/theme';
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 
 export const DashboardPinButton = ({ pinned, onPress, style }: Props) => {
   const { t } = useTranslation();
+  const animatedStyle = usePinFeedback(pinned);
 
   return (
     <TouchableOpacity
@@ -23,7 +26,15 @@ export const DashboardPinButton = ({ pinned, onPress, style }: Props) => {
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       activeOpacity={0.88}
     >
-      <Icon icon={IconName.PinIcon} color={pinned ? colours.secondary : colours.primary} size={16} strokeWidth={1.8} />
+      <Animated.View style={animatedStyle}>
+        <Icon
+          icon={IconName.PinIcon}
+          color={pinned ? colours.secondary : colours.primary}
+          fill={pinned ? colours.secondary : undefined}
+          size={16}
+          strokeWidth={1.8}
+        />
+      </Animated.View>
     </TouchableOpacity>
   );
 };
