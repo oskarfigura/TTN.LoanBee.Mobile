@@ -19,6 +19,9 @@ interface Props {
   iconSize?: number;
   variant?: AppTextVariant;
   numberOfLines?: number;
+  // Hide the leading glyph when the surrounding UI already shows a category icon
+  // (e.g. the saved-list card renders its own avatar tile), keeping just the label.
+  showIcon?: boolean;
   // Optional lender appended inline after the category as "<label> · <lender>". Kept in
   // the same AppText (not a sibling) so the existing flexShrink ellipsis truncates the
   // whole "category · lender" string as one unit in a centred header.
@@ -37,6 +40,7 @@ export const LoanCategoryTag = ({
   iconSize = 12,
   variant = 'labelSm',
   numberOfLines = 1,
+  showIcon = true,
   lender,
   style,
   textStyle,
@@ -48,11 +52,13 @@ export const LoanCategoryTag = ({
 
   return (
     <View style={[styles.row, style]}>
-      {purpose ? (
-        <LoanPurposeIcon purpose={purpose} size={iconSize} color={color} />
-      ) : (
-        <Icon icon={IconName.MortgageIcon} size={iconSize} color={color} strokeWidth={1.8} />
-      )}
+      {showIcon ? (
+        purpose ? (
+          <LoanPurposeIcon purpose={purpose} size={iconSize} color={color} />
+        ) : (
+          <Icon icon={IconName.MortgageIcon} size={iconSize} color={color} strokeWidth={1.8} />
+        )
+      ) : null}
       <AppText
         variant={variant}
         numberOfLines={numberOfLines}
