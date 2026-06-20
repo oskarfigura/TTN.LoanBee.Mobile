@@ -32,7 +32,7 @@ export default function TabLayout() {
         tabPress: event => {
           const navigateToTab = () => {
             if (route.name === 'index') {
-              navigation.navigate('index', { dashboard: String(Date.now()) });
+              navigation.navigate('index');
               return;
             }
 

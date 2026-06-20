@@ -45,7 +45,7 @@ This document is the source of truth for how a saved mortgage behaves end-to-end
 
 ### J2. Track a mortgage from current lender facts
 
-- **Entry:** Home → **Track one I have** → choose **Mortgage** inside `/saved/track`.
+- **Entry:** reopening a `draft` tracked mortgage from the Tracked tab opens `/saved/track`. (The former Home "Track one I have" intent that opened this form from scratch has been retired; the from-scratch flow is calculate-then-save via `/saved/new`.)
 - **Required form:** current balance, interest rate, repayment type, and either:
   - the actual scheduled monthly payment shown by the lender, or
   - the remaining term.

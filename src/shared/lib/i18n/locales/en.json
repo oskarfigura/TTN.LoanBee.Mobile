@@ -40,24 +40,6 @@
     "cash": "Cash",
     "percent": "Percent"
   },
-  "journey": {
-    "title": "New calculation",
-    "stepIntent": "Step 1",
-    "intentTitle": "What would you like to do?",
-    "intentHelp": "Planning a new loan, or keeping an eye on one you already have?",
-    "intentHint": "Not sure? Either works — you can switch anytime.",
-    "calculateTag": "Planning ahead",
-    "calculateTitle": "Calculate repayments",
-    "calculateHelp": "Thinking of borrowing? See the monthly repayments and total cost first.",
-    "trackTag": "Already borrowing",
-    "trackTitle": "Track my borrowing",
-    "trackIntentHelp": "Got a mortgage or loan already? Follow it and watch the balance fall.",
-    "stepTrack": "Step 2",
-    "trackChoiceTitle": "What are you tracking?",
-    "trackChoiceHelp": "Pick a type to tailor the details.",
-    "trackMortgageHelp": "From today or back to purchase.",
-    "trackLoanHelp": "One you have or are about to start."
-  },
   "results": {
     "title": "Results",
     "summary": "Summary",
