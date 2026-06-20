@@ -27,6 +27,7 @@ import { LoanResult } from '@/shared/domain/results/loanResultRoute';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { useAmortisationCsvExport } from '@/shared/lib/hooks/useAmortisationCsvExport';
+import { ExportCsvButton } from '@/shared/ui/components/ExportCsvButton';
 import { AmortisationTable } from './AmortisationTable';
 import { LoanSummaryOverview } from './LoanSummaryOverview';
 
@@ -364,17 +365,7 @@ export const LoanCalculationView = ({
           <View style={[styles.chartHeader, styles.scheduleHeader]}>
             <AppText variant="title3" style={styles.scheduleTitle}>{t('results.amortisationTable')}</AppText>
             <View style={styles.scheduleActions}>
-              <TouchableOpacity
-                style={[styles.exportButton, isExportingCsv && styles.exportButtonDisabled]}
-                onPress={handleExportCsv}
-                disabled={isExportingCsv}
-                accessibilityRole="button"
-                activeOpacity={0.8}
-              >
-                <AppText variant="labelSm" tone="accent" style={styles.actionButtonText}>
-                  {isExportingCsv ? t('results.exportingCsv') : t('results.exportCsv')}
-                </AppText>
-              </TouchableOpacity>
+              <ExportCsvButton onPress={handleExportCsv} isExporting={isExportingCsv} />
               <TouchableOpacity
                 style={styles.fullscreenButton}
                 onPress={() => openFullscreenPreview('schedule')}
@@ -549,19 +540,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  exportButton: {
-    minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    borderRadius: radii.button,
-    backgroundColor: colours.surface,
-    borderWidth: 1,
-    borderColor: colours.border,
-  },
-  exportButtonDisabled: {
-    opacity: 0.6,
   },
   fullscreenButton: {
     width: 36,

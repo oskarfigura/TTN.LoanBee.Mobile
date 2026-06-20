@@ -52,6 +52,7 @@ import {
 } from '@/shared/domain/mortgage/tracker';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
 import { useAmortisationCsvExport } from '@/shared/lib/hooks/useAmortisationCsvExport';
+import { ExportCsvButton } from '@/shared/ui/components/ExportCsvButton';
 import { LoanDeal, SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours } from '@/shared/ui/theme';
 import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate, formatShortMonthYearRange } from '@/shared/lib/utils/date';
@@ -535,22 +536,13 @@ export const MortgageDetailView = ({
             <Card style={[styles.chartCard, styles.scheduleCard]}>
               <View style={styles.chartHeader}>
                 <AppText variant="title3" style={styles.previewTitle}>{t('mortgage.trackedSchedule')}</AppText>
-                <View style={styles.scheduleActions}>
-                  <TouchableOpacity
-                    style={[styles.exportButton, isExportingCsv && styles.exportButtonDisabled]}
-                    onPress={handleExportSchedule}
-                    disabled={isExportingCsv}
-                    accessibilityRole="button"
-                    activeOpacity={0.8}
-                  >
-                    <AppText variant="labelSm" tone="accent" style={styles.actionButtonText}>
-                      {isExportingCsv ? t('results.exportingCsv') : t('results.exportCsv')}
-                    </AppText>
-                  </TouchableOpacity>
+                <View style={styles.chartActions}>
+                  <ExportCsvButton onPress={handleExportSchedule} isExporting={isExportingCsv} />
                   <TouchableOpacity
                     style={styles.fullscreenButton}
                     onPress={() => openProjectionPreview('schedule')}
                     accessibilityRole="button"
+                    accessibilityLabel={t('results.fullScreen')}
                     activeOpacity={0.8}
                   >
                     <Icon icon={IconName.Maximize01Icon} size={18} color={colours.primary} />
