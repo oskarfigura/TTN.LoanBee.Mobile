@@ -38,18 +38,9 @@ const defaultValues: LoanCalculatorFormInputValues = {
   currency: getDefaultCurrency(),
 };
 
-// Example mortgage pre-filled on the very first calculation — before the user has any
-// saved loans or recent calcs — so a brand-new user can hit Calculate straight away and
-// see a full result. Edit/recent/shared flows override it via `initialValues`, and once the
-// user has any calculator history the form starts empty (gated in BorrowingScreen).
-export const EXAMPLE_CALCULATOR_VALUES: Partial<LoanCalculatorFormValues> = {
-  category: 'mortgage',
-  loanAmount: 250000,
-  interest: 5,
-  termInYears: 25,
-  downPayment: 10,
-  downPaymentType: DownPaymentType.PERCENT,
-};
+// Defined in the schema module (kept free of expo-localization / MMKV) so it can be
+// unit-tested in isolation; re-exported here as the calculator's canonical import surface.
+export { EXAMPLE_CALCULATOR_VALUES } from '@/shared/lib/hooks/loanCalculatorSchema';
 
 interface Props {
   initialValues?: Partial<LoanCalculatorFormValues>;

@@ -60,6 +60,16 @@ const parseJson = <T,>(value?: string): T | null => {
   }
 };
 
+// Run a maths-engine computation defensively, capturing any throw instead of letting it
+// escape render. The caller logs the error from an effect, keeping the useMemo pure.
+const safeCompute = <T,>(run: () => T): { value: T | null; error: unknown } => {
+  try {
+    return { value: run(), error: null };
+  } catch (error) {
+    return { value: null, error };
+  }
+};
+
 export default function ResultScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -80,20 +90,18 @@ export default function ResultScreen() {
   const isSavedMode = params.mode === 'saved' && savedLoan !== null;
   const draftSession = useMemo(() => getDraftResultSession(params.draftId), [params.draftId]);
 
-  const result = useMemo(() => {
-    // savedLoan can arrive straight from a navigation/deep-link param (params.savedLoan),
-    // bypassing the storage-load normalisation that drops malformed records. Guard the
-    // engine call so a corrupt snapshot yields the notFound UI below, not a hard crash.
-    try {
-      if (savedLoan) return getResultForSavedLoan(savedLoan);
-      if (draftSession) return draftSession.result;
-      if (recentCalculation) return getResultForFormValues(recentCalculation.formValues);
-      return parseJson<LoanResult>(params.result);
-    } catch (error) {
-      recordCrash(error, 'render', false);
-      return null;
-    }
-  }, [draftSession, params.result, recentCalculation, savedLoan]);
+  // savedLoan can arrive straight from a navigation/deep-link param (params.savedLoan),
+  // bypassing the storage-load normalisation that drops malformed records. Compute the
+  // result (and the baseline below) defensively so a corrupt snapshot yields the notFound
+  // UI rather than a hard crash; the throw is surfaced to the crash log from an effect so
+  // these useMemos stay side-effect free.
+  const resultComputation = useMemo(() => safeCompute<LoanResult | null>(() => {
+    if (savedLoan) return getResultForSavedLoan(savedLoan);
+    if (draftSession) return draftSession.result;
+    if (recentCalculation) return getResultForFormValues(recentCalculation.formValues);
+    return parseJson<LoanResult>(params.result);
+  }), [draftSession, params.result, recentCalculation, savedLoan]);
+  const result = resultComputation.value;
   const formValues = useMemo(() => (
     savedLoan?.formSnapshot
     ?? draftSession?.formValues
@@ -104,28 +112,31 @@ export default function ResultScreen() {
   // Baseline remaining-balance series for the with/without overpayment comparison chart —
   // only when a recurring overpayment exists. Mirrors the `result` source precedence; the
   // raw-param fallback has no inputs to re-run, so the card is simply omitted there.
-  const baselineRemainingArray = useMemo(() => {
-    // Same unvalidated-snapshot exposure as `result`: swallow a malformed-input throw so
-    // the comparison chart is simply omitted rather than taking the whole screen down.
-    try {
-      if (savedLoan) {
-        return (savedLoan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
-          ? getBaselineResultForSavedLoan(savedLoan).loanChartRemainingArray
-          : undefined;
-      }
-      const form = (draftSession?.formValues ?? recentCalculation?.formValues) as
-        LoanCalculatorFormValues | undefined;
-      if (form) {
-        return (form.additionalMonthlyPayment ?? 0) > 0
-          ? getBaselineResultForFormValues(form).loanChartRemainingArray
-          : undefined;
-      }
-      return undefined;
-    } catch (error) {
-      recordCrash(error, 'render', false);
-      return undefined;
+  // Same unvalidated-snapshot exposure as `result`: a malformed-input throw simply omits the
+  // comparison chart rather than taking the whole screen down (logged via the effect below).
+  const baselineComputation = useMemo(() => safeCompute<number[] | undefined>(() => {
+    if (savedLoan) {
+      return (savedLoan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
+        ? getBaselineResultForSavedLoan(savedLoan).loanChartRemainingArray
+        : undefined;
     }
-  }, [draftSession?.formValues, recentCalculation?.formValues, savedLoan]);
+    const form = (draftSession?.formValues ?? recentCalculation?.formValues) as
+      LoanCalculatorFormValues | undefined;
+    if (form) {
+      return (form.additionalMonthlyPayment ?? 0) > 0
+        ? getBaselineResultForFormValues(form).loanChartRemainingArray
+        : undefined;
+    }
+    return undefined;
+  }), [draftSession?.formValues, recentCalculation?.formValues, savedLoan]);
+  const baselineRemainingArray = baselineComputation.value ?? undefined;
+
+  // Record a malformed-snapshot failure once, outside render, so the computations above
+  // stay pure (no double-logging under StrictMode / concurrent rendering).
+  useEffect(() => {
+    const error = resultComputation.error ?? baselineComputation.error;
+    if (error) recordCrash(error, 'render', false);
+  }, [resultComputation.error, baselineComputation.error]);
   // Preview an unsaved calculation through the same summary surface the saved-loan
   // detail uses, by building a transient draft loan from the calculation inputs.
   const draftLoan = useMemo(

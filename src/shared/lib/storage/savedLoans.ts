@@ -149,17 +149,18 @@ const saveAll = (loans: LoanGroup[]): void => {
       ? loan
       : { ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION }
   ));
-  const payload = JSON.stringify(stamped);
 
   let lastCause: unknown;
   for (let attempt = 1; attempt <= MAX_SAVE_ATTEMPTS; attempt += 1) {
     try {
-      storage.set(STORAGE_KEYS.SAVED_LOANS, payload);
+      // Serialise inside the loop so a (pathological) JSON.stringify failure is wrapped and
+      // reported through the same path as a write failure, rather than escaping unhandled.
+      storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(stamped));
       return;
     } catch (cause) {
-      // Retry immediately. MMKV writes are synchronous, so sleeping between attempts
-      // would block the JS thread and freeze the UI — a momentary lock can instead
-      // clear between back-to-back tries. A persistent failure falls through below.
+      // Retry immediately: MMKV writes are synchronous, so sleeping between attempts would
+      // block the JS thread and freeze the UI. Back-to-back retries only help a write that
+      // fails momentarily; a persistent failure falls through to the report below.
       lastCause = cause;
     }
   }
