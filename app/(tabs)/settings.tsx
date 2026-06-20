@@ -40,7 +40,7 @@ const SettingsCallout = ({
   title: string;
   body: string;
   icon: React.ReactNode;
-  tone: 'guide' | 'about';
+  tone: 'guide' | 'about' | 'contact';
   onPress: () => void;
 }) => (
   <TouchableOpacity
@@ -51,7 +51,11 @@ const SettingsCallout = ({
   >
     <View style={[
       styles.calloutIconTile,
-      tone === 'guide' ? styles.calloutIconTileGuide : styles.calloutIconTileAbout,
+      tone === 'guide'
+        ? styles.calloutIconTileGuide
+        : tone === 'contact'
+          ? styles.calloutIconTileContact
+          : styles.calloutIconTileAbout,
     ]}>
       {icon}
     </View>
@@ -255,6 +259,14 @@ export default function SettingsScreen() {
             icon={<Icon icon={IconName.InfoCircleIcon} size={20} color={colours.tealDeep} strokeWidth={2} />}
             onPress={() => router.push('/about')}
           />
+          <View style={styles.calloutDivider} />
+          <SettingsCallout
+            title={t('settings.contact')}
+            body={t('settings.contactBody')}
+            tone="contact"
+            icon={<Icon icon={IconName.MailIcon} size={20} color={colours.primary} strokeWidth={2} />}
+            onPress={() => router.push('/contact')}
+          />
         </Card>
 
         <Card style={styles.section} padding={layout.cardPadding}>
@@ -384,6 +396,10 @@ const styles = StyleSheet.create({
   calloutIconTileAbout: {
     borderColor: colours.secondarySoft,
     backgroundColor: colours.successSurface,
+  },
+  calloutIconTileContact: {
+    borderColor: colours.primaryMuted,
+    backgroundColor: colours.surfaceMuted,
   },
   calloutCopy: {
     flex: 1,

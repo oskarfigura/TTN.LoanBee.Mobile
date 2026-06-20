@@ -204,6 +204,19 @@ describe('Settings About route', () => {
     expect(mockRouter.push).toHaveBeenCalledWith('/about');
   });
 
+  it('opens Contact from Settings', async () => {
+    const renderer = await renderSettings();
+    const contactRow = renderer.root.find(node => (
+      String(node.type) === 'TouchableOpacity' && textContent(node).includes('settings.contact')
+    ));
+
+    await act(async () => {
+      contactRow.props.onPress();
+    });
+
+    expect(mockRouter.push).toHaveBeenCalledWith('/contact');
+  });
+
   it('keeps About out of the visible tab layout', () => {
     const tabLayout = readFileSync(join(process.cwd(), 'app/(tabs)/_layout.tsx'), 'utf8');
 
