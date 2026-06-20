@@ -1,18 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
-  Share,
   StyleProp,
   StyleSheet,
   TouchableOpacity,
   View,
   ViewStyle,
 } from 'react-native';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -30,8 +26,8 @@ import { CurrencyCode } from '@/shared/domain/currency/currencies';
 import { LoanResult } from '@/shared/domain/results/loanResultRoute';
 import { colours, layout, radii, spacing } from '@/shared/ui/theme';
 import { SavedLoan } from '@/shared/domain/types/SavedLoan';
-import { buildAmortisationCsv } from '@oskarfigura/amortisation';
-import { presentInterstitial } from '@/ads/interstitialController';
+import { useAmortisationCsvExport } from '@/shared/lib/hooks/useAmortisationCsvExport';
+import { ExportCsvButton } from '@/shared/ui/components/ExportCsvButton';
 import { AmortisationTable } from './AmortisationTable';
 import { LoanSummaryOverview } from './LoanSummaryOverview';
 
@@ -74,10 +70,10 @@ export const LoanCalculationView = ({
   ownsScroll = false,
   scrollContentStyle,
 }: Props) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { exportCsv, isExporting: isExportingCsv } = useAmortisationCsvExport();
   const [activeTab, setActiveTab] = useState<CalculationTab>('summary');
-  const [isExportingCsv, setIsExportingCsv] = useState(false);
   const [fullscreenPreview, setFullscreenPreview] = useState<FullscreenPreview | null>(null);
   const [chartHelp, setChartHelp] = useState<ChartHelpId | null>(null);
   const isPreviewOpen = fullscreenPreview !== null;
@@ -111,56 +107,10 @@ export const LoanCalculationView = ({
     { value: 'schedule', label: t('results.schedule') },
   ];
 
-  const handleExportCsv = useCallback(async () => {
-    if (isExportingCsv) return;
-
-    setIsExportingCsv(true);
-
-    try {
-      // CSV export is a premium feature gated behind an ad: always show an
-      // interstitial first, bypassing the frequency policy. Resolves even if no
-      // ad could be shown (offline/no-fill), so the export is never blocked.
-      await presentInterstitial({ force: true });
-
-      const csvContent = buildAmortisationCsv({
-        items: result.tableItems,
-        startDate,
-        language: i18n.language,
-        headers: {
-          period: t('results.period'),
-          openingBalance: t('results.openingBalance'),
-          principal: t('results.principal'),
-          interest: t('results.interest'),
-          closingBalance: t('results.closingBalance'),
-        },
-      });
-
-      const sharingAvailable = await Sharing.isAvailableAsync();
-      if (!sharingAvailable) {
-        await Share.share({
-          title: t('results.exportCsv'),
-          message: csvContent,
-        });
-        return;
-      }
-
-      const fileName = `loanbee-amortisation-${new Date().toISOString().slice(0, 10)}.csv`;
-      const file = new File(Paths.cache, fileName);
-
-      file.create({ intermediates: true, overwrite: true });
-      file.write(csvContent);
-
-      await Sharing.shareAsync(file.uri, {
-        mimeType: 'text/csv',
-        UTI: 'public.comma-separated-values-text',
-        dialogTitle: t('results.exportCsv'),
-      });
-    } catch {
-      Alert.alert(t('results.exportErrorTitle'), t('results.exportErrorMessage'));
-    } finally {
-      setIsExportingCsv(false);
-    }
-  }, [i18n.language, isExportingCsv, result.tableItems, startDate, t]);
+  const handleExportCsv = useCallback(
+    () => exportCsv({ items: result.tableItems, startDate }),
+    [exportCsv, result.tableItems, startDate],
+  );
 
   const openFullscreenPreview = useCallback((preview: FullscreenPreview) => {
     setFullscreenPreview(preview);
@@ -415,17 +365,7 @@ export const LoanCalculationView = ({
           <View style={[styles.chartHeader, styles.scheduleHeader]}>
             <AppText variant="title3" style={styles.scheduleTitle}>{t('results.amortisationTable')}</AppText>
             <View style={styles.scheduleActions}>
-              <TouchableOpacity
-                style={[styles.exportButton, isExportingCsv && styles.exportButtonDisabled]}
-                onPress={handleExportCsv}
-                disabled={isExportingCsv}
-                accessibilityRole="button"
-                activeOpacity={0.8}
-              >
-                <AppText variant="labelSm" tone="accent" style={styles.actionButtonText}>
-                  {isExportingCsv ? t('results.exportingCsv') : t('results.exportCsv')}
-                </AppText>
-              </TouchableOpacity>
+              <ExportCsvButton onPress={handleExportCsv} isExporting={isExportingCsv} />
               <TouchableOpacity
                 style={styles.fullscreenButton}
                 onPress={() => openFullscreenPreview('schedule')}
@@ -600,19 +540,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  exportButton: {
-    minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-    borderRadius: radii.button,
-    backgroundColor: colours.surface,
-    borderWidth: 1,
-    borderColor: colours.border,
-  },
-  exportButtonDisabled: {
-    opacity: 0.6,
   },
   fullscreenButton: {
     width: 36,
