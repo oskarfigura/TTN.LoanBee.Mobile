@@ -7,6 +7,7 @@ import {
   useLoanCalculatorForm,
   LoanCalculatorFormValues,
 } from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { normaliseCalculatorFormValues } from '@/shared/lib/hooks/normaliseCalculatorFormValues';
 import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
 import { getLoanCalculations } from '@/shared/domain/core/amortisation';
 import { LoanCalculationType } from '@/shared/domain/core/LoanCalculationType';
@@ -135,13 +136,19 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
   const initialEditValues = useMemo(() => {
     if (!params.editValues) return undefined;
     try {
-      return JSON.parse(params.editValues) as Partial<LoanCalculatorFormValues>;
+      return normaliseCalculatorFormValues(JSON.parse(params.editValues));
     } catch {
       return undefined;
     }
   }, [params.editValues]);
   const form = useLoanCalculatorForm({ initialValues: initialEditValues });
   const consumedEditRef = useRef<string | null>(null);
+  // Set when we hydrate an edited calc, so the focus effect below skips its
+  // default-currency write exactly once: clearing editValues re-fires that
+  // effect, and its `if (params.editValues) return` guard no longer holds
+  // (the param is now an empty string), which would otherwise overwrite the
+  // edited calc's currency with the device default.
+  const skipCurrencyDefaultRef = useRef(false);
   const { loans, refresh } = useSavedLoans();
   const [journeyStep, setJourneyStep] = useState<JourneyStep>(isCalculateTab ? 'form' : 'intent');
   const [showCalculator, setShowCalculator] = useState(isCalculateTab);
@@ -197,8 +204,9 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
     if (!editValues || consumedEditRef.current === editValues) return;
     consumedEditRef.current = editValues;
     try {
-      const parsed = JSON.parse(editValues) as Partial<LoanCalculatorFormValues>;
+      const parsed = normaliseCalculatorFormValues(JSON.parse(editValues));
       form.reset(parsed);
+      skipCurrencyDefaultRef.current = true;
       setShowCalculator(true);
       setJourneyStep('form');
     } catch {
@@ -216,6 +224,13 @@ export function BorrowingJourneyScreen({ mode = 'home' }: BorrowingJourneyScreen
       setJourneyStep(step => (step === 'trackChoice' ? 'intent' : step));
       // Don't clobber an edited calc's currency while we're hydrating it.
       if (params.editValues) return;
+      // Clearing editValues (above) re-fires this effect with an empty param, so
+      // honour the one-shot skip the hydration set — otherwise the edited calc's
+      // currency would be reset to the device default the moment it's opened.
+      if (skipCurrencyDefaultRef.current) {
+        skipCurrencyDefaultRef.current = false;
+        return;
+      }
       // This effect runs on every focus (including returning from any pushed screen),
       // so only write the currency when the default actually differs — a same-value
       // setValue would still re-render the controlled currency field for nothing.
