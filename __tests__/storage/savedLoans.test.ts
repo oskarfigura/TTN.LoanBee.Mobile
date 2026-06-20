@@ -299,4 +299,36 @@ describe('savedLoansStorage', () => {
       .toThrow(InvalidMortgageEventError);
     expect(savedLoansStorage.getById('test-id-1')?.events).toEqual([]);
   });
+
+  it('retries a transient MMKV write failure and persists once it succeeds', () => {
+    // Default spyOn calls through to the real (mock) set, so the third attempt writes.
+    const setSpy = jest.spyOn(storage, 'set')
+      .mockImplementationOnce(() => { throw new Error('transient MMKV failure'); })
+      .mockImplementationOnce(() => { throw new Error('transient MMKV failure'); });
+
+    expect(() => savedLoansStorage.add(makeLoan())).not.toThrow();
+
+    expect(setSpy).toHaveBeenCalledTimes(3);
+    expect(savedLoansStorage.getById('test-id-1')).toBeDefined();
+
+    setSpy.mockRestore();
+  });
+
+  it('drops the cache, reports, and throws when every write attempt fails', () => {
+    const listener = jest.fn();
+    const unsubscribe = onSavedLoanStorageError(listener);
+    const consoleErr = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const setSpy = jest.spyOn(storage, 'set').mockImplementation(() => {
+      throw new Error('disk full');
+    });
+
+    expect(() => savedLoansStorage.add(makeLoan())).toThrow(SavedLoanStorageError);
+    expect(setSpy).toHaveBeenCalledTimes(3);
+    expect(listener).toHaveBeenCalled();
+    expect(listener.mock.calls[0][0]).toBeInstanceOf(SavedLoanStorageError);
+
+    setSpy.mockRestore();
+    unsubscribe();
+    consoleErr.mockRestore();
+  });
 });

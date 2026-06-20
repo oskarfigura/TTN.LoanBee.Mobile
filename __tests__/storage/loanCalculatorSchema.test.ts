@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+  EXAMPLE_CALCULATOR_VALUES,
   LoanCalculatorFormInputValues,
   loanCalculatorSchema,
 } from '@/shared/lib/hooks/loanCalculatorSchema';
@@ -81,5 +82,25 @@ describe('loanCalculatorSchema — term and payment refinements', () => {
   it('rejects an additional payment that exceeds the loan balance in TERM mode', () => {
     const result = parse({ calculationType: 'term', additionalMonthlyPayment: 500000 });
     expect(errorFor(result, 'additionalMonthlyPayment')).toBe('errors.additionalPaymentExceeds');
+  });
+});
+
+describe('EXAMPLE_CALCULATOR_VALUES (first-run prefill)', () => {
+  it('uses the intended example mortgage figures', () => {
+    expect(EXAMPLE_CALCULATOR_VALUES).toMatchObject({
+      category: 'mortgage',
+      loanAmount: 250000,
+      interest: 5,
+      termInYears: 25,
+      downPayment: 10,
+      downPaymentType: 'percent',
+    });
+  });
+
+  it('is a valid set of calculator inputs', () => {
+    // Completed with the non-prefilled defaults the form supplies, the example must pass the
+    // schema — a brand-new user can hit Calculate immediately without a validation error.
+    const result = loanCalculatorSchema.safeParse({ ...baseValues, ...EXAMPLE_CALCULATOR_VALUES });
+    expect(result.success).toBe(true);
   });
 });

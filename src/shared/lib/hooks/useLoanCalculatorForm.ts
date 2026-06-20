@@ -38,6 +38,10 @@ const defaultValues: LoanCalculatorFormInputValues = {
   currency: getDefaultCurrency(),
 };
 
+// Defined in the schema module (kept free of expo-localization / MMKV) so it can be
+// unit-tested in isolation; re-exported here as the calculator's canonical import surface.
+export { EXAMPLE_CALCULATOR_VALUES } from '@/shared/lib/hooks/loanCalculatorSchema';
+
 interface Props {
   initialValues?: Partial<LoanCalculatorFormValues>;
 }

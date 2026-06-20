@@ -34,11 +34,13 @@ export const useAmortisationCsvExport = () => {
         startDate,
         language: i18n.language,
         headers: {
-          period: t('results.period'),
-          openingBalance: t('results.openingBalance'),
-          principal: t('results.principal'),
-          interest: t('results.interest'),
-          closingBalance: t('results.closingBalance'),
+          // English defaultValues so a missing/corrupt locale never emits raw i18n keys
+          // (e.g. "results.period") as CSV column headers.
+          period: t('results.period', { defaultValue: 'Period' }),
+          openingBalance: t('results.openingBalance', { defaultValue: 'Opening Balance' }),
+          principal: t('results.principal', { defaultValue: 'Principal' }),
+          interest: t('results.interest', { defaultValue: 'Interest' }),
+          closingBalance: t('results.closingBalance', { defaultValue: 'Closing Balance' }),
         },
       });
 

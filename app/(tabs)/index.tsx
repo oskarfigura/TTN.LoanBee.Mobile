@@ -6,7 +6,10 @@ import {
   getDefaultCurrency,
   useLoanCalculatorForm,
   LoanCalculatorFormValues,
+  EXAMPLE_CALCULATOR_VALUES,
 } from '@/shared/lib/hooks/useLoanCalculatorForm';
+import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
+import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 import { normaliseCalculatorFormValues } from '@/shared/lib/hooks/normaliseCalculatorFormValues';
 import { useSavedLoans } from '@/shared/lib/hooks/useSavedLoans';
 import { getLoanCalculations } from '@/shared/domain/core/amortisation';
@@ -61,7 +64,17 @@ export function BorrowingScreen({ mode = 'home' }: BorrowingScreenProps) {
       return undefined;
     }
   }, [params.editValues]);
-  const form = useLoanCalculatorForm({ initialValues: initialEditValues });
+  // First-ever calculation (no recent calcs, no saved loans): pre-fill an example mortgage
+  // so a brand-new user can hit Calculate immediately and see how it works. Edit flows
+  // always win; once the user has any history the form starts empty. Read synchronously
+  // from MMKV so an existing user never sees the example flash before their empty form.
+  const initialValues = useMemo(() => {
+    if (initialEditValues) return initialEditValues;
+    const hasHistory = recentCalculationsStorage.getAll().length > 0
+      || savedLoansStorage.getAll().length > 0;
+    return hasHistory ? undefined : EXAMPLE_CALCULATOR_VALUES;
+  }, [initialEditValues]);
+  const form = useLoanCalculatorForm({ initialValues });
   const consumedEditRef = useRef<string | null>(null);
   // True while the form holds an edited calc that hasn't been recalculated yet.
   // Hydrating an edit clears the editValues param (to dedupe), so the focus

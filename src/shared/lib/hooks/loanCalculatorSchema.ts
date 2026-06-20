@@ -121,3 +121,18 @@ export const loanCalculatorSchema = z.object({
 
 export type LoanCalculatorFormInputValues = z.input<typeof loanCalculatorSchema>;
 export type LoanCalculatorFormValues = z.output<typeof loanCalculatorSchema>;
+
+// Example mortgage pre-filled on the very first calculation — before the user has any saved
+// loans or recent calcs — so a brand-new user can hit Calculate straight away and see a full
+// result. Lives here (not in useLoanCalculatorForm) so it stays free of expo-localization /
+// MMKV and can be unit-tested against the schema. Edit/recent/shared flows override it via
+// `initialValues`; once the user has any history the form starts empty (gated in
+// BorrowingScreen).
+export const EXAMPLE_CALCULATOR_VALUES: Partial<LoanCalculatorFormValues> = {
+  category: 'mortgage',
+  loanAmount: 250000,
+  interest: 5,
+  termInYears: 25,
+  downPayment: 10,
+  downPaymentType: DownPaymentType.PERCENT,
+};
