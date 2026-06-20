@@ -51,6 +51,8 @@ import {
   TimelineWarningType,
 } from '@/shared/domain/mortgage/tracker';
 import { getResultForSavedLoan } from '@/shared/domain/results/loanResultRoute';
+import { useAmortisationCsvExport } from '@/shared/lib/hooks/useAmortisationCsvExport';
+import { ExportCsvButton } from '@/shared/ui/components/ExportCsvButton';
 import { LoanDeal, SavedLoan } from '@/shared/domain/types/SavedLoan';
 import { colours } from '@/shared/ui/theme';
 import { formatFriendlyDate, formatFriendlyDateRange, formatIsoDate, formatShortMonthYearRange } from '@/shared/lib/utils/date';
@@ -99,6 +101,7 @@ export const MortgageDetailView = ({
   const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { exportCsv, isExporting: isExportingCsv } = useAmortisationCsvExport();
   const scrollRef = useRef<ScrollView>(null);
   const [activeTab, setActiveTab] = useState<MortgageDetailTab>('overview');
   const [addDrawerVisible, setAddDrawerVisible] = useState(false);
@@ -137,6 +140,14 @@ export const MortgageDetailView = ({
   const currentDeal = trackerSummary.currentDeal;
   const activeDeal = getCurrentDeal(loan, asOf);
   const publishedDeals = getPublishedDeals(loan);
+  // Schedule start: the first published deal's start if any, otherwise the saved
+  // mortgage's own start. Shared by the schedule table, its fullscreen preview, and
+  // the CSV export so all three describe the same timeline.
+  const scheduleStartDate = publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate;
+  const handleExportSchedule = useCallback(
+    () => exportCsv({ items: projection.tableItems, startDate: scheduleStartDate }),
+    [exportCsv, projection.tableItems, scheduleStartDate],
+  );
   const draftDeal = trackerSummary.nextDraftDeal;
   const canPlanNextDeal = !draftDeal;
   const overpaymentDeal = activeDeal ?? publishedDeals[publishedDeals.length - 1];
@@ -369,7 +380,7 @@ export const MortgageDetailView = ({
       return (
         <AmortisationTable
           items={projection.tableItems}
-          startDate={publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate}
+          startDate={scheduleStartDate}
           currency={loan.currency}
         />
       );
@@ -524,19 +535,23 @@ export const MortgageDetailView = ({
           {projectionRenderStage >= 5 ? (
             <Card style={[styles.chartCard, styles.scheduleCard]}>
               <View style={styles.chartHeader}>
-                <AppText variant="title3">{t('mortgage.trackedSchedule')}</AppText>
-                <TouchableOpacity
-                  style={styles.fullscreenButton}
-                  onPress={() => openProjectionPreview('schedule')}
-                  accessibilityRole="button"
-                  activeOpacity={0.8}
-                >
-                  <Icon icon={IconName.Maximize01Icon} size={18} color={colours.primary} />
-                </TouchableOpacity>
+                <AppText variant="title3" style={styles.previewTitle}>{t('mortgage.trackedSchedule')}</AppText>
+                <View style={styles.chartActions}>
+                  <ExportCsvButton onPress={handleExportSchedule} isExporting={isExportingCsv} />
+                  <TouchableOpacity
+                    style={styles.fullscreenButton}
+                    onPress={() => openProjectionPreview('schedule')}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('results.fullScreen')}
+                    activeOpacity={0.8}
+                  >
+                    <Icon icon={IconName.Maximize01Icon} size={18} color={colours.primary} />
+                  </TouchableOpacity>
+                </View>
               </View>
               <AmortisationTable
                 items={projection.tableItems}
-                startDate={publishedDeals[0]?.startDate ?? loan.formSnapshot.startDate}
+                startDate={scheduleStartDate}
                 currency={loan.currency}
                 scrollGesture={tableScrollGesture}
               />

@@ -335,6 +335,8 @@
     "about": "About LoanBee",
     "howItWorksBody": "Take the quick tour of planning, tracking, and overpayments.",
     "aboutBody": "See the formula, disclaimer, and app details.",
+    "contact": "Contact us",
+    "contactBody": "Get support or send feedback, sales enquiries and questions.",
     "devDataTitle": "Demo Portfolio",
     "devDataHelp": "Development only. Explore realistic home, car, bike and lifestyle loans with polished sample activity.",
     "devDataLoad": "Load demo portfolio",
@@ -380,6 +382,40 @@
     "dataImportError_invalidShape": "That file isn't a valid LoanBee backup.",
     "dataImportError_empty": "That backup contains no saved loans.",
     "copyright": "Copyright © 2026 THE TECH NARRATIVE LTD. All rights reserved."
+  },
+  "contact": {
+    "title": "Contact us",
+    "introTitle": "We'd love to hear from you",
+    "intro": "Pick a topic below and your mail app will open with a message ready to send. We read every email.",
+    "sentTo": "Your email goes to",
+    "fallbackTitle": "No mail app found",
+    "fallbackMessage": "We couldn't open a mail app on this device. You can email us directly at:",
+    "categories": {
+      "support": {
+        "label": "Support",
+        "body": "Something not working? Get help.",
+        "subject": "[LoanBee] Support",
+        "prompt": "Please describe the problem you're having:"
+      },
+      "feedback": {
+        "label": "Feedback",
+        "body": "Share ideas to make LoanBee better.",
+        "subject": "[LoanBee] Feedback",
+        "prompt": "We'd love your feedback:"
+      },
+      "sales": {
+        "label": "Sales enquiry",
+        "body": "Partnerships and business enquiries.",
+        "subject": "[LoanBee] Sales enquiry",
+        "prompt": "Tell us about your enquiry:"
+      },
+      "question": {
+        "label": "Question",
+        "body": "Ask us anything about the app.",
+        "subject": "[LoanBee] Question",
+        "prompt": "What would you like to know?"
+      }
+    }
   },
   "disclaimer": {
     "label": "Disclaimer:",
