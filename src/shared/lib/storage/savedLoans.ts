@@ -141,24 +141,37 @@ const normaliseLoanGroup = (loan: LoanGroup): LoanGroup => {
   };
 };
 
+const MAX_SAVE_ATTEMPTS = 3;
+
 const saveAll = (loans: LoanGroup[]): void => {
-  try {
-    const stamped = loans.map(loan => (
-      loan.schemaVersion === LOAN_GROUP_SCHEMA_VERSION
-        ? loan
-        : { ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION }
-    ));
-    storage.set(STORAGE_KEYS.SAVED_LOANS, JSON.stringify(stamped));
-  } catch (cause) {
-    // A failed write may follow an in-place mutation of the cached array (add/
-    // update/togglePinned/*Event all mutate loadAll()'s result). Drop the cache so
-    // the next read re-derives from what is actually persisted, not the lost write.
-    cachedRaw = undefined;
-    cachedLoans = null;
-    const error = new SavedLoanStorageError('Failed to persist saved loans', cause);
-    reportStorageError(error);
-    throw error;
+  const stamped = loans.map(loan => (
+    loan.schemaVersion === LOAN_GROUP_SCHEMA_VERSION
+      ? loan
+      : { ...loan, schemaVersion: LOAN_GROUP_SCHEMA_VERSION }
+  ));
+  const payload = JSON.stringify(stamped);
+
+  let lastCause: unknown;
+  for (let attempt = 1; attempt <= MAX_SAVE_ATTEMPTS; attempt += 1) {
+    try {
+      storage.set(STORAGE_KEYS.SAVED_LOANS, payload);
+      return;
+    } catch (cause) {
+      // Retry immediately. MMKV writes are synchronous, so sleeping between attempts
+      // would block the JS thread and freeze the UI — a momentary lock can instead
+      // clear between back-to-back tries. A persistent failure falls through below.
+      lastCause = cause;
+    }
   }
+
+  // Every attempt failed. A failed write may follow an in-place mutation of the cached
+  // array (add/update/togglePinned/*Event all mutate loadAll()'s result). Drop the cache
+  // so the next read re-derives from what is actually persisted, not the lost write.
+  cachedRaw = undefined;
+  cachedLoans = null;
+  const error = new SavedLoanStorageError('Failed to persist saved loans', lastCause);
+  reportStorageError(error);
+  throw error;
 };
 
 // Parsing + normalising the stored payload on every read is expensive and runs on

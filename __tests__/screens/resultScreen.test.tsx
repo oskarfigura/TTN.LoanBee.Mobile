@@ -352,6 +352,25 @@ describe('ResultScreen', () => {
     expect(renderer.root.findAll(node => String(node.type) === 'UnsavedResultModal')).toHaveLength(0);
   });
 
+  it('shows the not-found state instead of crashing on a malformed saved loan', async () => {
+    // A saved loan arriving via the navigation param bypasses storage-load normalisation;
+    // an empty formSnapshot makes getResultForSavedLoan throw. The screen must catch it and
+    // fall back to the not-found UI rather than taking the whole render down.
+    mockParams = {
+      mode: 'saved',
+      savedLoan: JSON.stringify({ id: 'bad', formSnapshot: {} }),
+      currency: 'GBP',
+    };
+
+    const renderer = await renderResultScreen();
+
+    expect(renderer.root.findAll(node => String(node.type) === 'LoanCalculationView')).toHaveLength(0);
+    const goBack = renderer.root.findAll(node => (
+      String(node.type) === 'Button' && node.props.label === 'common.goBack'
+    ));
+    expect(goBack).toHaveLength(1);
+  });
+
   it('promotes a calculation into tracking only when the user chooses Track', async () => {
     mockParams = {
       mode: 'draft',

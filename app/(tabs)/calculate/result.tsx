@@ -30,6 +30,7 @@ import { getDraftResultSession } from '@/shared/domain/results/draftResultStore'
 import { savedLoansStorage } from '@/shared/lib/storage/savedLoans';
 import { recentCalculationsStorage } from '@/shared/lib/storage/recentCalculations';
 import { useStoreReview } from '@/shared/lib/services/review';
+import { recordCrash } from '@/shared/lib/services/diagnostics/crashLog';
 import { shareCalculation } from '@/features/sharing/shareCalculation';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LoanSummaryPanel } from '@/features/calculator/components/LoanSummaryPanel';
@@ -80,10 +81,18 @@ export default function ResultScreen() {
   const draftSession = useMemo(() => getDraftResultSession(params.draftId), [params.draftId]);
 
   const result = useMemo(() => {
-    if (savedLoan) return getResultForSavedLoan(savedLoan);
-    if (draftSession) return draftSession.result;
-    if (recentCalculation) return getResultForFormValues(recentCalculation.formValues);
-    return parseJson<LoanResult>(params.result);
+    // savedLoan can arrive straight from a navigation/deep-link param (params.savedLoan),
+    // bypassing the storage-load normalisation that drops malformed records. Guard the
+    // engine call so a corrupt snapshot yields the notFound UI below, not a hard crash.
+    try {
+      if (savedLoan) return getResultForSavedLoan(savedLoan);
+      if (draftSession) return draftSession.result;
+      if (recentCalculation) return getResultForFormValues(recentCalculation.formValues);
+      return parseJson<LoanResult>(params.result);
+    } catch (error) {
+      recordCrash(error, 'render', false);
+      return null;
+    }
   }, [draftSession, params.result, recentCalculation, savedLoan]);
   const formValues = useMemo(() => (
     savedLoan?.formSnapshot
@@ -96,19 +105,26 @@ export default function ResultScreen() {
   // only when a recurring overpayment exists. Mirrors the `result` source precedence; the
   // raw-param fallback has no inputs to re-run, so the card is simply omitted there.
   const baselineRemainingArray = useMemo(() => {
-    if (savedLoan) {
-      return (savedLoan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
-        ? getBaselineResultForSavedLoan(savedLoan).loanChartRemainingArray
-        : undefined;
+    // Same unvalidated-snapshot exposure as `result`: swallow a malformed-input throw so
+    // the comparison chart is simply omitted rather than taking the whole screen down.
+    try {
+      if (savedLoan) {
+        return (savedLoan.formSnapshot.additionalMonthlyPayment ?? 0) > 0
+          ? getBaselineResultForSavedLoan(savedLoan).loanChartRemainingArray
+          : undefined;
+      }
+      const form = (draftSession?.formValues ?? recentCalculation?.formValues) as
+        LoanCalculatorFormValues | undefined;
+      if (form) {
+        return (form.additionalMonthlyPayment ?? 0) > 0
+          ? getBaselineResultForFormValues(form).loanChartRemainingArray
+          : undefined;
+      }
+      return undefined;
+    } catch (error) {
+      recordCrash(error, 'render', false);
+      return undefined;
     }
-    const form = (draftSession?.formValues ?? recentCalculation?.formValues) as
-      LoanCalculatorFormValues | undefined;
-    if (form) {
-      return (form.additionalMonthlyPayment ?? 0) > 0
-        ? getBaselineResultForFormValues(form).loanChartRemainingArray
-        : undefined;
-    }
-    return undefined;
   }, [draftSession?.formValues, recentCalculation?.formValues, savedLoan]);
   // Preview an unsaved calculation through the same summary surface the saved-loan
   // detail uses, by building a transient draft loan from the calculation inputs.
