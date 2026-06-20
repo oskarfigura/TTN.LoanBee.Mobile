@@ -64,7 +64,7 @@ export default function ResultScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const params = useLocalSearchParams<ResultParams>();
-  const allowBackRef = useRef(false);
+  const unsubscribeBackInterceptRef = useRef<(() => void) | undefined>(undefined);
   const recordedReviewActionRef = useRef(false);
   const { recordUsefulAction, requestReview } = useStoreReview();
 
@@ -174,11 +174,12 @@ export default function ResultScreen() {
 
   const handleBack = useCallback(() => {
     if (params.returnTo) {
-      allowBackRef.current = true;
+      // Detach our own interceptor before navigating, so the `beforeRemove`
+      // that the replace itself triggers isn't caught and re-routed (which
+      // would loop). The screen is leaving for good — nothing to re-attach.
+      unsubscribeBackInterceptRef.current?.();
+      unsubscribeBackInterceptRef.current = undefined;
       router.replace(params.returnTo as never);
-      setTimeout(() => {
-        allowBackRef.current = false;
-      }, 0);
       return;
     }
 
@@ -188,11 +189,18 @@ export default function ResultScreen() {
   useEffect(() => {
     if (!params.returnTo) return undefined;
 
-    return navigation.addListener('beforeRemove', event => {
-      if (allowBackRef.current) return;
+    // Intercept every removal (hardware Back, swipe, header Back) and redirect
+    // to the originating destination instead of popping the Calculate stack.
+    const unsubscribe = navigation.addListener('beforeRemove', event => {
       event.preventDefault();
       handleBack();
     });
+    unsubscribeBackInterceptRef.current = unsubscribe;
+
+    return () => {
+      unsubscribeBackInterceptRef.current = undefined;
+      unsubscribe();
+    };
   }, [handleBack, navigation, params.returnTo]);
 
   const handleEdit = useCallback(() => {

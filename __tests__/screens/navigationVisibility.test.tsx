@@ -22,11 +22,11 @@ describe('bottom navigation ownership', () => {
     const settingsStack = read('app/(tabs)/settings/_layout.tsx');
 
     expect(calculateStack).toMatch(/<Stack\.Screen\s+name="result"/);
-    expect(calculateStack).toContain('gestureEnabled: !');
+    expect(calculateStack).toMatch(/gestureEnabled:\s*!/);
     expect(calculateStack).toContain('returnTo?: string');
-    expect(savedStack).toContain('<Stack.Screen name="recent"');
-    expect(savedStack).toContain('<Stack.Screen name="[id]"');
-    expect(settingsStack).toContain('<Stack.Screen name="about"');
+    expect(savedStack).toMatch(/<Stack\.Screen\s+name="recent"/);
+    expect(savedStack).toMatch(/<Stack\.Screen\s+name="\[id\]"/);
+    expect(settingsStack).toMatch(/<Stack\.Screen\s+name="about"/);
 
     [
       'app/(tabs)/calculate/result.tsx',
