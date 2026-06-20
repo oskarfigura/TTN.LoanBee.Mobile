@@ -757,7 +757,6 @@ const MortgageSummaryPanel = ({
             loan={loan}
             lender={lender}
             color={colours.textSecondary}
-            iconSize={15}
             variant="bodySm"
             style={styles.summaryCategoryTag}
           />

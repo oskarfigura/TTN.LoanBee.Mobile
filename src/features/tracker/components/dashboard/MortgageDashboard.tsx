@@ -146,7 +146,6 @@ const LoanDashboardCard = React.memo(({
                 loan={loan}
                 lender={dealLender}
                 color={colours.textSecondary}
-                iconSize={14}
                 variant="bodyLg"
                 style={styles.cardSubtitle}
               />

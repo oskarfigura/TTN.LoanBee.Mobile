@@ -207,7 +207,6 @@ export const LoanSummaryPanel = ({
                 loan={loan}
                 lender={loan.lender}
                 color={colours.textSecondary}
-                iconSize={15}
                 variant="bodySm"
                 style={styles.summaryCategoryTag}
               />
