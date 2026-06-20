@@ -28,13 +28,7 @@ jest.mock('react-native', () => {
   const React = require('react');
 
   return {
-    ScrollView: ({ children, ...props }: { children?: React.ReactNode }) => (
-      React.createElement('ScrollView', props, children)
-    ),
     StyleSheet: { create: (styles: unknown) => styles },
-    TouchableOpacity: ({ children, ...props }: { children?: React.ReactNode }) => (
-      React.createElement('TouchableOpacity', props, children)
-    ),
     View: ({ children, ...props }: { children?: React.ReactNode }) => (
       React.createElement('View', props, children)
     ),
@@ -93,13 +87,6 @@ jest.mock('@/features/tracker/components/dashboard/MortgageDashboard', () => ({
   MortgageDashboard: (props: Record<string, unknown>) => React.createElement('MortgageDashboard', props),
 }));
 
-// Stub the journey icons so the test never pulls in react-native-svg.
-jest.mock('@/shared/ui/components/Icon', () => ({
-  Icon: (props: Record<string, unknown>) => React.createElement('Icon', props),
-  IconName: new Proxy({}, { get: (_target, prop) => prop }),
-}));
-
-
 jest.mock('@/shared/ui/components/HeaderBackAction', () => ({
   HeaderBackAction: (props: Record<string, unknown>) => React.createElement('HeaderBackAction', props),
 }));
@@ -113,10 +100,6 @@ const textContent = (node: ReactTestInstance | string | number | null | undefine
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   return node.children.map(child => textContent(child as ReactTestInstance | string | number)).join('');
 };
-
-const findTouchableByText = (renderer: ReactTestRenderer, text: string): ReactTestInstance => (
-  renderer.root.find(node => String(node.type) === 'TouchableOpacity' && textContent(node).includes(text))
-);
 
 const findAllByMockType = (renderer: ReactTestRenderer, type: string): ReactTestInstance[] => (
   renderer.root.findAll(node => String(node.type) === type)
@@ -175,13 +158,12 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('Home intent journey', () => {
-  it('opens the Calculate tab directly on the calculator form', async () => {
+describe('Calculate tab', () => {
+  it('opens directly on the calculator form with no back action', async () => {
     const renderer = await renderCalculate();
     const header = findAllByMockType(renderer, 'ScreenHeader')[0];
 
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(1);
-    expect(textContent(renderer.root)).not.toContain('journey.intentTitle');
     expect(header.props.leftAction).toBeUndefined();
   });
 
@@ -284,30 +266,21 @@ describe('Home intent journey', () => {
       }),
     });
   });
+});
 
-  it('keeps the upfront choice intent-first and opens the calculator form only for planning', async () => {
+describe('Home tab', () => {
+  it('shows the calculator form directly when there are no saved loans', async () => {
     const renderer = await renderHome();
-
-    expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(0);
-    // Step 1 is a clean Calculate-vs-Track fork; category cards live on step 2.
-    expect(textContent(renderer.root)).toContain('journey.calculateTitle');
-    expect(textContent(renderer.root)).toContain('journey.trackTitle');
-    expect(textContent(renderer.root)).not.toContain('journey.trackChoiceTitle');
-
-    await act(async () => {
-      findTouchableByText(renderer, 'journey.calculateTitle').props.onPress();
-    });
+    const header = findAllByMockType(renderer, 'ScreenHeader')[0];
 
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(1);
-    expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(findAllByMockType(renderer, 'MortgageDashboard')).toHaveLength(0);
+    // No multi-step journey: it is the single calculation surface, no back action.
+    expect(header.props.leftAction).toBeUndefined();
   });
 
   it('returns Home-originated results to Home', async () => {
     const renderer = await renderHome();
-
-    await act(async () => {
-      findTouchableByText(renderer, 'journey.calculateTitle').props.onPress();
-    });
     const loanForm = findAllByMockType(renderer, 'LoanForm')[0];
 
     await act(async () => {
@@ -320,26 +293,22 @@ describe('Home intent journey', () => {
     });
   });
 
-  it('routes through the track step 2 to the category-specific form', async () => {
+  it('shows the dashboard instead of the form when pinned loans exist', async () => {
+    mockLoans = [
+      { id: 'loan-1', pinnedToDashboard: true, dashboardOrder: 0 },
+    ];
     const renderer = await renderHome();
 
-    // Track my borrowing reveals the category step without navigating away.
-    await act(async () => {
-      findTouchableByText(renderer, 'journey.trackTitle').props.onPress();
-    });
-    expect(mockRouter.push).not.toHaveBeenCalled();
-    expect(textContent(renderer.root)).toContain('journey.trackChoiceTitle');
-
-    await act(async () => {
-      findTouchableByText(renderer, 'save.mortgage').props.onPress();
-    });
-    expect(mockRouter.push).toHaveBeenCalledWith('/saved/track?category=mortgage');
-
-    await act(async () => {
-      findTouchableByText(renderer, 'save.loan').props.onPress();
-    });
-    expect(mockRouter.push).toHaveBeenCalledWith('/saved/track?category=loan');
-
+    const dashboards = findAllByMockType(renderer, 'MortgageDashboard');
+    expect(dashboards).toHaveLength(1);
     expect(findAllByMockType(renderer, 'LoanForm')).toHaveLength(0);
+
+    await act(async () => {
+      dashboards[0].props.onNewCalculation();
+    });
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/calculate',
+      params: { fromTracked: '1', returnTo: '/' },
+    });
   });
 });
