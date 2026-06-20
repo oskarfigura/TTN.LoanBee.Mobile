@@ -57,6 +57,10 @@ export const styles = StyleSheet.create({
     color: colours.textSecondary,
     marginTop: spacing.xxxs,
   },
+  summaryCategoryTag: {
+    alignSelf: 'center',
+    marginTop: spacing.xs,
+  },
   summaryPinButton: {
     position: 'absolute',
     top: 0,
