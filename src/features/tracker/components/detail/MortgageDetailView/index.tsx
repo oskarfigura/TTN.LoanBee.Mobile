@@ -741,8 +741,6 @@ const MortgageSummaryPanel = ({
   onAddDeal: () => void;
   onOpenTimeline: () => void;
 }) => {
-  const { t } = useTranslation();
-
   return (
     <View style={styles.mortgageSummaryPanel}>
       <View style={styles.summaryHeader}>
@@ -755,11 +753,9 @@ const MortgageSummaryPanel = ({
           >
             {loan.nickname}
           </Text>
-          <Text style={styles.summarySubtitle} numberOfLines={1}>
-            {lender || t('saved.category.mortgage')}
-          </Text>
           <LoanCategoryTag
             loan={loan}
+            lender={lender}
             color={colours.textSecondary}
             iconSize={15}
             variant="bodySm"

@@ -19,6 +19,10 @@ interface Props {
   iconSize?: number;
   variant?: AppTextVariant;
   numberOfLines?: number;
+  // Optional lender appended inline after the category as "<label> · <lender>". Kept in
+  // the same AppText (not a sibling) so the existing flexShrink ellipsis truncates the
+  // whole "category · lender" string as one unit in a centred header.
+  lender?: string;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
@@ -33,12 +37,14 @@ export const LoanCategoryTag = ({
   iconSize = 12,
   variant = 'labelSm',
   numberOfLines = 1,
+  lender,
   style,
   textStyle,
 }: Props) => {
   const { t } = useTranslation();
   const purpose = getLoanPurpose(loan);
-  const label = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
+  const category = purpose ? t(`loanPurpose.${purpose}`) : t(`saved.category.${loan.category}`);
+  const label = lender ? `${category} · ${lender}` : category;
 
   return (
     <View style={[styles.row, style]}>
