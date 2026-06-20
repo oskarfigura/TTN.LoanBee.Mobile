@@ -38,9 +38,11 @@ const IdentityIcon = ({ loan }: { loan: SavedLoan }) => {
   const purpose = getLoanPurpose(loan);
   if (purpose) return <LoanPurposeIconTile purpose={purpose} size={40} />;
 
+  // Match LoanPurposeIconTile's chrome (size 40 → radius 14, icon 22) so the mortgage
+  // avatar reads identically to the loan-purpose avatars in the same list.
   return (
     <View style={styles.iconTile}>
-      <Icon icon={IconName.MortgageIcon} color={colours.primary} size={18} strokeWidth={1.8} />
+      <Icon icon={IconName.MortgageIcon} color={colours.primary} size={22} strokeWidth={1.85} />
     </View>
   );
 };
@@ -331,9 +333,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colours.surfaceAccent,
+    backgroundColor: colours.surfaceMuted,
     borderWidth: 1,
-    borderColor: colours.surfaceStrong,
+    borderColor: colours.borderSoft,
   },
   titleBlock: {
     flex: 1,
