@@ -5,6 +5,7 @@ import { AppText } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
 import { Icon, IconName } from '@/shared/ui/components/Icon';
 import { LoanPurposeIconTile } from '@/features/tracker/components/editing/LoanPurposePicker';
+import { LoanCategoryTag } from '@/features/tracker/components/LoanCategoryTag';
 import { SavedLoanProgressBar } from '@/features/tracker/components/dashboard/SavedLoanProgressBar';
 import { buildSavedLoanDisplayDetails, buildSavedLoanSummary, LoanInsightMetric } from '@/shared/domain/loans/loanInsightSummary';
 import { getLoanPurpose } from '@/shared/domain/loans/loanPurpose';
@@ -183,11 +184,12 @@ const LoanProfileCardComponent = ({
                   {loan.nickname}
                 </AppText>
                 <View style={styles.metaRow}>
-                  <View style={styles.categoryLabel}>
-                    <AppText variant="labelSm" tone="accent" numberOfLines={1}>
-                      {categoryLabel}
-                    </AppText>
-                  </View>
+                  <LoanCategoryTag
+                    loan={loan}
+                    color={colours.primary}
+                    iconSize={12}
+                    style={styles.categoryLabel}
+                  />
                   {displayDetails.lender ? (
                     <AppText variant="helper" tone="muted" numberOfLines={1} style={[styles.metaText, styles.smallLabel]}>
                       {displayDetails.lender}
