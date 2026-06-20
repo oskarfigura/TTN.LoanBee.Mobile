@@ -25,7 +25,7 @@ export default function AboutScreen() {
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('tabs.about')}
         variant="detail"

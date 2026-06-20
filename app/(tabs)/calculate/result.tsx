@@ -4,7 +4,7 @@ import {
   View,
   StyleSheet,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { LoanCalculationView } from '@/features/calculator/components/LoanCalculationView';
 import { AppText } from '@oskarfigura/ui-native';
@@ -47,6 +47,7 @@ type ResultParams = {
   recentId?: string;
   savedLoan?: string;
   savedLoanId?: string;
+  returnTo?: string;
 };
 
 const parseJson = <T,>(value?: string): T | null => {
@@ -61,7 +62,9 @@ const parseJson = <T,>(value?: string): T | null => {
 export default function ResultScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams<ResultParams>();
+  const unsubscribeBackInterceptRef = useRef<(() => void) | undefined>(undefined);
   const recordedReviewActionRef = useRef(false);
   const { recordUsefulAction, requestReview } = useStoreReview();
 
@@ -170,8 +173,35 @@ export default function ResultScreen() {
   }, [currency, formValues, recentCalculation?.category, result, savedLoan?.category, t]);
 
   const handleBack = useCallback(() => {
+    if (params.returnTo) {
+      // Detach our own interceptor before navigating, so the `beforeRemove`
+      // that the replace itself triggers isn't caught and re-routed (which
+      // would loop). The screen is leaving for good — nothing to re-attach.
+      unsubscribeBackInterceptRef.current?.();
+      unsubscribeBackInterceptRef.current = undefined;
+      router.replace(params.returnTo as never);
+      return;
+    }
+
     router.back();
-  }, [router]);
+  }, [params.returnTo, router]);
+
+  useEffect(() => {
+    if (!params.returnTo) return undefined;
+
+    // Intercept every removal (hardware Back, swipe, header Back) and redirect
+    // to the originating destination instead of popping the Calculate stack.
+    const unsubscribe = navigation.addListener('beforeRemove', event => {
+      event.preventDefault();
+      handleBack();
+    });
+    unsubscribeBackInterceptRef.current = unsubscribe;
+
+    return () => {
+      unsubscribeBackInterceptRef.current = undefined;
+      unsubscribe();
+    };
+  }, [handleBack, navigation, params.returnTo]);
 
   const handleEdit = useCallback(() => {
     if (!formValues) return;
@@ -192,6 +222,7 @@ export default function ResultScreen() {
           currency,
           mode: params.mode,
           recentId: params.recentId,
+          returnTo: params.returnTo,
           savedLoan: params.savedLoan,
           savedLoanId: params.savedLoanId,
           ...(canRehydrate ? {} : {
@@ -208,7 +239,7 @@ export default function ResultScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.notFound}>
           <AppText variant="bodyLg" style={styles.notFoundText}>{t('results.notFound')}</AppText>
-          <Button label={t('common.goBack')} onPress={() => router.back()} />
+          <Button label={t('common.goBack')} onPress={handleBack} />
         </View>
       </SafeAreaView>
     );

@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Alert, FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppText, ButtonVariant } from '@oskarfigura/ui-native';
 import { Button } from '@oskarfigura/ui-native';
 import { Card } from '@oskarfigura/ui-native';
@@ -150,7 +150,6 @@ const RecentCalculationCard = ({
 export default function RecentCalculationsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [recentItems, setRecentItems] = useState(() => recentCalculationsStorage.getAll());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const selectionMode = selectedIds.size > 0;
@@ -170,7 +169,13 @@ export default function RecentCalculationsScreen() {
   useFocusEffect(refresh);
 
   const openRecent = useCallback((id: string) => {
-    router.push({ pathname: '/result' as never, params: buildRecentResultParams(id) });
+    router.push({
+      pathname: '/calculate/result' as never,
+      params: {
+        ...buildRecentResultParams(id),
+        returnTo: '/saved/recent',
+      },
+    });
   }, [router]);
 
   const trackRecent = useCallback((item: RecentCalculation) => {
@@ -267,7 +272,7 @@ export default function RecentCalculationsScreen() {
   ) : null;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       <ScreenHeader
         title={t('recent.title')}
         variant="detail"
@@ -296,7 +301,7 @@ export default function RecentCalculationsScreen() {
         )}
       />
       {selectionMode ? (
-        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <View style={styles.actionBar}>
           <Button
             label={t('common.cancel')}
             onPress={clearSelection}
@@ -350,6 +355,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: layout.screenPadding,
     paddingTop: spacing.md,
+    paddingBottom: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colours.border,
     backgroundColor: colours.surfaceRaised,

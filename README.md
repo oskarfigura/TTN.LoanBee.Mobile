@@ -97,10 +97,11 @@ The app shell is file-based Expo Router, but the current action surface is broad
 
 | Area | Primary routes | Notes |
 |---|---|---|
-| Visible tabs | `/(tabs)/index`, `/(tabs)/saved`, `/(tabs)/calculate`, `/(tabs)/settings` | Bottom-nav destinations; Calculate opens directly on the form |
-| Hidden tab route | `/(tabs)/result` | Results screen is inside the tab navigator but hidden from the tab bar |
-| Onboarding / deep link / about | `/guide`, `/calculator/share`, `/about` | First-run flow, shared-calculation entrypoint, and Settings-entered formula/about content |
-| Saved loan routes | `/saved/new`, `/saved/track`, `/saved/[id]`, `/saved/[id]/edit`, `/saved/[id]/overpayments` | Promote a calculation to tracking, start from current lender facts, review, edit, and manage overpayments |
+| Visible tabs | `/(tabs)/index`, `/(tabs)/saved`, `/(tabs)/calculate`, `/(tabs)/settings` | Four bottom-nav destinations, each with its own browsing stack where needed |
+| Calculate browsing stack | `/calculate`, `/calculate/result` | Results keep Calculate selected; tapping Calculate returns to the form |
+| Tracked browsing stack | `/saved`, `/saved/recent`, `/saved/[id]` | List, Recent Calculations, and saved detail keep Tracked selected |
+| Settings browsing stack | `/settings`, `/settings/about` | About keeps Settings selected |
+| Focused routes | `/guide`, `/calculator/share`, `/saved/new`, `/saved/track`, `/saved/[id]/edit`, `/saved/[id]/overpayments` | Onboarding, handoff, create, and edit tasks cover the tab shell |
 | Mortgage tracking routes | `/saved/[id]/deals/new`, `/saved/[id]/deals/[dealId]`, `/saved/[id]/events/new`, `/saved/[id]/events/[eventId]`, `/saved/[id]/complete-current` | Deal lifecycle, event logging, and completion flows |
 
 ## Home Tab Modes
@@ -119,18 +120,23 @@ The Home tab is stateful:
 ```
 app/
   _layout.tsx              # Root stack: fonts, i18n, AdProvider, hidden/detail routes
-  about.tsx                # Formula/about content entered from Settings
   (tabs)/
     index.tsx              # Home tab: guide gate, dashboard mode, intent chooser, calculator mode
-    result.tsx             # Hidden results route with compare, track, and share actions
-    saved.tsx              # Tracked borrowing list plus Recent calculations entry
-    settings.tsx           # Language, currency, guide/about, version
+    calculate/
+      index.tsx            # Calculate tab form
+      result.tsx           # Results, compare, track, and share actions
+    saved/
+      index.tsx            # Tracked borrowing list
+      recent.tsx           # Recent calculations
+      [id].tsx             # Saved borrowing detail
+    settings/
+      index.tsx            # Language, currency, data, guide/about entry
+      about.tsx            # Formula, FAQ, and disclaimer
   guide.tsx                # First-run guide
   calculator/share.tsx     # Deep link / shared calculation entrypoint
   saved/
     new.tsx                # Save a calculation as a named profile
     track.tsx              # Track current borrowing from balance, rate, and payment or remaining term
-    [id].tsx               # View saved loan detail
     [id]/edit.tsx          # Edit nickname / lender / category / currency
     [id]/overpayments/     # Simple saved-loan overpayment editor
     [id]/deals/            # Mortgage deal creation/editing/correction

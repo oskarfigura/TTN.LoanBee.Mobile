@@ -38,9 +38,14 @@ export default function TabLayout() {
 
             if (route.name === 'calculate') {
               navigation.navigate('calculate', {
-                calculator: String(Date.now()),
-                fromTracked: '',
-                returnTo: '',
+                screen: 'index',
+                params: {
+                  calculator: String(Date.now()),
+                  fromResult: '',
+                  fromTracked: '',
+                  returnResultParams: '',
+                  returnTo: '',
+                },
               });
               return;
             }
@@ -110,13 +115,6 @@ export default function TabLayout() {
         options={{
           title: t('tabs.settings'),
           tabBarIcon: ({ color }) => <TabIcon name="settings" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="result"
-        options={{
-          href: null,
-          title: t('results.title'),
         }}
       />
     </Tabs>

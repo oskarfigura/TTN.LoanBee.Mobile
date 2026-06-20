@@ -198,7 +198,7 @@ const textContent = (node: ReactTestInstance | string | number | null | undefine
 };
 
 const renderDetail = async (): Promise<ReactTestRenderer> => {
-  const DetailScreen = (await import('../../app/saved/[id]')).default;
+  const DetailScreen = (await import('../../app/(tabs)/saved/[id]')).default;
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {

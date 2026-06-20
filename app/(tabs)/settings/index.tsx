@@ -257,7 +257,7 @@ export default function SettingsScreen() {
             body={t('settings.aboutBody')}
             tone="about"
             icon={<Icon icon={IconName.InfoCircleIcon} size={20} color={colours.tealDeep} strokeWidth={2} />}
-            onPress={() => router.push('/about')}
+            onPress={() => router.push('/settings/about')}
           />
           <View style={styles.calloutDivider} />
           <SettingsCallout

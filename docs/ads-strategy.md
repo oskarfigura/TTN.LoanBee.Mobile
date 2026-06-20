@@ -29,7 +29,7 @@ policy deliberately under-shows to them.
 
 | Format | Where it renders | Intrusiveness | Gate |
 |---|---|---|---|
-| **Banner** | Bottom of the result screen (`app/(tabs)/result.tsx`) | Passive | Shows once the consent flow has resolved |
+| **Banner** | Bottom of the result screen (`app/(tabs)/calculate/result.tsx`) | Passive | Shows once the consent flow has resolved |
 | **Interstitial** | Full-screen, on arrival at a calm tab after engagement | High | Frequency-capped policy (below) |
 | **Interstitial (forced)** | Full-screen, before a CSV export (premium gate) | High | **Always shows** — bypasses the frequency policy |
 

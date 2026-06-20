@@ -10,8 +10,18 @@ const mockRouter = {
   replace: jest.fn(),
 };
 let mockParams: Record<string, string | undefined> = {};
+let mockBeforeRemove: ((event: { preventDefault: () => void }) => void) | undefined;
 const mockRecordUsefulAction = jest.fn(() => Promise.resolve());
 const mockRequestReview = jest.fn(() => Promise.resolve(false));
+const mockNavigation = {
+  addListener: jest.fn((
+    event: string,
+    callback: (event: { preventDefault: () => void }) => void,
+  ) => {
+    if (event === 'beforeRemove') mockBeforeRemove = callback;
+    return jest.fn();
+  }),
+};
 const originalConsoleError = console.error;
 
 jest.mock('react-native', () => {
@@ -30,6 +40,7 @@ jest.mock('react-native', () => {
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
+  useNavigation: () => mockNavigation,
   useRouter: () => mockRouter,
 }));
 
@@ -172,7 +183,7 @@ const formValues = {
 };
 
 const renderResultScreen = async (): Promise<ReactTestRenderer> => {
-  const ResultScreen = (await import('../../app/(tabs)/result')).default;
+  const ResultScreen = (await import('../../app/(tabs)/calculate/result')).default;
   let renderer: ReactTestRenderer | undefined;
 
   await act(async () => {
@@ -193,6 +204,7 @@ beforeEach(() => {
 
 afterEach(() => {
   mockParams = {};
+  mockBeforeRemove = undefined;
   jest.restoreAllMocks();
   jest.clearAllMocks();
 });
@@ -225,6 +237,66 @@ describe('ResultScreen', () => {
         fromResult: '1',
       }),
     });
+  });
+
+  it('preserves the originating destination when editing a result', async () => {
+    mockParams = {
+      mode: 'draft',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+      returnTo: '/saved/recent',
+    };
+    const renderer = await renderResultScreen();
+    const header = renderer.root.find(node => String(node.type) === 'ScreenHeader');
+    const rightAction = header.props.rightAction as React.ReactElement<{
+      onPress: () => void;
+    }>;
+
+    await act(async () => {
+      rightAction.props.onPress();
+    });
+
+    const editCall = mockRouter.push.mock.calls[0][0] as {
+      params: { returnResultParams: string };
+    };
+    expect(JSON.parse(editCall.params.returnResultParams)).toMatchObject({
+      mode: 'draft',
+      returnTo: '/saved/recent',
+    });
+  });
+
+  it('routes both header and hardware Back to returnTo', async () => {
+    mockParams = {
+      mode: 'draft',
+      result: JSON.stringify(result),
+      formValues: JSON.stringify(formValues),
+      currency: 'GBP',
+      returnTo: '/',
+    };
+    const renderer = await renderResultScreen();
+    const header = renderer.root.find(node => String(node.type) === 'ScreenHeader');
+    const leftAction = header.props.leftAction as React.ReactElement<{
+      onPress: () => void;
+    }>;
+
+    await act(async () => {
+      leftAction.props.onPress();
+    });
+    expect(mockRouter.replace).toHaveBeenCalledWith('/');
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    mockRouter.replace.mockClear();
+    const preventDefault = jest.fn();
+    await act(async () => {
+      mockBeforeRemove?.({ preventDefault });
+    });
+
+    expect(preventDefault).toHaveBeenCalled();
+    expect(mockRouter.replace).toHaveBeenCalledWith('/');
+    expect(mockRouter.back).not.toHaveBeenCalled();
   });
 
   it('does not offer a second save concept because the calculation is already recent', async () => {

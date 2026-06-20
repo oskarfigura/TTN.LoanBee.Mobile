@@ -252,5 +252,5 @@ These are the invariants tests must keep guarding:
 | J12 Correct completed | `app/saved/[id]/deals/[dealId].tsx?correct=1` |
 | J13 Delete deal | `MortgageTimelineView.tsx`, `canDeleteDeal` + `removeLatestDealAndEvents` |
 | J14 Pin / unpin | `DashboardPinButton`, `savedLoansStorage.togglePinned` |
-| J15 Rename | rename modal in `app/saved/[id].tsx` |
-| J16 Delete mortgage | menu in `app/saved/[id].tsx`, `savedLoansStorage.remove` |
+| J15 Rename | rename modal in `app/(tabs)/saved/[id].tsx` |
+| J16 Delete mortgage | menu in `app/(tabs)/saved/[id].tsx`, `savedLoansStorage.remove` |
