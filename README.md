@@ -2,12 +2,26 @@
 
 Loan amortisation calculator for iOS and Android. Mobile companion to [TTN.loan-amortisation-calculator.web](https://github.com/oskarfigura/TTN.loan-amortisation-calculator.web).
 
+## Run & Deploy — Quick Links
+
+**iOS**
+
+- [Run on simulator](#running-on-the-ios-simulator)
+- [Run on a physical device](#running-on-a-physical-ios-device)
+- [Deploy / release](#deploying-ios)
+
+**Android**
+
+- [Run on emulator](#running-on-the-android-emulator)
+- [Run on a physical device](#running-on-a-physical-android-device-over-usb)
+- [Deploy / release](#deploying-android)
+
 ## Production Deployment
 
 Production releases for both operating systems are built with the EAS `production` profile, but
 their store submission flows differ.
 
-### iOS
+### Deploying iOS
 
 Build the production iOS app, selecting iOS if EAS prompts for a platform:
 
@@ -21,7 +35,7 @@ After the build succeeds, submit the latest iOS build to App Store Connect:
 eas submit -p ios --latest
 ```
 
-### Android
+### Deploying Android
 
 Before building, verify that the Android `versionCode` is higher than the current Play Store
 production release. Build the production Android app, selecting Android if EAS prompts for a
@@ -332,13 +346,25 @@ npm run android   # Gradle build, install, and start on Android emulator/device
 npm run ios       # Xcode build, install, and start on iOS simulator/device
 ```
 
-To choose a specific iOS simulator, such as an iPad, run:
+### Running On The iOS Simulator
 
 ```bash
-npm run ios -- --device
+npm run ios
 ```
 
-Select the desired iPad simulator from the interactive device list.
+To choose a specific simulator, such as an iPad, run `npm run ios -- --device` and select the
+desired simulator from the interactive device list.
+
+### Running On The Android Emulator
+
+Start an emulator from Android Studio (or `emulator -avd <name>`), then:
+
+```bash
+npm run android
+```
+
+If more than one emulator/device is connected, target one explicitly with
+`npx expo run:android --device`.
 
 ### Running On A Physical Android Device Over USB
 
@@ -390,6 +416,64 @@ npm start
 ```
 
 Use `npm start -- --clear` or `npx expo start -c` when Metro appears stale.
+
+### Running On A Physical iOS Device
+
+The app uses native modules (`react-native-mmkv`, `react-native-google-mobile-ads`), so Expo Go is
+not supported — a local dev build via `expo run:ios` is required. Device builds need a Mac with
+Xcode and Apple signing.
+
+Prerequisites:
+
+- **Xcode** plus its Command Line Tools, and **CocoaPods** (`brew install cocoapods` if missing).
+- An **Apple ID** signed into Xcode (Xcode → Settings → Accounts). A free Apple ID works for
+  on-device dev builds but re-signs every 7 days; a paid Apple Developer Program membership avoids
+  the weekly re-sign and is required for TestFlight/App Store distribution.
+- The device connected by USB (or on the same network), unlocked, with **Trust This Computer**
+  accepted.
+
+1. Authenticate with GitHub Packages and install dependencies:
+
+```bash
+export NODE_AUTH_TOKEN=$(gh auth token)
+npm install
+```
+
+2. Generate the `ios/` project (it is gitignored in this repo) and install pods:
+
+```bash
+npx expo prebuild --platform ios
+cd ios && pod install && cd ..
+```
+
+3. Set the signing team the first time. Open `ios/LoanBee.xcworkspace` in Xcode, select the
+   **LoanBee** target → **Signing & Capabilities**, choose your **Team**, and let Xcode
+   auto-manage the provisioning profile. On the device, approve the developer profile under
+   **Settings → General → VPN & Device Management** on first launch.
+
+4. Build and launch on the connected device:
+
+```bash
+npm run ios -- --device
+```
+
+Select the physical device from the interactive list, or target it directly with
+`npx expo run:ios --device "<Device Name>"`.
+
+A debug build still expects Metro on the network. To leave the app installed and runnable without a
+tethered Mac, build the Release configuration so the JS bundle is embedded:
+
+```bash
+npx expo run:ios --device --configuration Release
+```
+
+Notes:
+
+- The bundle ID is `com.thetechnarrative.loanbee`.
+- Metro hot-reloads JavaScript-only changes; re-run the build after native, dependency, or app
+  config changes, or after regenerating `ios/`.
+- iOS apps cannot be sideloaded freely like Android. Distribution beyond your own registered device
+  requires TestFlight or an ad-hoc/development provisioning profile (paid Apple Developer Program).
 
 ## Building Android Locally Without EAS
 

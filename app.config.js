@@ -69,6 +69,14 @@ const withoutIosTrackingUsageDescription = config => withInfoPlist(config, iosCo
 // ATT, consent, banner, and interstitial flow.
 const IOS_ADS_ENABLED = process.env.ADMOB_IOS_ENABLED === 'true';
 
+// Google's public sample AdMob app ID for iOS. It is always a valid
+// GADApplicationIdentifier. The Mobile Ads SDK is linked into the binary regardless of
+// IOS_ADS_ENABLED and validates GADApplicationIdentifier at launch, crashing with
+// GADInvalidInitializationException if it is missing or malformed — before any JS runs.
+// While iOS ads are disabled there is no real iOS AdMob app, so we always write this
+// valid placeholder instead of trusting ADMOB_IOS_ID (which may be set to "test").
+const GOOGLE_TEST_IOS_APP_ID = 'ca-app-pub-3940256099942544~1458002511';
+
 const ANDROID_PRODUCTION_AD_ENV_KEYS = [
   'ADMOB_ANDROID_ID',
   'ADMOB_BANNER_ANDROID_ID',
@@ -191,9 +199,13 @@ export default () => ({
           androidAppId:
             process.env.ADMOB_ANDROID_ID ??
             'ca-app-pub-3940256099942544~3347511713',
-          iosAppId:
-            process.env.ADMOB_IOS_ID ??
-            'ca-app-pub-3940256099942544~1458002511',
+          // Only trust ADMOB_IOS_ID once iOS ads are deliberately enabled and a real
+          // iOS AdMob app exists. While disabled, always write Google's valid sample
+          // ID so the linked-but-inert SDK does not abort at launch (no ads load — the
+          // JS AdProvider stays gated by ADS_ENABLED).
+          iosAppId: IOS_ADS_ENABLED
+            ? (process.env.ADMOB_IOS_ID ?? GOOGLE_TEST_IOS_APP_ID)
+            : GOOGLE_TEST_IOS_APP_ID,
           // Only write NSUserTrackingUsageDescription when iOS ads are enabled.
           ...(IOS_ADS_ENABLED
             ? {
