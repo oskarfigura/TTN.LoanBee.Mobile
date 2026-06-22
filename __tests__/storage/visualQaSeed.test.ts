@@ -10,8 +10,9 @@ describe('visual QA seed data', () => {
   it('builds representative saved-loan fixtures for emulator visual checks', () => {
     const loans = buildVisualQaLoans();
 
-    expect(loans).toHaveLength(9);
+    expect(loans).toHaveLength(10);
     expect(loans.map(loan => loan.id)).toEqual([
+      'demo-mega-mortgage',
       'demo-family-home',
       'demo-riverside-remortgage',
       'demo-holiday-let',
@@ -32,6 +33,7 @@ describe('visual QA seed data', () => {
     expect(loans.some(loan => loan.deals.some(deal => deal.repaymentType === 'interestOnly'))).toBe(true);
     expect(loans.some(loan => loan.events.some(event => event.type === 'paymentHoliday'))).toBe(true);
     expect(loans.filter(loan => loan.pinnedToDashboard).map(loan => loan.id)).toEqual([
+      'demo-mega-mortgage',
       'demo-family-home',
       'demo-riverside-remortgage',
     ]);
@@ -54,6 +56,7 @@ describe('visual QA seed data', () => {
 
     const loans = savedLoansStorage.getAll();
     expect(loans.map(loan => loan.id)).toEqual([
+      'demo-mega-mortgage',
       'demo-family-home',
       'demo-riverside-remortgage',
       'demo-holiday-let',
@@ -64,7 +67,7 @@ describe('visual QA seed data', () => {
       'demo-education',
       'demo-photo-studio',
     ]);
-    expect(loans[0].dashboardOrder).toBe(1);
-    expect(loans[1].dashboardOrder).toBe(2);
+    expect(loans[0].dashboardOrder).toBe(0);
+    expect(loans[1].dashboardOrder).toBe(1);
   });
 });
