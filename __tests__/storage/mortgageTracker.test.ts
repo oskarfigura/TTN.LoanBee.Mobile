@@ -707,13 +707,16 @@ describe('mortgage tracker', () => {
     // The monthly payment and remaining term must be re-derived from the new opening
     // balance and rebased start — not left at the value projected when the draft was
     // first built (the original 1385 computed for a 240000 opening balance).
+    // Remaining term is deterministic date math: 300-month mortgage less 54 months
+    // elapsed (2026-06 → 2030-12) = 246 months = 20y 6m, pinned concretely here.
     const expectedRemainingMonths = getRemainingMortgageTermInMonths(loan, '2030-12-16');
+    expect(expectedRemainingMonths).toBe(246);
+    expect(updatedDraft?.remainingTermInYears).toBe(20);
+    expect(updatedDraft?.remainingTermInMonths).toBe(6);
     expect(updatedDraft?.monthlyPayment).not.toBe(draft.monthlyPayment);
     expect(updatedDraft?.monthlyPayment).toBe(
       calculateDealMonthlyPayment(215000, draft.interestRate, expectedRemainingMonths, draft.repaymentType),
     );
-    expect(updatedDraft?.remainingTermInYears).toBe(Math.floor(expectedRemainingMonths / 12));
-    expect(updatedDraft?.remainingTermInMonths).toBe(expectedRemainingMonths % 12);
   });
 
   it('only deletes the latest chronological deal', () => {

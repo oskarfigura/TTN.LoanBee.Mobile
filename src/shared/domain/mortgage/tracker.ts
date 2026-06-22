@@ -618,24 +618,19 @@ export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGr
     // does at creation time. Otherwise they keep the values projected when the draft was first
     // built and drift out of sync once the previous deal completes with actuals that differ
     // from that projection. Completed deals hold real actuals, so their payment is left as-is.
-    const rebasedTerm = shouldRebaseDates
-      ? (() => {
-        const remainingTermMonths = getRemainingMortgageTermInMonths(loan, nextStartDate);
-        const { years, months } = splitMonths(remainingTermMonths);
-        const interestRate = deal.interestRate || loan.formSnapshot.interest;
-        return {
-          monthlyPayment: calculateDealMonthlyPayment(openingBalance, interestRate, remainingTermMonths, deal.repaymentType),
-          remainingTermInYears: years,
-          remainingTermInMonths: months,
-        };
-      })()
-      : null;
+    const remainingTermMonths = getRemainingMortgageTermInMonths(loan, nextStartDate);
+    const remainingTerm = splitMonths(remainingTermMonths);
+    const interestRate = deal.interestRate || loan.formSnapshot.interest;
     const nextDeal: LoanDeal = {
       ...deal,
       startDate: shouldRebaseDates ? nextStartDate : deal.startDate,
       endDate: shouldRebaseDates ? addMonthsIso(nextStartDate, durationMonths) : deal.endDate,
       openingBalance,
-      ...(rebasedTerm ?? {}),
+      ...(shouldRebaseDates ? {
+        monthlyPayment: calculateDealMonthlyPayment(openingBalance, interestRate, remainingTermMonths, deal.repaymentType),
+        remainingTermInYears: remainingTerm.years,
+        remainingTermInMonths: remainingTerm.months,
+      } : {}),
       updatedAt,
     };
 
