@@ -984,7 +984,7 @@ const CurrentDealSummaryPanel = ({
         </View>
         <View style={styles.summarySourceRow}>
           <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>
-          <Text style={styles.summarySourceValue} numberOfLines={1} adjustsFontSizeToFit>
+          <Text style={styles.summarySourceValue}>
             {balanceSource}
           </Text>
         </View>
@@ -1023,7 +1023,7 @@ const CurrentDealSummaryPanel = ({
       </View>
       <View style={styles.summarySourceRow}>
         <Text style={styles.summarySourceLabel}>{t('mortgage.balanceSource')}</Text>
-        <Text style={styles.summarySourceValue} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={styles.summarySourceValue}>
           {balanceSource}
         </Text>
       </View>

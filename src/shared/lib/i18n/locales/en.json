@@ -535,7 +535,7 @@
     "sourceBankCheckedToday": "Bank checked today",
     "sourceProjectedFromBankCheckpoint": "Projected from bank check-in on {{date}}",
     "sourceProjectedFromOlderBankCheckpoint": "Projected from older bank check-in on {{date}}",
-    "sourceProjectedFromStaleBankCheckpoint": "Projected from stale bank check-in on {{date}}; re-check recommended",
+    "sourceProjectedFromStaleBankCheckpoint": "Projected from stale bank check-in on {{date}} — re-check recommended",
     "sourceCompletedDeal": "Closed by lender {{date}}",
     "sourceProjectedFromCurrentDeal": "Projected from current deal",
     "sourceCurrentStateProjection": "Saved mortgage estimate",

@@ -535,7 +535,7 @@
     "sourceBankCheckedToday": "Bank sprawdzony dziś",
     "sourceProjectedFromBankCheckpoint": "Prognoza od salda z banku z {{date}}",
     "sourceProjectedFromOlderBankCheckpoint": "Prognoza od starszego salda z banku z {{date}}",
-    "sourceProjectedFromStaleBankCheckpoint": "Prognoza od nieaktualnego salda z banku z {{date}}; zalecane ponowne sprawdzenie",
+    "sourceProjectedFromStaleBankCheckpoint": "Prognoza od nieaktualnego salda z banku z {{date}} — zalecane ponowne sprawdzenie",
     "sourceCompletedDeal": "Zamknięte przez bank {{date}}",
     "sourceProjectedFromCurrentDeal": "Prognoza z aktualnej umowy",
     "sourceCurrentStateProjection": "Zapisany szacunek hipoteki",

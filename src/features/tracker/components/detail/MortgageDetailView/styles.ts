@@ -156,9 +156,9 @@ export const styles = StyleSheet.create({
     color: colours.textPrimary,
   },
   summarySourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: spacing.xxs,
     borderTopWidth: 1,
     borderTopColor: colours.borderSoft,
     marginTop: spacing.md,
@@ -171,11 +171,10 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   summarySourceValue: {
-    flex: 1,
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.sm,
     color: colours.primary,
-    textAlign: 'right',
+    textAlign: 'left',
   },
   reconciliationBox: {
     marginTop: spacing.sm,
@@ -352,8 +351,8 @@ export const styles = StyleSheet.create({
   },
   timelineAlertBody: {
     ...fontFaces.body.regular,
-    fontSize: fontSizes.xs,
-    lineHeight: 16,
+    fontSize: fontSizes.sm,
+    lineHeight: 18,
     color: colours.textSecondary,
     marginTop: spacing.xxxs,
   },
