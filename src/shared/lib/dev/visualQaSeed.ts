@@ -148,7 +148,144 @@ const makeDeal = (
   ...overrides,
 });
 
+// QA stress fixture: a deliberately oversized mortgage (£30m+ financed) with a
+// long remortgage chain and a dense event log, used to watch the timeline list
+// and currency text fitting struggle. Values are intentionally unrealistic.
+const buildMegaMortgageEvents = (dealId: string, dealStart: string, count: number): MortgageEvent[] => {
+  const events: MortgageEvent[] = [];
+  for (let i = 0; i < count; i += 1) {
+    const date = addMonths(dealStart, i + 1);
+    if (i % 3 === 0) {
+      events.push(
+        makeEvent(`${dealId}-lump-${i}`, 'lumpOverpayment', date, {
+          dealId,
+          amount: 1_250_000 + i * 75_000,
+          note: 'Quarter-end portfolio overpayment from rental income',
+        }),
+      );
+    } else if (i % 3 === 1) {
+      events.push(
+        makeEvent(`${dealId}-checkpoint-${i}`, 'balanceCheckpoint', date, {
+          dealId,
+          balance: 34_500_000 - i * 480_000,
+          projectedBalanceAtCheckpoint: 34_500_000 - i * 475_000,
+          reconciliationVariance: -5_000 * i,
+          varianceReason: 'lenderTiming',
+          note: 'Reconciled against the private bank statement',
+        }),
+      );
+    } else {
+      events.push(
+        makeEvent(`${dealId}-note-${i}`, 'note', date, {
+          dealId,
+          note: 'Reviewed offset linked accounts and interest accrual schedule',
+        }),
+      );
+    }
+  }
+  return events;
+};
+
 export const buildVisualQaLoans = (): LoanGroup[] => [
+  makeLoan({
+    id: 'demo-mega-mortgage',
+    nickname: 'Country Estate (QA stress)',
+    lender: 'Coutts Private',
+    category: 'mortgage',
+    currency: 'GBP',
+    pinnedToDashboard: true,
+    dashboardOrder: 0,
+    form: {
+      loanAmount: 45_000_000,
+      interest: 4.85,
+      termInYears: 30,
+      termInMonths: 0,
+      downPayment: 10_000_000,
+      downPaymentType: DownPaymentType.CASH,
+      additionalMonthlyPayment: 25_000,
+      startDate: '2010-01-01',
+      calculationType: LoanCalculationType.TERM,
+    },
+    deals: loan => [
+      makeDeal('demo-mega-deal-1', loan, {
+        name: 'Initial 5-year fix',
+        status: 'completed',
+        startDate: '2010-01-01',
+        endDate: '2015-01-01',
+        openingBalance: 35_000_000,
+        interestRate: 5.6,
+        monthlyPayment: 217_500,
+        regularOverpayment: 25_000,
+        remainingTermInYears: 30,
+        completion: {
+          completedAt: '2015-01-01',
+          closingBalance: 32_100_000,
+          feesAdded: 19_995,
+          notes: 'Arrangement fee rolled into the next deal.',
+        },
+      }),
+      makeDeal('demo-mega-deal-2', loan, {
+        name: 'Second 5-year fix',
+        status: 'completed',
+        startDate: '2015-01-01',
+        endDate: '2020-01-01',
+        openingBalance: 32_119_995,
+        interestRate: 4.1,
+        monthlyPayment: 198_400,
+        regularOverpayment: 25_000,
+        remainingTermInYears: 25,
+        completion: {
+          completedAt: '2020-01-01',
+          closingBalance: 27_650_000,
+          feesAdded: 24_995,
+          notes: 'Product transfer with the same lender.',
+        },
+      }),
+      makeDeal('demo-mega-deal-3', loan, {
+        name: 'Third 5-year fix',
+        status: 'completed',
+        startDate: '2020-01-01',
+        endDate: '2025-01-01',
+        openingBalance: 27_674_995,
+        interestRate: 3.45,
+        monthlyPayment: 176_200,
+        regularOverpayment: 25_000,
+        remainingTermInYears: 20,
+        completion: {
+          completedAt: '2025-01-01',
+          closingBalance: 22_400_000,
+          feesAdded: 29_995,
+          notes: 'Refinanced onto a higher post-2024 rate.',
+        },
+      }),
+      makeDeal('demo-mega-deal-4', loan, {
+        name: 'Current 5-year fix',
+        status: 'active',
+        startDate: '2025-01-01',
+        endDate: '2030-01-01',
+        openingBalance: 22_429_995,
+        interestRate: 4.85,
+        monthlyPayment: 188_750,
+        regularOverpayment: 25_000,
+        remainingTermInYears: 15,
+      }),
+      makeDeal('demo-mega-deal-5', loan, {
+        name: 'Next deal estimate',
+        status: 'draft',
+        startDate: '2030-01-01',
+        endDate: '2035-01-01',
+        openingBalance: 16_800_000,
+        interestRate: 4.4,
+        monthlyPayment: 172_300,
+        regularOverpayment: 0,
+        remainingTermInYears: 10,
+      }),
+    ],
+    events: [
+      ...buildMegaMortgageEvents('demo-mega-deal-1', '2010-01-01', 18),
+      ...buildMegaMortgageEvents('demo-mega-deal-4', '2025-01-01', 14),
+    ],
+  }),
   makeLoan({
     id: 'demo-family-home',
     nickname: 'Our Family Home',
