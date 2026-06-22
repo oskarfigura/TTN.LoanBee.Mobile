@@ -210,7 +210,7 @@ Then re-run `export NODE_AUTH_TOKEN=$(gh auth token)`. Without this env var set,
 npm install
 npm test          # run all Jest projects
 npm run android   # build & run on connected Android device or emulator (expo run:android)
-npm run ios       # build & run on connected iOS device or simulator (expo run:ios)
+npm run ios       # build & run on the default iOS simulator (expo run:ios)
 ```
 
 ## Using a local TTN.UI native package
@@ -420,45 +420,56 @@ Use `npm start -- --clear` or `npx expo start -c` when Metro appears stale.
 ### Running On A Physical iOS Device
 
 The app uses native modules (`react-native-mmkv`, `react-native-google-mobile-ads`), so Expo Go is
-not supported — a local dev build via `expo run:ios` is required. Device builds need a Mac with
-Xcode and Apple signing.
+not supported. Connect and unlock the iPhone, accept **Trust This Computer**, and enable
+**Settings → Privacy & Security → Developer Mode** on the phone.
 
-Prerequisites:
-
-- **Xcode** plus its Command Line Tools, and **CocoaPods** (`brew install cocoapods` if missing).
-- An **Apple ID** signed into Xcode (Xcode → Settings → Accounts). A free Apple ID works for
-  on-device dev builds but re-signs every 7 days; a paid Apple Developer Program membership avoids
-  the weekly re-sign and is required for TestFlight/App Store distribution.
-- The device connected by USB (or on the same network), unlocked, with **Trust This Computer**
-  accepted.
-
-1. Authenticate with GitHub Packages and install dependencies:
+List the device names visible to Xcode:
 
 ```bash
-export NODE_AUTH_TOKEN=$(gh auth token)
-npm install
+xcrun xctrace list devices
 ```
 
-2. Generate the `ios/` project (it is gitignored in this repo) and install pods:
+Physical devices appear under `== Devices ==`; simulators are listed separately. Use the device
+name without the parenthesised iOS version:
 
 ```bash
-npx expo prebuild --platform ios
-cd ios && pod install && cd ..
+npx expo run:ios --device "<Device Name>"
 ```
 
-3. Set the signing team the first time. Open `ios/LoanBee.xcworkspace` in Xcode, select the
-   **LoanBee** target → **Signing & Capabilities**, choose your **Team**, and let Xcode
-   auto-manage the provisioning profile. On the device, approve the developer profile under
-   **Settings → General → VPN & Device Management** on first launch.
+For example:
 
-4. Build and launch on the connected device:
+```bash
+npx expo run:ios --device "Oskar’s iPhone"
+```
+
+Alternatively, use Expo's interactive device picker:
 
 ```bash
 npm run ios -- --device
 ```
 
-Select the physical device from the interactive list, or target it directly with
-`npx expo run:ios --device "<Device Name>"`.
+Plain `npm run ios` selects the default simulator, so include `--device` when installing on an
+iPhone. Expo generates the native project if necessary, development-signs the app, installs it,
+launches it, and starts Metro.
+
+If Expo reports that no development signing profile is configured, perform the one-time setup:
+
+1. Sign in with an Apple ID under **Xcode → Settings → Accounts**.
+2. Open `ios/LoanBee.xcworkspace`.
+3. Select **LoanBee → Signing & Capabilities**, enable automatic signing, and choose your team.
+4. Re-run the `expo run:ios --device` command.
+
+A free Apple ID works for local device builds, although its provisioning expires after about seven
+days. A paid Apple Developer Program membership is needed for TestFlight and App Store distribution.
+
+After the app is installed, JavaScript-only development normally requires only:
+
+```bash
+npm start
+```
+
+Open LoanBee on the iPhone while it can reach Metro. Re-run the full `expo run:ios --device`
+command after native dependency or app-config changes.
 
 A debug build still expects Metro on the network. To leave the app installed and runnable without a
 tethered Mac, build the Release configuration so the JS bundle is embedded:
