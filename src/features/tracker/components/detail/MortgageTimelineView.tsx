@@ -99,7 +99,7 @@ const DealStats = ({
       <View style={styles.dealBalances}>
         <View style={styles.dealStat}>
           <Text style={styles.statLabel}>{t('mortgage.dealOpeningBalance')}</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {formatCurrency(deal.openingBalance, currency)}
           </Text>
         </View>
@@ -107,7 +107,7 @@ const DealStats = ({
           <Text style={styles.statLabel}>
             {closingBalance.isPredicted ? t('mortgage.dealPredictedBalance') : t('mortgage.dealClosingBalance')}
           </Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {formatCurrency(closingBalance.value, currency)}
           </Text>
         </View>
@@ -115,28 +115,28 @@ const DealStats = ({
       <View style={styles.dealStats}>
         <View style={styles.dealStat}>
           <Text style={styles.statLabel}>{t('mortgage.duration')}</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatDealDuration(deal, i18n.language)}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatDealDuration(deal, i18n.language)}</Text>
         </View>
         <View style={styles.dealStat}>
           <Text style={styles.statLabel}>{t('calculator.interestRate')}</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{deal.interestRate}%</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{deal.interestRate}%</Text>
         </View>
         <View style={styles.dealStat}>
           <Text style={styles.statLabel}>{t('results.monthlyPayment')}</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(deal.monthlyPayment, currency)}</Text>
+          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{formatCurrency(deal.monthlyPayment, currency)}</Text>
         </View>
       </View>
       {impact.hasOverpayments ? (
         <View style={styles.dealSavings}>
           <View style={styles.dealSavingsStat}>
             <Text style={styles.statLabel}>{t('mortgage.dealInterestSaved')}</Text>
-            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {formatCurrency(impact.interestSaved, currency)}
             </Text>
           </View>
           <View style={styles.dealSavingsStat}>
             <Text style={styles.statLabel}>{t('mortgage.dealExtraPrincipal')}</Text>
-            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={styles.statValueAccent} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {formatCurrency(impact.extraPrincipalRepaid, currency)}
             </Text>
           </View>
@@ -623,6 +623,10 @@ const styles = StyleSheet.create({
   statLabel: {
     ...fontFaces.heading.semibold,
     fontSize: fontSizes.xs,
+    lineHeight: 15,
+    // Reserve two lines so labels that wrap (e.g. "MONTHLY PAYMENT") and labels
+    // that don't (e.g. "DURATION") leave their values on the same baseline.
+    minHeight: 30,
     color: colours.textSecondary,
     textTransform: 'uppercase',
   },
