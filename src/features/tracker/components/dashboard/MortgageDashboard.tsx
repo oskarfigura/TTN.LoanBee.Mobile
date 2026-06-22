@@ -181,9 +181,21 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
     });
   };
 
+  const updateActiveIndex = useCallback((offsetX: number) => {
+    const nextIndex = Math.round(offsetX / slideWidth);
+    const clamped = Math.min(Math.max(nextIndex, 0), loans.length - 1);
+    setActiveIndex(prev => (prev === clamped ? prev : clamped));
+  }, [slideWidth, loans.length]);
+
+  // Track the offset live so the page indicator follows the swipe (flips at the
+  // halfway point) instead of jumping only once momentum settles. onMomentumScrollEnd
+  // stays as the final snap correction.
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    updateActiveIndex(event.nativeEvent.contentOffset.x);
+  }, [updateActiveIndex]);
+
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / slideWidth);
-    setActiveIndex(Math.min(Math.max(nextIndex, 0), loans.length - 1));
+    updateActiveIndex(event.nativeEvent.contentOffset.x);
   };
 
   // Each slide is its own vertical ScrollView so a tall card (or large font scale)
@@ -223,6 +235,8 @@ export const MortgageDashboard = ({ loans, onNewCalculation }: Props) => {
         showsHorizontalScrollIndicator={false}
         snapToInterval={slideWidth}
         decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={handleScrollEnd}
         initialNumToRender={1}
         maxToRenderPerBatch={2}

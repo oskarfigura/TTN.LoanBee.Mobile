@@ -50,10 +50,18 @@ export default function TabLayout() {
               return;
             }
 
+            if (route.name === 'saved') {
+              // Reset the saved stack to its list root. Without this the tab
+              // restores its last state and strands the user on a loan detail
+              // (saved/[id]) with no way back to the list.
+              navigation.navigate('saved', { screen: 'index' });
+              return;
+            }
+
             navigation.navigate(route.name);
           };
 
-          if (route.name === 'index' || route.name === 'calculate') {
+          if (route.name === 'index' || route.name === 'calculate' || route.name === 'saved') {
             event.preventDefault();
             navigateToTab();
           }
