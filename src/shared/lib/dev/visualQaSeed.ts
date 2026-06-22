@@ -9,8 +9,10 @@ import {
   LoanDeal,
   LoanFormSnapshot,
   LoanGroup,
+  LoanGroupStatus,
   LoanPurpose,
   MortgageEvent,
+  MortgageVarianceReason,
 } from '@/shared/domain/types/SavedLoan';
 import { advanceMonthsClamped } from '@/shared/lib/utils/date';
 
@@ -34,6 +36,7 @@ type SeedLoanOptions = {
   category: LoanCategory;
   loanPurpose?: LoanPurpose;
   currency: CurrencyCode;
+  status?: LoanGroupStatus;
   pinnedToDashboard?: boolean;
   dashboardOrder?: number;
   form: SeedFormValues;
@@ -85,6 +88,7 @@ const makeLoan = ({
   category,
   loanPurpose,
   currency,
+  status = 'tracked',
   pinnedToDashboard = false,
   dashboardOrder,
   form,
@@ -104,7 +108,7 @@ const makeLoan = ({
     loanPurpose,
     currency,
     mortgageTermInMonths: result.tableItems.length,
-    status: 'tracked',
+    status,
     pinnedToDashboard,
     dashboardOrder,
     deals: [],
@@ -151,8 +155,20 @@ const makeDeal = (
 // QA stress fixture: a deliberately oversized mortgage (£30m+ financed) with a
 // long remortgage chain and a dense event log, used to watch the timeline list
 // and currency text fitting struggle. Values are intentionally unrealistic.
+// Rotate through the remaining variance reasons so the timeline exercises every
+// reconciliation label, not just lenderTiming.
+const checkpointVarianceReasons: MortgageVarianceReason[] = [
+  'lenderTiming',
+  'unloggedOverpayment',
+  'feeAdded',
+  'rateOrPaymentChanged',
+  'paymentHoliday',
+  'unknown',
+];
+
 const buildMegaMortgageEvents = (dealId: string, dealStart: string, count: number): MortgageEvent[] => {
   const events: MortgageEvent[] = [];
+  let checkpointIndex = 0;
   for (let i = 0; i < count; i += 1) {
     const date = addMonths(dealStart, i + 1);
     if (i % 3 === 0) {
@@ -164,13 +180,16 @@ const buildMegaMortgageEvents = (dealId: string, dealStart: string, count: numbe
         }),
       );
     } else if (i % 3 === 1) {
+      const varianceReason =
+        checkpointVarianceReasons[checkpointIndex % checkpointVarianceReasons.length];
+      checkpointIndex += 1;
       events.push(
         makeEvent(`${dealId}-checkpoint-${i}`, 'balanceCheckpoint', date, {
           dealId,
           balance: 34_500_000 - i * 480_000,
           projectedBalanceAtCheckpoint: 34_500_000 - i * 475_000,
           reconciliationVariance: -5_000 * i,
-          varianceReason: 'lenderTiming',
+          varianceReason,
           note: 'Reconciled against the private bank statement',
         }),
       );
@@ -272,6 +291,7 @@ export const buildVisualQaLoans = (): LoanGroup[] => [
       makeDeal('demo-mega-deal-5', loan, {
         name: 'Next deal estimate',
         status: 'draft',
+        source: 'estimate',
         startDate: '2030-01-01',
         endDate: '2035-01-01',
         openingBalance: 16_800_000,
@@ -371,6 +391,7 @@ export const buildVisualQaLoans = (): LoanGroup[] => [
       makeDeal('demo-riverside-draft', loan, {
         name: 'Next deal estimate',
         status: 'draft',
+        source: 'estimate',
         startDate: '2031-01-01',
         endDate: '2033-01-01',
         openingBalance: 228000,
@@ -541,8 +562,8 @@ export const buildVisualQaLoans = (): LoanGroup[] => [
       interest: 5.8,
       termInYears: 5,
       termInMonths: 0,
-      downPayment: 2000,
-      downPaymentType: DownPaymentType.CASH,
+      downPayment: 12,
+      downPaymentType: DownPaymentType.PERCENT,
       additionalMonthlyPayment: 40,
       startDate: '2025-09-01',
       calculationType: LoanCalculationType.TERM,
@@ -572,6 +593,110 @@ export const buildVisualQaLoans = (): LoanGroup[] => [
         note: 'Busy-season income put towards the balance',
       }),
     ],
+  }),
+  // Fully repaid mortgage: every deal completed, the final one terminal, plus a
+  // mid-chain remortgage that drew additional borrowing. Exercises the paid-off
+  // end state and the additionalBorrowing display line.
+  makeLoan({
+    id: 'demo-paid-off',
+    nickname: 'Starter Flat (paid off)',
+    lender: 'Yorkshire BS',
+    category: 'mortgage',
+    currency: 'GBP',
+    form: {
+      loanAmount: 160000,
+      interest: 3.2,
+      termInYears: 15,
+      termInMonths: 0,
+      downPayment: 20000,
+      downPaymentType: DownPaymentType.CASH,
+      additionalMonthlyPayment: 0,
+      startDate: '2009-06-01',
+      calculationType: LoanCalculationType.TERM,
+    },
+    deals: loan => [
+      makeDeal('demo-paid-off-deal-1', loan, {
+        name: 'First 5-year fix',
+        status: 'completed',
+        startDate: '2009-06-01',
+        endDate: '2014-06-01',
+        openingBalance: 140000,
+        interestRate: 4.9,
+        monthlyPayment: 1100,
+        regularOverpayment: 0,
+        remainingTermInYears: 15,
+        completion: {
+          completedAt: '2014-06-01',
+          closingBalance: 108000,
+          feesAdded: 0,
+          notes: 'Switched lenders at the end of the fix.',
+        },
+      }),
+      makeDeal('demo-paid-off-deal-2', loan, {
+        name: 'Remortgage with extension borrowing',
+        status: 'completed',
+        startDate: '2014-06-01',
+        endDate: '2019-06-01',
+        openingBalance: 123000,
+        interestRate: 3.5,
+        monthlyPayment: 1180,
+        regularOverpayment: 100,
+        additionalBorrowing: 15000,
+        remainingTermInYears: 10,
+        completion: {
+          completedAt: '2019-06-01',
+          closingBalance: 78000,
+          feesAdded: 999,
+          notes: 'Borrowed an extra £15k for a loft extension.',
+        },
+      }),
+      makeDeal('demo-paid-off-deal-3', loan, {
+        name: 'Final 5-year fix',
+        status: 'completed',
+        startDate: '2019-06-01',
+        endDate: '2024-06-01',
+        openingBalance: 78999,
+        interestRate: 3.2,
+        monthlyPayment: 1240,
+        regularOverpayment: 250,
+        remainingTermInYears: 5,
+        completion: {
+          completedAt: '2024-03-01',
+          closingBalance: 0,
+          feesAdded: 0,
+          terminal: true,
+          notes: 'Mortgage repaid in full, ahead of term.',
+        },
+      }),
+    ],
+    events: [
+      makeEvent('demo-paid-off-final-lump', 'lumpOverpayment', '2024-02-01', {
+        dealId: 'demo-paid-off-deal-3',
+        amount: 9500,
+        note: 'Final overpayment that cleared the balance',
+      }),
+    ],
+  }),
+  // Draft loan group: a saved calculation the user has not yet started tracking.
+  // Exercises the draft card rendering in LoanProfileCard.
+  makeLoan({
+    id: 'demo-draft-plan',
+    nickname: 'Possible Buy-to-Let (draft)',
+    lender: 'Barclays',
+    category: 'mortgage',
+    currency: 'GBP',
+    status: 'draft',
+    form: {
+      loanAmount: 240000,
+      interest: 5.1,
+      termInYears: 25,
+      termInMonths: 0,
+      downPayment: 60000,
+      downPaymentType: DownPaymentType.CASH,
+      additionalMonthlyPayment: 0,
+      startDate: '2026-09-01',
+      calculationType: LoanCalculationType.TERM,
+    },
   }),
 ];
 
