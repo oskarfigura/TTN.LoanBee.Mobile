@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import {
   buildNextDealDraft,
+  calculateDealMonthlyPayment,
   canDeleteDeal,
   canActivateDeal,
   canEditDeal,
@@ -702,6 +703,17 @@ describe('mortgage tracker', () => {
     expect(updatedDraft?.startDate).toBe('2030-12-16');
     expect(updatedDraft?.endDate).toBe('2035-12-16');
     expect(updatedDraft?.openingBalance).toBe(215000);
+
+    // The monthly payment and remaining term must be re-derived from the new opening
+    // balance and rebased start — not left at the value projected when the draft was
+    // first built (the original 1385 computed for a 240000 opening balance).
+    const expectedRemainingMonths = getRemainingMortgageTermInMonths(loan, '2030-12-16');
+    expect(updatedDraft?.monthlyPayment).not.toBe(draft.monthlyPayment);
+    expect(updatedDraft?.monthlyPayment).toBe(
+      calculateDealMonthlyPayment(215000, draft.interestRate, expectedRemainingMonths, draft.repaymentType),
+    );
+    expect(updatedDraft?.remainingTermInYears).toBe(Math.floor(expectedRemainingMonths / 12));
+    expect(updatedDraft?.remainingTermInMonths).toBe(expectedRemainingMonths % 12);
   });
 
   it('only deletes the latest chronological deal', () => {

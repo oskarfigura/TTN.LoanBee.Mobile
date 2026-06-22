@@ -613,11 +613,29 @@ export const normaliseDealChain = (loan: LoanGroup, fromDealId?: string): LoanGr
     const projectedPrevious = projectDeal(previousDeal, loan.events, projectionDate, true);
     const openingBalance = toMoney(projectedPrevious.balance + (deal.additionalBorrowing ?? 0));
     const shouldRebaseDates = deal.status !== 'completed';
+    // For not-yet-completed (rebased) deals the monthly payment and remaining term must be
+    // re-derived from the new opening balance and rebased start, exactly as buildNextDealDraft
+    // does at creation time. Otherwise they keep the values projected when the draft was first
+    // built and drift out of sync once the previous deal completes with actuals that differ
+    // from that projection. Completed deals hold real actuals, so their payment is left as-is.
+    const rebasedTerm = shouldRebaseDates
+      ? (() => {
+        const remainingTermMonths = getRemainingMortgageTermInMonths(loan, nextStartDate);
+        const { years, months } = splitMonths(remainingTermMonths);
+        const interestRate = deal.interestRate || loan.formSnapshot.interest;
+        return {
+          monthlyPayment: calculateDealMonthlyPayment(openingBalance, interestRate, remainingTermMonths, deal.repaymentType),
+          remainingTermInYears: years,
+          remainingTermInMonths: months,
+        };
+      })()
+      : null;
     const nextDeal: LoanDeal = {
       ...deal,
       startDate: shouldRebaseDates ? nextStartDate : deal.startDate,
       endDate: shouldRebaseDates ? addMonthsIso(nextStartDate, durationMonths) : deal.endDate,
       openingBalance,
+      ...(rebasedTerm ?? {}),
       updatedAt,
     };
 
