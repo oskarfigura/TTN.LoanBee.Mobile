@@ -452,15 +452,35 @@ Plain `npm run ios` selects the default simulator, so include `--device` when in
 iPhone. Expo generates the native project if necessary, development-signs the app, installs it,
 launches it, and starts Metro.
 
-If Expo reports that no development signing profile is configured, perform the one-time setup:
+If Expo reports `No code signing certificates are available to use`, perform the one-time setup:
 
 1. Sign in with an Apple ID under **Xcode → Settings → Accounts**.
-2. Open `ios/LoanBee.xcworkspace`.
-3. Select **LoanBee → Signing & Capabilities**, enable automatic signing, and choose your team.
-4. Re-run the `expo run:ios --device` command.
+2. Select the account and team, open **Manage Certificates**, press **+**, and create an
+   **Apple Development** certificate.
+3. Open `ios/LoanBee.xcworkspace`.
+4. Select **LoanBee → Signing & Capabilities**, enable automatic signing, and choose your team.
+5. Re-run the `expo run:ios --device` command.
 
 A free Apple ID works for local device builds, although its provisioning expires after about seven
 days. A paid Apple Developer Program membership is needed for TestFlight and App Store distribution.
+
+Expo CLI 55.0.32 has a known physical-device installer bug that can occur after a successful build:
+
+```text
+TypeError: Cannot convert object to primitive value
+at LockdowndClient.startSession
+```
+
+This is an Expo CLI pairing-record logging bug, not a LoanBee build or signing failure. The upstream
+fix changes `` debug(`startSession: ${pairRecord}`) `` to `debug('startSession')` in:
+
+```text
+node_modules/expo/node_modules/@expo/cli/build/src/run/ios/appleDevice/client/LockdowndClient.js
+```
+
+Apply that one-line change and re-run the device command. It is temporary and may need to be applied
+again after `npm install`. Alternatively, open `ios/LoanBee.xcworkspace`, select the connected
+iPhone, and use **Product → Run** to let Xcode install the already buildable app.
 
 After the app is installed, JavaScript-only development normally requires only:
 
