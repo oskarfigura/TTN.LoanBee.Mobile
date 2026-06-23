@@ -117,7 +117,7 @@ export default () => ({
   expo: {
     name: 'LoanBee',
     slug: 'loanbee-odr6tdznqbl20no30tw0',
-    version: '1.0.13',
+    version: '2.2.1',
     orientation: 'default',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
