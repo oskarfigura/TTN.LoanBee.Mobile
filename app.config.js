@@ -117,7 +117,7 @@ export default () => ({
   expo: {
     name: 'LoanBee',
     slug: 'loanbee-odr6tdznqbl20no30tw0',
-    version: '2.2.0',
+    version: '1.0.13',
     orientation: 'default',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
@@ -138,7 +138,6 @@ export default () => ({
       supportsTablet: true,
       requireFullScreen: true,
       bundleIdentifier: 'com.thetechnarrative.loanbee',
-      buildNumber: '1',
       infoPlist: {
         // MMKV encrypts at rest but uses only standard/exempt cryptography, so the app
         // qualifies for the export-compliance exemption. Declaring this stops App Store
@@ -152,7 +151,6 @@ export default () => ({
         backgroundColor: '#002D72',
       },
       package: 'com.cactus.loancalculator.free',
-      versionCode: 24,
       predictiveBackGestureEnabled: false,
     },
     web: {

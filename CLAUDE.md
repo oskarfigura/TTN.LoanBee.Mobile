@@ -68,7 +68,8 @@ Screen padding: `paddingHorizontal: 16` (content), `20` (headers).
 - **Android package**: `com.cactus.loancalculator.free` — matches the existing Play Store listing with 28+ installs. Do not change this.
 - **iOS bundle ID**: `com.thetechnarrative.loanbee` — new App Store submission.
 - **EAS project ID**: `06179207-8267-41ff-a5ed-dbb4cd7b439e`
-- **Android versionCode**: currently `24` (supersedes production release 23 / v2.1). Always increment before a production build.
+- **App version**: `1.0.13` (set via the top-level `version` field in `app.config.js`; drives both iOS `CFBundleShortVersionString` and Android `versionName`). Must stay `≥ 1.0.13` — Play production is live at versionName `1.0.12` / versionCode `21`, so a lower string would read as a downgrade.
+- **Build numbers are EAS-remote-managed**: `eas.json` sets `appVersionSource: "remote"`, so iOS `buildNumber` and Android `versionCode` are auto-incremented on EAS's servers and the values in `app.config.js` are ignored (the fields have been removed). As of the last check the remote counters were iOS build `6` and Android versionCode `48` — both auto-increment on the next production build. Inspect or override with `eas build:version:get -p <platform>` / `eas build:version:set -p <platform>`.
 
 ## Test Setup
 
@@ -200,7 +201,7 @@ EAS is used for preview and production releases only, not local development.
 - `preview` — internal APK (Android), no store submission
 - `production` — AAB/IPA, `autoIncrement: true`
 
-Before any production build, verify `versionCode` in `app.config.js` is higher than the current Play Store release. Check Play Console → Release → Production for the current code.
+`autoIncrement` fires during `eas build` (not `eas submit`) and, because `appVersionSource: "remote"`, bumps the EAS-remote build number / versionCode — there is no `versionCode` in `app.config.js` to maintain. The remote counter is already above the current Play production release (versionCode `21`), so it supersedes cleanly; verify with `eas build:version:get -p android` if in doubt. Note `eas submit --latest` re-submits the most recently *built* binary — it does not create a new build, so re-running it after a submission fails with a duplicate-build-number error. Build first, then submit.
 
 ## Commits
 
